@@ -6,7 +6,6 @@ from screener.technical_criteria import TechnicalCriteria
 import concurrent.futures
 from datetime import timezone
 from utils.config_manager import ConfigManager
-import os
 from utils.fetch import get_historical_data
 
 class TechnicalScreener:

@@ -6,7 +6,7 @@ from typing import List
 from .screening_criteria import ScreeningCriteria
 import os
 from utils.config_manager import ConfigManager
-from datetime import datetime, timedelta
+from datetime import datetime
 
 class BasicInfoScreener():
     def __init__(self):

@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import yfinance as yf
-from datetime import datetime, timedelta
+from datetime import datetime
 from utils.config_manager import ConfigManager
 
 config = ConfigManager()
