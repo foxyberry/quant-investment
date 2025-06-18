@@ -4,7 +4,6 @@ import time
 import logging
 from typing import List
 from .screening_criteria import ScreeningCriteria
-from .base import SmartStockScreener
 import os
 from utils.config_manager import ConfigManager
 from datetime import datetime, timedelta

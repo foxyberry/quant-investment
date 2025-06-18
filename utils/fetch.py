@@ -2,14 +2,16 @@ import os
 import pandas as pd
 import yfinance as yf
 from datetime import datetime, timedelta
-from typing import Optional
+from utils.config_manager import ConfigManager
 
+config = ConfigManager()
 
 def get_cache_path(symbol: str) -> str:
-    return os.path.join("data", "history", f"{symbol}_history.csv")
+    file_path = config.get_history_file_path(symbol)
+    return file_path
 
 
-def load_cached_data(symbol: str) -> Optional[pd.DataFrame]:
+def load_cached_data(symbol: str):
     path = get_cache_path(symbol)
     if os.path.exists(path):
         try:
@@ -26,12 +28,10 @@ def save_data_to_cache(symbol: str, df: pd.DataFrame):
     df.to_csv(path)
 
 
-def fetch_yfinance_data(symbol: str, lookback_days: int = 20) -> pd.DataFrame:
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=lookback_days * 2)
-
+def fetch_yfinance_data(symbol: str, start_date: datetime, end_date: datetime) -> pd.DataFrame:
+    
     print(f"📥 {symbol} 데이터 다운로드 중... ({start_date.date()} ~ {end_date.date()})")
-    ticker = yf.Ticker(symbol)
+    ticker = yf.Ticker(symbol.replace('.', '-'))
     df = ticker.history(start=start_date, end=end_date)
 
     if not df.empty:
@@ -42,14 +42,17 @@ def fetch_yfinance_data(symbol: str, lookback_days: int = 20) -> pd.DataFrame:
     return df
 
 
-def get_historical_data(symbol: str, lookback_days: int = 20) -> Optional[pd.DataFrame]:
-    df = load_cached_data(symbol)
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=lookback_days * 2)
+def history_data(symbol: str, start_date: datetime, end_date: datetime) -> pd.DataFrame:
+    ticker = yf.Ticker(symbol.replace('.', '-'))
+    data = ticker.history(start=start_date, end=end_date)
+    return data
 
+def get_historical_data(symbol: str, start_date: datetime, end_date: datetime):
+    
+    df = load_cached_data(symbol)
+    
     if df is not None and not df.empty and df.index[-1] >= start_date:
-        print(f"✅ 캐시된 데이터 사용: {symbol}")
         return df
 
     print(f"🔄 캐시 부족: {symbol}, yfinance로부터 다운로드 시도")
-    return fetch_yfinance_data(symbol, lookback_days)
+    return fetch_yfinance_data(symbol, start_date, end_date)

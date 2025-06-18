@@ -1,6 +1,5 @@
 import os
 import yaml
-from typing import Dict, Any
 from pathlib import Path
 
 class ConfigManager:
@@ -8,7 +7,7 @@ class ConfigManager:
     
     def __init__(self, config_dir: str = "config"):
         self.config_dir = config_dir
-        self.configs: Dict[str, Dict[str, Any]] = {}
+        self.configs = {}
         self._load_configs()
     
     def get_history_file_path(self, symbol: str) -> str:
@@ -27,13 +26,13 @@ class ConfigManager:
                 config_name = config_file.stem
                 self.configs[config_name] = yaml.safe_load(f)
     
-    def get_config(self, config_name: str) -> Dict[str, Any]:
+    def get_config(self, config_name: str):
         """Get a specific configuration by name."""
         if config_name not in self.configs:
             raise KeyError(f"Configuration not found: {config_name}")
         return self.configs[config_name]
     
-    def get_value(self, config_name: str, *keys: str) -> Any:
+    def get_value(self, config_name: str, *keys: str):
         """Get a specific value from a configuration using dot notation."""
         config = self.get_config(config_name)
         value = config
@@ -57,18 +56,18 @@ class ConfigManager:
         """Get the basic info file path."""
         return self.get_value("base_config", "data", "basic_info_file")
     
-    def get_screening_criteria(self) -> Dict[str, Any]:
+    def get_screening_criteria(self):
         """Get the screening criteria configuration."""
         return self.get_config("screening_criteria")
     
-    def get_basic_filters(self) -> Dict[str, Any]:
+    def get_basic_filters(self):
         """Get the basic filters configuration."""
         return self.get_value("screening_criteria", "basic_filters")
     
-    def get_technical_analysis_params(self) -> Dict[str, Any]:
+    def get_technical_analysis_params(self):
         """Get the technical analysis parameters."""
         return self.get_value("screening_criteria", "technical_analysis")
     
-    def get_external_filters(self) -> Dict[str, Any]:
+    def get_external_filters(self):
         """Get the external filters configuration."""
         return self.get_value("screening_criteria", "external_filters") 

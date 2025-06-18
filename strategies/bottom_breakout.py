@@ -1,18 +1,18 @@
 from datetime import datetime, timedelta
-from typing import Dict, Optional
+from typing import Dict
 import pandas as pd
 import logging
 
 
 class BottomBreakoutAnalyzer:
-    def __init__(self, get_data_fn, logger: Optional[logging.Logger] = None):
+    def __init__(self, get_data_fn, logger=None):
         """
         get_data_fn: 함수를 인자로 받음. 심볼과 조회 일수를 받아서 데이터프레임 반환
         """
         self.get_data_fn = get_data_fn
         self.logger = logger or logging.getLogger(__name__)
 
-    def analyze(self, symbol: str, lookback_days: int = 20) -> Optional[Dict]:
+    def analyze(self, symbol: str, lookback_days: int = 20):
         try:
             # +1일 포함 (오늘 포함)
             data = self.get_data_fn(symbol, lookback_days + 1)
