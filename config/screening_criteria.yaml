@@ -1,0 +1,28 @@
+# Screening criteria configuration
+
+# Basic filters
+basic_filters:
+  price:
+    min: 5.0
+    max: 500.0
+  volume:
+    min: 200_000
+  market_cap:
+    min: 5_000_000_000  # 5 billion
+  sector:
+    - 'Technology'
+    - 'Healthcare'
+    - 'Financial Services'
+
+# Technical analysis
+technical_analysis:
+  lookback_days: 20
+  breakout_threshold: 1.05  # 5% above bottom
+  stop_loss_threshold: 0.95 # 5% below bottom
+  volume_threshold: 1.5     # 150% of average volume
+
+# External filters
+external_filters:
+  min_analyst_rating: 3.0
+  min_institutional_ownership: 0.3  # 30%
+  max_short_interest: 0.2          # 20% 
