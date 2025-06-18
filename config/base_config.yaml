@@ -1,0 +1,27 @@
+# Base configuration for the quant investment project
+
+# Data settings
+data:
+  history_dir: "data/history"
+  basic_info_file: "data/basic_info.csv"
+  snp500_info_file: "data/snp500_info.csv"
+  cache_dir: "data/cache"
+
+# API settings
+api:
+  yahoo_finance:
+    timeout: 30
+    retry_attempts: 3
+    retry_delay: 1
+
+# Logging settings
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/quant_investment.log"
+
+# Performance settings
+performance:
+  batch_size: 50
+  max_workers: 4
+  timeout: 60 

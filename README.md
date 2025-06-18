@@ -14,6 +14,7 @@ pip install 'backtrader[plotting]' matplotlib pandas numpy
 
 pip install --upgrade yfinance --no-cache-dir
 
+install lxml
 
 ## 실전용
 pip install ib_insync
