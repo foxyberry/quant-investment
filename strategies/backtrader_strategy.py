@@ -56,16 +56,27 @@ class BottomBreakoutStrategy(bt.Strategy):
         self.logger = logging.getLogger(f"{self.__class__.__name__}")
         
         # Strategy initialization log
-        self.log("=== BottomBreakoutStrategy Initialized ===", level=logging.INFO)
-        self.log(f"Parameters: lookback_days={self.params['lookback_days']}, "
+        self.log2("=== BottomBreakoutStrategy Initialized ===", level=logging.INFO)
+        self.log2(f"Parameters: lookback_days={self.params['lookback_days']}, "
                 f"breakout_threshold={self.params['breakout_threshold']:.1%}, "
                 f"take_profit_threshold={self.params['take_profit_threshold']:.1%}, "
-                f"stop_loss_threshold={self.params['stop_loss_threshold']:.1%}", level=logging.INFO)
+                f"stop_loss_threshold={self.params['stop_loss_threshold']:.1%}, "
+                f"start_date={self.params['start_date'].date() if self.params['start_date'] else 'None'}, "
+                f"end_date={self.params['end_date'].date() if self.params['end_date'] else 'None'}",
+                level=logging.INFO)
+
+    def log2(self, txt, level=logging.INFO):
+        message = f'Default: {txt}'
+
+        if self.params['debug'] or self.params['verbose_logging']:
+            print(message)
+        self.logger.log(level, message)
 
     def log(self, txt, dt=None, level=logging.INFO):
 
-        prefix = dt.isoformat() if dt else "Default"
-        message = f'{prefix}: {txt}'
+        dt = dt or self.datas[0].datetime.date(0)
+        message = f'{dt.isoformat()}: {txt}'
+        
 
         if self.params['debug'] or self.params['verbose_logging']:
             print(message)
@@ -73,8 +84,8 @@ class BottomBreakoutStrategy(bt.Strategy):
 
     def start(self):
         """Called when strategy starts"""
-        self.log("=== Strategy Started ===", level=logging.INFO)
-        self.log(f"Initial cash: ${self.broker.getcash():,.2f}", level=logging.INFO)
+        self.log2("=== Strategy Started ===", level=logging.INFO)
+        self.log2(f"Initial cash: ${self.broker.getcash():,.2f}", level=logging.INFO)
 
     def stop(self):
         """Called when strategy ends"""
@@ -112,7 +123,6 @@ class BottomBreakoutStrategy(bt.Strategy):
         current_date = data.datetime.date(0)
 
         if(self.params['start_date'] and self.params['start_date'].date() > current_date):
-            self.log(f"Waiting for start date: {self.params['start_date']} > {current_date}", level=logging.INFO)
             return
         
         current_price = data.close[0]
@@ -172,19 +182,34 @@ class BottomBreakoutStrategy(bt.Strategy):
             self.log(f"Market Analysis - Price: ${current_price:.2f}, "
                     f"Bottom: ${bottom_price:.2f} on {bottom_date} ({days_ago} days ago, {bottom_to_current_pct:+.1f}%), "
                     f"Breakout: ${breakout_price:.2f}, "
-                    f"Volume: {current_volume:,.0f} ({volume_ratio:.1f}x avg)", 
+                    f"Volume: {current_volume:,.0f} ({volume_ratio:.1f}x (avg))", 
                     level=logging.DEBUG)
 
         # === BUY Logic - First Breakout Only ===
         if not self.position and current_price > breakout_price:
-            # Check if this is the FIRST breakout (yesterday was below breakout, today is above)
-            yesterday_price = data.close[-1]  # Yesterday's closing price
-            is_first_breakout = yesterday_price <= breakout_price and current_price > breakout_price
             
-            if not is_first_breakout:
+            yesterday_price = data.close[-1]  
+
+            # Check if price has broken above breakout_price in the lookback period (excluding today)
+            prev_closes = [data.close[-i] for i in range(2, self.params['lookback_days'] + 1)]
+            
+            has_broken_before = any(close >= breakout_price for close in prev_closes)
+            
+            is_breakout_today = current_price >= breakout_price
+            
+
+            is_fresh_breakout = (not has_broken_before) and is_breakout_today
+            
+         
+            print("has_broken_before", has_broken_before)
+            print("is_breakout_today", is_breakout_today)
+            print("is_fresh_breakout", is_fresh_breakout)
+
+            if not is_fresh_breakout :
                 if self.params['verbose_logging']:
                     self.log(f"⚠️ SKIPPING BUY - Not first breakout (Yesterday: ${yesterday_price:.2f}, "
                             f"Today: ${current_price:.2f}, Breakout: ${breakout_price:.2f})", 
+
                             level=logging.DEBUG)
                 return
             

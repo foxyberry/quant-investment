@@ -16,14 +16,11 @@ def main():
     # Initialize configuration
     config = ConfigManager()
     
-    # 1. Get S&P 500 basic information
-    print("🔍 Getting S&P 500 basic information...")
     basic = BasicInfoScreener()
     basic_info_df = basic.get_snp500_basic_info()
     print(f"[1] S&P 500 종목 수: {len(basic_info_df)}")
     
     # 2. Apply basic filters
-    print("📊 Applying basic filters...")
     basic_filters = config.get_basic_filters()
     criteria = ScreeningCriteria(
         min_price=basic_filters['price']['min'],
@@ -36,15 +33,10 @@ def main():
     filtered_df = basic.apply_basic_filters(basic_info_df, criteria)
     print(f"[2] 기본 필터링 후 종목 수: {len(filtered_df)}")
     
-    # 3. Set up backtesting parameters
-    print("⚙️ Setting up backtesting parameters...")
     tech_params = config.get_technical_analysis_params()
     
-    # 4. Initialize backtrader engine
     backtester = BacktraderEngine(initial_cash=100000, commission=0.001)
     
-    # 5. Set backtesting period with valid trading dates
-    print("📅 Setting up backtesting period...")
     start_date, end_date = get_valid_backtest_dates(days_back=90)
 
     # Strategy parameters for backtrader
