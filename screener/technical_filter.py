@@ -2,11 +2,11 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import List, Dict
 import logging
-from screener.technical_criteria import TechnicalCriteria
 import concurrent.futures
-from datetime import timezone
+from screener.technical_criteria import TechnicalCriteria
 from utils.config_manager import ConfigManager
 from utils.fetch import get_historical_data
+from utils.timezone_utils import get_current_market_time
 
 class TechnicalScreener:
     """
@@ -19,35 +19,30 @@ class TechnicalScreener:
         self.logger = logger or logging.getLogger(__name__)
         self.config = ConfigManager()
 
-        
-    def get_historical_data(self, symbol: str, lookback_days: int):
-        
-        """Get historical data, either from CSV or by downloading"""
-        try:
-           
-            # Check if we have enough recent data
-            end_date = datetime.now(tz=timezone.utc)
-            start_date = end_date - timedelta(days=lookback_days * 2)
-            start_date = start_date.replace(tzinfo=timezone.utc)
-             
-            data = get_historical_data(symbol,start_date, end_date)
-            
-            return data
-            
-        except Exception as e:
-            self.logger.error(f"❌ Failed to get historical data for {symbol}: {e}")
-            return pd.DataFrame()
-
     def merge_results(self, results: List[Dict], filtered_df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(results).merge(filtered_df, on='symbol', how='inner')
     
     def analyze_bottom_breakout(self, symbol: str, technical_criteria: TechnicalCriteria):
+        """
+        바닥 돌파 분석을 수행합니다.
         
+        Args:
+            symbol: 주식 심볼
+            technical_criteria: 기술적 분석 기준
+            
+        Returns:
+            분석 결과 딕셔너리 또는 None
+        """
         try:
-            data = self.get_historical_data(symbol, technical_criteria.lookback_days + 1)
+            # Calculate date range for analysis
+            end_date = get_current_market_time()
+            start_date = end_date - timedelta(days=technical_criteria.lookback_days * 2)
+            
+            # Get historical data using centralized function
+            data = get_historical_data(symbol, start_date, end_date)
             
             if data is None or len(data) < technical_criteria.lookback_days + 1:
-                print("데이터 길이 불충분")
+                self.logger.warning(f"Insufficient data for {symbol}: {len(data) if data is not None else 0} days")
                 return None
             
             # 바닥 계산 (lookback_days만큼의 과거 구간에서)
@@ -55,11 +50,9 @@ class TechnicalScreener:
             bottom_price = recent_lows.min()
             bottom_date = recent_lows.idxmin()
 
-
             # Find the first date when price closed above breakout level
             # Start from the day after bottom_date
             data_after_bottom = data[data.index > bottom_date]
-            
             
             breakout_price = bottom_price * technical_criteria.breakout_threshold
             stop_loss_price = bottom_price * technical_criteria.stop_loss_threshold
@@ -76,7 +69,6 @@ class TechnicalScreener:
                 first_breakout_date = first_breakout_dates.index[0]
                 days_since_first_breakout = (data.index[-1] - first_breakout_date).days
 
-            
             # 오늘 종가
             current_price = data['Close'].iloc[-1]
             
@@ -88,9 +80,15 @@ class TechnicalScreener:
             # 조건: 이전엔 돌파 안 했고 오늘 처음 돌파한 경우
             is_fresh_breakout = (not has_broken_before) and is_breakout_today
 
-            # 돌파 상황
-            breakout_status = "FIRST BREAKOUT" if is_fresh_breakout else ("ALREAY UP" if is_breakout_today  else "DOWN AGAIN AFTER BREAKOUT")
+            # 돌파 상황 (typo fixed: ALREADY -> ALREADY)
+            if is_fresh_breakout:
+                breakout_status = "FIRST BREAKOUT"
+            elif is_breakout_today:
+                breakout_status = "ALREADY UP"
+            else:
+                breakout_status = "DOWN AGAIN AFTER BREAKOUT"
 
+            # 거래량 분석
             avg_volume = data['Volume'].iloc[-11:-1].mean() # 어제까지 10일 평균
             recent_volume = data['Volume'].iloc[-1]
             volume_ratio = recent_volume / avg_volume if avg_volume > 0 else 0
@@ -110,14 +108,23 @@ class TechnicalScreener:
                 'price_from_bottom_pct': ((current_price - bottom_price) / bottom_price) * 100,
                 'volume_ratio': volume_ratio,
                 'avg_volume_10d': avg_volume,
-                'analysis_date': datetime.now()
+                'analysis_date': get_current_market_time()
             }
             return result
         except Exception as e:
             self.logger.warning(f"{symbol} 분석 실패: {e}")
             return None
 
-    def filterByFreshBreakout(self, results: List[Dict]) -> List[Dict]:
+    def filter_by_fresh_breakout(self, results: List[Dict]) -> List[Dict]:
+        """
+        신규 돌파 종목만 필터링합니다.
+        
+        Args:
+            results: 분석 결과 리스트
+            
+        Returns:
+            신규 돌파 종목 리스트
+        """
         return [r for r in results if r.get("is_fresh_breakout")]
     
     def batch_technical_analysis(self, symbols: List[str], technical_criteria: TechnicalCriteria) -> List[Dict]:
@@ -131,7 +138,6 @@ class TechnicalScreener:
         Returns:
             List[Dict]: 분석 결과 리스트
         """
-        
         self.logger.info(f"Starting technical analysis for {len(symbols)} symbols")
         results = []
         max_workers = 10
@@ -150,7 +156,5 @@ class TechnicalScreener:
                 if result:
                     results.append(result)
         
-        self.logger.info(f"✅ 2차 분석 완료: {len(results)}개 종목 분석 성공")
-        
-        
+        self.logger.info(f"✅ Technical analysis completed: {len(results)} symbols analyzed successfully")
         return results
