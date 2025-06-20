@@ -1,0 +1,22 @@
+2025-06-20 09:55:13,074 - BottomBreakoutStrategy - INFO - 2025-06-18: === BottomBreakoutStrategy Initialized ===
+2025-06-20 09:55:13,074 - BottomBreakoutStrategy - INFO - 2025-06-18: Parameters: lookback_days=20, breakout_threshold=105.0%, take_profit_threshold=110.0%, stop_loss_threshold=95.0%
+2025-06-20 09:55:13,074 - BottomBreakoutStrategy - INFO - 2025-06-18: === Strategy Started ===
+2025-06-20 09:55:13,074 - BottomBreakoutStrategy - INFO - 2025-06-18: Initial cash: $100,000.00
+2025-06-20 09:55:13,075 - BottomBreakoutStrategy - INFO - 2025-06-11: 🚀 BUY SIGNAL DETECTED!
+2025-06-20 09:55:13,075 - BottomBreakoutStrategy - INFO - 2025-06-11:    💰 Price: $135.28 (breakout above $134.60)
+2025-06-20 09:55:13,075 - BottomBreakoutStrategy - INFO - 2025-06-11:    📊 Bottom price: $128.19 (+5.5% from bottom)
+2025-06-20 09:55:13,075 - BottomBreakoutStrategy - INFO - 2025-06-11:    📈 Volume: 4,100,500 (0.7x average)
+2025-06-20 09:55:13,075 - BottomBreakoutStrategy - INFO - 2025-06-11:    💵 Available cash: $100,000.00
+2025-06-20 09:55:13,075 - BottomBreakoutStrategy - INFO - 2025-06-11:    📦 Position size: 702 shares ($94,966.56)
+2025-06-20 09:55:13,075 - BottomBreakoutStrategy - INFO - 2025-06-11: ✅ BUY ORDER EXECUTED
+2025-06-20 09:55:13,075 - BottomBreakoutStrategy - INFO - 2025-06-11:    📅 Entry date: 2025-06-11
+2025-06-20 09:55:13,075 - BottomBreakoutStrategy - INFO - 2025-06-11:    💲 Entry price: $135.28
+2025-06-20 09:55:13,076 - BottomBreakoutStrategy - INFO - 2025-06-11:    🛡️ Stop loss: $121.78 (95.0%)
+2025-06-20 09:55:13,076 - BottomBreakoutStrategy - INFO - 2025-06-11:    🎯 Take profit: $148.81 (110.0%)
+2025-06-20 09:55:13,076 - BottomBreakoutStrategy - INFO - 2025-06-11:    ⏰ Timeout: 2025-06-21 (10 days)
+2025-06-20 09:55:13,076 - BottomBreakoutStrategy - INFO - 2025-06-18: === Strategy Completed ===
+2025-06-20 09:55:13,076 - BottomBreakoutStrategy - INFO - 2025-06-18: Final portfolio value: $97,707.60
+2025-06-20 09:55:13,076 - BottomBreakoutStrategy - INFO - 2025-06-18: Total return: -2.29%
+2025-06-20 09:55:13,076 - BottomBreakoutStrategy - INFO - 2025-06-18: Total trades: 0
+2025-06-20 09:55:13,076 - BottomBreakoutStrategy - INFO - 2025-06-18: Winning trades: 0
+2025-06-20 09:55:13,076 - BottomBreakoutStrategy - INFO - 2025-06-18: Losing trades: 0

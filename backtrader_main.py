@@ -40,57 +40,30 @@ def main():
     print("⚙️ Setting up backtesting parameters...")
     tech_params = config.get_technical_analysis_params()
     
+    # 4. Initialize backtrader engine
+    backtester = BacktraderEngine(initial_cash=100000, commission=0.001)
+    
+    # 5. Set backtesting period with valid trading dates
+    print("📅 Setting up backtesting period...")
+    start_date, end_date = get_valid_backtest_dates(days_back=90)
+
     # Strategy parameters for backtrader
     strategy_params = {
         'lookback_days': tech_params['lookback_days'],
         'volume_threshold': tech_params['volume_threshold'],
         'breakout_threshold': tech_params['breakout_threshold'],
         'stop_loss_threshold': tech_params['stop_loss_threshold'],
-        'take_profit_threshold': tech_params['take_profit_threshold']
+        'take_profit_threshold': tech_params['take_profit_threshold'],
+        'start_date': start_date,
+        'end_date': end_date
     }
-    
-    # 4. Initialize backtrader engine
-    backtester = BacktraderEngine(initial_cash=100000, commission=0.001)
-    
-    # 5. Set backtesting period with valid trading dates
-    print("📅 Setting up backtesting period...")
-    start_date, end_date = get_valid_backtest_dates(days_back=360)
     
     print(f"📅 Backtesting period: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
     print(f"📅 Start date is trading day: {start_date.strftime('%A')}")
     print(f"📅 End date is trading day: {end_date.strftime('%A')}")
-    
-    # 6. Select symbols for backtesting (limit to first 2 for demo)
-    symbols_to_test = filtered_df['symbol'].tolist()
-    print(f"🎯 Testing {len(symbols_to_test)} symbols: {symbols_to_test}")
-    
-    # 7. Run individual backtests
-    print("\n🚀 Running individual backtests...")
-    individual_results = {}
-    
-    for symbol in symbols_to_test[:1]:
-        print(f"\n📊 Testing {symbol}...")
         
-        # Test basic breakout strategy
-        result = backtester.run_backtest(
-            symbol=symbol,
-            start_date=start_date,
-            end_date=end_date,
-            strategy_class=BottomBreakoutStrategy,
-            strategy_params=strategy_params
-        )     
-        
-        if result and 'error' not in result:
-            individual_results[symbol] = result
-            print(f"   ✅ Total Return: {result['total_return_pct']:.2f}%")
-            print(f"   🔄 Total Trades: {result['num_trades']}")
-            print(f"   📉 Max Drawdown: {result['max_drawdown_pct']:.2f}%")
-        else:
-            error_msg = result.get('error', 'Unknown error') if result else 'No result'
-            print(f"   ❌ Failed to backtest {symbol}: {error_msg}")
- 
   
-    # 8. Run batch backtest for all symbols
+    # 7. Run batch backtest for all symbols
     print("\n🔄 Running batch backtest for all symbols...")
     batch_results = backtester.batch_backtest(
         symbols=["SMCI"],

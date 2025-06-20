@@ -90,7 +90,7 @@ class BacktraderEngine:
         """
         try:
             # Convert dates to timezone-naive for backtrader
-            start_date = make_timezone_naive(start_date)
+            start_date = make_timezone_naive(start_date - timedelta(days=50))
             end_date = make_timezone_naive(end_date)
             
             # Prepare data
@@ -114,9 +114,6 @@ class BacktraderEngine:
             )
             cerebro.adddata(data_feed)
             
-            # Add strategy
-            if strategy_params is None:
-                strategy_params = {}
             cerebro.addstrategy(strategy_class, **strategy_params)
             
             # Set initial cash and commission

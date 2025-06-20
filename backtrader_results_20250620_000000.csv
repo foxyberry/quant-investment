@@ -1,0 +1,2 @@
+symbol,initial_value,final_value,total_return_pct,num_trades,max_drawdown_pct,start_date,end_date,strategy,trades
+SMCI,100000,100000.0,0.0,0,0,2024-12-23,2025-06-20,BottomBreakoutStrategy,[]
