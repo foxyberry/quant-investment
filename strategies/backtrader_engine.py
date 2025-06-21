@@ -112,15 +112,15 @@ class BacktraderEngine:
                 volume='Volume',
                 openinterest=-1
             )
+            
+
+            data_feed._name = symbol
             cerebro.adddata(data_feed)
-            
             cerebro.addstrategy(strategy_class, **strategy_params)
-            
-            # Set initial cash and commission
             cerebro.broker.setcash(self.initial_cash)
             cerebro.broker.setcommission(commission=self.commission)
             
-            # Run backtest
+            
             initial_value = cerebro.broker.getvalue()
             results = cerebro.run()
             final_value = cerebro.broker.getvalue()
