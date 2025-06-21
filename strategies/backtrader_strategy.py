@@ -122,9 +122,6 @@ class BottomBreakoutStrategy(bt.Strategy):
         data = self.datas[0]
         current_date = data.datetime.date(0)
 
-        if(self.params['start_date'] and self.params['start_date'].date() > current_date):
-            return
-        
         current_price = data.close[0]
         current_volume = data.volume[0]
         
@@ -186,43 +183,58 @@ class BottomBreakoutStrategy(bt.Strategy):
                     level=logging.DEBUG)
 
         # === BUY Logic - First Breakout Only ===
-        if not self.position and current_price > breakout_price:
+        if not self.position:
             
-            yesterday_price = data.close[-1]  
+            # Look at the last 5 complete bars (excluding today) to find the lowest price
+            # data.low[-1] is yesterday, data.low[-2] is day before yesterday, etc.
+            lookback_lows_for_breakout = [data.low[-i] for i in range(1, 6)]  # Last 5 complete bars
+            bottom_price_for_breakout = min(lookback_lows_for_breakout)
+            
+            # The breakout threshold is 5% above the lowest price in last 5 days
+            actual_breakout_price = bottom_price_for_breakout * self.params['breakout_threshold']
+            
+            # Check if today's price breaks above the breakout level
+            is_breakout_today = current_price >= actual_breakout_price
+            
+            # For "first breakout", check if the price was recently below the breakout level
+            # Look at the last 3 days to see if price was below breakout level
+            prev_closes_3_days = [data.close[-i] for i in range(1, 4)]  # Last 3 complete bars
+            was_recently_below = any(close < actual_breakout_price for close in prev_closes_3_days)
+            
+            # This is a fresh breakout if:
+            # 1. Today breaks above the breakout level AND
+            # 2. The price was below the breakout level in at least one of the last 3 days
+            is_fresh_breakout = is_breakout_today and was_recently_below
+            
+            print(f"Bottom price (last 5 days): ${bottom_price_for_breakout:.2f}")
+            print(f"Actual breakout price: ${actual_breakout_price:.2f}")
+            print(f"Current price: ${current_price:.2f}")
+            print(f"Was recently below breakout (last 3 days): {was_recently_below}")
+            print(f"Is breakout today: {is_breakout_today}")
+            print(f"Is fresh breakout: {is_fresh_breakout}")
+            print("---")
 
-            # Check if price has broken above breakout_price in the lookback period (excluding today)
-            prev_closes = [data.close[-i] for i in range(2, self.params['lookback_days'] + 1)]
-            
-            has_broken_before = any(close >= breakout_price for close in prev_closes)
-            
-            is_breakout_today = current_price >= breakout_price
-            
-
-            is_fresh_breakout = (not has_broken_before) and is_breakout_today
-            
-         
-            print("has_broken_before", has_broken_before)
-            print("is_breakout_today", is_breakout_today)
-            print("is_fresh_breakout", is_fresh_breakout)
-
-            if not is_fresh_breakout :
+            if not is_fresh_breakout:
                 if self.params['verbose_logging']:
-                    self.log(f"⚠️ SKIPPING BUY - Not first breakout (Yesterday: ${yesterday_price:.2f}, "
-                            f"Today: ${current_price:.2f}, Breakout: ${breakout_price:.2f})", 
-
+                    self.log(f"⚠️ SKIPPING BUY - Not first breakout (was recently below: {was_recently_below})", 
+                            level=logging.DEBUG)
+                    self.log(f"   Current: ${current_price:.2f}, Breakout: ${actual_breakout_price:.2f}", 
+                            level=logging.DEBUG)
+                    self.log(f"   Bottom (5-day): ${bottom_price_for_breakout:.2f}", 
                             level=logging.DEBUG)
                 return
             
             # Get current symbol name for tracking
             symbol = self.datas[0]._name if hasattr(self.datas[0], '_name') else 'UNKNOWN'
             
-            bottom_key = (symbol, round(bottom_price, 2))
+            # Use the 5-day bottom price for tracking to avoid re-buying the same bottom
+            bottom_key = (symbol, round(bottom_price_for_breakout, 2))
 
             if bottom_key in self.bought_bottoms:
                 if self.params['verbose_logging']:
-                    self.log(f"⚠️ SKIPPING BUY - Already bought {symbol} at bottom ${bottom_price:.2f}", 
+                    self.log(f"⚠️ SKIPPING BUY - Already bought {symbol} at bottom ${bottom_price_for_breakout:.2f}", 
                             level=logging.INFO)
-                    self.log(f"   Current price: ${current_price:.2f}, Breakout: ${breakout_price:.2f}", 
+                    self.log(f"   Current price: ${current_price:.2f}, Breakout: ${actual_breakout_price:.2f}", 
                             level=logging.DEBUG)
                 return
             
@@ -240,10 +252,12 @@ class BottomBreakoutStrategy(bt.Strategy):
                     self.in_position = True
                     self.entry_price = current_price
                     self.entry_date = current_date
-                    self.stop_loss_price = bottom_price * self.params['stop_loss_threshold']
+                    # Stop loss: 5% below the lowest price (in last 5 days)
+                    self.stop_loss_price = bottom_price_for_breakout * self.params['stop_loss_threshold']
+                    # Take profit: 10% above entry price
                     self.take_profit_price = current_price * self.params['take_profit_threshold']
                     
-                    # Add this bottom to bought bottoms set
+                    # Add this bottom to bought bottoms set (use 5-day bottom)
                     self.bought_bottoms.add(bottom_key)
                     
                     # Update trade statistics
@@ -254,18 +268,17 @@ class BottomBreakoutStrategy(bt.Strategy):
                     self.log(f"   💰 Symbol: {symbol}", level=logging.INFO)
                     self.log(f"   💵 Price: ${current_price:.2f} (Size: {size} shares, ${size * current_price:,.2f})", 
                             level=logging.INFO)
-                    self.log(f"   📊 Bottom: ${bottom_price:.2f} on {bottom_date} ({days_ago} days ago)", 
-                            level=logging.INFO)
-                    self.log(f"   📈 Breakout: ${breakout_price:.2f} ({self.params['breakout_threshold']:.1%})", 
+                    self.log(f"   📊 5-Day Bottom: ${bottom_price_for_breakout:.2f}", level=logging.INFO)
+                    self.log(f"   📈 Breakout: ${actual_breakout_price:.2f} ({self.params['breakout_threshold']:.1%})", 
                             level=logging.INFO)
                     self.log(f"   📊 Volume: {current_volume:,.0f} ({volume_ratio:.1f}x avg, threshold: {self.params['volume_threshold']:.1f}x)", 
                             level=logging.INFO)
-                    self.log(f"   🛡️ Stop loss: ${self.stop_loss_price:.2f} ({self.params['stop_loss_threshold']:.1%})", 
+                    self.log(f"   🛡️ Stop loss: ${self.stop_loss_price:.2f} (5% below 5-day bottom)", 
                             level=logging.INFO)
-                    self.log(f"   🎯 Take profit: ${self.take_profit_price:.2f} ({self.params['take_profit_threshold']:.1%})", 
+                    self.log(f"   🎯 Take profit: ${self.take_profit_price:.2f} ({self.params['take_profit_threshold']:.1%} above entry)", 
                             level=logging.INFO)
                     self.log(f"   ⏰ Timeout: {current_date + timedelta(days=10)} (10 days)", level=logging.INFO)
-                    self.log(f"   🔒 Marked bottom ${bottom_price:.2f} as bought (no re-buy)", level=logging.INFO)
+                    self.log(f"   🔒 Marked 5-day bottom ${bottom_price_for_breakout:.2f} as bought (no re-buy)", level=logging.INFO)
 
                     # Record signal
                     self.signals.append({
@@ -273,10 +286,10 @@ class BottomBreakoutStrategy(bt.Strategy):
                         'action': 'BUY',
                         'price': current_price,
                         'size': size,
-                        'bottom_price': bottom_price,
-                        'bottom_date': bottom_date,
-                        'days_from_bottom': days_ago,
-                        'breakout_price': breakout_price,
+                        'bottom_price': bottom_price_for_breakout,  # Use 5-day bottom
+                        'bottom_date': None,  # We don't track the specific date for 5-day bottom
+                        'days_from_bottom': None,
+                        'breakout_price': actual_breakout_price,
                         'volume_ratio': volume_ratio,
                         'portfolio_value': portfolio_value
                     })

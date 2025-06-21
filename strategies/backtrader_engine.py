@@ -90,7 +90,7 @@ class BacktraderEngine:
         """
         try:
             # Convert dates to timezone-naive for backtrader
-            start_date = make_timezone_naive(start_date - timedelta(days=50))
+            start_date = make_timezone_naive(start_date)
             end_date = make_timezone_naive(end_date)
             
             # Prepare data
