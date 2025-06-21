@@ -16,9 +16,9 @@ basic_filters:
 
 # Technical analysis
 technical_analysis:
-  lookback_days: 20
+  lookback_days: 5
   breakout_threshold: 1.05  # 5% above bottom
-  stop_loss_threshold: 0.95 # 5% below bottom
+  stop_loss_threshold: 0.98 # 2% below bottom
   volume_threshold: 1.5     # 150% of average volume
   take_profit_threshold: 1.1 # 10% above entry price
 

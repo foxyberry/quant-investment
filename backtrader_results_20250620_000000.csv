@@ -1,0 +1,2 @@
+symbol,initial_value,final_value,total_return_pct,num_trades,max_drawdown_pct,start_date,end_date,strategy,trades
+SMCI,100000,111725.24632971763,11.725246329717628,1,31.736108607539627,2024-11-06,2025-06-20,BottomBreakoutStrategy,"[{'entry_date': datetime.date(2025, 1, 6), 'exit_date': datetime.date(2025, 1, 27), 'entry_price': 36.45000076293945, 'exit_price': 29.06999969482422, 'return_pct': -20.246916086813506, 'days_held': 21, 'reason': 'STOP_LOSS', 'size': 1371}]"

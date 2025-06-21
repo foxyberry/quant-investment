@@ -114,9 +114,6 @@ class BacktraderEngine:
             )
             cerebro.adddata(data_feed)
             
-            # Add strategy
-            if strategy_params is None:
-                strategy_params = {}
             cerebro.addstrategy(strategy_class, **strategy_params)
             
             # Set initial cash and commission
