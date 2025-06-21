@@ -34,15 +34,15 @@ class BottomBreakoutStrategy(bt.Strategy):
         self.params.update(kwargs)
         
         # Internal state
-        self.in_position = False
         self.entry_price = None
         self.entry_date = None
         self.stop_loss_price = None
         self.take_profit_price = None
         
-        # Track which bottom prices we've already bought at
-        # This prevents re-buying the same stock at the same bottom level
-        self.bought_bottoms = set()  # Store (symbol, bottom_price) tuples
+        # Track which symbols currently have positions or pending orders
+        # This prevents buying more of the same stock until it's sold
+        self.held_symbols = set()  # Store symbol names
+        self.pending_orders = {}  # Store pending orders {order_id: symbol}
         
         # Record keeping
         self.signals = []
@@ -103,21 +103,63 @@ class BottomBreakoutStrategy(bt.Strategy):
             win_rate = (self.winning_trades / self.total_trades) * 100
             self.log(f"Win rate: {win_rate:.1f}%", level=logging.INFO)
         
-        # Show bought bottoms summary
-        if self.bought_bottoms:
-            self.log(f"Bought bottoms tracked: {len(self.bought_bottoms)}", level=logging.INFO)
-        
-            for symbol, bottom_price in sorted(self.bought_bottoms):
-                self.log(f"  - {symbol}: ${bottom_price:.2f}", level=logging.DEBUG)
+        # Show held symbols summary
+        if self.held_symbols:
+            self.log(f"Symbols held during strategy: {len(self.held_symbols)}", level=logging.INFO)
+            for symbol in sorted(self.held_symbols):
+                self.log(f"  - {symbol}", level=logging.DEBUG)
         else:
-            self.log("No bottoms were bought during this period", level=logging.INFO)
+            self.log("No symbols were held during this period", level=logging.INFO)
 
-    def get_bought_bottoms_status(self):
-        """Helper method to get current bought bottoms status for debugging"""
+    def get_held_symbols_status(self):
+        """Helper method to get current held symbols status for debugging"""
         return {
-            'count': len(self.bought_bottoms),
-            'bottoms': list(self.bought_bottoms)
+            'count': len(self.held_symbols),
+            'symbols': list(self.held_symbols),
+            'pending_orders': len(self.pending_orders)
         }
+    
+    def notify_order(self, order):
+        """Called when order status changes"""
+        if order.status in [order.Completed]:
+            # Order completed successfully
+            if order.isbuy():
+                symbol = self.pending_orders.get(order.ref, self.datas[0]._name or "UNKNOWN")
+                self.log(f"✅ BUY ORDER COMPLETED - {symbol} at ${order.executed.price:.2f}, Size: {order.executed.size}", 
+                        level=logging.INFO)
+            elif order.issell():
+                symbol = self.pending_orders.get(order.ref, self.datas[0]._name or "UNKNOWN")
+                self.log(f"✅ SELL ORDER COMPLETED - {symbol} at ${order.executed.price:.2f}, Size: {order.executed.size}", 
+                        level=logging.INFO)
+                
+                # Now that sell order is completed, clean up tracking
+                if symbol in self.held_symbols:
+                    self.held_symbols.remove(symbol)
+                    self.log(f"🔓 Cleared held symbol {symbol} - allowing re-entry", 
+                            level=logging.INFO)
+                
+                # Reset position tracking state
+                self.entry_price = None
+                self.entry_date = None
+                self.stop_loss_price = None
+                self.take_profit_price = None
+                self.log(f"🔄 Reset position tracking state", level=logging.INFO)
+        
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            # Order failed - clean up tracking
+            if order.ref in self.pending_orders:
+                symbol = self.pending_orders[order.ref]
+                self.log(f"❌ ORDER FAILED - {symbol}: {order.getstatusname()}", level=logging.WARNING)
+                
+                # For failed buy orders, remove from held symbols
+                if order.isbuy() and symbol in self.held_symbols:
+                    self.held_symbols.remove(symbol)
+                    self.log(f"🔓 Cleared held symbol {symbol} due to failed buy order", 
+                            level=logging.INFO)
+                    
+        # Clean up pending orders tracking
+        if order.ref in self.pending_orders:
+            del self.pending_orders[order.ref]
 
     def next(self):
         data = self.datas[0]
@@ -131,8 +173,6 @@ class BottomBreakoutStrategy(bt.Strategy):
         portfolio_value = self.broker.getvalue()
         self.portfolio_values.append(portfolio_value)
 
-        # Skip if not enough historical data to calculate lookback bottom
-        # We need at least lookback_days of data BEFORE the current date
         if len(data) < self.params['lookback_days'] + 1:  # +1 because we need current day plus lookback days
             if self.params['verbose_logging']:
                 self.log(f"Waiting for sufficient historical data ({len(data)}/{self.params['lookback_days'] + 1} days)", 
@@ -153,17 +193,15 @@ class BottomBreakoutStrategy(bt.Strategy):
         if not lookback_lows:
             return
 
-        
+
         bottom_price = min(lookback_lows)
         bottom_price_index = lookback_lows.index(bottom_price)  # Index in lookback_lows list
         
         days_ago = bottom_price_index + 1
         bottom_date = data.datetime.date(-days_ago)  # Negative index to go back in time
         
-        breakout_price = bottom_price * self.params['breakout_threshold']
         bottom_to_current_pct = ((current_price - bottom_price) / bottom_price) * 100
-        
-        
+                
         volume_lookback = min(10, len(data) - 1)  
         if volume_lookback > 0:
             recent_volumes = [data.volume[-i] for i in range(1, volume_lookback + 1)]
@@ -173,11 +211,13 @@ class BottomBreakoutStrategy(bt.Strategy):
             avg_volume = current_volume
             volume_ratio = 1.0
 
-        
+
+        breakout_price = bottom_price * self.params['breakout_threshold'] 
+               
         # Daily market status log (only if verbose logging enabled)
         if self.params['verbose_logging'] :
-            if self.position:
-                self.log(f"============ Market Analysis - Price: ${current_price:.2f}, ",
+            if self.position.size > 0:
+                self.log(f"============ Market Analysis - Price: ${current_price:.2f}, Position Size: {self.position.size}",
                     level=logging.DEBUG)
             else :
                 self.log(f"============ Market Analysis - Price: ${current_price:.2f}, "
@@ -187,7 +227,8 @@ class BottomBreakoutStrategy(bt.Strategy):
                     level=logging.DEBUG)
 
         # === BUY Logic - First Breakout Only ===
-        if not self.position:
+        # Check if we have no position AND no pending orders for this symbol
+        if self.position.size == 0:
             
             is_breakout_today = current_price >= breakout_price
             was_recently_below = any(close < breakout_price for close in lookback_lows)
@@ -212,15 +253,13 @@ class BottomBreakoutStrategy(bt.Strategy):
                             level=logging.DEBUG)
                 return
             
-            # Get current symbol name for tracking
+            
             symbol = data._name or "UNKNOWN"
 
-            # Use the 5-day bottom price for tracking to avoid re-buying the same bottom
-            bottom_key = (symbol, round(bottom_price, 2))
-
-            if bottom_key in self.bought_bottoms:
+            
+            if symbol in self.held_symbols:
                 if self.params['verbose_logging']:
-                    self.log(f"⚠️ SKIPPING BUY - Already bought {symbol} at bottom ${bottom_price:.2f}", 
+                    self.log(f"⚠️ SKIPPING BUY - Already holding {symbol}", 
                             level=logging.INFO)
                     self.log(f"   Current price: ${current_price:.2f}, Breakout: ${breakout_price:.2f}", 
                             level=logging.DEBUG)
@@ -236,17 +275,19 @@ class BottomBreakoutStrategy(bt.Strategy):
     
                     order = self.buy(size=size)
                     
-                
-                    self.in_position = True
+                    # Track pending order to prevent duplicate buys
+                    if order:
+                        self.pending_orders[order.ref] = symbol
+                    
+                    # Set entry tracking (will be confirmed when order executes)
                     self.entry_price = current_price
                     self.entry_date = current_date
                     
                     self.stop_loss_price = bottom_price * self.params['stop_loss_threshold']
                     self.take_profit_price = current_price * self.params['take_profit_threshold']
                     
-                    
-                    self.bought_bottoms.add(bottom_key)
-                    
+                    # Mark this symbol as held (preventing further buys)
+                    self.held_symbols.add(symbol)
                     
                     self.total_trades += 1
                     
@@ -265,7 +306,7 @@ class BottomBreakoutStrategy(bt.Strategy):
                     self.log(f"   🎯 Take profit: ${self.take_profit_price:.2f} ({self.params['take_profit_threshold']:.1%} above entry)", 
                             level=logging.INFO)
                     self.log(f"   ⏰ Timeout: {current_date + timedelta(days=10)} (10 days)", level=logging.INFO)
-                    self.log(f"   🔒 Marked 5-day bottom ${bottom_price:.2f} as bought (no re-buy)", level=logging.INFO)
+                    self.log(f"   🔒 Marked {symbol} as held (no additional buys until sold)", level=logging.INFO)
 
                     # Record signal
                     self.signals.append({
@@ -285,34 +326,38 @@ class BottomBreakoutStrategy(bt.Strategy):
                             level=logging.DEBUG)
 
         # === SELL Logic ===
-        elif self.position and self.in_position:
+        elif self.position.size > 0:
             sell_signal = False
             sell_reason = ""
             
             # Safety check: ensure entry_date and entry_price are set
             if self.entry_date is None or self.entry_price is None:
-                self.log(f"⚠️ ERROR: Position exists but entry_date/entry_price not set. Clearing in_position flag.", 
-                        level=logging.ERROR)
-                self.in_position = False
+                self.log(f"⚠️ WARNING: Position exists but entry tracking missing. Skipping sell logic this bar.", 
+                        level=logging.WARNING)
+                self.log(f"   Position size: {self.position.size}, Current price: ${current_price:.2f}", 
+                        level=logging.WARNING)
+                # Don't reset tracking here - this could cause incorrect sells
+                # Instead, skip this bar and wait for proper state
                 return
             
             days_held = (current_date - self.entry_date).days
             current_return_pct = ((current_price - self.entry_price) / self.entry_price) * 100
             
-            # Analyze exit conditions
-            if current_price <= self.stop_loss_price:
+            # Analyze exit conditions - with proper null checks
+            if self.stop_loss_price is not None and current_price <= self.stop_loss_price:
                 sell_signal = True
                 sell_reason = "STOP_LOSS"
                 self.log(f"🛑 STOP LOSS TRIGGERED! Price ${current_price:.2f} <= ${self.stop_loss_price:.2f}", 
                         level=logging.WARNING)
 
-            elif current_price >= self.take_profit_price:
+            elif self.take_profit_price is not None and current_price >= self.take_profit_price:
                 sell_signal = True
                 sell_reason = "TAKE_PROFIT"
                 self.log(f"🎯 TAKE PROFIT TRIGGERED! Price ${current_price:.2f} >= TAKE PROFIT ${self.take_profit_price:.2f}", 
                         level=logging.INFO)
 
-            elif current_price > self.entry_price and current_date > self.entry_date + timedelta(days=10):
+            elif (self.entry_price is not None and current_price > self.entry_price and 
+                  current_date > self.entry_date + timedelta(days=10)):
                 sell_signal = True
                 sell_reason = "TIME_OUT"
                 self.log(f"⏰ TIMEOUT TRIGGERED! Held for {days_held} days with {current_return_pct:+.2f}% return", 
@@ -322,13 +367,19 @@ class BottomBreakoutStrategy(bt.Strategy):
             elif self.params['verbose_logging']:
                 self.log(f"📊 Position Status - Days held: {days_held}, "
                         f"Current: ${current_price:.2f} ({current_return_pct:+.2f}%), "
-                        f"Stop: ${self.stop_loss_price:.2f}, "
-                        f"Target: ${self.take_profit_price:.2f}", 
+                        f"Stop Lost: ${self.stop_loss_price:.2f}, "
+                        f"Target Take Profit: ${self.take_profit_price:.2f}", 
                         level=logging.DEBUG)
 
             # Execute sell if conditions met
             if sell_signal:
-                order = self.sell()
+                # Sell the entire position
+                order = self.sell(size=self.position.size)
+                
+                # Track pending sell order
+                if order:
+                    symbol = data._name or "UNKNOWN"
+                    self.pending_orders[order.ref] = symbol
                 
                 # Update trade statistics
                 if current_return_pct > 0:
@@ -337,9 +388,7 @@ class BottomBreakoutStrategy(bt.Strategy):
                     self.losing_trades += 1
                 
                 # Enhanced sell logging
-                symbol = self.params.get('symbol', 'UNKNOWN')
-                if symbol == 'UNKNOWN' and hasattr(self.datas[0], '_name') and self.datas[0]._name:
-                    symbol = self.datas[0]._name
+                symbol = data._name or "UNKNOWN"
                 self.log(f"💸 SELL EXECUTED - {sell_reason}!", level=logging.INFO)
                 self.log(f"   💰 Symbol: {symbol}", level=logging.INFO)
                 self.log(f"   💵 Entry: ${self.entry_price:.2f} on {self.entry_date}", level=logging.INFO)
@@ -360,14 +409,9 @@ class BottomBreakoutStrategy(bt.Strategy):
                     'size': self.position.size
                 })
 
-
-                # Reset position state
-                
-                self.in_position = False
-                self.entry_price = None
-                self.entry_date = None
-                self.stop_loss_price = None
-                self.take_profit_price = None
+                # Note: Don't clear held_symbols or reset tracking here!
+                # This will be done in notify_order() when the sell order is actually completed
+                # to prevent timing issues with position tracking
 
 class SimpleBuyHoldStrategy(bt.Strategy):
     """
