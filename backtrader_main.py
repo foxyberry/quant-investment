@@ -37,7 +37,7 @@ def main():
     
     backtester = BacktraderEngine(initial_cash=100000, commission=0.001)
     
-    start_date, end_date = get_valid_backtest_dates(days_back=60)
+    start_date, end_date = get_valid_backtest_dates(days_back=120)
 
     # Strategy parameters for backtrader
     strategy_params = {

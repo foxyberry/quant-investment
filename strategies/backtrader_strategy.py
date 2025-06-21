@@ -44,6 +44,14 @@ class BottomBreakoutStrategy(bt.Strategy):
         self.held_symbols = set()  # Store symbol names
         self.pending_orders = {}  # Store pending orders {order_id: symbol}
         
+        # Track actual execution prices for accurate P&L calculation
+        self.actual_entry_price = None  # Actual execution price from buy order
+        self.actual_entry_size = None   # Actual size executed
+        
+        # Portfolio value tracking based on order executions
+        self.execution_portfolio_values = []  # Track portfolio at each execution
+        self.cash_flows = []  # Track all cash flows from executions
+        
         # Record keeping
         self.signals = []
         self.trades = []
@@ -119,18 +127,104 @@ class BottomBreakoutStrategy(bt.Strategy):
             'pending_orders': len(self.pending_orders)
         }
     
+    def get_execution_portfolio_summary(self):
+        """Get summary of portfolio tracking based on order executions"""
+        if not self.execution_portfolio_values:
+            return {
+                'total_executions': 0,
+                'total_cash_flow': 0,
+                'latest_portfolio_value': self.broker.getvalue(),
+                'latest_cash_value': self.broker.getcash()
+            }
+        
+        total_cash_flow = sum(self.cash_flows)
+        latest_execution = self.execution_portfolio_values[-1]
+        
+        return {
+            'total_executions': len(self.execution_portfolio_values),
+            'total_cash_flow': total_cash_flow,
+            'latest_portfolio_value': latest_execution['portfolio_value'],
+            'latest_cash_value': latest_execution['cash_value'],
+            'latest_execution_datetime': latest_execution['datetime'],
+            'execution_history': self.execution_portfolio_values
+        }
+    
     def notify_order(self, order):
         """Called when order status changes"""
+
         if order.status in [order.Completed]:
+            # Get execution details from order.executed object
+            execution_price = order.executed.price
+            execution_size = order.executed.size
+            execution_value = order.executed.value
+            execution_commission = order.executed.comm
+            execution_datetime = order.executed.dt
+            
+            # Track portfolio value at order completion (broker's calculation)
+            portfolio_value = self.broker.getvalue()
+            cash_value = self.broker.getcash()
+            
+            # Calculate cash flow from this execution
+            cash_flow = -execution_value - execution_commission if order.isbuy() else execution_value - execution_commission
+            
+            # Record execution-based portfolio tracking
+            execution_record = {
+                'datetime': execution_datetime,
+                'order_type': 'BUY' if order.isbuy() else 'SELL',
+                'execution_price': execution_price,
+                'execution_size': execution_size,
+                'execution_value': execution_value,
+                'commission': execution_commission,
+                'cash_flow': cash_flow,
+                'portfolio_value': portfolio_value,
+                'cash_value': cash_value
+            }
+            self.execution_portfolio_values.append(execution_record)
+            self.cash_flows.append(cash_flow)
+            
             # Order completed successfully
             if order.isbuy():
                 symbol = self.pending_orders.get(order.ref, self.datas[0]._name or "UNKNOWN")
-                self.log(f"✅ BUY ORDER COMPLETED - {symbol} at ${order.executed.price:.2f}, Size: {order.executed.size}", 
+                
+                # Update actual execution tracking
+                self.actual_entry_price = order.executed.price
+                self.actual_entry_size = order.executed.size
+                
+                # Calculate actual cash spent
+                cash_spent = order.executed.price * order.executed.size
+                
+                self.log(f"✅ BUY ORDER COMPLETED - {symbol} at ${execution_price:.2f}, Size: {execution_size}", 
                         level=logging.INFO)
+                self.log(f"   💸 Cash spent: ${execution_value:.2f}, Commission: ${execution_commission:.2f}, Remaining cash: ${cash_value:,.2f}", 
+                        level=logging.INFO)
+                self.log(f"   📊 Portfolio value: ${portfolio_value:,.2f}, Cash flow: ${cash_flow:+,.2f}", level=logging.INFO)
+                self.log(f"   🎯 Execution tracking: Total executions recorded: {len(self.execution_portfolio_values)}", 
+                        level=logging.INFO)
+                
             elif order.issell():
                 symbol = self.pending_orders.get(order.ref, self.datas[0]._name or "UNKNOWN")
-                self.log(f"✅ SELL ORDER COMPLETED - {symbol} at ${order.executed.price:.2f}, Size: {order.executed.size}", 
-                        level=logging.INFO)
+                
+                # Calculate actual P&L using execution prices
+                if self.actual_entry_price is not None and self.actual_entry_size is not None:
+                    actual_pnl = (order.executed.price - self.actual_entry_price) * abs(order.executed.size)
+                    actual_return_pct = ((order.executed.price - self.actual_entry_price) / self.actual_entry_price) * 100
+                    
+                    self.log(f"✅ SELL ORDER COMPLETED - {symbol} at ${order.executed.price:.2f}, Size: {order.executed.size}", 
+                            level=logging.INFO)
+                    self.log(f"   💰 ACTUAL P&L: ${actual_pnl:+,.2f} ({actual_return_pct:+.2f}%)", 
+                            level=logging.INFO)
+                    self.log(f"   📊 Entry: ${self.actual_entry_price:.2f} → Exit: ${order.executed.price:.2f}", 
+                            level=logging.INFO)
+                    
+                    # Calculate cash received
+                    cash_received = order.executed.price * abs(order.executed.size)
+                    self.log(f"   💸 Cash received: ${cash_received:,.2f}, Total cash: ${cash_value:,.2f}", 
+                            level=logging.INFO)
+                    self.log(f"   📊 Portfolio value: ${portfolio_value:,.2f}", level=logging.INFO)
+                else:
+                    self.log(f"✅ SELL ORDER COMPLETED - {symbol} at ${order.executed.price:.2f}, Size: {order.executed.size}", 
+                            level=logging.INFO)
+                    self.log(f"   ⚠️ WARNING: No entry price data for accurate P&L calculation", level=logging.WARNING)
                 
                 # Now that sell order is completed, clean up tracking
                 if symbol in self.held_symbols:
@@ -143,6 +237,8 @@ class BottomBreakoutStrategy(bt.Strategy):
                 self.entry_date = None
                 self.stop_loss_price = None
                 self.take_profit_price = None
+                self.actual_entry_price = None
+                self.actual_entry_size = None
                 self.log(f"🔄 Reset position tracking state", level=logging.INFO)
         
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
@@ -156,7 +252,7 @@ class BottomBreakoutStrategy(bt.Strategy):
                     self.held_symbols.remove(symbol)
                     self.log(f"🔓 Cleared held symbol {symbol} due to failed buy order", 
                             level=logging.INFO)
-                    
+            
         # Clean up pending orders tracking
         if order.ref in self.pending_orders:
             del self.pending_orders[order.ref]
@@ -391,11 +487,12 @@ class BottomBreakoutStrategy(bt.Strategy):
                 symbol = data._name or "UNKNOWN"
                 self.log(f"💸 SELL EXECUTED - {sell_reason}!", level=logging.INFO)
                 self.log(f"   💰 Symbol: {symbol}", level=logging.INFO)
-                self.log(f"   💵 Entry: ${self.entry_price:.2f} on {self.entry_date}", level=logging.INFO)
-                self.log(f"   💵 Exit: ${current_price:.2f} on {current_date}", level=logging.INFO)
-                self.log(f"   📊 Return: {current_return_pct:+.2f}% over {days_held} days", level=logging.INFO)
-                self.log(f"   📈 P&L: ${(current_price - self.entry_price) * self.position.size:+,.2f}", 
+                self.log(f"   💵 Entry (decision): ${self.entry_price:.2f} on {self.entry_date}", level=logging.INFO)
+                self.log(f"   💵 Exit (decision): ${current_price:.2f} on {current_date}", level=logging.INFO)
+                self.log(f"   📊 Estimated Return: {current_return_pct:+.2f}% over {days_held} days", level=logging.INFO)
+                self.log(f"   📈 Estimated P&L: ${(current_price - self.entry_price) * self.position.size:+,.2f}", 
                         level=logging.INFO)
+                self.log(f"   ⏳ ACTUAL P&L will be calculated when order executes at opening price", level=logging.INFO)
 
                 # Record trade
                 self.trades.append({
