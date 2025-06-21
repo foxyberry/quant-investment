@@ -46,6 +46,7 @@ def main():
         'breakout_threshold': tech_params['breakout_threshold'],
         'stop_loss_threshold': tech_params['stop_loss_threshold'],
         'take_profit_threshold': tech_params['take_profit_threshold'],
+        'position_size': tech_params['position_size'],
         'start_date': start_date,
         'end_date': end_date
     }
@@ -65,7 +66,12 @@ def main():
         strategy_params=strategy_params
     )
     
-    # 9. Display batch results
+    print_result(batch_results, backtester, start_date, end_date)
+    
+
+def print_result(batch_results, backtester, start_date, end_date):
+
+
     print("\n" + "="*80)
     print("BATCH BACKTEST RESULTS")
     print("="*80)
@@ -82,34 +88,14 @@ def main():
         print("\n📈 Top Performers:")
         for result in successful_results[:3]:
             print(f"   {result['symbol']}: {result['total_return_pct']:.2f}% return, "
-                  f"{result['num_trades']} trades, {result['max_drawdown_pct']:.2f}% max drawdown")
+                f"{result['num_trades']} trades, {result['max_drawdown_pct']:.2f}% max drawdown")
         
         if len(successful_results) > 3:
             print("\n📉 Other Results:")
             for result in successful_results[3:]:
                 print(f"   {result['symbol']}: {result['total_return_pct']:.2f}% return, "
-                      f"{result['num_trades']} trades, {result['max_drawdown_pct']:.2f}% max drawdown")
+                    f"{result['num_trades']} trades, {result['max_drawdown_pct']:.2f}% max drawdown")
         
-        # 10. Strategy comparison for best performer
-        if successful_results:
-            best_symbol = successful_results[0]['symbol']
-            print(f"\n🔍 Comparing strategies for best performer: {best_symbol}")
-            
-            comparison = backtester.compare_strategies(
-                best_symbol, start_date, end_date
-            )
-            
-            if comparison:
-                print("\nStrategy Comparison:")
-                for strategy_name, result in comparison.items():
-                    if 'error' not in result:
-                        print(f"   {strategy_name}:")
-                        print(f"     Return: {result['total_return_pct']:.2f}%")
-                        print(f"     Trades: {result['num_trades']}")
-                        print(f"     Max DD: {result['max_drawdown_pct']:.2f}%")
-                        print()
-                    else:
-                        print(f"   {strategy_name}: Error - {result['error']}")
         
         # 11. Summary statistics
         print("\n" + "="*60)
@@ -141,9 +127,6 @@ def main():
         for result in batch_results:
             if 'error' in result:
                 print(f"   Error: {result['error']}")
-    
-    print("\n✅ Backtrader backtesting completed!")
-
 
 if __name__ == "__main__":
     main() 
