@@ -1,12 +1,12 @@
 """
 Backtesting Strategy Template
 
-Copy this file to my_strategies/backtesting/ and customize it with your own parameters.
+Copy this file to scripts/backtesting/ and customize it with your own parameters.
 The run() function is the entry point that will be called by the orchestrator.
 """
 
-from strategies.backtrader_engine import BacktraderEngine
-from strategies.backtrader_strategy import BottomBreakoutStrategy, SimpleBuyHoldStrategy
+from engine.backtrader_engine import BacktraderEngine
+from engine.backtrader_strategy import BottomBreakoutStrategy, SimpleBuyHoldStrategy
 from screener.basic_filter import BasicInfoScreener
 from screener.screening_criteria import ScreeningCriteria
 from datetime import datetime, timedelta

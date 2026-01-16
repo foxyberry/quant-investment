@@ -7,8 +7,8 @@ from screener.basic_filter import BasicInfoScreener
 from utils.config_manager import ConfigManager
 from screener.screening_criteria import ScreeningCriteria
 from screener.technical_criteria import TechnicalCriteria      
-from strategies.backtrader_engine import BacktraderEngine
-from strategies.backtrader_strategy import BottomBreakoutStrategy
+from engine.backtrader_engine import BacktraderEngine
+from engine.backtrader_strategy import BottomBreakoutStrategy
 from utils.timezone_utils import get_valid_backtest_dates
 
 def main():

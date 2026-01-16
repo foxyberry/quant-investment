@@ -4,8 +4,8 @@ Simple orchestrator for running different trading strategies
 
 Usage:
     python run.py <strategy_file>
-    python run.py my_strategies/screening/tech_breakout.py
-    python run.py my_strategies/backtesting/momentum.py
+    python run.py scripts/screening/tech_breakout.py
+    python run.py scripts/backtesting/momentum.py
     python run.py --list
     python run.py --new <type> <name>
 
@@ -36,8 +36,8 @@ class StrategyRunner:
     
     def __init__(self):
         self.project_root = Path(__file__).parent
-        self.strategies_dir = self.project_root / "my_strategies"
-        self.templates_dir = self.project_root / "strategy_templates"
+        self.strategies_dir = self.project_root / "scripts"
+        self.templates_dir = self.project_root / "docs" / "examples"
         
     def run_strategy(self, strategy_path: str, output_format: str = None):
         """
@@ -132,7 +132,7 @@ class StrategyRunner:
         
         if not self.strategies_dir.exists():
             logger.warning(f"Strategies directory not found: {self.strategies_dir}")
-            logger.info("Create your strategies in 'my_strategies/' directory")
+            logger.info("Create your strategies in 'scripts/' directory")
             return
         
         # Find all Python files in my_strategies
@@ -142,7 +142,7 @@ class StrategyRunner:
                 logger.info(f"  - {relative_path}")
         
         logger.info("\nUsage: python run.py <strategy_file>")
-        logger.info("Example: python run.py my_strategies/screening/tech_breakout.py")
+        logger.info("Example: python run.py scripts/screening/tech_breakout.py")
     
     def create_from_template(self, template_type: str, name: str):
         """Create a new strategy from template"""
@@ -238,8 +238,8 @@ if __name__ == "__main__":
             return '''"""
 Custom Backtesting Strategy
 """
-from strategies.backtrader_engine import BacktraderEngine
-from strategies.backtrader_strategy import BottomBreakoutStrategy
+from engine.backtrader_engine import BacktraderEngine
+from engine.backtrader_strategy import BottomBreakoutStrategy
 from datetime import datetime, timedelta
 import logging
 
@@ -318,8 +318,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run.py my_strategies/screening/tech_breakout.py
-  python run.py my_strategies/backtesting/momentum.py --output csv
+  python run.py scripts/screening/tech_breakout.py
+  python run.py scripts/backtesting/momentum.py --output csv
   python run.py --list
   python run.py --new screening my_value_screen
         """

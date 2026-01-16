@@ -6,7 +6,14 @@
       "Bash(python3 run.py:*)",
       "Bash(source:*)",
       "Bash(python run.py:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(tree:*)",
+      "Bash(git mv:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git -C /Users/miyoungjang/Repository/quant-investment status)",
+      "Bash(git -C /Users/miyoungjang/Repository/quant-investment log --oneline -5)"
     ],
     "deny": [],
     "ask": []

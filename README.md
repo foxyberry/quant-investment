@@ -40,37 +40,30 @@ quant-investment/
 ├── global_dual_momentum_2025.py  # 글로벌 듀얼 모멘텀 전략
 ├── options_tracker.py            # 옵션 거래량 추적 봇
 │
-├── my_strategies/                # 사용자 커스텀 전략 (여기에 새 전략 추가)
-│   ├── screening/                # 종목 스크리닝 전략
-│   ├── backtesting/              # 백테스팅 전략
-│   ├── optimization/             # 파라미터 최적화 전략
-│   └── live/                     # 실전 거래 전략
+├── engine/                       # 백트레이더 엔진 (핵심 라이브러리)
+│   ├── backtrader_engine.py      # 백테스팅 엔진 래퍼
+│   ├── backtrader_strategy.py    # 기본 전략 클래스들
+│   └── bottom_breakout.py        # 바닥 돌파 전략
 │
-├── strategies/                   # 백트레이더 엔진 및 기본 전략
-│   ├── backtrader_engine.py      # 백테스팅 엔진 (핵심)
-│   ├── backtrader_strategy.py    # 기본 전략 클래스
-│   └── bottom_breakout.py        # 바닥 돌파 전략 예제
+├── scripts/                      # 실행 스크립트 (여기에 새 전략 추가)
+│   ├── screening/                # 종목 스크리닝 스크립트
+│   └── backtesting/              # 백테스팅 스크립트
 │
-├── screener/                     # 종목 스크리닝 모듈
+├── screener/                     # 종목 스크리닝 라이브러리
 │   ├── basic_filter.py           # 기본 정보 필터
 │   ├── technical_filter.py       # 기술적 지표 필터
-│   └── ...
+│   └── korean/                   # 한국 주식 스크리너
 │
 ├── utils/                        # 유틸리티
 │   ├── fetch.py                  # 주가 데이터 수집
 │   ├── options_fetch.py          # 옵션 데이터 수집
 │   └── ...
 │
-├── strategy_templates/           # 전략 템플릿
-│   ├── screening_template.py
-│   └── backtesting_template.py
-│
 ├── data/                         # 데이터 저장소
 ├── logs/                         # 로그 파일
 ├── results/                      # 백테스팅 결과
 └── docs/                         # 문서
-    ├── examples/                 # 예제 파일
-    └── ...
+    └── examples/                 # 예제 및 템플릿
 ```
 
 ## Quick Start
@@ -99,18 +92,21 @@ python options_tracker.py
 
 1. 템플릿 복사
 ```bash
-cp strategy_templates/screening_template.py my_strategies/screening/my_strategy.py
+cp docs/examples/screening_template.py scripts/screening/my_strategy.py
 ```
 
 2. 전략 수정
 ```python
-# my_strategies/screening/my_strategy.py 편집
+# scripts/screening/my_strategy.py 편집
 def run():
     # 여기에 전략 로직 작성
     pass
 ```
 
 3. `run.py`에서 실행
+```bash
+python run.py scripts/screening/my_strategy.py
+```
 
 ## Recent Updates
 
@@ -123,9 +119,10 @@ def run():
 - 다자산 배분 전략 (주식/채권/현금)
 - 모멘텀 기반 자산 스위칭
 
-### 전략 구조 개선
-- `my_strategies/` 폴더 조직화
-- 전략 템플릿 추가
+### 디렉토리 구조 정리 (2025-01)
+- `strategies/` → `engine/` (역할에 맞게 이름 변경)
+- `my_strategies/` → `scripts/` (실행 스크립트)
+- `strategy_templates/` → `docs/examples/` (템플릿 통합)
 - 문서화 강화
 
 ## Documentation
@@ -137,11 +134,9 @@ def run():
 
 ## Contributing
 
-새 전략은 `my_strategies/` 아래 적절한 하위 폴더에 추가해주세요:
+새 전략은 `scripts/` 아래 적절한 하위 폴더에 추가해주세요:
 - `screening/` - 종목 스크리닝
 - `backtesting/` - 백테스팅
-- `optimization/` - 파라미터 최적화
-- `live/` - 실전 거래
 
 ## License
 

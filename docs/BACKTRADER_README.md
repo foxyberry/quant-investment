@@ -25,13 +25,18 @@ pip install -r requirements.txt
 ## Files Structure
 
 ```
-strategies/
+engine/
 ├── backtrader_strategy.py      # Backtrader strategy implementations
 ├── backtrader_engine.py        # Backtrader engine wrapper
 └── bottom_breakout.py          # Your existing strategy
 
-backtrader_main.py              # Main backtesting script
-simple_backtrader_example.py    # Simple example for quick testing
+scripts/
+├── screening/                  # Screening scripts
+└── backtesting/                # Backtesting scripts
+
+docs/examples/
+├── backtesting_template.py     # Template for new backtests
+└── simple_backtrader_example.py # Simple example
 ```
 
 ## Strategy Classes
@@ -78,8 +83,8 @@ This will:
 ### Custom Backtesting
 
 ```python
-from strategies.backtrader_engine import BacktraderEngine
-from strategies.backtrader_strategy import BreakoutStrategy
+from engine.backtrader_engine import BacktraderEngine
+from engine.backtrader_strategy import BreakoutStrategy
 from screener.technical_criteria import TechnicalCriteria
 from datetime import datetime, timedelta
 

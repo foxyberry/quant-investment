@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple
 import logging
-from strategies.backtrader_strategy import BottomBreakoutStrategy, SimpleBuyHoldStrategy
+from engine.backtrader_strategy import BottomBreakoutStrategy, SimpleBuyHoldStrategy
 from utils.fetch import get_historical_data
 from utils.timezone_utils import prepare_dataframe_for_backtrader, make_timezone_naive
 

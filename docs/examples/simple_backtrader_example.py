@@ -3,8 +3,8 @@
 Simple backtrader example for individual stocks
 """
 
-from strategies.backtrader_engine import BacktraderEngine
-from strategies.backtrader_strategy import BreakoutStrategy, BreakoutStrategyWithVolume
+from engine.backtrader_engine import BacktraderEngine
+from engine.backtrader_strategy import BreakoutStrategy, BreakoutStrategyWithVolume
 from screener.technical_criteria import TechnicalCriteria
 from datetime import timedelta
 from utils.timezone_utils import now, get_valid_backtest_dates, validate_trading_date

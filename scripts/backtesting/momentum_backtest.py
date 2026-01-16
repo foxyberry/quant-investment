@@ -5,8 +5,8 @@ This strategy backtests a momentum-based approach on high-volume stocks
 with specific entry and exit criteria.
 """
 
-from strategies.backtrader_engine import BacktraderEngine
-from strategies.backtrader_strategy import BottomBreakoutStrategy
+from engine.backtrader_engine import BacktraderEngine
+from engine.backtrader_strategy import BottomBreakoutStrategy
 from screener.basic_filter import BasicInfoScreener
 from screener.screening_criteria import ScreeningCriteria
 from datetime import datetime, timedelta
