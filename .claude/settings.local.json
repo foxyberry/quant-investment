@@ -13,7 +13,11 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git -C /Users/miyoungjang/Repository/quant-investment status)",
-      "Bash(git -C /Users/miyoungjang/Repository/quant-investment log --oneline -5)"
+      "Bash(git -C /Users/miyoungjang/Repository/quant-investment log --oneline -5)",
+      "Bash(git -C /Users/miyoungjang/Repository/quant-investment commit -m \"$\\(cat <<''EOF''\nReorganize directory structure for clarity\n\n- Rename strategies/ to engine/ \\(reflects its role as core library\\)\n- Rename my_strategies/ to scripts/ \\(reflects its role as runnable scripts\\)\n- Move strategy_templates/ to docs/examples/ \\(consolidate templates\\)\n- Add Korean MA screener \\(kospi_fetcher, ma_screener\\)\n- Update all imports and documentation to reflect new structure\n\nDirectory mapping:\n  strategies/ → engine/\n  my_strategies/ → scripts/\n  strategy_templates/ → docs/examples/\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /Users/miyoungjang/Repository/quant-investment log --oneline -3)",
+      "Bash(git -C /Users/miyoungjang/Repository/quant-investment push)",
+      "Bash(git -C:*)"
     ],
     "deny": [],
     "ask": []

@@ -86,7 +86,7 @@ python options_tracker.py --once
 python options_tracker.py
 ```
 
-자세한 내용은 [OPTIONS_TRACKER_README.md](OPTIONS_TRACKER_README.md) 참고
+자세한 내용은 [docs/OPTIONS_TRACKER_README.md](docs/OPTIONS_TRACKER_README.md) 참고
 
 ### 3. 새 전략 만들기
 

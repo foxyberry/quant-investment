@@ -13,7 +13,7 @@
 4. **config/screening_criteria.yaml** - 종목 스크리닝 및 기술적 분석 파라미터
 
 ### 3단계: 부가 문서 (필요시)
-5. **OPTIONS_TRACKER_README.md** - 옵션 거래량 추적 봇 (옵션 관련 작업시)
+5. **docs/OPTIONS_TRACKER_README.md** - 옵션 거래량 추적 봇 (옵션 관련 작업시)
 6. **docs/MARKET_CALENDAR_README.md** - 마켓 캘린더 유틸 (시간대 관련 작업시)
 7. **docs/code_quality_report.md** - 코드 품질 현황
 
@@ -117,7 +117,7 @@ python run.py
 3. 성능 지표 계산 로직 파악
 
 ### 옵션 트래커 수정
-1. `OPTIONS_TRACKER_README.md` 읽기
+1. `docs/OPTIONS_TRACKER_README.md` 읽기
 2. `options_tracker.py` 코드 확인
 3. `utils/` 내 옵션 관련 파일 확인
 
