@@ -70,7 +70,7 @@ This will:
 ### Full Integration - Main Script
 
 ```bash
-python backtrader_main.py
+python scripts/legacy/backtrader_main.py
 ```
 
 This will:

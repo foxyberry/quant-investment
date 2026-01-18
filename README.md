@@ -34,20 +34,21 @@ pip show yfinance
 ```
 quant-investment/
 ├── run.py                        # 메인 진입점 (전략 오케스트레이터)
-├── main.py                       # 레거시 스크리닝 (run.py 사용 권장)
-├── backtrader_main.py            # 레거시 백테스팅 (run.py 사용 권장)
-│
-├── global_dual_momentum_2025.py  # 글로벌 듀얼 모멘텀 전략
-├── options_tracker.py            # 옵션 거래량 추적 봇
 │
 ├── engine/                       # 백트레이더 엔진 (핵심 라이브러리)
 │   ├── backtrader_engine.py      # 백테스팅 엔진 래퍼
 │   ├── backtrader_strategy.py    # 기본 전략 클래스들
 │   └── bottom_breakout.py        # 바닥 돌파 전략
 │
-├── scripts/                      # 실행 스크립트 (여기에 새 전략 추가)
+├── scripts/                      # 실행 스크립트
 │   ├── screening/                # 종목 스크리닝 스크립트
-│   └── backtesting/              # 백테스팅 스크립트
+│   ├── backtesting/              # 백테스팅 스크립트
+│   ├── live/                     # 실전 거래/봇
+│   │   ├── options_tracker.py    # 옵션 거래량 추적 봇
+│   │   └── global_dual_momentum_2025.py  # 듀얼 모멘텀 전략
+│   └── legacy/                   # 레거시 스크립트
+│       ├── main.py               # 구 스크리닝 (run.py 사용 권장)
+│       └── backtrader_main.py    # 구 백테스팅 (run.py 사용 권장)
 │
 ├── screener/                     # 종목 스크리닝 라이브러리
 │   ├── basic_filter.py           # 기본 정보 필터
@@ -80,10 +81,10 @@ python run.py
 ### 2. 옵션 추적 봇 실행
 ```bash
 # 일회성 체크
-python options_tracker.py --once
+python scripts/live/options_tracker.py --once
 
 # 지속적 모니터링 (60초마다)
-python options_tracker.py
+python scripts/live/options_tracker.py
 ```
 
 자세한 내용은 [docs/OPTIONS_TRACKER_README.md](docs/OPTIONS_TRACKER_README.md) 참고
@@ -129,7 +130,7 @@ python run.py scripts/screening/my_strategy.py
 
 - [Backtrader 사용법](docs/BACKTRADER_README.md)
 - [Market Calendar](docs/MARKET_CALENDAR_README.md)
-- [옵션 추적 봇](OPTIONS_TRACKER_README.md)
+- [옵션 추적 봇](docs/OPTIONS_TRACKER_README.md)
 - [코드 품질 리포트](docs/code_quality_report.md)
 
 ## Contributing
@@ -137,6 +138,7 @@ python run.py scripts/screening/my_strategy.py
 새 전략은 `scripts/` 아래 적절한 하위 폴더에 추가해주세요:
 - `screening/` - 종목 스크리닝
 - `backtesting/` - 백테스팅
+- `live/` - 실전 거래/봇
 
 ## License
 

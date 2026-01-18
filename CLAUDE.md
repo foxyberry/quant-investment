@@ -25,8 +25,8 @@
 | 파일 | 용도 | 우선순위 |
 |------|------|----------|
 | `run.py` | 메인 진입점 (전략 오케스트레이터) | **필수** |
-| `options_tracker.py` | 옵션 거래량 추적 봇 | 옵션 작업시 |
-| `global_dual_momentum_2025.py` | 듀얼 모멘텀 전략 | 전략 수정시 |
+| `scripts/live/options_tracker.py` | 옵션 거래량 추적 봇 | 옵션 작업시 |
+| `scripts/live/global_dual_momentum_2025.py` | 듀얼 모멘텀 전략 | 전략 수정시 |
 
 ### 백테스팅 엔진 (Core)
 | 파일 | 설명 |
@@ -63,7 +63,9 @@ quant-investment/
 │   └── bottom_breakout.py    # 바닥 돌파 전략
 ├── scripts/                  # 실행 스크립트
 │   ├── screening/            # 종목 스크리닝 스크립트
-│   └── backtesting/          # 백테스팅 스크립트
+│   ├── backtesting/          # 백테스팅 스크립트
+│   ├── live/                 # 실전 거래/봇
+│   └── legacy/               # 레거시 스크립트
 ├── screener/                 # 종목 스크리닝 라이브러리
 ├── utils/                    # 유틸리티
 ├── data/                     # 데이터 저장소
@@ -118,14 +120,14 @@ python run.py
 
 ### 옵션 트래커 수정
 1. `docs/OPTIONS_TRACKER_README.md` 읽기
-2. `options_tracker.py` 코드 확인
+2. `scripts/live/options_tracker.py` 코드 확인
 3. `utils/` 내 옵션 관련 파일 확인
 
 ---
 
 ## 7. 주의사항
 
-- `main.py`, `backtrader_main.py`는 레거시 - `run.py` 사용 권장
+- `scripts/legacy/`에 있는 파일들은 레거시 - `run.py` 사용 권장
 - 새 전략은 반드시 `scripts/` 하위에 추가
 - 데이터 캐시는 `data/cache/`에 저장됨
 - 로그는 `logs/quant_investment.log` 확인

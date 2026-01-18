@@ -17,7 +17,7 @@ Based on the requirements in `Todo/1.bot.md`, this bot monitors unusual options 
 source venv/bin/activate
 
 # Run a one-time check
-python options_tracker.py --once
+python scripts/live/options_tracker.py --once
 ```
 
 ### Continuous Monitoring
@@ -26,7 +26,7 @@ python options_tracker.py --once
 source venv/bin/activate
 
 # Run continuous monitoring (checks every 60 seconds)
-python options_tracker.py
+python scripts/live/options_tracker.py
 ```
 
 ## Alert Levels
@@ -43,7 +43,7 @@ python options_tracker.py
 
 ## Configuration
 
-Edit these variables in `options_tracker.py`:
+Edit these variables in `scripts/live/options_tracker.py`:
 - `TARGET_SYMBOLS`: Stocks to monitor
 - `CHECK_INTERVAL`: Seconds between checks (default: 60)
 - `VOLUME_THRESHOLD`: Medium alert threshold (default: 2.0x)
