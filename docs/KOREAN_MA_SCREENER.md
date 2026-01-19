@@ -1,226 +1,228 @@
-# 한국 주식 이동평균선 스크리너
+# Korean Stock Moving Average Screener
 
-코스피 종목 중 이동평균선(60일~365일) 아래로 내려오거나 터치하는 주식을 찾아내는 스크리너
+A screener that finds KOSPI stocks trading below or touching moving averages (60-day to 365-day)
 
----
-
-## 스크리너 종류
-
-| 스크리너 | 파일 | 용도 |
-|---------|------|------|
-| **단기/중기 MA** | `korean_ma_below.py` | 60일선, 120일선 분석 |
-| **장기 MA 터치** | `korean_ma_touch.py` | 200일, 240일, 365일선 터치/아래 분석 |
+[한국어 문서](ko/KOREAN_MA_SCREENER.md)
 
 ---
 
-## 1. 단기/중기 이동평균선 스크리너
+## Screener Types
 
-### 실행
+| Screener | File | Purpose |
+|----------|------|---------|
+| **Short/Mid-term MA** | `korean_ma_below.py` | 60-day, 120-day MA analysis |
+| **Long-term MA Touch** | `korean_ma_touch.py` | 200-day, 240-day, 365-day MA touch/below analysis |
+
+---
+
+## 1. Short/Mid-term Moving Average Screener
+
+### Usage
 ```bash
-# 가상환경 활성화
+# Activate virtual environment
 source venv/bin/activate
 
-# 기본 실행 (60일선, 120일선)
+# Basic run (60-day, 120-day MA)
 python scripts/screening/korean_ma_below.py
 
-# 옵션
+# Options
 python scripts/screening/korean_ma_below.py --short-ma 20 --long-ma 60
 python scripts/screening/korean_ma_below.py --limit 30
 python scripts/screening/korean_ma_below.py --min-volume 500000
 python scripts/screening/korean_ma_below.py --help
 ```
 
-### 출력 예시
+### Example Output
 ```
-[요약]
-  분석 완료: 86개
-  60일선 아래: 30개
-  120일선 아래: 25개
-  둘 다 아래: 22개
+[Summary]
+  Analyzed: 86 stocks
+  Below 60-day MA: 30
+  Below 120-day MA: 25
+  Below both: 22
 
-60일선 아래 종목 (낙폭 큰 순)
-  1. 코스모신소재  (005070) | 현재가  43,450원 | 60일선  50,433원 | -13.8%
-  2. 코웨이      (021240) | 현재가  78,400원 | 60일선  87,883원 | -10.8%
+Stocks below 60-day MA (sorted by decline)
+  1. Cosmo Materials (005070) | Price ₩43,450 | 60-day MA ₩50,433 | -13.8%
+  2. Coway         (021240) | Price ₩78,400 | 60-day MA ₩87,883 | -10.8%
 ```
 
 ---
 
-## 2. 장기 이동평균선 터치 스크리너
+## 2. Long-term Moving Average Touch Screener
 
-### 실행
+### Usage
 ```bash
-# 기본 실행 (200일, 240일, 365일선)
+# Basic run (200-day, 240-day, 365-day MA)
 python scripts/screening/korean_ma_touch.py
 
-# MA 기간 변경
+# Change MA periods
 python scripts/screening/korean_ma_touch.py --periods 120 200 365
 
-# 터치 판정 기준 변경 (기본 ±2%)
+# Change touch threshold (default ±2%)
 python scripts/screening/korean_ma_touch.py --threshold 3.0
 
-# 전체 옵션
+# All options
 python scripts/screening/korean_ma_touch.py --help
 ```
 
-### 상태 분류
-| 상태 | 표시 | 조건 | 의미 |
-|------|-----|------|------|
-| **터치** | [터] | MA선 ±2% 이내 | 이동평균선 근처에서 지지/저항 테스트 중 |
-| **아래** | [하] | MA선 -2% 미만 | 이동평균선 하향 이탈 |
-| **위** | [상] | MA선 +2% 초과 | 이동평균선 위에서 안정적 |
+### Status Classification
+| Status | Label | Condition | Meaning |
+|--------|-------|-----------|---------|
+| **Touch** | [T] | Within ±2% of MA | Testing support/resistance near MA |
+| **Below** | [B] | Below MA by >2% | Broken below MA |
+| **Above** | [A] | Above MA by >2% | Stable above MA |
 
-### 출력 예시
+### Example Output
 ```
-[요약] 분석 완료: 82개
+[Summary] Analyzed: 82 stocks
 --------------------------------------------------
-MA 기간     |     아래 |     터치 |       위
+MA Period   |    Below |    Touch |    Above
 --------------------------------------------------
-200일선     |       11 |        8 |       63
-240일선     |       11 |       10 |       61
-365일선     |       11 |        4 |       67
+200-day     |       11 |        8 |       63
+240-day     |       11 |       10 |       61
+365-day     |       11 |        4 |       67
 
-여러 장기 MA선 동시 터치/아래 종목:
-  1. SK이노베이션 | 200일:-2.8% | 240일:-5.5% | 365일:-5.7%
+Stocks touching/below multiple long-term MAs:
+  1. SK Innovation | 200-day:-2.8% | 240-day:-5.5% | 365-day:-5.7%
 ```
 
 ---
 
-## 결과 해석 가이드
+## Interpretation Guide
 
-### 이동평균선별 의미
+### Moving Average Meanings
 
-| MA 기간 | 의미 | 투자 관점 |
-|---------|------|----------|
-| **60일선** | 약 3개월 평균 | 단기 추세, 스윙 트레이딩 기준 |
-| **120일선** | 약 6개월 평균 | 중기 추세, 분기 실적 반영 |
-| **200일선** | 약 10개월 평균 | 장기 추세의 핵심 지표, 기관 매매 기준 |
-| **240일선** | 약 1년 (영업일 기준) | 연간 평균 매수가, 장기 투자자 손익분기 |
-| **365일선** | 1년 (달력일 기준) | 최장기 추세, 대세 상승/하락 판단 |
+| MA Period | Meaning | Investment Perspective |
+|-----------|---------|----------------------|
+| **60-day** | ~3 month average | Short-term trend, swing trading reference |
+| **120-day** | ~6 month average | Mid-term trend, quarterly earnings reflected |
+| **200-day** | ~10 month average | Key long-term indicator, institutional trading reference |
+| **240-day** | ~1 year (trading days) | Annual average cost basis, long-term investor breakeven |
+| **365-day** | 1 year (calendar days) | Longest-term trend, major bull/bear determination |
 
-### 상태별 해석
+### Status Interpretation
 
-#### 터치 [터] 종목
+#### Touch [T] Stocks
 ```
-의미: 현재가가 이동평균선 ±2% 이내
+Meaning: Current price within ±2% of MA
 ```
-- **지지 테스트**: 위에서 내려와 MA선 근처 → 반등 가능성 확인
-- **저항 테스트**: 아래에서 올라와 MA선 근처 → 돌파 여부 관찰
-- **매매 타이밍**: 지지/저항 확인 후 진입 고려
+- **Support test**: Price dropped from above to near MA → Watch for bounce
+- **Resistance test**: Price rose from below to near MA → Watch for breakout
+- **Trading timing**: Consider entry after support/resistance confirmation
 
-#### 아래 [하] 종목
+#### Below [B] Stocks
 ```
-의미: 현재가가 이동평균선 -2% 미만
+Meaning: Current price more than 2% below MA
 ```
-- **단기 MA(60일) 아래**: 단기 조정 국면, 반등 매매 기회 탐색
-- **중기 MA(120일) 아래**: 중기 하락 추세, 신중한 접근 필요
-- **장기 MA(200일+) 아래**:
-  - 장기 하락 추세 진입 가능성
-  - 역발상 투자자에게는 저점 매수 기회
-  - 추가 하락 위험도 존재 → 분할 매수 권장
+- **Below short-term MA (60-day)**: Short-term correction, look for bounce opportunities
+- **Below mid-term MA (120-day)**: Mid-term downtrend, proceed with caution
+- **Below long-term MA (200-day+)**:
+  - Possible entry into long-term downtrend
+  - Contrarian investors may see buying opportunity
+  - Risk of further decline → Consider dollar-cost averaging
 
-#### 여러 MA선 동시 아래
+#### Below Multiple MAs
 ```
-예: 200일, 240일, 365일선 모두 아래
+Example: Below 200-day, 240-day, and 365-day MAs
 ```
-- **심각한 하락**: 단기~장기 모든 추세가 하락
-- **극단적 저평가 또는 펀더멘털 악화**
-- **투자 시 주의**:
-  - 하락 이유 분석 필수 (실적 악화? 업황 부진? 일시적 악재?)
-  - 재무제표, 뉴스 확인 후 판단
-  - 분할 매수로 리스크 관리
+- **Severe decline**: All timeframes in downtrend
+- **Extreme undervaluation or deteriorating fundamentals**
+- **Investment caution**:
+  - Analyze reasons for decline (earnings? industry? temporary?)
+  - Check financial statements and news before deciding
+  - Manage risk with dollar-cost averaging
 
-### 실전 활용 예시
+### Practical Examples
 
-#### 1. 장기 지지선 반등 매매
+#### 1. Long-term Support Bounce Trade
 ```
-조건: 200일선 또는 240일선 "터치" 상태
-전략:
-  - 해당 MA선에서 지지 확인 시 매수
-  - 손절: MA선 -5% 이탈 시
-  - 목표: 전고점 또는 +10%
-```
-
-#### 2. 역발상 저점 매수
-```
-조건: 365일선 "아래" + 우량주
-전략:
-  - 펀더멘털 양호한 종목 선별
-  - 분할 매수 (3~5회 나눠서)
-  - 장기 보유 (6개월~1년)
+Condition: "Touch" status at 200-day or 240-day MA
+Strategy:
+  - Buy when support is confirmed at MA
+  - Stop loss: -5% below MA
+  - Target: Previous high or +10%
 ```
 
-#### 3. 추세 추종 매도
+#### 2. Contrarian Bottom Buying
 ```
-조건: 보유 종목이 120일선 "아래" 전환
-전략:
-  - 추가 하락 대비 일부 매도
-  - 60일선 회복 시 재매수 검토
+Condition: "Below" 365-day MA + Quality stock
+Strategy:
+  - Select stocks with solid fundamentals
+  - Dollar-cost average (3-5 tranches)
+  - Long-term hold (6 months to 1 year)
 ```
 
-### 주의사항
+#### 3. Trend Following Sell
+```
+Condition: Holding turns "Below" 120-day MA
+Strategy:
+  - Partial sell to prepare for further decline
+  - Consider re-entry when 60-day MA recovers
+```
 
-1. **이동평균선은 후행 지표**
-   - 과거 데이터 기반 → 미래 예측 한계
-   - 다른 지표(거래량, RSI, MACD)와 함께 분석
+### Cautions
 
-2. **섹터/시장 상황 고려**
-   - 시장 전체 하락 시 개별 종목도 동반 하락
-   - 섹터별 특성 (성장주 vs 가치주) 감안
+1. **Moving averages are lagging indicators**
+   - Based on historical data → Limited future prediction
+   - Analyze with other indicators (volume, RSI, MACD)
 
-3. **손절 기준 설정**
-   - MA선 이탈 후 추가 하락 가능
-   - 진입 전 손절 가격 반드시 설정
+2. **Consider sector/market conditions**
+   - Individual stocks decline with overall market
+   - Account for sector characteristics (growth vs value)
+
+3. **Set stop-loss levels**
+   - Further decline possible after MA break
+   - Always set stop-loss price before entry
 
 ---
 
-## 종목 리스트 관리
+## Stock List Management
 
-### 종목 추가/삭제
-`data/korean/kospi_master.csv` 파일 직접 편집:
+### Add/Remove Stocks
+Edit `data/korean/kospi_master.csv` directly:
 
 ```csv
 code,name,sector
-005930,삼성전자,전기전자
-000660,SK하이닉스,전기전자
-373220,LG에너지솔루션,전기전자
+005930,Samsung Electronics,Electronics
+000660,SK Hynix,Electronics
+373220,LG Energy Solution,Electronics
 ...
 ```
 
-### 파일 위치
-| 파일 | 용도 |
-|------|------|
-| `data/korean/kospi_master.csv` | 종목 마스터 리스트 (수동 관리) |
-| `data/korean/kospi_list.csv` | 캐시 파일 (자동 생성) |
+### File Locations
+| File | Purpose |
+|------|---------|
+| `data/korean/kospi_master.csv` | Stock master list (manual) |
+| `data/korean/kospi_list.csv` | Cache file (auto-generated) |
 
 ---
 
-## 파일 구조
+## File Structure
 
 ```
 quant-investment/
 ├── screener/korean/
 │   ├── __init__.py
-│   ├── kospi_fetcher.py         # 종목 리스트 수집
-│   └── ma_screener.py           # MA 스크리너
-│       ├── MovingAverageScreener   # 단기/중기 (60, 120일)
-│       └── MultiMAScreener         # 장기 멀티 (200, 240, 365일)
+│   ├── kospi_fetcher.py         # Stock list fetcher
+│   └── ma_screener.py           # MA screener
+│       ├── MovingAverageScreener   # Short/mid-term (60, 120 days)
+│       └── MultiMAScreener         # Long-term multi (200, 240, 365 days)
 │
 ├── scripts/screening/
-│   ├── korean_ma_below.py       # 단기/중기 MA 실행
-│   └── korean_ma_touch.py       # 장기 MA 터치 실행
+│   ├── korean_ma_below.py       # Short/mid-term MA runner
+│   └── korean_ma_touch.py       # Long-term MA touch runner
 │
 ├── config/
-│   └── korean_screening.yaml    # 설정 파일
+│   └── korean_screening.yaml    # Configuration
 │
 └── data/korean/
-    ├── kospi_master.csv         # 종목 마스터
-    └── kospi_list.csv           # 캐시
+    ├── kospi_master.csv         # Stock master
+    └── kospi_list.csv           # Cache
 ```
 
 ---
 
-## 기술 스택
+## Tech Stack
 
-- **yfinance** - 주가 데이터 수집 (`.KS` 서픽스)
-- **pandas** - 데이터 처리
-- **pykrx** - 한국 주식 데이터 (선택사항)
+- **yfinance** - Stock data fetching (`.KS` suffix for KOSPI)
+- **pandas** - Data processing
+- **pykrx** - Korean stock data (optional)

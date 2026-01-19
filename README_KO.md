@@ -149,7 +149,7 @@ python run.py scripts/screening/my_strategy.py
 - [Backtrader 사용법](docs/BACKTRADER_README.md)
 - [Market Calendar](docs/MARKET_CALENDAR_README.md)
 - [옵션 추적 봇](docs/OPTIONS_TRACKER_README.md)
-- [한국 주식 MA 스크리너](docs/KOREAN_MA_SCREENER.md)
+- [한국 주식 MA 스크리너](docs/ko/KOREAN_MA_SCREENER.md)
 - [코드 품질 리포트](docs/code_quality_report.md)
 
 ## 기여하기
