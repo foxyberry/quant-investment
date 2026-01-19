@@ -1,28 +1,30 @@
 # quant-investment
 
-퀀트 투자 전략 개발 및 백테스팅 프로젝트
+Quantitative investment strategy development and backtesting project
+
+[한국어 README](README_KO.md)
 
 ## Stack
-- **Backtrader** - 백테스팅 + 실전 거래
-- **yfinance** - 주가 데이터 수집
-- **ib_insync** - Interactive Brokers 연동
-- **pandas/numpy** - 데이터 처리
+- **Backtrader** - Backtesting + Live trading
+- **yfinance** - Stock data collection
+- **ib_insync** - Interactive Brokers integration
+- **pandas/numpy** - Data processing
 
 ## Installation
 
-### 기본 패키지
+### Basic Packages
 ```bash
 pip install 'backtrader[plotting]' matplotlib pandas numpy
 pip install --upgrade yfinance --no-cache-dir
 pip install lxml
 ```
 
-### 실전 거래용
+### For Live Trading
 ```bash
 pip install ib_insync
 ```
 
-### 버전 확인
+### Version Check
 ```bash
 pip show yfinance
 # Name: yfinance
@@ -33,112 +35,112 @@ pip show yfinance
 
 ```
 quant-investment/
-├── run.py                        # 메인 진입점 (전략 오케스트레이터)
+├── run.py                        # Main entry point (strategy orchestrator)
 │
-├── engine/                       # 백트레이더 엔진 (핵심 라이브러리)
-│   ├── backtrader_engine.py      # 백테스팅 엔진 래퍼
-│   ├── backtrader_strategy.py    # 기본 전략 클래스들
-│   └── bottom_breakout.py        # 바닥 돌파 전략
+├── engine/                       # Backtrader engine (core library)
+│   ├── backtrader_engine.py      # Backtesting engine wrapper
+│   ├── backtrader_strategy.py    # Base strategy classes
+│   └── bottom_breakout.py        # Bottom breakout strategy
 │
-├── scripts/                      # 실행 스크립트
-│   ├── screening/                # 종목 스크리닝 스크립트
-│   ├── backtesting/              # 백테스팅 스크립트
-│   ├── live/                     # 실전 거래/봇
-│   │   ├── options_tracker.py    # 옵션 거래량 추적 봇
-│   │   └── global_dual_momentum_2025.py  # 듀얼 모멘텀 전략
-│   └── legacy/                   # 레거시 스크립트
-│       ├── main.py               # 구 스크리닝 (run.py 사용 권장)
-│       └── backtrader_main.py    # 구 백테스팅 (run.py 사용 권장)
+├── scripts/                      # Executable scripts
+│   ├── screening/                # Stock screening scripts
+│   ├── backtesting/              # Backtesting scripts
+│   ├── live/                     # Live trading/bots
+│   │   ├── options_tracker.py    # Options volume tracker bot
+│   │   └── global_dual_momentum_2025.py  # Dual momentum strategy
+│   └── legacy/                   # Legacy scripts
+│       ├── main.py               # Old screening (use run.py instead)
+│       └── backtrader_main.py    # Old backtesting (use run.py instead)
 │
-├── screener/                     # 종목 스크리닝 라이브러리
-│   ├── basic_filter.py           # 기본 정보 필터
-│   ├── technical_filter.py       # 기술적 지표 필터
-│   └── korean/                   # 한국 주식 스크리너
+├── screener/                     # Stock screening library
+│   ├── basic_filter.py           # Basic info filter
+│   ├── technical_filter.py       # Technical indicator filter
+│   └── korean/                   # Korean stock screener
 │
-├── utils/                        # 유틸리티
-│   ├── fetch.py                  # 주가 데이터 수집
-│   ├── options_fetch.py          # 옵션 데이터 수집
+├── utils/                        # Utilities
+│   ├── fetch.py                  # Stock data fetching
+│   ├── options_fetch.py          # Options data fetching
 │   └── ...
 │
-├── data/                         # 데이터 저장소
-├── logs/                         # 로그 파일
-├── results/                      # 백테스팅 결과
-└── docs/                         # 문서
-    └── examples/                 # 예제 및 템플릿
+├── data/                         # Data storage
+├── logs/                         # Log files
+├── results/                      # Backtesting results
+└── docs/                         # Documentation
+    └── examples/                 # Examples and templates
 ```
 
 ## Quick Start
 
-### 1. 전략 실행
+### 1. Run Strategy
 ```bash
-# 가상환경 활성화
+# Activate virtual environment
 source venv/bin/activate
 
-# 전략 오케스트레이터 실행
+# Run strategy orchestrator
 python run.py
 ```
 
-### 2. 옵션 추적 봇 실행
+### 2. Run Options Tracker Bot
 ```bash
-# 일회성 체크
+# One-time check
 python scripts/live/options_tracker.py --once
 
-# 지속적 모니터링 (60초마다)
+# Continuous monitoring (every 60 seconds)
 python scripts/live/options_tracker.py
 ```
 
-자세한 내용은 [docs/OPTIONS_TRACKER_README.md](docs/OPTIONS_TRACKER_README.md) 참고
+See [docs/OPTIONS_TRACKER_README.md](docs/OPTIONS_TRACKER_README.md) for details
 
-### 3. 새 전략 만들기
+### 3. Create New Strategy
 
-1. 템플릿 복사
+1. Copy template
 ```bash
 cp docs/examples/screening_template.py scripts/screening/my_strategy.py
 ```
 
-2. 전략 수정
+2. Edit strategy
 ```python
-# scripts/screening/my_strategy.py 편집
+# Edit scripts/screening/my_strategy.py
 def run():
-    # 여기에 전략 로직 작성
+    # Write your strategy logic here
     pass
 ```
 
-3. `run.py`에서 실행
+3. Run with `run.py`
 ```bash
 python run.py scripts/screening/my_strategy.py
 ```
 
 ## Recent Updates
 
-### 옵션 추적 봇 (2025-01)
-- NVDA, AAPL, TSLA, AMZN 옵션 거래량 이상 징후 감지
-- 5일 평균 대비 2~3배 급증 시 알림
-- 자동 데이터 캐싱 및 히스토리 분석
+### Options Tracker Bot (2025-01)
+- Detects unusual options activity for NVDA, AAPL, TSLA, AMZN
+- Alerts when volume is 2-3x above 5-day average
+- Automatic data caching and history analysis
 
-### 글로벌 듀얼 모멘텀 (2025-01)
-- 다자산 배분 전략 (주식/채권/현금)
-- 모멘텀 기반 자산 스위칭
+### Global Dual Momentum (2025-01)
+- Multi-asset allocation strategy (stocks/bonds/cash)
+- Momentum-based asset switching
 
-### 디렉토리 구조 정리 (2025-01)
-- `strategies/` → `engine/` (역할에 맞게 이름 변경)
-- `my_strategies/` → `scripts/` (실행 스크립트)
-- `strategy_templates/` → `docs/examples/` (템플릿 통합)
-- 문서화 강화
+### Directory Structure Cleanup (2025-01)
+- `strategies/` → `engine/` (renamed to reflect role)
+- `my_strategies/` → `scripts/` (executable scripts)
+- `strategy_templates/` → `docs/examples/` (consolidated templates)
+- Enhanced documentation
 
 ## Documentation
 
-- [Backtrader 사용법](docs/BACKTRADER_README.md)
+- [Backtrader Guide](docs/BACKTRADER_README.md)
 - [Market Calendar](docs/MARKET_CALENDAR_README.md)
-- [옵션 추적 봇](docs/OPTIONS_TRACKER_README.md)
-- [코드 품질 리포트](docs/code_quality_report.md)
+- [Options Tracker Bot](docs/OPTIONS_TRACKER_README.md)
+- [Code Quality Report](docs/code_quality_report.md)
 
 ## Contributing
 
-새 전략은 `scripts/` 아래 적절한 하위 폴더에 추가해주세요:
-- `screening/` - 종목 스크리닝
-- `backtesting/` - 백테스팅
-- `live/` - 실전 거래/봇
+Add new strategies under `scripts/` in the appropriate subfolder:
+- `screening/` - Stock screening
+- `backtesting/` - Backtesting
+- `live/` - Live trading/bots
 
 ## License
 
