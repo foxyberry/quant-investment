@@ -1,5 +1,7 @@
 # Backtrader Integration for Quant Investment
 
+[한국어 문서](ko/BACKTRADER_README.md)
+
 This document explains how to use the backtrader library integration with your existing quant investment system.
 
 ## Overview

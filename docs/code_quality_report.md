@@ -1,5 +1,7 @@
 # Code Quality Improvements Report
 
+[한국어 문서](ko/code_quality_report.md)
+
 ## 📋 **Executive Summary**
 
 This report documents the comprehensive code quality improvements made to the quant investment project. The changes focus on clean, readable code, understandable logic, and elimination of duplicated functionality.

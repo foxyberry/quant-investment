@@ -1,5 +1,7 @@
 # Market Calendar Functionality
 
+[한국어 문서](ko/MARKET_CALENDAR_README.md)
+
 This project includes comprehensive market calendar functionality to ensure that all backtesting and analysis uses valid trading days only.
 
 ## Overview

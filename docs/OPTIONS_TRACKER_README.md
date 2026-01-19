@@ -1,5 +1,7 @@
 # Options Volume Tracker Bot
 
+[한국어 문서](ko/OPTIONS_TRACKER_README.md)
+
 Based on the requirements in `Todo/1.bot.md`, this bot monitors unusual options activity for key stocks.
 
 ## Features
