@@ -149,6 +149,10 @@ logs/
 results/
 !results/.gitkeep
 
+# Reports (daily screening reports)
+reports/
+!reports/.gitkeep
+
 # Config (keep templates, ignore local configs)
 config/*.json
 config/*.yaml
