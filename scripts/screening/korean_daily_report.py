@@ -44,9 +44,25 @@ def print_section(title: str, width: int = 70):
     print(f"{'='*width}")
 
 
+class TeeOutput:
+    """터미널과 파일에 동시 출력"""
+    def __init__(self, file_handle, terminal):
+        self.file = file_handle
+        self.terminal = terminal
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.file.write(message)
+
+    def flush(self):
+        self.terminal.flush()
+        self.file.flush()
+
+
 def run(
     lookback_days: int = 7,
-    output_file: str = None
+    output_file: str = None,
+    auto_save: bool = True
 ) -> dict:
     """
     일일 종합 리포트 생성
@@ -54,19 +70,26 @@ def run(
     Args:
         lookback_days: 크로스 감지 기간 (최근 N일)
         output_file: 결과 저장 파일 경로
+        auto_save: 자동 저장 여부 (기본 True)
 
     Returns:
         종합 분석 결과
     """
     report_date = datetime.now().strftime('%Y-%m-%d %H:%M')
+    today_str = datetime.now().strftime('%Y-%m-%d')
 
-    # 출력 리다이렉션 설정
+    # 자동 저장 경로 설정
+    if auto_save and output_file is None:
+        output_file = f"reports/daily_{today_str}.txt"
+
+    # 출력 리다이렉션 설정 (터미널 + 파일 동시 출력)
     original_stdout = sys.stdout
+    file_handle = None
     if output_file:
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         file_handle = open(output_path, 'w', encoding='utf-8')
-        sys.stdout = file_handle
+        sys.stdout = TeeOutput(file_handle, original_stdout)
 
     try:
         print("\n" + "#"*70)
@@ -282,10 +305,10 @@ def run(
         }
 
     finally:
-        if output_file:
+        if file_handle:
             sys.stdout = original_stdout
             file_handle.close()
-            print(f"리포트 저장 완료: {output_file}")
+            print(f"\n리포트 저장 완료: {output_file}")
 
 
 def main():
@@ -300,12 +323,17 @@ def main():
         '--output', '-o', type=str, default=None,
         help='결과 저장 파일 경로 (예: reports/daily_2024-01-22.txt)'
     )
+    parser.add_argument(
+        '--no-save', action='store_true',
+        help='파일 저장 안함 (터미널 출력만)'
+    )
 
     args = parser.parse_args()
 
     run(
         lookback_days=args.lookback,
-        output_file=args.output
+        output_file=args.output,
+        auto_save=not args.no_save
     )
 
 
