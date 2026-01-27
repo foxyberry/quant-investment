@@ -3,7 +3,7 @@
 - **날짜**: 2026-01-27
 - **이슈**: 없음
 - **브랜치**: `refactor/remove-backtrader`
-- **상태**: 계획중
+- **상태**: 완료
 
 ## 목표
 
@@ -18,27 +18,27 @@
 ## 계획
 
 ### Phase 1: 코드 삭제
-- [ ] 1단계: `engine/` 폴더 전체 삭제
+- [x] 1단계: `engine/` 폴더 전체 삭제
   - `backtrader_engine.py`
   - `backtrader_strategy.py`
   - `bottom_breakout.py`
-- [ ] 2단계: `scripts/backtesting/` 폴더 삭제
+- [x] 2단계: `scripts/backtesting/` 폴더 삭제
   - `momentum_backtest.py`
-- [ ] 3단계: `docs/examples/` backtrader 관련 파일 삭제
+- [x] 3단계: `docs/examples/` backtrader 관련 파일 삭제
   - `simple_backtrader_example.py`
   - `backtesting_template.py`
 
 ### Phase 2: 문서 정리
-- [ ] 4단계: backtrader 관련 문서 삭제
+- [x] 4단계: backtrader 관련 문서 삭제
   - `docs/BACKTRADER_README.md`
   - `docs/ko/BACKTRADER_README.md`
-- [ ] 5단계: README, CLAUDE.md에서 backtrader 언급 제거
+- [x] 5단계: README, CLAUDE.md에서 backtrader 언급 제거
 
 ### Phase 3: 의존성 정리
-- [ ] 6단계: `requirements.txt`에서 backtrader 제거
+- [x] 6단계: `requirements.txt`에서 backtrader 제거
 
 ### Phase 4: 검증
-- [ ] 7단계: 기존 스크립트 동작 확인
+- [x] 7단계: 기존 스크립트 동작 확인
   - `python run.py --list`
   - `python scripts/live/portfolio_sell_checker.py`
 
@@ -77,4 +77,20 @@
 
 ## 결과
 
-(완료 후 작성)
+### 삭제된 파일 (1,913줄)
+- `engine/` 폴더 전체 (852줄)
+- `scripts/backtesting/momentum_backtest.py` (166줄)
+- `docs/BACKTRADER_README.md` (244줄)
+- `docs/ko/BACKTRADER_README.md` (244줄)
+- `docs/examples/simple_backtrader_example.py` (79줄)
+- `docs/examples/backtesting_template.py` (238줄)
+
+### 수정된 파일
+- `requirements.txt` - backtrader 의존성 제거
+- `README.md` - Stack, Installation, Project Structure, Documentation 섹션 정리
+- `README_KO.md` - 동일
+- `CLAUDE.md` - backtrader 관련 내용 전체 제거
+
+### 검증 완료
+- `python run.py --list` ✅
+- `python scripts/live/portfolio_sell_checker.py` ✅
