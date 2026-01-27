@@ -15,6 +15,7 @@ from datetime import datetime, date
 class Holding:
     """단일 보유 종목 정보"""
     symbol: str
+    name: str
     buy_price: float
     quantity: int
     buy_date: date
@@ -31,6 +32,7 @@ class Holding:
 
         return cls(
             symbol=symbol,
+            name=data.get('name', symbol),
             buy_price=float(data.get('buy_price', 0)),
             quantity=int(data.get('quantity', 0)),
             buy_date=buy_date,
@@ -40,6 +42,7 @@ class Holding:
     def to_dict(self) -> Dict:
         """Holding 객체를 딕셔너리로 변환"""
         result = {
+            'name': self.name,
             'buy_price': self.buy_price,
             'quantity': self.quantity,
             'buy_date': self.buy_date.strftime('%Y-%m-%d')

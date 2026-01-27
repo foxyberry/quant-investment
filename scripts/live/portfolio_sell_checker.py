@@ -37,6 +37,7 @@ class Signal(Enum):
 class SellCheckResult:
     """매도 체크 결과"""
     symbol: str
+    name: str
     buy_price: float
     current_price: float
     pnl_pct: float
@@ -179,6 +180,7 @@ class PortfolioSellChecker:
 
         return SellCheckResult(
             symbol=symbol,
+            name=holding.name,
             buy_price=holding.buy_price,
             current_price=current_price,
             pnl_pct=pnl_pct,
@@ -203,9 +205,9 @@ class PortfolioSellChecker:
         """결과 출력"""
         now = get_current_market_time()
         print()
-        print("=" * 70)
+        print("=" * 80)
         print(f"PORTFOLIO SELL CHECK - {now.strftime('%Y-%m-%d %H:%M')} ET")
-        print("=" * 70)
+        print("=" * 80)
         print()
 
         if not results:
@@ -213,8 +215,8 @@ class PortfolioSellChecker:
             return
 
         # 헤더
-        print(f"{'Symbol':<8} {'Buy':>10} {'Current':>10} {'P/L%':>8} {'Signal':<8} Reason")
-        print("-" * 70)
+        print(f"{'종목명':<12} {'매수가':>12} {'현재가':>12} {'수익률':>8} {'신호':<6} 사유")
+        print("-" * 80)
 
         # 결과 정렬: SELL > WATCH > HOLD
         signal_order = {Signal.SELL: 0, Signal.WATCH: 1, Signal.HOLD: 2}
@@ -239,13 +241,16 @@ class PortfolioSellChecker:
             pnl_str = f"{r.pnl_pct:+.1%}"
             reason = r.reasons[0] if r.reasons else ""
 
-            print(f"{emoji} {r.symbol:<6} ${r.buy_price:>8.2f} ${r.current_price:>8.2f} {pnl_str:>8} {r.signal.value:<8} {reason}")
+            # 종목명 (최대 10자)
+            name_display = r.name[:10] if len(r.name) > 10 else r.name
+
+            print(f"{emoji} {name_display:<10} {r.buy_price:>12,.0f} {r.current_price:>12,.0f} {pnl_str:>8} {r.signal.value:<6} {reason}")
 
             # 추가 이유가 있으면 출력
             for extra_reason in r.reasons[1:]:
-                print(f"{'':>52} {extra_reason}")
+                print(f"{'':>56} {extra_reason}")
 
-        print("-" * 70)
+        print("-" * 80)
         print(f"Summary: {sell_count} SELL, {watch_count} WATCH, {hold_count} HOLD")
         print()
 
