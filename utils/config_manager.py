@@ -127,4 +127,27 @@ class ConfigManager:
     
     def get_external_filters(self) -> Dict[str, Any]:
         """Get the external filters configuration"""
-        return self.get_screening_criteria_config().get("external_filters", {}) 
+        return self.get_screening_criteria_config().get("external_filters", {})
+
+    def get_portfolio_config(self) -> Dict[str, Any]:
+        """Load portfolio configuration"""
+        portfolio_path = self.project_root / "config" / "portfolio.yaml"
+        try:
+            with open(portfolio_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+                self.logger.debug(f"Portfolio config loaded from {portfolio_path}")
+                return config or {}
+        except FileNotFoundError:
+            self.logger.warning(f"Portfolio config not found: {portfolio_path}")
+            return {}
+        except yaml.YAMLError as e:
+            self.logger.error(f"YAML parsing error in portfolio config: {e}")
+            return {}
+
+    def get_portfolio_holdings(self) -> Dict[str, Any]:
+        """Get portfolio holdings"""
+        return self.get_portfolio_config().get("holdings", {})
+
+    def get_portfolio_sell_conditions(self) -> Dict[str, Any]:
+        """Get default sell conditions from portfolio config"""
+        return self.get_portfolio_config().get("default_sell_conditions", {})
