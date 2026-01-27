@@ -5,23 +5,15 @@ Quantitative investment strategy development and backtesting project
 [한국어 README](README_KO.md)
 
 ## Stack
-- **Backtrader** - Backtesting + Live trading
 - **yfinance** - Stock data collection
-- **ib_insync** - Interactive Brokers integration
+- **pykrx** - Korean stock data (KOSPI/KOSDAQ)
 - **pandas/numpy** - Data processing
+- **matplotlib/seaborn** - Visualization
 
 ## Installation
 
-### Basic Packages
 ```bash
-pip install 'backtrader[plotting]' matplotlib pandas numpy
-pip install --upgrade yfinance --no-cache-dir
-pip install lxml
-```
-
-### For Live Trading
-```bash
-pip install ib_insync
+pip install -r requirements.txt
 ```
 
 ### Version Check
@@ -37,24 +29,17 @@ pip show yfinance
 quant-investment/
 ├── run.py                        # Main entry point (strategy orchestrator)
 │
-├── engine/                       # Backtrader engine (core library)
-│   ├── backtrader_engine.py      # Backtesting engine wrapper
-│   ├── backtrader_strategy.py    # Base strategy classes
-│   └── bottom_breakout.py        # Bottom breakout strategy
-│
 ├── scripts/                      # Executable scripts
 │   ├── screening/                # Stock screening scripts
-│   ├── backtesting/              # Backtesting scripts
-│   ├── live/                     # Live trading/bots
-│   │   ├── options_tracker.py    # Options volume tracker bot
-│   │   └── global_dual_momentum_2025.py  # Dual momentum strategy
-│   └── legacy/                   # Legacy scripts
-│       ├── main.py               # Old screening (use run.py instead)
-│       └── backtrader_main.py    # Old backtesting (use run.py instead)
+│   └── live/                     # Live trading/bots
+│       ├── options_tracker.py    # Options volume tracker bot
+│       ├── portfolio_sell_checker.py  # Portfolio sell signal checker
+│       └── global_dual_momentum_2025.py  # Dual momentum strategy
 │
 ├── screener/                     # Stock screening library
 │   ├── basic_filter.py           # Basic info filter
 │   ├── technical_filter.py       # Technical indicator filter
+│   ├── portfolio_manager.py      # Portfolio management
 │   └── korean/                   # Korean stock screener
 │
 ├── utils/                        # Utilities
@@ -62,9 +47,9 @@ quant-investment/
 │   ├── options_fetch.py          # Options data fetching
 │   └── ...
 │
+├── config/                       # Configuration files
 ├── data/                         # Data storage
 ├── logs/                         # Log files
-├── results/                      # Backtesting results
 └── docs/                         # Documentation
     └── examples/                 # Examples and templates
 ```
@@ -130,7 +115,6 @@ python run.py scripts/screening/my_strategy.py
 
 ## Documentation
 
-- [Backtrader Guide](docs/BACKTRADER_README.md)
 - [Market Calendar](docs/MARKET_CALENDAR_README.md)
 - [Options Tracker Bot](docs/OPTIONS_TRACKER_README.md)
 - [Code Quality Report](docs/code_quality_report.md)
@@ -139,7 +123,6 @@ python run.py scripts/screening/my_strategy.py
 
 Add new strategies under `scripts/` in the appropriate subfolder:
 - `screening/` - Stock screening
-- `backtesting/` - Backtesting
 - `live/` - Live trading/bots
 
 ## License

@@ -5,23 +5,15 @@
 [English README](README.md)
 
 ## 기술 스택
-- **Backtrader** - 백테스팅 + 실전 거래
-- **yfinance** - 주가 데이터 수집
-- **ib_insync** - Interactive Brokers 연동
+- **yfinance** - 미국 주가 데이터 수집
+- **pykrx** - 한국 주식 데이터 (코스피/코스닥)
 - **pandas/numpy** - 데이터 처리
+- **matplotlib/seaborn** - 시각화
 
 ## 설치
 
-### 기본 패키지
 ```bash
-pip install 'backtrader[plotting]' matplotlib pandas numpy
-pip install --upgrade yfinance --no-cache-dir
-pip install lxml
-```
-
-### 실전 거래용
-```bash
-pip install ib_insync
+pip install -r requirements.txt
 ```
 
 ### 버전 확인
@@ -37,24 +29,17 @@ pip show yfinance
 quant-investment/
 ├── run.py                        # 메인 진입점 (전략 오케스트레이터)
 │
-├── engine/                       # 백트레이더 엔진 (핵심 라이브러리)
-│   ├── backtrader_engine.py      # 백테스팅 엔진 래퍼
-│   ├── backtrader_strategy.py    # 기본 전략 클래스들
-│   └── bottom_breakout.py        # 바닥 돌파 전략
-│
 ├── scripts/                      # 실행 스크립트
 │   ├── screening/                # 종목 스크리닝 스크립트
-│   ├── backtesting/              # 백테스팅 스크립트
-│   ├── live/                     # 실전 거래/봇
-│   │   ├── options_tracker.py    # 옵션 거래량 추적 봇
-│   │   └── global_dual_momentum_2025.py  # 듀얼 모멘텀 전략
-│   └── legacy/                   # 레거시 스크립트
-│       ├── main.py               # 구 스크리닝 (run.py 사용 권장)
-│       └── backtrader_main.py    # 구 백테스팅 (run.py 사용 권장)
+│   └── live/                     # 실전 거래/봇
+│       ├── options_tracker.py    # 옵션 거래량 추적 봇
+│       ├── portfolio_sell_checker.py  # 포트폴리오 매도 신호 체커
+│       └── global_dual_momentum_2025.py  # 듀얼 모멘텀 전략
 │
 ├── screener/                     # 종목 스크리닝 라이브러리
 │   ├── basic_filter.py           # 기본 정보 필터
 │   ├── technical_filter.py       # 기술적 지표 필터
+│   ├── portfolio_manager.py      # 포트폴리오 관리
 │   └── korean/                   # 한국 주식 스크리너
 │
 ├── utils/                        # 유틸리티
@@ -62,9 +47,9 @@ quant-investment/
 │   ├── options_fetch.py          # 옵션 데이터 수집
 │   └── ...
 │
+├── config/                       # 설정 파일
 ├── data/                         # 데이터 저장소
 ├── logs/                         # 로그 파일
-├── results/                      # 백테스팅 결과
 └── docs/                         # 문서
     └── examples/                 # 예제 및 템플릿
 ```
@@ -146,7 +131,6 @@ python run.py scripts/screening/my_strategy.py
 
 ## 문서
 
-- [Backtrader 사용법](docs/BACKTRADER_README.md)
 - [Market Calendar](docs/MARKET_CALENDAR_README.md)
 - [옵션 추적 봇](docs/OPTIONS_TRACKER_README.md)
 - [한국 주식 MA 스크리너](docs/ko/KOREAN_MA_SCREENER.md)
@@ -156,7 +140,6 @@ python run.py scripts/screening/my_strategy.py
 
 새 전략은 `scripts/` 아래 적절한 하위 폴더에 추가해주세요:
 - `screening/` - 종목 스크리닝
-- `backtesting/` - 백테스팅
 - `live/` - 실전 거래/봇
 
 ## 라이선스
