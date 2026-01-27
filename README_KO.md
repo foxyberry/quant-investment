@@ -29,29 +29,46 @@ pip show yfinance
 quant-investment/
 ├── run.py                        # 메인 진입점 (전략 오케스트레이터)
 │
+├── config/                       # 설정 파일
+│   ├── base_config.yaml          # 기본 설정
+│   ├── portfolio.yaml            # 포트폴리오 보유종목 & 매도 조건
+│   ├── korean_screening.yaml     # 한국 주식 스크리닝 설정
+│   └── screening_criteria.yaml   # 기술적 스크리닝 조건
+│
 ├── scripts/                      # 실행 스크립트
 │   ├── screening/                # 종목 스크리닝 스크립트
+│   │   ├── korean_daily_report.py    # 일일 리포트 (골든/데스크로스)
+│   │   ├── korean_crossover.py       # 이평선 크로스오버 감지
+│   │   ├── korean_ma_below.py        # 이평선 하향 돌파 종목
+│   │   ├── korean_ma_touch.py        # 이평선 터치 종목
+│   │   └── tech_breakout.py          # 기술적 돌파 스크리너
 │   └── live/                     # 실전 거래/봇
-│       ├── options_tracker.py    # 옵션 거래량 추적 봇
-│       ├── portfolio_sell_checker.py  # 포트폴리오 매도 신호 체커
+│       ├── portfolio_sell_checker.py     # 포트폴리오 매도 신호 체커
+│       ├── options_tracker.py            # 옵션 거래량 추적 봇
 │       └── global_dual_momentum_2025.py  # 듀얼 모멘텀 전략
 │
 ├── screener/                     # 종목 스크리닝 라이브러리
-│   ├── basic_filter.py           # 기본 정보 필터
+│   ├── basic_filter.py           # 기본 정보 필터 (가격, 거래량, 시총)
 │   ├── technical_filter.py       # 기술적 지표 필터
+│   ├── external_filter.py        # 외부 데이터 필터
 │   ├── portfolio_manager.py      # 포트폴리오 관리
 │   └── korean/                   # 한국 주식 스크리너
+│       ├── kospi_fetcher.py      # 코스피/코스닥 데이터 조회
+│       └── ma_screener.py        # 이동평균선 스크리너
 │
 ├── utils/                        # 유틸리티
-│   ├── fetch.py                  # 주가 데이터 수집
+│   ├── fetch.py                  # 주가 데이터 수집 (yfinance)
 │   ├── options_fetch.py          # 옵션 데이터 수집
-│   └── ...
+│   ├── config_manager.py         # 설정 파일 관리
+│   └── timezone_utils.py         # 시간대 유틸리티
 │
-├── config/                       # 설정 파일
-├── data/                         # 데이터 저장소
+├── data/                         # 데이터 저장소 & 캐시
 ├── logs/                         # 로그 파일
+├── reports/                      # 생성된 리포트
 └── docs/                         # 문서
-    └── examples/                 # 예제 및 템플릿
+    ├── examples/                 # 예제 및 템플릿
+    ├── ko/                       # 한글 문서
+    └── works/                    # 작업 계획 문서
 ```
 
 ## 빠른 시작
@@ -76,18 +93,25 @@ python scripts/live/options_tracker.py
 
 자세한 내용은 [docs/OPTIONS_TRACKER_README.md](docs/OPTIONS_TRACKER_README.md) 참고
 
-### 3. 한국 주식 스크리너 실행
+### 3. 포트폴리오 매도 신호 확인
 ```bash
-# 단기/중기 이동평균선 스크리너 (60일, 120일)
-python scripts/screening/korean_ma_below.py
+# config/portfolio.yaml에 보유 종목 추가 후 실행
+python scripts/live/portfolio_sell_checker.py
+```
 
-# 장기 이동평균선 터치 스크리너 (200일, 240일, 365일)
+### 4. 한국 주식 스크리너 실행
+```bash
+# 일일 리포트 (골든/데스크로스 감지)
+python scripts/screening/korean_daily_report.py
+
+# 이동평균선 스크리너
+python scripts/screening/korean_ma_below.py
 python scripts/screening/korean_ma_touch.py
 ```
 
 자세한 내용은 [docs/KOREAN_MA_SCREENER.md](docs/KOREAN_MA_SCREENER.md) 참고
 
-### 4. 새 전략 만들기
+### 5. 새 전략 만들기
 
 1. 템플릿 복사
 ```bash
@@ -109,31 +133,34 @@ python run.py scripts/screening/my_strategy.py
 
 ## 최근 업데이트
 
+### 포트폴리오 매도 알림 (2026-01)
+- `config/portfolio.yaml`로 보유 종목 관리
+- 매도 신호 감지 (손절, 익절, 트레일링 스탑)
+- 기술적 매도 신호 (20일선 이탈, 데스크로스)
+- 실행: `python scripts/live/portfolio_sell_checker.py`
+
+### 한국 주식 일일 리포트 (2026-01)
+- 코스피 종목 골든/데스크로스 감지
+- `reports/` 폴더에 일일 리포트 자동 저장
+
+### 프로젝트 정리 (2026-01)
+- backtrader 의존성 제거 (미사용)
+- 레거시 코드 정리 (`lib/`, `scripts/legacy/`, `visualizer/`)
+- 프로젝트 구조 단순화
+
 ### 옵션 추적 봇 (2025-01)
 - NVDA, AAPL, TSLA, AMZN 옵션 거래량 이상 징후 감지
 - 5일 평균 대비 2~3배 급증 시 알림
-- 자동 데이터 캐싱 및 히스토리 분석
-
-### 글로벌 듀얼 모멘텀 (2025-01)
-- 다자산 배분 전략 (주식/채권/현금)
-- 모멘텀 기반 자산 스위칭
 
 ### 한국 주식 MA 스크리너 (2025-01)
 - 코스피 종목 이동평균선 분석
 - 60일, 120일, 200일, 240일, 365일선 지원
-- 터치/이탈 감지
-
-### 디렉토리 구조 정리 (2025-01)
-- `strategies/` → `engine/` (역할에 맞게 이름 변경)
-- `my_strategies/` → `scripts/` (실행 스크립트)
-- `strategy_templates/` → `docs/examples/` (템플릿 통합)
-- 문서화 강화
 
 ## 문서
 
+- [한국 주식 MA 스크리너](docs/KOREAN_MA_SCREENER.md)
 - [Market Calendar](docs/MARKET_CALENDAR_README.md)
 - [옵션 추적 봇](docs/OPTIONS_TRACKER_README.md)
-- [한국 주식 MA 스크리너](docs/ko/KOREAN_MA_SCREENER.md)
 - [코드 품질 리포트](docs/code_quality_report.md)
 
 ## 기여하기

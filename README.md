@@ -29,29 +29,46 @@ pip show yfinance
 quant-investment/
 ├── run.py                        # Main entry point (strategy orchestrator)
 │
+├── config/                       # Configuration files
+│   ├── base_config.yaml          # Base settings
+│   ├── portfolio.yaml            # Portfolio holdings & sell conditions
+│   ├── korean_screening.yaml     # Korean stock screening settings
+│   └── screening_criteria.yaml   # Technical screening criteria
+│
 ├── scripts/                      # Executable scripts
 │   ├── screening/                # Stock screening scripts
+│   │   ├── korean_daily_report.py    # Daily report with golden/death cross
+│   │   ├── korean_crossover.py       # MA crossover detection
+│   │   ├── korean_ma_below.py        # Stocks below MA
+│   │   ├── korean_ma_touch.py        # Stocks touching MA
+│   │   └── tech_breakout.py          # Technical breakout screener
 │   └── live/                     # Live trading/bots
-│       ├── options_tracker.py    # Options volume tracker bot
-│       ├── portfolio_sell_checker.py  # Portfolio sell signal checker
+│       ├── portfolio_sell_checker.py     # Portfolio sell signal checker
+│       ├── options_tracker.py            # Options volume tracker bot
 │       └── global_dual_momentum_2025.py  # Dual momentum strategy
 │
 ├── screener/                     # Stock screening library
-│   ├── basic_filter.py           # Basic info filter
+│   ├── basic_filter.py           # Basic info filter (price, volume, market cap)
 │   ├── technical_filter.py       # Technical indicator filter
+│   ├── external_filter.py        # External data filter
 │   ├── portfolio_manager.py      # Portfolio management
 │   └── korean/                   # Korean stock screener
+│       ├── kospi_fetcher.py      # KOSPI/KOSDAQ data fetcher
+│       └── ma_screener.py        # Moving average screener
 │
 ├── utils/                        # Utilities
-│   ├── fetch.py                  # Stock data fetching
+│   ├── fetch.py                  # Stock data fetching (yfinance)
 │   ├── options_fetch.py          # Options data fetching
-│   └── ...
+│   ├── config_manager.py         # Configuration file manager
+│   └── timezone_utils.py         # Timezone utilities
 │
-├── config/                       # Configuration files
-├── data/                         # Data storage
+├── data/                         # Data storage & cache
 ├── logs/                         # Log files
+├── reports/                      # Generated reports
 └── docs/                         # Documentation
-    └── examples/                 # Examples and templates
+    ├── examples/                 # Examples and templates
+    ├── ko/                       # Korean documentation
+    └── works/                    # Work plan documents
 ```
 
 ## Quick Start
@@ -76,7 +93,13 @@ python scripts/live/options_tracker.py
 
 See [docs/OPTIONS_TRACKER_README.md](docs/OPTIONS_TRACKER_README.md) for details
 
-### 3. Create New Strategy
+### 3. Check Portfolio Sell Signals
+```bash
+# Add holdings to config/portfolio.yaml first
+python scripts/live/portfolio_sell_checker.py
+```
+
+### 4. Create New Strategy
 
 1. Copy template
 ```bash
@@ -98,23 +121,28 @@ python run.py scripts/screening/my_strategy.py
 
 ## Recent Updates
 
+### Portfolio Sell Alert (2026-01)
+- Portfolio holdings management via `config/portfolio.yaml`
+- Sell signal detection (stop loss, take profit, trailing stop)
+- Technical sell signals (MA20 breakdown, death cross)
+- Run: `python scripts/live/portfolio_sell_checker.py`
+
+### Korean Daily Report (2026-01)
+- Golden/death cross detection for KOSPI stocks
+- Auto-saved daily reports to `reports/` folder
+
+### Project Cleanup (2026-01)
+- Removed backtrader dependency (unused)
+- Removed legacy code (`lib/`, `scripts/legacy/`, `visualizer/`)
+- Simplified project structure
+
 ### Options Tracker Bot (2025-01)
 - Detects unusual options activity for NVDA, AAPL, TSLA, AMZN
 - Alerts when volume is 2-3x above 5-day average
-- Automatic data caching and history analysis
-
-### Global Dual Momentum (2025-01)
-- Multi-asset allocation strategy (stocks/bonds/cash)
-- Momentum-based asset switching
-
-### Directory Structure Cleanup (2025-01)
-- `strategies/` → `engine/` (renamed to reflect role)
-- `my_strategies/` → `scripts/` (executable scripts)
-- `strategy_templates/` → `docs/examples/` (consolidated templates)
-- Enhanced documentation
 
 ## Documentation
 
+- [Korean MA Screener](docs/KOREAN_MA_SCREENER.md)
 - [Market Calendar](docs/MARKET_CALENDAR_README.md)
 - [Options Tracker Bot](docs/OPTIONS_TRACKER_README.md)
 - [Code Quality Report](docs/code_quality_report.md)
