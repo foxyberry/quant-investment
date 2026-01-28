@@ -12,8 +12,12 @@ from datetime import datetime, date
 
 
 @dataclass
-class Holding:
-    """단일 보유 종목 정보"""
+class ConfigHolding:
+    """
+    YAML 설정 파일의 보유 종목 정보
+
+    Note: 런타임 포트폴리오 관리에는 portfolio.holdings.Holding 사용
+    """
     symbol: str
     name: str
     buy_price: float
@@ -22,7 +26,7 @@ class Holding:
     custom_conditions: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, symbol: str, data: Dict) -> 'Holding':
+    def from_dict(cls, symbol: str, data: Dict) -> 'ConfigHolding':
         """딕셔너리에서 Holding 객체 생성"""
         buy_date = data.get('buy_date')
         if isinstance(buy_date, str):
@@ -115,7 +119,7 @@ class PortfolioManager:
             if 'holdings' in save_config:
                 holdings_dict = {}
                 for symbol, holding in save_config['holdings'].items():
-                    if isinstance(holding, Holding):
+                    if isinstance(holding, ConfigHolding):
                         holdings_dict[symbol] = holding.to_dict()
                     else:
                         holdings_dict[symbol] = holding
@@ -138,7 +142,7 @@ class PortfolioManager:
         """기술적 매도 신호 설정 반환"""
         return self.config.get('technical_sell_signals', {})
 
-    def get_holdings(self) -> List[Holding]:
+    def get_holdings(self) -> List[ConfigHolding]:
         """모든 보유 종목 반환"""
         holdings = []
         holdings_data = self.config.get('holdings', {})
@@ -150,14 +154,14 @@ class PortfolioManager:
             if data is None:
                 continue
             try:
-                holding = Holding.from_dict(symbol, data)
+                holding = ConfigHolding.from_dict(symbol, data)
                 holdings.append(holding)
             except Exception as e:
                 self.logger.warning(f"Failed to parse holding {symbol}: {e}")
 
         return holdings
 
-    def get_holding(self, symbol: str) -> Optional[Holding]:
+    def get_holding(self, symbol: str) -> Optional[ConfigHolding]:
         """특정 종목 정보 반환"""
         holdings_data = self.config.get('holdings', {})
         if symbol in holdings_data and holdings_data[symbol]:
