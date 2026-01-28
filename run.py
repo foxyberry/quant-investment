@@ -169,12 +169,14 @@ class StrategyRunner:
         # Template file
         template_file = self.templates_dir / f"{strategy_type}_template.py"
         if not template_file.exists():
-            logger.warning(f"Template not found: {template_file}")
-            logger.info("Creating basic template...")
-            template_content = self._get_basic_template(strategy_type)
-        else:
-            with open(template_file, 'r') as f:
-                template_content = f.read()
+            logger.error(f"Template not found: {template_file}")
+            logger.info(f"Available templates in {self.templates_dir}:")
+            for t in self.templates_dir.glob("*_template.py"):
+                logger.info(f"  - {t.name}")
+            return False
+
+        with open(template_file, 'r') as f:
+            template_content = f.read()
         
         # Create new strategy file
         new_file = strategy_dir / f"{name}.py"
@@ -188,127 +190,6 @@ class StrategyRunner:
         logger.info(f"Created new strategy: {new_file}")
         logger.info(f"Edit the file and run: python run.py {new_file.relative_to(self.project_root)}")
         return True
-    
-    def _get_basic_template(self, strategy_type: str) -> str:
-        """Get a basic template for strategy type"""
-        if strategy_type == 'screening':
-            return '''"""
-Custom Screening Strategy
-"""
-from screener.basic_filter import BasicInfoScreener
-from screener.screening_criteria import ScreeningCriteria
-import logging
-
-logger = logging.getLogger(__name__)
-
-def run():
-    """Main screening logic"""
-    logger.info("Running custom screening strategy...")
-    
-    # Initialize screener
-    screener = BasicInfoScreener()
-    
-    # Get S&P 500 stocks
-    stocks = screener.get_snp500_basic_info()
-    logger.info(f"Total stocks: {len(stocks)}")
-    
-    # Define your criteria here
-    criteria = ScreeningCriteria(
-        min_price=10,
-        max_price=500,
-        min_volume=500_000,
-        min_market_cap=5_000_000_000,
-        sectors=['Technology', 'Healthcare']
-    )
-    
-    # Apply filters
-    filtered = screener.apply_basic_filters(stocks, criteria)
-    logger.info(f"Filtered stocks: {len(filtered)}")
-    
-    # Add your custom logic here
-    # ...
-    
-    return filtered
-
-if __name__ == "__main__":
-    results = run()
-    print(f"Found {len(results)} stocks matching criteria")
-'''
-        elif strategy_type == 'backtesting':
-            return '''"""
-Custom Backtesting Strategy
-"""
-from engine.backtrader_engine import BacktraderEngine
-from engine.backtrader_strategy import BottomBreakoutStrategy
-from datetime import datetime, timedelta
-import logging
-
-logger = logging.getLogger(__name__)
-
-def run():
-    """Main backtesting logic"""
-    logger.info("Running custom backtesting strategy...")
-    
-    # Define symbols to test
-    symbols = ['AAPL', 'MSFT', 'GOOGL']
-    
-    # Initialize backtest engine
-    engine = BacktraderEngine(initial_cash=100000, commission=0.001)
-    
-    # Define strategy parameters
-    strategy_params = {
-        'lookback_days': 20,
-        'breakout_threshold': 1.05,
-        'stop_loss_threshold': 0.95,
-        'take_profit_threshold': 1.10,
-        'position_size': 0.2
-    }
-    
-    # Set date range
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=180)
-    
-    # Run backtest
-    results = engine.batch_backtest(
-        symbols=symbols,
-        start_date=start_date,
-        end_date=end_date,
-        strategy_class=BottomBreakoutStrategy,
-        strategy_params=strategy_params
-    )
-    
-    # Process results
-    for result in results:
-        if 'error' not in result:
-            logger.info(f"{result['symbol']}: Return={result['total_return_pct']:.2f}%")
-    
-    return results
-
-if __name__ == "__main__":
-    results = run()
-    print(f"Backtested {len(results)} symbols")
-'''
-        else:
-            return '''"""
-Custom Strategy
-"""
-import logging
-
-logger = logging.getLogger(__name__)
-
-def run():
-    """Main strategy logic"""
-    logger.info("Running custom strategy...")
-    
-    # Add your strategy logic here
-    results = {}
-    
-    return results
-
-if __name__ == "__main__":
-    results = run()
-    print("Strategy completed")
-'''
 
 
 def main():
