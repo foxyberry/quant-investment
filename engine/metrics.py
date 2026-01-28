@@ -11,10 +11,30 @@ Metrics:
     - CAGR: 연평균 복리 수익률
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 import pandas as pd
 import numpy as np
+
+
+# PnL column name variants
+PNL_COLUMN_NAMES: List[str] = ['PnL', 'pnl', 'profit', 'Profit', 'ReturnPct']
+
+
+def find_pnl_column(df: pd.DataFrame) -> Optional[str]:
+    """
+    데이터프레임에서 PnL 컬럼 찾기
+
+    Args:
+        df: 거래 내역 DataFrame
+
+    Returns:
+        PnL 컬럼명 또는 None
+    """
+    for col in PNL_COLUMN_NAMES:
+        if col in df.columns:
+            return col
+    return None
 
 
 @dataclass
@@ -176,12 +196,7 @@ def calculate_win_rate(trades: pd.DataFrame) -> float:
     if trades.empty:
         return 0.0
 
-    pnl_col = None
-    for col in ['PnL', 'pnl', 'profit', 'Profit']:
-        if col in trades.columns:
-            pnl_col = col
-            break
-
+    pnl_col = find_pnl_column(trades)
     if pnl_col is None:
         return 0.0
 
@@ -202,12 +217,7 @@ def calculate_profit_factor(trades: pd.DataFrame) -> float:
     if trades.empty:
         return 0.0
 
-    pnl_col = None
-    for col in ['PnL', 'pnl', 'profit', 'Profit']:
-        if col in trades.columns:
-            pnl_col = col
-            break
-
+    pnl_col = find_pnl_column(trades)
     if pnl_col is None:
         return 0.0
 
@@ -233,12 +243,7 @@ def calculate_consecutive_wins_losses(trades: pd.DataFrame) -> tuple:
     if trades.empty:
         return 0, 0
 
-    pnl_col = None
-    for col in ['PnL', 'pnl', 'profit', 'Profit']:
-        if col in trades.columns:
-            pnl_col = col
-            break
-
+    pnl_col = find_pnl_column(trades)
     if pnl_col is None:
         return 0, 0
 
