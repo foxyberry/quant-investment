@@ -42,6 +42,26 @@ quant-investment/
 │   └── strategies/               # Trading strategies
 │       └── ma_cross.py           # MA crossover strategies
 │
+├── models/                       # Data models
+│   ├── condition.py              # Quant condition schema (17 types)
+│   ├── watchlist.py              # Watchlist management
+│   └── price_target.py           # Price target settings
+│
+├── discovery/                    # Stock discovery
+│   ├── evaluator.py              # Condition evaluation engine
+│   ├── indicators.py             # Technical indicators (RSI, MACD, BB)
+│   └── decision.py               # Buy decision logic (scoring)
+│
+├── portfolio/                    # Portfolio management
+│   ├── holdings.py               # Holdings CRUD
+│   ├── monitor.py                # Price monitoring (polling)
+│   ├── trigger.py                # Condition trigger detection
+│   ├── conditions.py             # Trading condition IoC pattern
+│   ├── quantity.py               # Buy/sell quantity calculation
+│   ├── executor.py               # Order execution (Paper/Live)
+│   ├── risk.py                   # Risk management rules
+│   └── notifier.py               # Notification (Telegram/Slack)
+│
 ├── scripts/                      # Executable scripts
 │   ├── backtesting/              # Backtesting scripts
 │   │   └── run_backtest.py       # CLI backtest runner
@@ -108,7 +128,31 @@ See [docs/OPTIONS_TRACKER_README.md](docs/OPTIONS_TRACKER_README.md) for details
 python scripts/live/portfolio_sell_checker.py
 ```
 
-### 4. Run Backtest
+### 4. Stock Discovery (Buy Signal Analysis)
+```python
+from discovery import analyze_buy_signal
+
+decision = analyze_buy_signal("005930.KS")
+print(decision.summary())
+# Recommendation: HOLD, Score: 54/100, Risk: HIGH
+```
+
+### 5. Portfolio Management & Paper Trading
+```python
+from portfolio import Portfolio, OrderExecutor, Order
+
+# Manage holdings
+portfolio = Portfolio()
+portfolio.add("005930.KS", quantity=10, avg_price=70000)
+
+# Paper trading
+executor = OrderExecutor(dry_run=True)
+order = Order("005930.KS", "SELL", quantity=5)
+result = executor.execute(order, market_price=80000)
+print(f"Simulated P&L: {result.fill_price * result.fill_quantity:,.0f}")
+```
+
+### 6. Run Backtest
 ```bash
 # Basic backtest (Korean stock) - uses SMA(10,20) by default
 python scripts/backtesting/run_backtest.py --ticker 005930.KS --period 1y
@@ -130,7 +174,7 @@ python scripts/backtesting/run_backtest.py --ticker 005930.KS --optimize
 | `ema` | Exponential MA crossover | n1=12, n2=26 |
 | `ma_touch` | MA touch & bounce | ma_period=20 |
 
-### 5. Create New Strategy
+### 7. Create New Strategy
 
 1. Copy template
 ```bash
@@ -151,6 +195,21 @@ python run.py scripts/screening/my_strategy.py
 ```
 
 ## Recent Updates
+
+### Portfolio Monitoring System (2026-01)
+- Holdings management with auto avg price calculation
+- Price monitoring with polling & callbacks
+- Condition trigger detection (price targets, stop loss)
+- Trading condition IoC pattern (customizable sell conditions)
+- Paper trading executor with virtual balance
+- Risk management rules (position limits, daily loss limits)
+- Notification system (Telegram, Slack, Console)
+
+### Stock Discovery System (2026-01)
+- Quant condition schema with 17 condition types
+- Technical indicators (RSI, MACD, Bollinger, MA 5/20/60/120/240)
+- Buy decision logic with scoring (STRONG_BUY/BUY/HOLD/WAIT)
+- Watchlist & price target management
 
 ### Backtesting Framework (2026-01)
 - Backtesting.py integration for strategy testing

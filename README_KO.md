@@ -42,6 +42,26 @@ quant-investment/
 │   └── strategies/               # 트레이딩 전략
 │       └── ma_cross.py           # 이동평균 크로스오버 전략
 │
+├── models/                       # 데이터 모델
+│   ├── condition.py              # 퀀트 조건 스키마 (17가지 타입)
+│   ├── watchlist.py              # 관심종목 관리
+│   └── price_target.py           # 목표가 설정
+│
+├── discovery/                    # 종목 발굴
+│   ├── evaluator.py              # 조건 평가 엔진
+│   ├── indicators.py             # 기술적 지표 (RSI, MACD, BB)
+│   └── decision.py               # 매수 결정 로직 (점수화)
+│
+├── portfolio/                    # 포트폴리오 관리
+│   ├── holdings.py               # 보유 종목 CRUD
+│   ├── monitor.py                # 가격 모니터링 (폴링)
+│   ├── trigger.py                # 조건 트리거 감지
+│   ├── conditions.py             # 매매 조건 IoC 패턴
+│   ├── quantity.py               # 매수/매도 수량 계산
+│   ├── executor.py               # 주문 실행 (Paper/Live)
+│   ├── risk.py                   # 위험 관리 규칙
+│   └── notifier.py               # 알림 (텔레그램/슬랙)
+│
 ├── scripts/                      # 실행 스크립트
 │   ├── backtesting/              # 백테스팅 스크립트
 │   │   └── run_backtest.py       # CLI 백테스트 실행기
@@ -108,7 +128,31 @@ python scripts/live/options_tracker.py
 python scripts/live/portfolio_sell_checker.py
 ```
 
-### 4. 백테스트 실행
+### 4. 종목 발굴 (매수 신호 분석)
+```python
+from discovery import analyze_buy_signal
+
+decision = analyze_buy_signal("005930.KS")
+print(decision.summary())
+# Recommendation: HOLD, Score: 54/100, Risk: HIGH
+```
+
+### 5. 포트폴리오 관리 & 모의 거래
+```python
+from portfolio import Portfolio, OrderExecutor, Order
+
+# 보유 종목 관리
+portfolio = Portfolio()
+portfolio.add("005930.KS", quantity=10, avg_price=70000)
+
+# 모의 거래 (Paper Trading)
+executor = OrderExecutor(dry_run=True)
+order = Order("005930.KS", "SELL", quantity=5)
+result = executor.execute(order, market_price=80000)
+print(f"시뮬레이션 손익: {result.fill_price * result.fill_quantity:,.0f}")
+```
+
+### 6. 백테스트 실행
 ```bash
 # 기본 백테스트 (한국 주식) - 기본값 SMA(10,20) 사용
 python scripts/backtesting/run_backtest.py --ticker 005930.KS --period 1y
@@ -130,7 +174,7 @@ python scripts/backtesting/run_backtest.py --ticker 005930.KS --optimize
 | `ema` | 지수 이평선 크로스오버 | n1=12, n2=26 |
 | `ma_touch` | 이평선 터치 후 반등 | ma_period=20 |
 
-### 5. 한국 주식 스크리너 실행
+### 7. 한국 주식 스크리너 실행
 ```bash
 # 일일 리포트 (골든/데스크로스 감지)
 python scripts/screening/korean_daily_report.py
@@ -142,7 +186,7 @@ python scripts/screening/korean_ma_touch.py
 
 자세한 내용은 [docs/KOREAN_MA_SCREENER.md](docs/KOREAN_MA_SCREENER.md) 참고
 
-### 6. 새 전략 만들기
+### 8. 새 전략 만들기
 
 1. 템플릿 복사
 ```bash
@@ -163,6 +207,21 @@ python run.py scripts/screening/my_strategy.py
 ```
 
 ## 최근 업데이트
+
+### 포트폴리오 모니터링 시스템 (2026-01)
+- 보유 종목 관리 (평균 매수가 자동 계산)
+- 가격 모니터링 (폴링 방식 + 콜백)
+- 조건 트리거 감지 (목표가, 손절가)
+- 매매 조건 IoC 패턴 (커스텀 매도 조건)
+- Paper Trading (가상 잔고 시뮬레이션)
+- 위험 관리 규칙 (포지션 한도, 일일 손실 한도)
+- 알림 시스템 (텔레그램, 슬랙, 콘솔)
+
+### 종목 발굴 시스템 (2026-01)
+- 퀀트 조건 스키마 (17가지 조건 타입)
+- 기술적 지표 (RSI, MACD, 볼린저, MA 5/20/60/120/240)
+- 매수 결정 로직 (STRONG_BUY/BUY/HOLD/WAIT 점수화)
+- 관심종목 & 목표가 관리
 
 ### 백테스팅 프레임워크 (2026-01)
 - Backtesting.py 기반 전략 테스트
