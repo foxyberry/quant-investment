@@ -5,6 +5,7 @@ Quantitative investment strategy development and backtesting project
 [한국어 README](README_KO.md)
 
 ## Stack
+- **Backtesting.py** - Strategy backtesting framework
 - **yfinance** - Stock data collection
 - **pykrx** - Korean stock data (KOSPI/KOSDAQ)
 - **pandas/numpy** - Data processing
@@ -35,7 +36,15 @@ quant-investment/
 │   ├── korean_screening.yaml     # Korean stock screening settings
 │   └── screening_criteria.yaml   # Technical screening criteria
 │
+├── engine/                       # Backtesting engine
+│   ├── backtesting_engine.py     # Backtesting.py wrapper
+│   ├── metrics.py                # Performance metrics (Sharpe, MDD, etc.)
+│   └── strategies/               # Trading strategies
+│       └── ma_cross.py           # MA crossover strategies
+│
 ├── scripts/                      # Executable scripts
+│   ├── backtesting/              # Backtesting scripts
+│   │   └── run_backtest.py       # CLI backtest runner
 │   ├── screening/                # Stock screening scripts
 │   │   ├── korean_daily_report.py    # Daily report with golden/death cross
 │   │   ├── korean_crossover.py       # MA crossover detection
@@ -99,7 +108,19 @@ See [docs/OPTIONS_TRACKER_README.md](docs/OPTIONS_TRACKER_README.md) for details
 python scripts/live/portfolio_sell_checker.py
 ```
 
-### 4. Create New Strategy
+### 4. Run Backtest
+```bash
+# Basic backtest (Korean stock)
+python scripts/backtesting/run_backtest.py --ticker 005930.KS --period 1y
+
+# US stock with EMA strategy
+python scripts/backtesting/run_backtest.py --ticker AAPL --strategy ema
+
+# Parameter optimization
+python scripts/backtesting/run_backtest.py --ticker 005930.KS --optimize
+```
+
+### 5. Create New Strategy
 
 1. Copy template
 ```bash
@@ -120,6 +141,12 @@ python run.py scripts/screening/my_strategy.py
 ```
 
 ## Recent Updates
+
+### Backtesting Framework (2026-01)
+- Backtesting.py integration for strategy testing
+- MA crossover strategies (SMA, EMA)
+- Performance metrics: Sharpe, Sortino, MDD, Win Rate, CAGR
+- Run: `python scripts/backtesting/run_backtest.py --ticker AAPL`
 
 ### Portfolio Sell Alert (2026-01)
 - Portfolio holdings management via `config/portfolio.yaml`
@@ -150,6 +177,7 @@ python run.py scripts/screening/my_strategy.py
 ## Contributing
 
 Add new strategies under `scripts/` in the appropriate subfolder:
+- `backtesting/` - Backtesting scripts
 - `screening/` - Stock screening
 - `live/` - Live trading/bots
 

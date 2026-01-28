@@ -5,6 +5,7 @@
 [English README](README.md)
 
 ## 기술 스택
+- **Backtesting.py** - 전략 백테스팅 프레임워크
 - **yfinance** - 미국 주가 데이터 수집
 - **pykrx** - 한국 주식 데이터 (코스피/코스닥)
 - **pandas/numpy** - 데이터 처리
@@ -35,7 +36,15 @@ quant-investment/
 │   ├── korean_screening.yaml     # 한국 주식 스크리닝 설정
 │   └── screening_criteria.yaml   # 기술적 스크리닝 조건
 │
+├── engine/                       # 백테스팅 엔진
+│   ├── backtesting_engine.py     # Backtesting.py 래퍼
+│   ├── metrics.py                # 성능 지표 (Sharpe, MDD 등)
+│   └── strategies/               # 트레이딩 전략
+│       └── ma_cross.py           # 이동평균 크로스오버 전략
+│
 ├── scripts/                      # 실행 스크립트
+│   ├── backtesting/              # 백테스팅 스크립트
+│   │   └── run_backtest.py       # CLI 백테스트 실행기
 │   ├── screening/                # 종목 스크리닝 스크립트
 │   │   ├── korean_daily_report.py    # 일일 리포트 (골든/데스크로스)
 │   │   ├── korean_crossover.py       # 이평선 크로스오버 감지
@@ -99,7 +108,19 @@ python scripts/live/options_tracker.py
 python scripts/live/portfolio_sell_checker.py
 ```
 
-### 4. 한국 주식 스크리너 실행
+### 4. 백테스트 실행
+```bash
+# 기본 백테스트 (한국 주식)
+python scripts/backtesting/run_backtest.py --ticker 005930.KS --period 1y
+
+# 미국 주식 + EMA 전략
+python scripts/backtesting/run_backtest.py --ticker AAPL --strategy ema
+
+# 파라미터 최적화
+python scripts/backtesting/run_backtest.py --ticker 005930.KS --optimize
+```
+
+### 5. 한국 주식 스크리너 실행
 ```bash
 # 일일 리포트 (골든/데스크로스 감지)
 python scripts/screening/korean_daily_report.py
@@ -111,7 +132,7 @@ python scripts/screening/korean_ma_touch.py
 
 자세한 내용은 [docs/KOREAN_MA_SCREENER.md](docs/KOREAN_MA_SCREENER.md) 참고
 
-### 5. 새 전략 만들기
+### 6. 새 전략 만들기
 
 1. 템플릿 복사
 ```bash
@@ -132,6 +153,12 @@ python run.py scripts/screening/my_strategy.py
 ```
 
 ## 최근 업데이트
+
+### 백테스팅 프레임워크 (2026-01)
+- Backtesting.py 기반 전략 테스트
+- 이동평균 크로스오버 전략 (SMA, EMA)
+- 성능 지표: Sharpe, Sortino, MDD, Win Rate, CAGR
+- 실행: `python scripts/backtesting/run_backtest.py --ticker AAPL`
 
 ### 포트폴리오 매도 알림 (2026-01)
 - `config/portfolio.yaml`로 보유 종목 관리
@@ -166,6 +193,7 @@ python run.py scripts/screening/my_strategy.py
 ## 기여하기
 
 새 전략은 `scripts/` 아래 적절한 하위 폴더에 추가해주세요:
+- `backtesting/` - 백테스팅 스크립트
 - `screening/` - 종목 스크리닝
 - `live/` - 실전 거래/봇
 
