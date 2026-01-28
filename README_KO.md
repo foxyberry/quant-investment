@@ -62,6 +62,12 @@ quant-investment/
 │   ├── risk.py                   # 위험 관리 규칙
 │   └── notifier.py               # 알림 (텔레그램/슬랙)
 │
+├── news/                         # 뉴스 피드
+│   ├── provider.py               # 뉴스 제공자 인터페이스
+│   ├── finnhub.py                # Finnhub API (60건/분 무료)
+│   ├── marketaux.py              # Marketaux API (100건/일 무료)
+│   └── aggregator.py             # 다중 소스 통합
+│
 ├── scripts/                      # 실행 스크립트
 │   ├── backtesting/              # 백테스팅 스크립트
 │   │   └── run_backtest.py       # CLI 백테스트 실행기
@@ -152,7 +158,17 @@ result = executor.execute(order, market_price=80000)
 print(f"시뮬레이션 손익: {result.fill_price * result.fill_quantity:,.0f}")
 ```
 
-### 6. 백테스트 실행
+### 6. 뉴스 피드 & 감성 분석
+```python
+from news import NewsAggregator
+
+aggregator = NewsAggregator()  # FINNHUB_API_KEY, MARKETAUX_API_KEY 환경변수 사용
+news = aggregator.get_news("AAPL", limit=10)
+sentiment = aggregator.get_sentiment("AAPL")
+print(aggregator.summary("AAPL"))
+```
+
+### 7. 백테스트 실행
 ```bash
 # 기본 백테스트 (한국 주식) - 기본값 SMA(10,20) 사용
 python scripts/backtesting/run_backtest.py --ticker 005930.KS --period 1y
@@ -174,7 +190,7 @@ python scripts/backtesting/run_backtest.py --ticker 005930.KS --optimize
 | `ema` | 지수 이평선 크로스오버 | n1=12, n2=26 |
 | `ma_touch` | 이평선 터치 후 반등 | ma_period=20 |
 
-### 7. 한국 주식 스크리너 실행
+### 8. 한국 주식 스크리너 실행
 ```bash
 # 일일 리포트 (골든/데스크로스 감지)
 python scripts/screening/korean_daily_report.py
@@ -186,7 +202,7 @@ python scripts/screening/korean_ma_touch.py
 
 자세한 내용은 [docs/KOREAN_MA_SCREENER.md](docs/KOREAN_MA_SCREENER.md) 참고
 
-### 8. 새 전략 만들기
+### 9. 새 전략 만들기
 
 1. 템플릿 복사
 ```bash

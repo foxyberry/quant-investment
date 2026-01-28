@@ -62,6 +62,12 @@ quant-investment/
 │   ├── risk.py                   # Risk management rules
 │   └── notifier.py               # Notification (Telegram/Slack)
 │
+├── news/                         # News feed integration
+│   ├── provider.py               # News provider interface
+│   ├── finnhub.py                # Finnhub API (60 calls/min free)
+│   ├── marketaux.py              # Marketaux API (100 calls/day free)
+│   └── aggregator.py             # Multi-source aggregation
+│
 ├── scripts/                      # Executable scripts
 │   ├── backtesting/              # Backtesting scripts
 │   │   └── run_backtest.py       # CLI backtest runner
@@ -152,7 +158,17 @@ result = executor.execute(order, market_price=80000)
 print(f"Simulated P&L: {result.fill_price * result.fill_quantity:,.0f}")
 ```
 
-### 6. Run Backtest
+### 6. News Feed & Sentiment Analysis
+```python
+from news import NewsAggregator
+
+aggregator = NewsAggregator()  # Uses FINNHUB_API_KEY, MARKETAUX_API_KEY env vars
+news = aggregator.get_news("AAPL", limit=10)
+sentiment = aggregator.get_sentiment("AAPL")
+print(aggregator.summary("AAPL"))
+```
+
+### 7. Run Backtest
 ```bash
 # Basic backtest (Korean stock) - uses SMA(10,20) by default
 python scripts/backtesting/run_backtest.py --ticker 005930.KS --period 1y
@@ -174,7 +190,7 @@ python scripts/backtesting/run_backtest.py --ticker 005930.KS --optimize
 | `ema` | Exponential MA crossover | n1=12, n2=26 |
 | `ma_touch` | MA touch & bounce | ma_period=20 |
 
-### 7. Create New Strategy
+### 8. Create New Strategy
 
 1. Copy template
 ```bash
