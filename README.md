@@ -110,15 +110,25 @@ python scripts/live/portfolio_sell_checker.py
 
 ### 4. Run Backtest
 ```bash
-# Basic backtest (Korean stock)
+# Basic backtest (Korean stock) - uses SMA(10,20) by default
 python scripts/backtesting/run_backtest.py --ticker 005930.KS --period 1y
 
 # US stock with EMA strategy
 python scripts/backtesting/run_backtest.py --ticker AAPL --strategy ema
 
+# Custom MA periods
+python scripts/backtesting/run_backtest.py --ticker AAPL --strategy sma --n1 5 --n2 30
+
 # Parameter optimization
 python scripts/backtesting/run_backtest.py --ticker 005930.KS --optimize
 ```
+
+**Available strategies:**
+| Strategy | Description | Default params |
+|----------|-------------|----------------|
+| `sma` | Simple MA crossover (default) | n1=10, n2=20 |
+| `ema` | Exponential MA crossover | n1=12, n2=26 |
+| `ma_touch` | MA touch & bounce | ma_period=20 |
 
 ### 5. Create New Strategy
 

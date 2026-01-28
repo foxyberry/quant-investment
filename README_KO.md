@@ -110,15 +110,25 @@ python scripts/live/portfolio_sell_checker.py
 
 ### 4. 백테스트 실행
 ```bash
-# 기본 백테스트 (한국 주식)
+# 기본 백테스트 (한국 주식) - 기본값 SMA(10,20) 사용
 python scripts/backtesting/run_backtest.py --ticker 005930.KS --period 1y
 
 # 미국 주식 + EMA 전략
 python scripts/backtesting/run_backtest.py --ticker AAPL --strategy ema
 
+# 이평선 기간 직접 지정
+python scripts/backtesting/run_backtest.py --ticker AAPL --strategy sma --n1 5 --n2 30
+
 # 파라미터 최적화
 python scripts/backtesting/run_backtest.py --ticker 005930.KS --optimize
 ```
+
+**사용 가능한 전략:**
+| 전략 | 설명 | 기본 파라미터 |
+|------|------|---------------|
+| `sma` | 단순 이평선 크로스오버 (기본값) | n1=10, n2=20 |
+| `ema` | 지수 이평선 크로스오버 | n1=12, n2=26 |
+| `ma_touch` | 이평선 터치 후 반등 | ma_period=20 |
 
 ### 5. 한국 주식 스크리너 실행
 ```bash
