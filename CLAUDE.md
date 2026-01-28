@@ -18,24 +18,48 @@
 
 ---
 
-## 2. 핵심 코드 파악 순서
+## 2. 핵심 모듈
 
-### 진입점 (Entry Points)
-| 파일 | 용도 | 우선순위 |
-|------|------|----------|
-| `run.py` | 메인 진입점 (전략 오케스트레이터) | **필수** |
-| `scripts/live/portfolio_sell_checker.py` | 포트폴리오 매도 신호 확인 | 포트폴리오 작업시 |
-| `scripts/live/options_tracker.py` | 옵션 거래량 추적 봇 | 옵션 작업시 |
-
-### 스크리너 모듈
+### 백테스팅 (engine/)
 | 파일 | 설명 |
 |------|------|
-| `screener/basic_filter.py` | 기본 정보 필터 (가격, 거래량, 시총) |
-| `screener/technical_filter.py` | 기술적 지표 필터 |
-| `screener/portfolio_manager.py` | 포트폴리오 관리 |
-| `screener/korean/` | 한국 주식 스크리너 |
+| `engine/backtesting_engine.py` | Backtesting.py 래퍼 |
+| `engine/metrics.py` | 성능 지표 (Sharpe, MDD, CAGR) |
+| `engine/strategies/` | 트레이딩 전략 (SMA, EMA) |
 
-### 유틸리티
+### 종목 발굴 (discovery/)
+| 파일 | 설명 |
+|------|------|
+| `discovery/evaluator.py` | 조건 평가 엔진 |
+| `discovery/indicators.py` | 기술적 지표 (RSI, MACD, BB, MA) |
+| `discovery/decision.py` | 매수 결정 로직 (점수화) |
+
+### 포트폴리오 관리 (portfolio/)
+| 파일 | 설명 |
+|------|------|
+| `portfolio/holdings.py` | 보유 종목 CRUD |
+| `portfolio/monitor.py` | 가격 모니터링 (폴링) |
+| `portfolio/trigger.py` | 조건 트리거 감지 |
+| `portfolio/conditions.py` | 매매 조건 IoC 패턴 |
+| `portfolio/executor.py` | 주문 실행 (Paper/Live) |
+| `portfolio/risk.py` | 위험 관리 규칙 |
+| `portfolio/notifier.py` | 알림 (텔레그램/슬랙) |
+
+### 뉴스 피드 (news/)
+| 파일 | 설명 |
+|------|------|
+| `news/finnhub.py` | Finnhub API (60건/분 무료) |
+| `news/marketaux.py` | Marketaux API (100건/일 무료) |
+| `news/aggregator.py` | 다중 소스 통합 |
+
+### 데이터 모델 (models/)
+| 파일 | 설명 |
+|------|------|
+| `models/condition.py` | 퀀트 조건 스키마 (17가지 타입) |
+| `models/watchlist.py` | 관심종목 관리 |
+| `models/price_target.py` | 목표가 설정 |
+
+### 유틸리티 (utils/)
 | 파일 | 설명 |
 |------|------|
 | `utils/fetch.py` | 주가 데이터 수집 (yfinance) |
@@ -50,18 +74,21 @@
 quant-investment/
 ├── run.py                    # 메인 진입점
 ├── config/                   # 설정 파일
-│   ├── base_config.yaml      # 기본 설정
-│   ├── screening_criteria.yaml # 스크리닝 기준
-│   └── portfolio.yaml        # 포트폴리오 설정
+├── engine/                   # 백테스팅 엔진
+├── models/                   # 데이터 모델
+├── discovery/                # 종목 발굴
+├── portfolio/                # 포트폴리오 관리
+├── news/                     # 뉴스 피드
 ├── scripts/                  # 실행 스크립트
-│   ├── screening/            # 종목 스크리닝 스크립트
+│   ├── backtesting/          # 백테스팅 스크립트
+│   ├── screening/            # 종목 스크리닝
 │   └── live/                 # 실전 거래/봇
 ├── screener/                 # 종목 스크리닝 라이브러리
-│   └── korean/               # 한국 주식 스크리너
 ├── utils/                    # 유틸리티
 ├── data/                     # 데이터 저장소
 ├── logs/                     # 로그
 └── docs/                     # 문서
+    └── works/                # 작업 계획 문서
 ```
 
 ---
@@ -69,45 +96,51 @@ quant-investment/
 ## 4. 기술 스택
 
 - **Python 3.13**
+- **Backtesting.py** - 전략 백테스팅
 - **yfinance** - 주가 데이터 수집 (미국)
 - **pykrx** - 주가 데이터 수집 (한국)
 - **pandas/numpy** - 데이터 처리
 
 ---
 
-## 5. 실행 환경 확인
+## 5. 빠른 시작
 
 ```bash
 # 가상환경 활성화
 source venv/bin/activate
 
-# 의존성 확인
-pip list | grep -E "yfinance|pandas|numpy|pykrx"
+# 백테스트 실행
+python scripts/backtesting/run_backtest.py --ticker AAPL
 
-# 메인 실행
-python run.py --list
+# 매수 신호 분석
+python -c "from discovery import analyze_buy_signal; print(analyze_buy_signal('AAPL').summary())"
+
+# 포트폴리오 매도 체크
+python scripts/live/portfolio_sell_checker.py
 ```
 
 ---
 
 ## 6. 작업 유형별 파악 경로
 
-### 새 전략 추가
-1. `scripts/` 구조 파악
-2. `run.py`에서 등록 방식 확인
+### 백테스팅
+1. `engine/backtesting_engine.py` 파악
+2. `engine/strategies/` 전략 확인
+3. `scripts/backtesting/run_backtest.py` 실행
 
-### 스크리닝 조건 수정
-1. `config/screening_criteria.yaml` 파악
-2. `screener/` 모듈 확인
-3. 관련 필터 클래스 수정
+### 종목 발굴
+1. `discovery/` 모듈 확인
+2. `models/condition.py` 조건 타입 확인
+3. `discovery/decision.py` 매수 결정 로직
 
-### 포트폴리오 매도 체크
-1. `config/portfolio.yaml` 설정
-2. `scripts/live/portfolio_sell_checker.py` 실행
+### 포트폴리오 관리
+1. `portfolio/holdings.py` 보유 종목 관리
+2. `portfolio/executor.py` 주문 실행
+3. `portfolio/risk.py` 위험 관리
 
-### 옵션 트래커 수정
-1. `docs/OPTIONS_TRACKER_README.md` 읽기
-2. `scripts/live/options_tracker.py` 코드 확인
+### 뉴스 피드
+1. 환경 변수 설정: `FINNHUB_API_KEY`, `MARKETAUX_API_KEY`
+2. `news/aggregator.py` 사용
 
 ---
 
@@ -117,9 +150,15 @@ python run.py --list
 - 데이터 캐시는 `data/cache/`에 저장됨
 - 로그는 `logs/quant_investment.log` 확인
 - `config/portfolio.yaml`은 gitignore됨 (민감 정보)
+- API 키는 환경 변수로 관리
 
 ---
 
 ## 8. 현재 진행 중인 작업
 
 `docs/works/` 폴더의 작업 계획 문서 참조
+
+### 완료된 Epic
+- Epic 0: Backtesting Framework (#5, #8, #9)
+- Epic 1: Stock Discovery (#6, #10-17)
+- Epic 2: Portfolio Monitoring (#7, #18-26)
