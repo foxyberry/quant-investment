@@ -1,11 +1,29 @@
+"""
+Stock data fetching utilities
+주가 데이터 조회 유틸리티
+
+Usage:
+    from utils.fetch import get_ohlcv
+
+    # Simple interface
+    data = get_ohlcv("AAPL", days=365)
+    data = get_ohlcv("005930.KS", days=365)  # Korean stock
+"""
+
 import os
 import pandas as pd
 import yfinance as yf
 from datetime import datetime, timedelta
+from typing import Optional
+from pathlib import Path
+
 from utils.config_manager import ConfigManager
 from utils.timezone_utils import make_timezone_aware, convert_dataframe_timezone
 
 config = ConfigManager()
+
+# Cache directory
+CACHE_DIR = Path(__file__).parent.parent / "data" / "cache"
 
 def get_cache_path(symbol: str) -> str:
     file_path = config.get_history_file_path(symbol)
@@ -116,3 +134,109 @@ def get_historical_data(symbol: str, start_date: datetime, end_date: datetime):
         return filtered_df
     
     return downloaded_df
+
+
+def get_ohlcv(
+    ticker: str,
+    days: int = 365,
+    use_cache: bool = True
+) -> pd.DataFrame:
+    """
+    단일 종목 OHLCV 데이터 조회
+
+    Args:
+        ticker: 종목 코드 (예: "AAPL", "005930.KS")
+        days: 조회 기간 (일 수, 기본 365일)
+        use_cache: 캐시 사용 여부
+
+    Returns:
+        DataFrame with columns: open, high, low, close, volume
+        (lowercase column names for consistency)
+    """
+    cache_file = CACHE_DIR / f"{ticker.replace('.', '_')}_ohlcv.csv"
+
+    # Try cache first
+    if use_cache and cache_file.exists():
+        try:
+            cached = pd.read_csv(cache_file, index_col=0, parse_dates=True)
+            cache_age = (datetime.now() - cached.index[-1].replace(tzinfo=None)).days
+
+            # Use cache if it's recent (less than 1 day old for last data point)
+            if cache_age <= 1 and len(cached) >= days * 0.7:
+                return _normalize_columns(cached.tail(days))
+        except Exception:
+            pass
+
+    # Fetch from yfinance
+    try:
+        yf_ticker = yf.Ticker(ticker)
+        period = _days_to_period(days)
+        data = yf_ticker.history(period=period, auto_adjust=True)
+
+        if data.empty:
+            raise ValueError(f"No data found for ticker: {ticker}")
+
+        # Save to cache
+        if use_cache:
+            CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            data.to_csv(cache_file)
+
+        return _normalize_columns(data)
+
+    except Exception as e:
+        raise ValueError(f"Failed to fetch data for {ticker}: {e}")
+
+
+def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """컬럼명을 소문자로 통일"""
+    df = df.copy()
+    df.columns = [c.lower() for c in df.columns]
+
+    # Ensure required columns exist
+    required = ['open', 'high', 'low', 'close', 'volume']
+    for col in required:
+        if col not in df.columns:
+            raise ValueError(f"Missing required column: {col}")
+
+    # Select only required columns
+    return df[required]
+
+
+def _days_to_period(days: int) -> str:
+    """일 수를 yfinance period 문자열로 변환"""
+    if days <= 5:
+        return "5d"
+    elif days <= 30:
+        return "1mo"
+    elif days <= 90:
+        return "3mo"
+    elif days <= 180:
+        return "6mo"
+    elif days <= 365:
+        return "1y"
+    elif days <= 730:
+        return "2y"
+    elif days <= 1825:
+        return "5y"
+    else:
+        return "max"
+
+
+def get_current_price(ticker: str) -> Optional[float]:
+    """
+    현재가 조회
+
+    Args:
+        ticker: 종목 코드
+
+    Returns:
+        현재가 (없으면 None)
+    """
+    try:
+        yf_ticker = yf.Ticker(ticker)
+        data = yf_ticker.history(period="5d")
+        if not data.empty:
+            return float(data['Close'].iloc[-1])
+    except Exception:
+        pass
+    return None
