@@ -5,6 +5,7 @@ from .basic_filter import BasicInfoScreener
 from .technical_filter import TechnicalScreener
 from .external_filter import ExternalScreener
 from .screening_criteria import ScreeningCriteria
+from .kospi_fetcher import KospiListFetcher
 
 # New extensible screening system
 from .stock_screener import StockScreener, ScreeningResult
@@ -34,6 +35,7 @@ __all__ = [
     "TechnicalScreener",
     "ExternalScreener",
     "ScreeningCriteria",
+    "KospiListFetcher",
 
     # New extensible system
     "StockScreener",

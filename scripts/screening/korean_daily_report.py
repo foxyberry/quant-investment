@@ -22,7 +22,7 @@ from datetime import datetime
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from screener.korean.kospi_fetcher import KospiListFetcher
+from screener.kospi_fetcher import KospiListFetcher
 from screener import (
     StockScreener,
     MinPriceCondition,
