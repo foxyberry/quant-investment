@@ -200,16 +200,15 @@ code,name,sector
 
 ```
 quant-investment/
-├── screener/korean/
-│   ├── __init__.py
+├── screener/
 │   ├── kospi_fetcher.py         # Stock list fetcher
-│   └── ma_screener.py           # MA screener
-│       ├── MovingAverageScreener   # Short/mid-term (60, 120 days)
-│       └── MultiMAScreener         # Long-term multi (200, 240, 365 days)
+│   └── conditions/              # MA conditions (BelowMACondition, MATouchCondition, etc.)
 │
 ├── scripts/screening/
 │   ├── korean_ma_below.py       # Short/mid-term MA runner
-│   └── korean_ma_touch.py       # Long-term MA touch runner
+│   ├── korean_ma_touch.py       # Long-term MA touch runner
+│   ├── korean_crossover.py      # Golden/Dead cross runner
+│   └── korean_daily_report.py   # Daily comprehensive report
 │
 ├── config/
 │   └── korean_screening.yaml    # Configuration
