@@ -1,13 +1,13 @@
 """
+Korean Stock Below MA Screener
 한국 주식 이동평균선 하향 스크리너
-- 코스피 종목 중 60일선/120일선 아래 종목 탐색
-- 역발상 투자 또는 저점 매수 기회 탐색용
 
-사용법:
-    python my_strategies/screening/korean_ma_below.py
-    python my_strategies/screening/korean_ma_below.py --ma 60
-    python my_strategies/screening/korean_ma_below.py --ma 120
-    python my_strategies/screening/korean_ma_below.py --limit 30
+Screens for stocks trading below their moving averages.
+
+Usage:
+    python scripts/screening/korean_ma_below.py
+    python scripts/screening/korean_ma_below.py --short-ma 60 --long-ma 120
+    python scripts/screening/korean_ma_below.py --limit 30
 """
 
 import sys
@@ -15,18 +15,18 @@ import logging
 import argparse
 from pathlib import Path
 
-# 프로젝트 루트 경로 추가
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from screener.korean.kospi_fetcher import KospiListFetcher
-from screener.korean.ma_screener import (
-    MovingAverageScreener,
-    print_results,
-    format_price
+from screener import (
+    StockScreener,
+    MinPriceCondition,
+    MinVolumeCondition,
+    BelowMACondition,
+    AndCondition,
 )
 
-# 로깅 설정
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -40,133 +40,207 @@ def run(
     min_volume: int = 100000,
     min_price: float = 1000,
     limit: int = 50,
-    show_all: bool = False
 ) -> dict:
     """
-    메인 실행 함수
+    Main screening function.
 
     Args:
-        short_ma: 단기 이동평균 기간
-        long_ma: 장기 이동평균 기간
-        min_volume: 최소 거래량
-        min_price: 최소 주가
-        limit: 출력 제한
-        show_all: 모든 결과 표시
+        short_ma: Short-term MA period
+        long_ma: Long-term MA period
+        min_volume: Minimum volume filter
+        min_price: Minimum price filter
+        limit: Output limit
 
     Returns:
-        {'below_short': [...], 'below_long': [...], 'summary': {...}}
+        Screening results dict
     """
-    print("\n" + "="*60)
-    print(" 한국 주식 이동평균선 스크리너")
-    print(f" 설정: {short_ma}일선 / {long_ma}일선")
-    print("="*60)
+    print("\n" + "=" * 60)
+    print(" Korean Stock Below MA Screener")
+    print(f" MA Periods: {short_ma}d / {long_ma}d")
+    print("=" * 60)
 
-    # 1. 코스피 종목 리스트 가져오기
-    logger.info("코스피 종목 리스트 수집 중...")
+    # 1. Fetch KOSPI stock list
+    logger.info("Fetching KOSPI stock list...")
     fetcher = KospiListFetcher()
     kospi_list = fetcher.get_kospi_symbols()
 
     if not kospi_list:
-        logger.error("종목 리스트를 가져올 수 없습니다.")
+        logger.error("Failed to fetch stock list")
         return {}
 
-    print(f"\n총 {len(kospi_list)}개 종목 대상")
+    tickers = [s['symbol'] for s in kospi_list]
+    ticker_info = {s['symbol']: s['name'] for s in kospi_list}
+    print(f"\nTotal stocks: {len(tickers)}")
 
-    # 2. 이동평균선 스크리닝
-    logger.info("이동평균선 분석 시작...")
-    screener = MovingAverageScreener(
-        short_ma=short_ma,
-        long_ma=long_ma,
-        min_volume=min_volume,
-        min_price=min_price,
-        max_workers=10
-    )
+    # 2. Screen for stocks below short-term MA
+    print(f"\n{'='*60}")
+    print(f" Below {short_ma}-day MA")
+    print(f"{'='*60}")
 
-    results = screener.batch_screen(kospi_list)
+    screener_short = StockScreener(max_workers=10)
+    screener_short.add_condition(MinPriceCondition(min_price))
+    screener_short.add_condition(MinVolumeCondition(min_volume))
+    screener_short.add_condition(BelowMACondition(period=short_ma))
 
-    if not results:
-        logger.warning("분석 결과가 없습니다.")
-        return {}
+    below_short = screener_short.run(tickers=tickers, show_progress=False)
 
-    # 3. 결과 요약
-    summary = screener.get_summary(results)
-    print(f"\n[요약]")
-    print(f"  분석 완료: {summary['total']}개")
-    print(f"  {short_ma}일선 아래: {summary.get(f'below_{short_ma}', 0)}개")
-    print(f"  {long_ma}일선 아래: {summary.get(f'below_{long_ma}', 0)}개")
-    print(f"  둘 다 아래: {summary.get('below_both', 0)}개")
-
-    # 4. 필터링 및 출력
-    below_short = screener.filter_below_ma(results, 'short')
-    below_long = screener.filter_below_ma(results, 'long')
-
-    print_results(
+    # Sort by distance (most below first)
+    below_short_sorted = sorted(
         below_short,
-        f"{short_ma}일선 아래 종목 (낙폭 큰 순)",
-        short_ma,
-        limit
+        key=lambda r: next(
+            (cr.details.get('distance_pct', 0) for cr in r.condition_results
+             if f'below_ma_{short_ma}d' in cr.condition_name),
+            0
+        )
     )
 
-    print_results(
-        below_long,
-        f"{long_ma}일선 아래 종목 (낙폭 큰 순)",
-        long_ma,
-        limit
-    )
-
-    # 5. 둘 다 아래인 종목 (심각한 하락)
-    below_both = [
-        r for r in results
-        if r.get(f'below_{short_ma}') and r.get(f'below_{long_ma}')
-    ]
-    below_both.sort(key=lambda x: x.get(f'distance_from_{long_ma}_pct', 0))
-
-    if below_both:
-        print(f"\n{'='*60}")
-        print(f" {short_ma}일선 & {long_ma}일선 모두 아래 (심각한 하락)")
-        print(f"{'='*60}")
-        for i, r in enumerate(below_both[:limit], 1):
-            dist_short = r.get(f'distance_from_{short_ma}_pct', 0)
-            dist_long = r.get(f'distance_from_{long_ma}_pct', 0)
-            print(
-                f"{i:3}. {r['name'][:10]:<10} ({r['code']}) | "
-                f"현재가 {format_price(r['current_price']):>12} | "
-                f"{short_ma}일선 {dist_short:>+6.1f}% | "
-                f"{long_ma}일선 {dist_long:>+6.1f}%"
+    if below_short_sorted:
+        print(f"\nBelow {short_ma}d MA - {len(below_short_sorted)} stocks (sorted by distance):")
+        for i, r in enumerate(below_short_sorted[:limit], 1):
+            name = ticker_info.get(r.ticker, r.name)[:10]
+            ma_details = next(
+                (cr.details for cr in r.condition_results
+                 if f'below_ma_{short_ma}d' in cr.condition_name),
+                {}
             )
+            distance = ma_details.get('distance_pct', 0) * 100
+            ma_value = ma_details.get('ma_value', 0)
+            print(
+                f"  {i:3}. {name:<10} ({r.ticker}) | "
+                f"Price: {r.current_price:>10,.0f} | "
+                f"{short_ma}d MA: {ma_value:>10,.0f} | "
+                f"Dist: {distance:>+6.1f}%"
+            )
+    else:
+        print("  No stocks found")
+
+    # 3. Screen for stocks below long-term MA
+    print(f"\n{'='*60}")
+    print(f" Below {long_ma}-day MA")
+    print(f"{'='*60}")
+
+    screener_long = StockScreener(max_workers=10)
+    screener_long.add_condition(MinPriceCondition(min_price))
+    screener_long.add_condition(MinVolumeCondition(min_volume))
+    screener_long.add_condition(BelowMACondition(period=long_ma))
+
+    below_long = screener_long.run(tickers=tickers, show_progress=False)
+
+    below_long_sorted = sorted(
+        below_long,
+        key=lambda r: next(
+            (cr.details.get('distance_pct', 0) for cr in r.condition_results
+             if f'below_ma_{long_ma}d' in cr.condition_name),
+            0
+        )
+    )
+
+    if below_long_sorted:
+        print(f"\nBelow {long_ma}d MA - {len(below_long_sorted)} stocks (sorted by distance):")
+        for i, r in enumerate(below_long_sorted[:limit], 1):
+            name = ticker_info.get(r.ticker, r.name)[:10]
+            ma_details = next(
+                (cr.details for cr in r.condition_results
+                 if f'below_ma_{long_ma}d' in cr.condition_name),
+                {}
+            )
+            distance = ma_details.get('distance_pct', 0) * 100
+            ma_value = ma_details.get('ma_value', 0)
+            print(
+                f"  {i:3}. {name:<10} ({r.ticker}) | "
+                f"Price: {r.current_price:>10,.0f} | "
+                f"{long_ma}d MA: {ma_value:>10,.0f} | "
+                f"Dist: {distance:>+6.1f}%"
+            )
+    else:
+        print("  No stocks found")
+
+    # 4. Screen for stocks below BOTH MAs
+    print(f"\n{'='*60}")
+    print(f" Below BOTH {short_ma}d & {long_ma}d MA (Severe Decline)")
+    print(f"{'='*60}")
+
+    screener_both = StockScreener(max_workers=10)
+    screener_both.add_condition(MinPriceCondition(min_price))
+    screener_both.add_condition(MinVolumeCondition(min_volume))
+    screener_both.add_condition(BelowMACondition(period=short_ma))
+    screener_both.add_condition(BelowMACondition(period=long_ma))
+
+    below_both = screener_both.run(tickers=tickers, show_progress=False)
+
+    below_both_sorted = sorted(
+        below_both,
+        key=lambda r: next(
+            (cr.details.get('distance_pct', 0) for cr in r.condition_results
+             if f'below_ma_{long_ma}d' in cr.condition_name),
+            0
+        )
+    )
+
+    if below_both_sorted:
+        print(f"\nBelow both MAs - {len(below_both_sorted)} stocks:")
+        for i, r in enumerate(below_both_sorted[:limit], 1):
+            name = ticker_info.get(r.ticker, r.name)[:10]
+            short_details = next(
+                (cr.details for cr in r.condition_results
+                 if f'below_ma_{short_ma}d' in cr.condition_name),
+                {}
+            )
+            long_details = next(
+                (cr.details for cr in r.condition_results
+                 if f'below_ma_{long_ma}d' in cr.condition_name),
+                {}
+            )
+            dist_short = short_details.get('distance_pct', 0) * 100
+            dist_long = long_details.get('distance_pct', 0) * 100
+            print(
+                f"  {i:3}. {name:<10} ({r.ticker}) | "
+                f"Price: {r.current_price:>10,.0f} | "
+                f"{short_ma}d: {dist_short:>+6.1f}% | "
+                f"{long_ma}d: {dist_long:>+6.1f}%"
+            )
+    else:
+        print("  No stocks found")
+
+    # 5. Summary
+    print(f"\n{'='*60}")
+    print(" Summary")
+    print(f"{'='*60}")
+    print(f"  Analyzed: {len(tickers)} stocks")
+    print(f"  Below {short_ma}d MA: {len(below_short_sorted)}")
+    print(f"  Below {long_ma}d MA: {len(below_long_sorted)}")
+    print(f"  Below both: {len(below_both_sorted)}")
 
     return {
-        'below_short': below_short,
-        'below_long': below_long,
-        'below_both': below_both,
-        'all_results': results,
-        'summary': summary
+        'below_short': below_short_sorted,
+        'below_long': below_long_sorted,
+        'below_both': below_both_sorted,
     }
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='한국 주식 이동평균선 하향 스크리너'
+        description='Korean Stock Below MA Screener'
     )
     parser.add_argument(
         '--short-ma', type=int, default=60,
-        help='단기 이동평균 기간 (기본: 60)'
+        help='Short-term MA period (default: 60)'
     )
     parser.add_argument(
         '--long-ma', type=int, default=120,
-        help='장기 이동평균 기간 (기본: 120)'
+        help='Long-term MA period (default: 120)'
     )
     parser.add_argument(
         '--min-volume', type=int, default=100000,
-        help='최소 거래량 (기본: 100,000)'
+        help='Minimum volume (default: 100,000)'
     )
     parser.add_argument(
         '--min-price', type=float, default=1000,
-        help='최소 주가 (기본: 1,000원)'
+        help='Minimum price (default: 1,000 KRW)'
     )
     parser.add_argument(
         '--limit', type=int, default=50,
-        help='출력 제한 (기본: 50)'
+        help='Output limit (default: 50)'
     )
 
     args = parser.parse_args()

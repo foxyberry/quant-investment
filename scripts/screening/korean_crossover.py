@@ -1,9 +1,10 @@
 """
+Korean Stock Golden/Dead Cross Screener
 한국 주식 골든크로스/데드크로스 스크리너
-- 단기 이평선이 장기 이평선을 돌파하는 종목 탐색
-- 추세 전환 시점 포착용
 
-사용법:
+Screens for stocks with recent MA crossover signals.
+
+Usage:
     python scripts/screening/korean_crossover.py
     python scripts/screening/korean_crossover.py --short-ma 20 --long-ma 60
     python scripts/screening/korean_crossover.py --lookback 10
@@ -14,18 +15,21 @@ import logging
 import argparse
 from pathlib import Path
 
-# 프로젝트 루트 경로 추가
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from screener.korean.kospi_fetcher import KospiListFetcher
-from screener.korean.ma_screener import (
-    CrossoverScreener,
-    print_crossover_results,
-    format_price
+from screener import (
+    StockScreener,
+    MinPriceCondition,
+    MinVolumeCondition,
+    MACrossUpCondition,
+    MACrossDownCondition,
+    MATouchCondition,
+    AboveMACondition,
+    BelowMACondition,
 )
 
-# 로깅 설정
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -43,199 +47,198 @@ def run(
     limit: int = 30
 ) -> dict:
     """
-    메인 실행 함수
+    Main screening function.
 
     Args:
-        short_ma: 단기 이동평균 기간
-        long_ma: 장기 이동평균 기간
-        lookback_days: 크로스 감지 기간 (최근 N일)
-        extra_ma: 추가 분석할 장기 이평선 기간 (예: [240])
-        min_volume: 최소 거래량
-        min_price: 최소 주가
-        limit: 출력 제한
+        short_ma: Short-term MA period
+        long_ma: Long-term MA period
+        lookback_days: Days to look back for crossover detection
+        extra_ma: Additional MA periods for touch analysis
+        min_volume: Minimum volume filter
+        min_price: Minimum price filter
+        limit: Output limit
 
     Returns:
-        {'golden_cross': [...], 'dead_cross': [...], 'summary': {...}}
+        Screening results dict
     """
     if extra_ma is None:
         extra_ma = [240]
 
-    print("\n" + "="*70)
-    print(" 한국 주식 골든크로스/데드크로스 스크리너")
-    print(f" 설정: {short_ma}일선 vs {long_ma}일선 | 최근 {lookback_days}일 내 발생")
+    print("\n" + "=" * 70)
+    print(" Korean Stock Golden/Dead Cross Screener")
+    print(f" Settings: {short_ma}d vs {long_ma}d MA | Lookback: {lookback_days} days")
     if extra_ma:
-        print(f" 추가 분석: {extra_ma}일선 터치 여부")
-    print("="*70)
+        print(f" Extra MA analysis: {extra_ma}")
+    print("=" * 70)
 
-    # 1. 코스피 종목 리스트 가져오기
-    logger.info("코스피 종목 리스트 수집 중...")
+    # 1. Fetch KOSPI stock list
+    logger.info("Fetching KOSPI stock list...")
     fetcher = KospiListFetcher()
     kospi_list = fetcher.get_kospi_symbols()
 
     if not kospi_list:
-        logger.error("종목 리스트를 가져올 수 없습니다.")
+        logger.error("Failed to fetch stock list")
         return {}
 
-    print(f"\n총 {len(kospi_list)}개 종목 대상")
+    tickers = [s['symbol'] for s in kospi_list]
+    ticker_info = {s['symbol']: s['name'] for s in kospi_list}
+    print(f"\nTotal stocks: {len(tickers)}")
 
-    # 2. 크로스오버 스크리닝
-    logger.info("크로스오버 분석 시작...")
-    screener = CrossoverScreener(
-        short_ma=short_ma,
-        long_ma=long_ma,
-        lookback_days=lookback_days,
-        extra_ma_periods=extra_ma,
-        min_volume=min_volume,
-        min_price=min_price,
-        max_workers=10
-    )
-
-    results = screener.batch_screen(kospi_list)
-
-    if not results:
-        logger.warning("분석 결과가 없습니다.")
-        return {}
-
-    # 3. 결과 요약
-    summary = screener.get_summary(results)
-    print(f"\n[요약] 분석 완료: {summary['total']}개")
-    print("-" * 50)
-    print(f"  상승 추세 (단기 > 장기): {summary['bullish']}개")
-    print(f"  하락 추세 (단기 < 장기): {summary['bearish']}개")
-    print(f"  최근 {lookback_days}일 내 골든크로스: {summary['golden_cross']}개")
-    print(f"  최근 {lookback_days}일 내 데드크로스: {summary['dead_cross']}개")
-    for period in extra_ma:
-        below = summary.get(f'ma_{period}_below', 0)
-        touch = summary.get(f'ma_{period}_touch', 0)
-        print(f"  {period}일선 터치: {touch}개 | 아래: {below}개")
-    print("-" * 50)
-
-    # 4. 골든크로스 종목 출력
-    golden_cross = screener.filter_golden_cross(results)
-    print_crossover_results(
-        golden_cross,
-        f"골든크로스 발생 종목 ({short_ma}일선이 {long_ma}일선 상향 돌파)",
-        'golden',
-        limit
-    )
-
-    # 5. 데드크로스 종목 출력
-    dead_cross = screener.filter_dead_cross(results)
-    print_crossover_results(
-        dead_cross,
-        f"데드크로스 발생 종목 ({short_ma}일선이 {long_ma}일선 하향 돌파)",
-        'dead',
-        limit
-    )
-
-    # 6. 장기 이평선 터치/아래 종목 출력
-    for period in extra_ma:
-        touch_list = screener.filter_ma_touch(results, period)
-        if touch_list:
-            print(f"\n{'='*70}")
-            print(f" {period}일선 터치 종목 (±2% 이내)")
-            print(f"{'='*70}")
-            for i, r in enumerate(touch_list[:limit], 1):
-                dist = r.get(f'dist_{period}', 0)
-                ma_val = r.get(f'ma_{period}', 0)
-                cross_info = ""
-                if r.get('has_golden_cross'):
-                    cross_info = " [골든크로스]"
-                elif r.get('has_dead_cross'):
-                    cross_info = " [데드크로스]"
-                print(
-                    f"{i:3}. {r['name'][:10]:<10} ({r['code']}) | "
-                    f"현재가 {format_price(r['current_price']):>12} | "
-                    f"{period}일선 {format_price(ma_val):>12} | "
-                    f"{dist:>+5.1f}%{cross_info}"
-                )
-
-        below_list = screener.filter_ma_below(results, period)
-        if below_list:
-            print(f"\n{'='*70}")
-            print(f" {period}일선 아래 종목 (낙폭 큰 순)")
-            print(f"{'='*70}")
-            for i, r in enumerate(below_list[:limit], 1):
-                dist = r.get(f'dist_{period}', 0)
-                ma_val = r.get(f'ma_{period}', 0)
-                cross_info = ""
-                if r.get('has_golden_cross'):
-                    cross_info = " [골든크로스]"
-                elif r.get('has_dead_cross'):
-                    cross_info = " [데드크로스]"
-                print(
-                    f"{i:3}. {r['name'][:10]:<10} ({r['code']}) | "
-                    f"현재가 {format_price(r['current_price']):>12} | "
-                    f"{period}일선 {format_price(ma_val):>12} | "
-                    f"{dist:>+5.1f}%{cross_info}"
-                )
-
-    # 7. 추세별 상위 종목
+    # 2. Screen for Golden Cross
     print(f"\n{'='*70}")
-    print(f" 상승 추세 강도 TOP 10 (단기 MA가 장기 MA 위)")
+    print(f" Golden Cross ({short_ma}d crosses above {long_ma}d)")
     print(f"{'='*70}")
-    bullish = screener.filter_bullish(results)[:10]
-    for i, r in enumerate(bullish, 1):
-        ma_diff = r.get('ma_diff_pct', 0)
-        print(
-            f"{i:3}. {r['name'][:10]:<10} ({r['code']}) | "
-            f"현재가 {format_price(r['current_price']):>12} | "
-            f"MA차이 {ma_diff:>+5.1f}%"
-        )
 
+    screener_golden = StockScreener(max_workers=10)
+    screener_golden.add_condition(MinPriceCondition(min_price))
+    screener_golden.add_condition(MinVolumeCondition(min_volume))
+    screener_golden.add_condition(MACrossUpCondition(
+        short_period=short_ma,
+        long_period=long_ma,
+        lookback_days=lookback_days
+    ))
+
+    golden_results = screener_golden.run(tickers=tickers, show_progress=False)
+
+    if golden_results:
+        print(f"\nGolden Cross detected - {len(golden_results)} stocks:")
+        for i, r in enumerate(golden_results[:limit], 1):
+            name = ticker_info.get(r.ticker, r.name)[:10]
+            cross_details = next(
+                (cr.details for cr in r.condition_results
+                 if f'ma_cross_up_{short_ma}_{long_ma}' in cr.condition_name),
+                {}
+            )
+            cross_day = cross_details.get('cross_day', '?')
+            short_val = cross_details.get('short_ma', 0)
+            long_val = cross_details.get('long_ma', 0)
+            print(
+                f"  {i:3}. {name:<10} ({r.ticker}) | "
+                f"Price: {r.current_price:>10,.0f} | "
+                f"{short_ma}d: {short_val:>10,.0f} | "
+                f"{long_ma}d: {long_val:>10,.0f} | "
+                f"{cross_day}d ago"
+            )
+    else:
+        print("  No golden cross detected")
+
+    # 3. Screen for Dead Cross
     print(f"\n{'='*70}")
-    print(f" 하락 추세 강도 TOP 10 (단기 MA가 장기 MA 아래)")
+    print(f" Dead Cross ({short_ma}d crosses below {long_ma}d)")
     print(f"{'='*70}")
-    bearish = screener.filter_bearish(results)[:10]
-    for i, r in enumerate(bearish, 1):
-        ma_diff = r.get('ma_diff_pct', 0)
-        print(
-            f"{i:3}. {r['name'][:10]:<10} ({r['code']}) | "
-            f"현재가 {format_price(r['current_price']):>12} | "
-            f"MA차이 {ma_diff:>+5.1f}%"
-        )
+
+    screener_dead = StockScreener(max_workers=10)
+    screener_dead.add_condition(MinPriceCondition(min_price))
+    screener_dead.add_condition(MinVolumeCondition(min_volume))
+    screener_dead.add_condition(MACrossDownCondition(
+        short_period=short_ma,
+        long_period=long_ma,
+        lookback_days=lookback_days
+    ))
+
+    dead_results = screener_dead.run(tickers=tickers, show_progress=False)
+
+    if dead_results:
+        print(f"\nDead Cross detected - {len(dead_results)} stocks:")
+        for i, r in enumerate(dead_results[:limit], 1):
+            name = ticker_info.get(r.ticker, r.name)[:10]
+            cross_details = next(
+                (cr.details for cr in r.condition_results
+                 if f'ma_cross_down_{short_ma}_{long_ma}' in cr.condition_name),
+                {}
+            )
+            cross_day = cross_details.get('cross_day', '?')
+            short_val = cross_details.get('short_ma', 0)
+            long_val = cross_details.get('long_ma', 0)
+            print(
+                f"  {i:3}. {name:<10} ({r.ticker}) | "
+                f"Price: {r.current_price:>10,.0f} | "
+                f"{short_ma}d: {short_val:>10,.0f} | "
+                f"{long_ma}d: {long_val:>10,.0f} | "
+                f"{cross_day}d ago"
+            )
+    else:
+        print("  No dead cross detected")
+
+    # 4. Extra MA touch analysis
+    extra_results = {}
+    for period in extra_ma:
+        print(f"\n{'='*70}")
+        print(f" {period}-day MA Touch (±2%)")
+        print(f"{'='*70}")
+
+        screener_touch = StockScreener(max_workers=10)
+        screener_touch.add_condition(MinPriceCondition(min_price))
+        screener_touch.add_condition(MinVolumeCondition(min_volume))
+        screener_touch.add_condition(MATouchCondition(period=period, threshold=0.02))
+
+        touch_results = screener_touch.run(tickers=tickers, show_progress=False)
+
+        if touch_results:
+            print(f"\n{period}d MA touch - {len(touch_results)} stocks:")
+            for i, r in enumerate(touch_results[:limit], 1):
+                name = ticker_info.get(r.ticker, r.name)[:10]
+                ma_details = next(
+                    (cr.details for cr in r.condition_results
+                     if f'ma_touch_{period}d' in cr.condition_name),
+                    {}
+                )
+                distance = ma_details.get('distance_pct', 0) * 100
+                print(
+                    f"  {i:3}. {name:<10} ({r.ticker}) | "
+                    f"Price: {r.current_price:>10,.0f} | "
+                    f"Dist: {distance:>+6.1f}%"
+                )
+            extra_results[f'{period}_touch'] = touch_results
+
+    # 5. Summary
+    print(f"\n{'='*70}")
+    print(" Summary")
+    print(f"{'='*70}")
+    print(f"  Golden Cross: {len(golden_results)} stocks")
+    print(f"  Dead Cross: {len(dead_results)} stocks")
+    for period in extra_ma:
+        count = len(extra_results.get(f'{period}_touch', []))
+        print(f"  {period}d MA Touch: {count} stocks")
 
     return {
-        'golden_cross': golden_cross,
-        'dead_cross': dead_cross,
-        'bullish': bullish,
-        'bearish': bearish,
-        'all_results': results,
-        'summary': summary
+        'golden_cross': golden_results,
+        'dead_cross': dead_results,
+        'extra_ma': extra_results,
     }
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='한국 주식 골든크로스/데드크로스 스크리너'
+        description='Korean Stock Golden/Dead Cross Screener'
     )
     parser.add_argument(
         '--short-ma', type=int, default=20,
-        help='단기 이동평균 기간 (기본: 20)'
+        help='Short-term MA period (default: 20)'
     )
     parser.add_argument(
         '--long-ma', type=int, default=60,
-        help='장기 이동평균 기간 (기본: 60)'
+        help='Long-term MA period (default: 60)'
     )
     parser.add_argument(
         '--lookback', type=int, default=5,
-        help='크로스 감지 기간 - 최근 N일 (기본: 5)'
+        help='Lookback days for crossover detection (default: 5)'
     )
     parser.add_argument(
         '--extra-ma', type=int, nargs='+', default=[240],
-        help='추가 분석할 장기 이평선 기간 (기본: 240)'
+        help='Extra MA periods for touch analysis (default: 240)'
     )
     parser.add_argument(
         '--min-volume', type=int, default=100000,
-        help='최소 거래량 (기본: 100,000)'
+        help='Minimum volume (default: 100,000)'
     )
     parser.add_argument(
         '--min-price', type=float, default=1000,
-        help='최소 주가 (기본: 1,000원)'
+        help='Minimum price (default: 1,000 KRW)'
     )
     parser.add_argument(
         '--limit', type=int, default=30,
-        help='출력 제한 (기본: 30)'
+        help='Output limit (default: 30)'
     )
 
     args = parser.parse_args()
