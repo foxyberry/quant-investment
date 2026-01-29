@@ -187,15 +187,15 @@ def momentum_breakout(min_price: int = 5000) -> List[BaseCondition]:
 
 def accumulation_basic(
     min_price: int = 5000,
-    bb_max_width: float = 10.0,
-    volume_multiplier: float = 0.8,
-    price_max_range: float = 5.0
+    bb_max_width: float = 15.0,
+    volume_multiplier: float = 1.0,
+    price_max_range: float = 10.0
 ) -> List[BaseCondition]:
     """
     조용한 매집 구간 - 기본 전략
-    - 볼린저 밴드 수축 (폭 10% 이하)
-    - 거래량 평균 이하 (80%)
-    - 가격 횡보 (변동폭 5% 이하)
+    - 볼린저 밴드 수축 (폭 15% 이하)
+    - 거래량 평균 이하 (100%)
+    - 가격 횡보 (변동폭 10% 이하)
     """
     return [
         MinPriceCondition(min_price),
@@ -207,9 +207,9 @@ def accumulation_basic(
 
 def accumulation_obv(
     min_price: int = 5000,
-    bb_max_width: float = 10.0,
-    volume_multiplier: float = 0.8,
-    price_max_range: float = 5.0
+    bb_max_width: float = 15.0,
+    volume_multiplier: float = 1.0,
+    price_max_range: float = 10.0
 ) -> List[BaseCondition]:
     """
     조용한 매집 구간 - OBV 다이버전스 전략
@@ -227,9 +227,9 @@ def accumulation_obv(
 
 def accumulation_full(
     min_price: int = 5000,
-    bb_max_width: float = 10.0,
-    volume_multiplier: float = 0.8,
-    price_max_range: float = 5.0
+    bb_max_width: float = 15.0,
+    volume_multiplier: float = 1.0,
+    price_max_range: float = 10.0
 ) -> List[BaseCondition]:
     """
     조용한 매집 구간 - 종합 전략

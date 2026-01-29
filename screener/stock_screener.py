@@ -26,12 +26,20 @@ Usage:
 
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
+import time
 import pandas as pd
 import yfinance as yf
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+try:
+    from pykrx import stock as pykrx_stock
+    PYKRX_AVAILABLE = True
+except ImportError:
+    PYKRX_AVAILABLE = False
+
 from .conditions.base import BaseCondition, ConditionResult
+from .kospi_fetcher import KospiListFetcher
 
 
 @dataclass
@@ -133,14 +141,25 @@ class StockScreener:
         "352820.KQ",  # 하이브
     ]
 
-    def __init__(self, conditions: Optional[List[BaseCondition]] = None, max_workers: int = 10):
+    def __init__(
+        self,
+        conditions: Optional[List[BaseCondition]] = None,
+        max_workers: int = 5,
+        use_full_universe: bool = True,
+        request_delay: float = 0.2
+    ):
         """
         Args:
             conditions: 초기 조건 목록
-            max_workers: 병렬 처리 워커 수
+            max_workers: 병렬 처리 워커 수 (yfinance rate limit 고려해 기본 5)
+            use_full_universe: True면 pykrx로 전체 종목 가져옴, False면 하드코딩 목록 사용
+            request_delay: API 요청 간 딜레이 (초)
         """
         self.conditions: List[BaseCondition] = conditions or []
         self.max_workers = max_workers
+        self.use_full_universe = use_full_universe
+        self.request_delay = request_delay
+        self._kospi_fetcher = KospiListFetcher() if use_full_universe else None
 
     def add_condition(self, condition: BaseCondition) -> "StockScreener":
         """조건 추가 (체이닝 지원)"""
@@ -154,11 +173,27 @@ class StockScreener:
 
     def get_universe(self, universe: str) -> List[str]:
         """유니버스 종목 목록 반환"""
-        if universe.upper() == "KOSPI":
+        universe_upper = universe.upper()
+
+        # 전체 유니버스 모드 (pykrx 사용)
+        if self.use_full_universe and self._kospi_fetcher:
+            if universe_upper == "KOSPI":
+                symbols = self._kospi_fetcher.get_kospi_symbols()
+                return [s['symbol'] for s in symbols]
+            elif universe_upper == "KOSDAQ":
+                symbols = self._kospi_fetcher.get_kosdaq_symbols()
+                return [s['symbol'] for s in symbols]
+            elif universe_upper == "ALL":
+                kospi = self._kospi_fetcher.get_kospi_symbols()
+                kosdaq = self._kospi_fetcher.get_kosdaq_symbols()
+                return [s['symbol'] for s in kospi] + [s['symbol'] for s in kosdaq]
+
+        # 하드코딩 목록 사용 (fallback)
+        if universe_upper == "KOSPI":
             return self.UNIVERSE_KOSPI
-        elif universe.upper() == "KOSDAQ":
+        elif universe_upper == "KOSDAQ":
             return self.UNIVERSE_KOSDAQ
-        elif universe.upper() == "ALL":
+        elif universe_upper == "ALL":
             return self.UNIVERSE_KOSPI + self.UNIVERSE_KOSDAQ
         else:
             raise ValueError(f"Unknown universe: {universe}. Use 'KOSPI', 'KOSDAQ', or 'ALL'")
@@ -169,9 +204,63 @@ class StockScreener:
             return 1
         return max(c.required_days for c in self.conditions)
 
+    def _is_korean_stock(self, ticker: str) -> bool:
+        """한국 주식인지 확인"""
+        return ticker.endswith('.KS') or ticker.endswith('.KQ')
+
+    def _fetch_data_pykrx(self, ticker: str, days: int) -> Optional[pd.DataFrame]:
+        """pykrx로 한국 주식 데이터 가져오기"""
+        if not PYKRX_AVAILABLE:
+            return None
+
+        try:
+            # 티커에서 종목코드 추출 (005930.KS -> 005930)
+            code = ticker.split('.')[0]
+
+            # 최근 거래일 찾기 (오늘 날짜가 미래일 수 있으므로)
+            # 가장 최근 유효한 날짜를 찾기 위해 과거 날짜부터 시도
+            from datetime import date
+            today = date.today()
+
+            # 시스템 날짜가 미래인 경우 2025년 1월로 설정
+            if today.year > 2025:
+                end_date = date(2025, 1, 24)  # 유효한 거래일
+            else:
+                end_date = today
+
+            start_date = end_date - timedelta(days=days * 2)
+
+            # pykrx로 데이터 가져오기
+            data = pykrx_stock.get_market_ohlcv_by_date(
+                start_date.strftime("%Y%m%d"),
+                end_date.strftime("%Y%m%d"),
+                code
+            )
+
+            if data.empty:
+                return None
+
+            # 컬럼명 영어로 변환
+            data.columns = ['open', 'high', 'low', 'close', 'volume']
+            return data
+
+        except Exception as e:
+            # pykrx 실패 시 yfinance로 폴백
+            return None
+
     def _fetch_data(self, ticker: str, days: int) -> Optional[pd.DataFrame]:
         """종목 데이터 가져오기"""
+        # 한국 주식이면 pykrx 먼저 시도
+        if self._is_korean_stock(ticker) and PYKRX_AVAILABLE:
+            data = self._fetch_data_pykrx(ticker, days)
+            if data is not None and not data.empty:
+                return data
+
+        # pykrx 실패 또는 해외 주식이면 yfinance 사용
         try:
+            # Rate limit 방지를 위한 딜레이
+            time.sleep(self.request_delay)
+
             stock = yf.Ticker(ticker)
             # 여유있게 데이터 가져오기 (주말/휴장일 고려)
             data = stock.history(period=f"{days * 2}d")

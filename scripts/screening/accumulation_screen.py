@@ -203,16 +203,16 @@ Examples:
         help="Minimum price (default: 5000)"
     )
     parser.add_argument(
-        "--bb-width", type=float, default=10.0,
-        help="Max Bollinger Band width %% (default: 10.0)"
+        "--bb-width", type=float, default=15.0,
+        help="Max Bollinger Band width %% (default: 15.0)"
     )
     parser.add_argument(
-        "--volume-mult", type=float, default=0.8,
-        help="Volume below average multiplier (default: 0.8)"
+        "--volume-mult", type=float, default=1.0,
+        help="Volume below average multiplier (default: 1.0)"
     )
     parser.add_argument(
-        "--price-range", type=float, default=5.0,
-        help="Max price range %% for flat detection (default: 5.0)"
+        "--price-range", type=float, default=10.0,
+        help="Max price range %% for flat detection (default: 10.0)"
     )
 
     args = parser.parse_args()
