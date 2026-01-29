@@ -165,7 +165,7 @@ class PortfolioManager:
         """특정 종목 정보 반환"""
         holdings_data = self.config.get('holdings', {})
         if symbol in holdings_data and holdings_data[symbol]:
-            return Holding.from_dict(symbol, holdings_data[symbol])
+            return ConfigHolding.from_dict(symbol, holdings_data[symbol])
         return None
 
     def get_sell_conditions_for(self, symbol: str) -> SellConditions:
