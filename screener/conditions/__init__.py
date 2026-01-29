@@ -60,6 +60,20 @@ from .composite import (
     NotCondition,
 )
 
+from .accumulation import (
+    # Layer 1: Primitive Conditions
+    BollingerWidthCondition,
+    VolumeBelowAvgCondition,
+    PriceFlatCondition,
+    OBVTrendCondition,
+    StochasticLevelCondition,
+    VPCITrendCondition,
+    # Layer 2: Divergence Conditions
+    OBVDivergenceCondition,
+    StochasticDivergenceCondition,
+    VPCIDivergenceCondition,
+)
+
 __all__ = [
     # Base
     'BaseCondition', 'ConditionResult', 'ConditionError',
@@ -79,4 +93,11 @@ __all__ = [
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
+
+    # Accumulation (Layer 1 - Primitives)
+    'BollingerWidthCondition', 'VolumeBelowAvgCondition', 'PriceFlatCondition',
+    'OBVTrendCondition', 'StochasticLevelCondition', 'VPCITrendCondition',
+
+    # Accumulation (Layer 2 - Divergences)
+    'OBVDivergenceCondition', 'StochasticDivergenceCondition', 'VPCIDivergenceCondition',
 ]

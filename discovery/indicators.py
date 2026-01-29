@@ -292,3 +292,124 @@ def _calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
             obv.iloc[i] = obv.iloc[i-1]
 
     return obv
+
+
+# ============================================================
+# Exported Indicator Functions (for accumulation screening)
+# ============================================================
+
+def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    """
+    OBV (On-Balance Volume) 계산
+
+    Args:
+        close: 종가 시리즈
+        volume: 거래량 시리즈
+
+    Returns:
+        OBV 시리즈
+    """
+    return _calculate_obv(close, volume)
+
+
+def calculate_stochastic(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    k_period: int = 14,
+    d_period: int = 3
+) -> tuple:
+    """
+    스토캐스틱 오실레이터 계산
+
+    Args:
+        high: 고가 시리즈
+        low: 저가 시리즈
+        close: 종가 시리즈
+        k_period: %K 기간 (기본 14)
+        d_period: %D 기간 (기본 3)
+
+    Returns:
+        (stoch_k, stoch_d) 튜플
+    """
+    lowest_low = low.rolling(window=k_period).min()
+    highest_high = high.rolling(window=k_period).max()
+
+    stoch_k = 100 * (close - lowest_low) / (highest_high - lowest_low)
+    stoch_d = stoch_k.rolling(window=d_period).mean()
+
+    return stoch_k, stoch_d
+
+
+def calculate_vpci(
+    close: pd.Series,
+    volume: pd.Series,
+    short_period: int = 5,
+    long_period: int = 20
+) -> pd.Series:
+    """
+    VPCI (Volume Price Confirmation Indicator) 계산
+
+    VPCI는 가격과 거래량의 상관관계를 측정하여
+    매집/분산 구간을 탐지하는 지표
+
+    Args:
+        close: 종가 시리즈
+        volume: 거래량 시리즈
+        short_period: 단기 EMA 기간 (기본 5)
+        long_period: 장기 EMA 기간 (기본 20)
+
+    Returns:
+        VPCI 시리즈
+    """
+    # Volume Weighted Moving Averages
+    vwma_short = (close * volume).rolling(short_period).sum() / volume.rolling(short_period).sum()
+    vwma_long = (close * volume).rolling(long_period).sum() / volume.rolling(long_period).sum()
+
+    # Simple Moving Averages
+    sma_short = close.rolling(short_period).mean()
+    sma_long = close.rolling(long_period).mean()
+
+    # VPC (Volume Price Confirmation)
+    vpc = vwma_long - sma_long
+
+    # VPR (Volume Price Ratio)
+    vpr = vwma_short / sma_short
+
+    # VM (Volume Multiplier)
+    volume_sma = volume.rolling(short_period).mean()
+    volume_sma_long = volume.rolling(long_period).mean()
+    vm = volume_sma / volume_sma_long
+
+    # VPCI = VPC * VPR * VM
+    vpci = vpc * vpr * vm
+
+    return vpci
+
+
+def calculate_bollinger_width(
+    close: pd.Series,
+    period: int = 20,
+    std_dev: float = 2.0
+) -> pd.Series:
+    """
+    볼린저 밴드 폭 계산 (% 기준)
+
+    Args:
+        close: 종가 시리즈
+        period: 이동평균 기간 (기본 20)
+        std_dev: 표준편차 배수 (기본 2.0)
+
+    Returns:
+        볼린저 밴드 폭 (%) 시리즈
+    """
+    middle = close.rolling(period).mean()
+    std = close.rolling(period).std()
+
+    upper = middle + (std_dev * std)
+    lower = middle - (std_dev * std)
+
+    # 폭을 중심선 대비 % 로 계산
+    width_pct = ((upper - lower) / middle) * 100
+
+    return width_pct

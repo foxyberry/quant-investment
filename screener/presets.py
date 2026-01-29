@@ -29,6 +29,10 @@ from .conditions import (
     RSIOversoldCondition, RSIOverboughtCondition, RSIRangeCondition,
     # Composite
     AndCondition, OrCondition,
+    # Accumulation
+    BollingerWidthCondition, VolumeBelowAvgCondition, PriceFlatCondition,
+    OBVTrendCondition, StochasticLevelCondition, VPCITrendCondition,
+    OBVDivergenceCondition, StochasticDivergenceCondition, VPCIDivergenceCondition,
 )
 
 
@@ -177,6 +181,74 @@ def momentum_breakout(min_price: int = 5000) -> List[BaseCondition]:
     ]
 
 
+# ============================================================
+# Accumulation Presets (조용한 매집 구간)
+# ============================================================
+
+def accumulation_basic(
+    min_price: int = 5000,
+    bb_max_width: float = 10.0,
+    volume_multiplier: float = 0.8,
+    price_max_range: float = 5.0
+) -> List[BaseCondition]:
+    """
+    조용한 매집 구간 - 기본 전략
+    - 볼린저 밴드 수축 (폭 10% 이하)
+    - 거래량 평균 이하 (80%)
+    - 가격 횡보 (변동폭 5% 이하)
+    """
+    return [
+        MinPriceCondition(min_price),
+        BollingerWidthCondition(max_width_pct=bb_max_width),
+        VolumeBelowAvgCondition(multiplier=volume_multiplier),
+        PriceFlatCondition(max_range_pct=price_max_range),
+    ]
+
+
+def accumulation_obv(
+    min_price: int = 5000,
+    bb_max_width: float = 10.0,
+    volume_multiplier: float = 0.8,
+    price_max_range: float = 5.0
+) -> List[BaseCondition]:
+    """
+    조용한 매집 구간 - OBV 다이버전스 전략
+    - 기본 조건 + OBV 다이버전스
+    - 가격 횡보 중 OBV 상승 시 매집 신호
+    """
+    return [
+        MinPriceCondition(min_price),
+        BollingerWidthCondition(max_width_pct=bb_max_width),
+        VolumeBelowAvgCondition(multiplier=volume_multiplier),
+        PriceFlatCondition(max_range_pct=price_max_range),
+        OBVDivergenceCondition(),
+    ]
+
+
+def accumulation_full(
+    min_price: int = 5000,
+    bb_max_width: float = 10.0,
+    volume_multiplier: float = 0.8,
+    price_max_range: float = 5.0
+) -> List[BaseCondition]:
+    """
+    조용한 매집 구간 - 종합 전략
+    - 기본 조건 + 다이버전스 (OBV, Stochastic, VPCI 중 하나)
+    - 여러 다이버전스 중 하나라도 충족하면 매칭
+    """
+    return [
+        MinPriceCondition(min_price),
+        BollingerWidthCondition(max_width_pct=bb_max_width),
+        VolumeBelowAvgCondition(multiplier=volume_multiplier),
+        PriceFlatCondition(max_range_pct=price_max_range),
+        OrCondition([
+            OBVDivergenceCondition(),
+            StochasticDivergenceCondition(),
+            VPCIDivergenceCondition(),
+        ]),
+    ]
+
+
 # 프리셋 목록 (CLI 등에서 사용)
 PRESET_REGISTRY = {
     "ma_touch_160": ma_touch_160,
@@ -190,6 +262,10 @@ PRESET_REGISTRY = {
     "trend_following": trend_following,
     "value_dip": value_dip,
     "momentum_breakout": momentum_breakout,
+    # Accumulation (조용한 매집 구간)
+    "accumulation_basic": accumulation_basic,
+    "accumulation_obv": accumulation_obv,
+    "accumulation_full": accumulation_full,
 }
 
 
