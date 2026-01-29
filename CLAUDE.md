@@ -144,7 +144,30 @@ python scripts/live/portfolio_sell_checker.py
 
 ---
 
-## 7. 주의사항
+## 7. 문서 작성 규칙
+
+### 언어
+- **기본**: 영어로 작성
+- **한국어 버전**: `docs/ko/` 폴더에 번역본 제공
+- **코드 주석**: 영어 (한국어 병기 가능)
+- **커밋 메시지**: 영어
+
+### 문서 위치
+| 종류 | 위치 |
+|------|------|
+| 기능 문서 | `docs/{FEATURE}_README.md` |
+| 한국어 번역 | `docs/ko/{FEATURE}_README.md` |
+| 작업 계획 | `docs/works/YYYYMMDD_작업명.md` |
+| API 문서 | `docs/api/` |
+
+### 문서 작성 순서
+1. 영어 문서 작성 (`docs/`)
+2. 한국어 번역 (`docs/ko/`)
+3. CLAUDE.md 또는 README.md에 링크 추가
+
+---
+
+## 8. 주의사항
 
 - 새 전략은 반드시 `scripts/` 하위에 추가
 - 데이터 캐시는 `data/cache/`에 저장됨
@@ -154,7 +177,7 @@ python scripts/live/portfolio_sell_checker.py
 
 ---
 
-## 8. 현재 진행 중인 작업
+## 9. 현재 진행 중인 작업
 
 `docs/works/` 폴더의 작업 계획 문서 참조
 
