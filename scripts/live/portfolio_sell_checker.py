@@ -21,7 +21,7 @@ from enum import Enum
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from screener.portfolio_manager import PortfolioManager, Holding, SellConditions
+from screener.portfolio_manager import PortfolioManager, ConfigHolding, SellConditions
 from utils.fetch import get_historical_data
 from utils.timezone_utils import get_current_market_time
 
@@ -99,7 +99,7 @@ class PortfolioSellChecker:
             self.logger.warning(f"Failed to get price data for {symbol}: {e}")
         return None
 
-    def check_price_conditions(self, holding: Holding, current_price: float,
+    def check_price_conditions(self, holding: ConfigHolding, current_price: float,
                                 conditions: SellConditions) -> List[str]:
         """가격 기반 매도 조건 체크"""
         reasons = []
@@ -146,7 +146,7 @@ class PortfolioSellChecker:
 
         return reasons
 
-    def check_holding(self, holding: Holding) -> Optional[SellCheckResult]:
+    def check_holding(self, holding: ConfigHolding) -> Optional[SellCheckResult]:
         """단일 종목 매도 신호 체크"""
         symbol = holding.symbol
         conditions = self.pm.get_sell_conditions_for(symbol)
