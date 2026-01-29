@@ -11,15 +11,9 @@ Usage:
     print(f"Reasons: {decision.reasons}")
 """
 
-import sys
-from pathlib import Path
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
-
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
 from discovery.indicators import calculate_indicators, get_ma_distances
 from utils.fetch import get_ohlcv

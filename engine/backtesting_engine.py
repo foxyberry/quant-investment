@@ -16,8 +16,6 @@ Usage:
     print(result.summary())
 """
 
-import sys
-from pathlib import Path
 from typing import Optional, Type, Dict, Any, Union
 from datetime import datetime, timedelta
 from dataclasses import dataclass
@@ -26,10 +24,6 @@ import pandas as pd
 import numpy as np
 
 from backtesting import Backtest, Strategy
-
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
 
 @dataclass
