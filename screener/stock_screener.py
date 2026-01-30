@@ -41,6 +41,12 @@ except ImportError:
 from .conditions.base import BaseCondition, ConditionResult
 from .kospi_fetcher import KospiListFetcher
 
+try:
+    from utils.data_cache import OHLCVCache, get_cache
+    CACHE_AVAILABLE = True
+except ImportError:
+    CACHE_AVAILABLE = False
+
 
 @dataclass
 class ScreeningResult:
@@ -146,7 +152,8 @@ class StockScreener:
         conditions: Optional[List[BaseCondition]] = None,
         max_workers: int = 5,
         use_full_universe: bool = True,
-        request_delay: float = 0.2
+        request_delay: float = 0.2,
+        use_cache: bool = True
     ):
         """
         Args:
@@ -154,12 +161,15 @@ class StockScreener:
             max_workers: 병렬 처리 워커 수 (yfinance rate limit 고려해 기본 5)
             use_full_universe: True면 pykrx로 전체 종목 가져옴, False면 하드코딩 목록 사용
             request_delay: API 요청 간 딜레이 (초)
+            use_cache: 데이터 캐시 사용 여부 (기본 True)
         """
         self.conditions: List[BaseCondition] = conditions or []
         self.max_workers = max_workers
         self.use_full_universe = use_full_universe
         self.request_delay = request_delay
+        self.use_cache = use_cache and CACHE_AVAILABLE
         self._kospi_fetcher = KospiListFetcher() if use_full_universe else None
+        self._cache = get_cache() if self.use_cache else None
 
     def add_condition(self, condition: BaseCondition) -> "StockScreener":
         """조건 추가 (체이닝 지원)"""
@@ -249,7 +259,17 @@ class StockScreener:
             return None
 
     def _fetch_data(self, ticker: str, days: int) -> Optional[pd.DataFrame]:
-        """종목 데이터 가져오기"""
+        """종목 데이터 가져오기 (캐시 사용)"""
+        # 캐시 사용 가능하면 캐시에서 가져오기
+        if self._cache is not None:
+            data = self._cache.get(ticker, days=days)
+            if data is not None and not data.empty:
+                # 캐시 데이터 컬럼 확인 및 정리
+                required_cols = ['open', 'high', 'low', 'close', 'volume']
+                if all(col in data.columns for col in required_cols):
+                    return data[required_cols]
+
+        # 캐시 없거나 실패 시 직접 가져오기
         # 한국 주식이면 pykrx 먼저 시도
         if self._is_korean_stock(ticker) and PYKRX_AVAILABLE:
             data = self._fetch_data_pykrx(ticker, days)
