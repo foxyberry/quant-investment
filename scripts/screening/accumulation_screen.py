@@ -3,6 +3,32 @@
 Quiet Accumulation Zone Screening Script
 조용한 매집 구간 탐지 스크리닝
 
+프리셋별 차이점:
+================
+
+accumulation_basic (기본)
+    조건: BB수축 + 거래량↓ + 가격횡보
+    특징: 넓은 범위의 매집 후보, 결과 많음 (~200개)
+    신뢰도: 낮음
+
+accumulation_obv (OBV 다이버전스)
+    조건: basic + OBV 상승 다이버전스
+    특징: 가격은 횡보인데 OBV가 상승하는 종목만 필터
+    신뢰도: 중간 (가장 추천)
+
+accumulation_full (전체 다이버전스)
+    조건: basic + (OBV or Stoch or VPCI 다이버전스 중 하나)
+    특징: 3가지 다이버전스 신호 중 하나라도 충족
+    신뢰도: 중간
+
+조건 상세:
+=========
+- 가격 >= 5,000원 (저가주 제외)
+- 볼린저밴드 폭 <= 15% (변동성 낮음, 수축 구간)
+- 거래량 <= 평균의 1.0배 (조용한 거래)
+- 20일 가격변동폭 <= 10% (횡보 구간)
+- OBV 다이버전스: 가격 횡보 + OBV 상승 (매집 신호)
+
 Usage:
     # 단일 종목 테스트
     python scripts/screening/accumulation_screen.py --ticker 005930.KS
@@ -10,17 +36,23 @@ Usage:
     # 기본 프리셋 실행
     python scripts/screening/accumulation_screen.py --preset accumulation_basic
 
-    # OBV 다이버전스 프리셋
+    # OBV 다이버전스 프리셋 (추천)
     python scripts/screening/accumulation_screen.py --preset accumulation_obv
 
     # 전체 프리셋 (다이버전스 OR 조건)
     python scripts/screening/accumulation_screen.py --preset accumulation_full
 
-    # 커스텀 파라미터
+    # 커스텀 파라미터 (더 엄격한 조건)
     python scripts/screening/accumulation_screen.py --preset accumulation_basic --bb-width 8.0 --volume-mult 0.7
 
     # 유니버스 지정
     python scripts/screening/accumulation_screen.py --preset accumulation_basic --universe KOSDAQ
+
+커스텀 파라미터:
+    --bb-width 8.0     볼린저밴드 폭 8% 이하 (더 수축된 종목)
+    --volume-mult 0.7  평균의 70% 이하 거래량 (더 조용한 종목)
+    --min-price 10000  최소가 1만원 이상
+    --price-range 5.0  20일 가격변동 5% 이하 (더 좁은 횡보)
 """
 
 import sys

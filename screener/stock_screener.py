@@ -170,6 +170,7 @@ class StockScreener:
         self.use_cache = use_cache and CACHE_AVAILABLE
         self._kospi_fetcher = KospiListFetcher() if use_full_universe else None
         self._cache = get_cache() if self.use_cache else None
+        self._korean_names: Optional[Dict[str, str]] = None  # 한국어 종목명 캐시
 
     def add_condition(self, condition: BaseCondition) -> "StockScreener":
         """조건 추가 (체이닝 지원)"""
@@ -294,8 +295,42 @@ class StockScreener:
             print(f"  ⚠️ {ticker} 데이터 로드 실패: {e}")
             return None
 
+    def _load_korean_names(self) -> Dict[str, str]:
+        """한국어 종목명 로드 (캐시)"""
+        if self._korean_names is not None:
+            return self._korean_names
+
+        self._korean_names = {}
+        from pathlib import Path
+
+        # KOSPI/KOSDAQ CSV 파일 경로
+        csv_files = [
+            Path(__file__).parent.parent / "data" / "korean" / "kospi_list.csv",
+            Path(__file__).parent.parent / "data" / "korean" / "kosdaq_list.csv",
+        ]
+
+        for csv_path in csv_files:
+            if csv_path.exists():
+                try:
+                    df = pd.read_csv(csv_path)
+                    # symbol -> name 매핑 (예: 005930.KS -> 삼성전자)
+                    if 'symbol' in df.columns and 'name' in df.columns:
+                        for _, row in df.iterrows():
+                            self._korean_names[row['symbol']] = row['name']
+                except Exception:
+                    pass
+
+        return self._korean_names
+
     def _get_stock_name(self, ticker: str) -> str:
-        """종목명 가져오기"""
+        """종목명 가져오기 (한국 주식은 한국어명 사용)"""
+        # 한국 주식인 경우 한국어명 사용
+        if self._is_korean_stock(ticker):
+            korean_names = self._load_korean_names()
+            if ticker in korean_names:
+                return korean_names[ticker]
+
+        # 해외 주식 또는 한국어명 없는 경우 yfinance 사용
         try:
             stock = yf.Ticker(ticker)
             info = stock.info
