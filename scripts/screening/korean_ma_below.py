@@ -74,7 +74,7 @@ def run(
 
     # 2. Screen for stocks below short-term MA
     print(f"\n{'='*60}")
-    print(f" Below {short_ma}-day MA")
+    print(f" {short_ma}일 이동평균선 아래 종목")
     print(f"{'='*60}")
 
     screener_short = StockScreener(max_workers=10)
@@ -95,7 +95,9 @@ def run(
     )
 
     if below_short_sorted:
-        print(f"\nBelow {short_ma}d MA - {len(below_short_sorted)} stocks (sorted by distance):")
+        print(f"\n  {short_ma}일선 아래 종목 - {len(below_short_sorted)}개 (이격도 순)")
+        print(f"  {'순위':>4} {'종목명':<12} {'현재가':>10} {f'{short_ma}일선':>10} {'이격도':>8}")
+        print(f"  {'-'*4} {'-'*12} {'-'*10} {'-'*10} {'-'*8}")
         for i, r in enumerate(below_short_sorted[:limit], 1):
             name = ticker_info.get(r.ticker, r.name)[:10]
             ma_details = next(
@@ -106,17 +108,15 @@ def run(
             distance = ma_details.get('distance_pct', 0) * 100
             ma_value = ma_details.get('ma_value', 0)
             print(
-                f"  {i:3}. {name:<10} ({r.ticker}) | "
-                f"Price: {r.current_price:>10,.0f} | "
-                f"{short_ma}d MA: {ma_value:>10,.0f} | "
-                f"Dist: {distance:>+6.1f}%"
+                f"  {i:>4} {name:<12} {r.current_price:>10,.0f} "
+                f"{ma_value:>10,.0f} {distance:>+7.1f}%"
             )
     else:
         print("  No stocks found")
 
     # 3. Screen for stocks below long-term MA
     print(f"\n{'='*60}")
-    print(f" Below {long_ma}-day MA")
+    print(f" {long_ma}일 이동평균선 아래 종목")
     print(f"{'='*60}")
 
     screener_long = StockScreener(max_workers=10)
@@ -136,7 +136,9 @@ def run(
     )
 
     if below_long_sorted:
-        print(f"\nBelow {long_ma}d MA - {len(below_long_sorted)} stocks (sorted by distance):")
+        print(f"\n  {long_ma}일선 아래 종목 - {len(below_long_sorted)}개 (이격도 순)")
+        print(f"  {'순위':>4} {'종목명':<12} {'현재가':>10} {f'{long_ma}일선':>10} {'이격도':>8}")
+        print(f"  {'-'*4} {'-'*12} {'-'*10} {'-'*10} {'-'*8}")
         for i, r in enumerate(below_long_sorted[:limit], 1):
             name = ticker_info.get(r.ticker, r.name)[:10]
             ma_details = next(
@@ -147,17 +149,15 @@ def run(
             distance = ma_details.get('distance_pct', 0) * 100
             ma_value = ma_details.get('ma_value', 0)
             print(
-                f"  {i:3}. {name:<10} ({r.ticker}) | "
-                f"Price: {r.current_price:>10,.0f} | "
-                f"{long_ma}d MA: {ma_value:>10,.0f} | "
-                f"Dist: {distance:>+6.1f}%"
+                f"  {i:>4} {name:<12} {r.current_price:>10,.0f} "
+                f"{ma_value:>10,.0f} {distance:>+7.1f}%"
             )
     else:
         print("  No stocks found")
 
     # 4. Screen for stocks below BOTH MAs
     print(f"\n{'='*60}")
-    print(f" Below BOTH {short_ma}d & {long_ma}d MA (Severe Decline)")
+    print(f" {short_ma}일선 & {long_ma}일선 둘 다 아래 (심각한 하락)")
     print(f"{'='*60}")
 
     screener_both = StockScreener(max_workers=10)
@@ -178,7 +178,9 @@ def run(
     )
 
     if below_both_sorted:
-        print(f"\nBelow both MAs - {len(below_both_sorted)} stocks:")
+        print(f"\n  양쪽 이평선 아래 종목 - {len(below_both_sorted)}개 (심각한 하락)")
+        print(f"  {'순위':>4} {'종목명':<12} {'현재가':>10} {f'{short_ma}일선':>8} {f'{long_ma}일선':>8}")
+        print(f"  {'-'*4} {'-'*12} {'-'*10} {'-'*8} {'-'*8}")
         for i, r in enumerate(below_both_sorted[:limit], 1):
             name = ticker_info.get(r.ticker, r.name)[:10]
             short_details = next(
@@ -194,22 +196,20 @@ def run(
             dist_short = short_details.get('distance_pct', 0) * 100
             dist_long = long_details.get('distance_pct', 0) * 100
             print(
-                f"  {i:3}. {name:<10} ({r.ticker}) | "
-                f"Price: {r.current_price:>10,.0f} | "
-                f"{short_ma}d: {dist_short:>+6.1f}% | "
-                f"{long_ma}d: {dist_long:>+6.1f}%"
+                f"  {i:>4} {name:<12} {r.current_price:>10,.0f} "
+                f"{dist_short:>+7.1f}% {dist_long:>+7.1f}%"
             )
     else:
         print("  No stocks found")
 
     # 5. Summary
     print(f"\n{'='*60}")
-    print(" Summary")
+    print(" 요약")
     print(f"{'='*60}")
-    print(f"  Analyzed: {len(tickers)} stocks")
-    print(f"  Below {short_ma}d MA: {len(below_short_sorted)}")
-    print(f"  Below {long_ma}d MA: {len(below_long_sorted)}")
-    print(f"  Below both: {len(below_both_sorted)}")
+    print(f"  분석 종목: {len(tickers)}개")
+    print(f"  {short_ma}일선 아래: {len(below_short_sorted)}개")
+    print(f"  {long_ma}일선 아래: {len(below_long_sorted)}개")
+    print(f"  양쪽 아래: {len(below_both_sorted)}개")
 
     return {
         'below_short': below_short_sorted,

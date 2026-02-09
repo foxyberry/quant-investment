@@ -86,13 +86,8 @@ class OHLCVCache:
     def _get_latest_trading_date(self) -> date:
         """
         최신 거래일 반환
-        시스템 날짜가 미래인 경우 고정된 날짜 반환
         """
         today = date.today()
-
-        # 시스템 날짜가 2025년 이후면 고정 날짜 사용
-        if today.year > 2025:
-            return date(2025, 1, 24)
 
         # 주말이면 금요일로
         if today.weekday() == 5:  # Saturday
@@ -102,30 +97,40 @@ class OHLCVCache:
 
         return today
 
-    def _is_cache_fresh(self, cache_path: Path, required_days: int) -> bool:
-        """캐시가 신선한지 확인"""
+    def _get_cache_latest_date(self, cache_path: Path) -> Optional[date]:
+        """캐시 데이터의 최신 날짜 반환"""
         if not cache_path.exists():
+            return None
+        try:
+            data = pd.read_parquet(cache_path)
+            if data.empty:
+                return None
+            latest = data.index.max()
+            if hasattr(latest, 'date'):
+                return latest.date()
+            return pd.to_datetime(latest).date()
+        except Exception:
+            return None
+
+    def _is_cache_fresh(self, cache_path: Path, required_days: int) -> bool:
+        """캐시가 신선한지 확인 (오늘 데이터가 있으면 신선)"""
+        latest = self._get_cache_latest_date(cache_path)
+        if latest is None:
             return False
 
-        try:
-            # 캐시 파일의 마지막 수정 시간
-            mtime = datetime.fromtimestamp(cache_path.stat().st_mtime)
-            hours_old = (datetime.now() - mtime).total_seconds() / 3600
+        today = self._get_latest_trading_date()
 
-            # STALE_HOURS 이상 지났으면 갱신 필요
-            if hours_old > self.STALE_HOURS:
-                return False
-
-            # 데이터 내용 확인
-            data = pd.read_parquet(cache_path)
-            if len(data) < required_days * 0.7:  # 70% 이상 데이터 필요
-                return False
-
+        # 캐시 최신 날짜가 오늘이면 신선
+        if latest >= today:
             return True
 
-        except Exception as e:
-            logger.warning(f"캐시 확인 실패: {e}")
-            return False
+        # 주말/휴일 고려: 금요일 데이터가 있고 오늘이 토/일이면 신선
+        if today.weekday() in [5, 6]:  # 토, 일
+            friday = today - timedelta(days=(today.weekday() - 4))
+            if latest >= friday:
+                return True
+
+        return False
 
     def _fetch_from_pykrx(self, ticker: str, days: int) -> Optional[pd.DataFrame]:
         """pykrx로 한국 주식 데이터 가져오기"""
@@ -213,7 +218,7 @@ class OHLCVCache:
         force_refresh: bool = False
     ) -> Optional[pd.DataFrame]:
         """
-        OHLCV 데이터 가져오기 (캐시 사용)
+        OHLCV 데이터 가져오기 (캐시 사용, 증분 업데이트)
 
         Args:
             ticker: 종목 코드 (예: '005930.KS', 'AAPL')
@@ -240,13 +245,38 @@ class OHLCVCache:
             except Exception as e:
                 logger.warning(f"캐시 읽기 실패 ({ticker}): {e}")
 
-        # 캐시 미스 - 새로 가져오기
-        self._misses += 1
-        logger.debug(f"캐시 미스: {ticker}")
+        # 캐시가 있지만 오래된 경우 - 증분 업데이트
+        cached_data = None
+        cache_latest = self._get_cache_latest_date(cache_path)
 
-        # 캐시 기간만큼 데이터 가져오기
-        fetch_days = max(days, self.cache_days)
-        data = self._fetch_data(ticker, fetch_days)
+        if cache_latest is not None and not force_refresh:
+            try:
+                cached_data = pd.read_parquet(cache_path)
+                logger.debug(f"캐시 증분 업데이트: {ticker} (마지막: {cache_latest})")
+            except Exception:
+                cached_data = None
+
+        # 새 데이터 가져오기
+        self._misses += 1
+
+        if cached_data is not None and cache_latest is not None:
+            # 증분: 캐시 마지막 날짜 이후만 가져오기
+            days_to_fetch = (self._get_latest_trading_date() - cache_latest).days + 5
+            new_data = self._fetch_data(ticker, max(days_to_fetch, 10))
+
+            if new_data is not None and not new_data.empty:
+                # 기존 캐시 + 새 데이터 병합
+                combined = pd.concat([cached_data, new_data])
+                combined = combined[~combined.index.duplicated(keep='last')]
+                combined = combined.sort_index()
+                data = combined
+                logger.debug(f"증분 업데이트 완료: {ticker} (+{len(new_data)}행)")
+            else:
+                data = cached_data
+        else:
+            # 캐시 없음 - 전체 가져오기
+            fetch_days = max(days, self.cache_days)
+            data = self._fetch_data(ticker, fetch_days)
 
         if data is not None and not data.empty:
             # 캐시 저장
