@@ -33,10 +33,15 @@ python scripts/investor_trading.py --top 10 --market KOSDAQ
 ```
 
 ### 3. 일일 마켓 리포트
-코스피 종목 골든크로스/데스크로스 감지
+코스피/미국 종목 골든크로스/데스크로스 감지
 
 ```bash
+# 한국 (코스피)
 python scripts/screening/korean_daily_report.py
+
+# 미국 (S&P 500)
+python scripts/screening/us_daily_report.py
+python scripts/screening/us_daily_report.py --sector Technology
 ```
 
 ---

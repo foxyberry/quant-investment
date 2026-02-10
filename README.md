@@ -30,10 +30,15 @@ python scripts/investor_trading.py --top-institution 10
 ```
 
 ### 3. Daily Market Report
-Golden/death cross detection for KOSPI stocks.
+Golden/death cross detection for KOSPI and US stocks.
 
 ```bash
+# Korean (KOSPI)
 python scripts/screening/korean_daily_report.py
+
+# US (S&P 500)
+python scripts/screening/us_daily_report.py
+python scripts/screening/us_daily_report.py --sector Technology
 ```
 
 ---

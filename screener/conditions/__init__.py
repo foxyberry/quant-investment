@@ -74,6 +74,13 @@ from .accumulation import (
     VPCIDivergenceCondition,
 )
 
+from .breakout import (
+    BottomBreakoutCondition,
+    FreshBreakoutCondition,
+    BreakoutWithVolumeCondition,
+    ResistanceBreakoutCondition,
+)
+
 __all__ = [
     # Base
     'BaseCondition', 'ConditionResult', 'ConditionError',
@@ -100,4 +107,8 @@ __all__ = [
 
     # Accumulation (Layer 2 - Divergences)
     'OBVDivergenceCondition', 'StochasticDivergenceCondition', 'VPCIDivergenceCondition',
+
+    # Breakout
+    'BottomBreakoutCondition', 'FreshBreakoutCondition',
+    'BreakoutWithVolumeCondition', 'ResistanceBreakoutCondition',
 ]
