@@ -55,7 +55,11 @@ class UsStockFetcher:
         """Wikipedia에서 S&P 500 종목 리스트 가져오기"""
         try:
             url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-            tables = pd.read_html(url)
+            # User-Agent 헤더 추가 (403 방지)
+            tables = pd.read_html(
+                url,
+                storage_options={'User-Agent': 'Mozilla/5.0 (compatible; QuantInvestment/1.0)'}
+            )
 
             if not tables:
                 logger.warning("Wikipedia에서 테이블을 찾지 못함")
