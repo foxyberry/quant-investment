@@ -46,6 +46,38 @@ python scripts/screening/us_daily_report.py --sector Technology
 
 ---
 
+## AI 기반 주식 분석 (신규!)
+
+Claude AI를 활용한 반자동 분석 파이프라인:
+1. 240일선 터치 종목 스크리닝
+2. 기술적 지표, 재무제표, 뉴스 데이터 수집
+3. Claude AI로 저평가 분석 및 진입 타이밍 판단
+4. 포지션 사이징 포함 리포트 생성
+
+```bash
+# 전체 분석 (ANTHROPIC_API_KEY 필요)
+export ANTHROPIC_API_KEY="your-api-key"
+python scripts/analysis/run_daily_analysis.py
+
+# 단일 마켓
+python scripts/analysis/run_daily_analysis.py --market KOSPI
+python scripts/analysis/run_daily_analysis.py --market SP500
+
+# 데이터 수집만 (Claude 없이)
+python scripts/analysis/run_daily_analysis.py --enrich-only
+
+# 자본금 설정 (포지션 사이징용)
+python scripts/analysis/run_daily_analysis.py --capital 50000000
+```
+
+**분석 결과:**
+- 저평가 점수 (1-10)
+- 리스크 평가
+- 진입 추천 (BUY/WAIT/AVOID)
+- 손절가 포함 포지션 사이징
+
+---
+
 ## 종목 발굴 (Stock Screening)
 
 ### 매집 구간 탐지
@@ -74,9 +106,10 @@ python scripts/screening/korean_ma_below.py
 python scripts/screening/korean_crossover.py
 ```
 
-### 기술적 돌파
+### 돌파 감지
 ```bash
-python scripts/screening/tech_breakout.py
+# 새로운 조건 기반 스크리너 사용
+from screener import StockScreener, BottomBreakoutCondition, BreakoutWithVolumeCondition
 ```
 
 ---
@@ -124,8 +157,14 @@ python scripts/live/options_tracker.py
 | 파일 | 설명 |
 |------|------|
 | `config/portfolio.yaml` | 보유 종목 & 매도 조건 |
-| `config/screening_criteria.yaml` | 기술적 스크리닝 파라미터 |
 | `config/base_config.yaml` | 데이터 경로, API, 로깅 설정 |
+
+**환경 변수:**
+| 변수 | 설명 |
+|------|------|
+| `ANTHROPIC_API_KEY` | Claude API 키 (AI 분석용) |
+| `FINNHUB_API_KEY` | Finnhub API 키 (뉴스, 선택) |
+| `MARKETAUX_API_KEY` | Marketaux API 키 (뉴스, 선택) |
 
 ---
 
@@ -144,6 +183,7 @@ pip install -r requirements.txt
 
 ## 기술 스택
 - **Python 3.13**
+- **Claude API** - AI 기반 주식 분석
 - **Backtesting.py** - 전략 백테스팅
 - **yfinance** - 미국 주가 데이터
 - **pykrx** - 한국 주식 데이터 (코스피/코스닥)
@@ -156,33 +196,46 @@ pip install -r requirements.txt
 ```
 quant-investment/
 ├── scripts/
-│   ├── investor_trading.py      # 투자자별 매매 동향
-│   ├── screening/               # 종목 스크리닝
-│   │   ├── accumulation_screen.py   # 매집 구간 탐지
-│   │   ├── korean_daily_report.py   # 일일 리포트
-│   │   ├── korean_crossover.py      # 이평선 크로스오버
-│   │   ├── korean_ma_below.py       # 이평선 하향 돌파
-│   │   └── korean_ma_touch.py       # 이평선 터치
-│   ├── backtesting/             # 백테스팅
+│   ├── analysis/               # AI 기반 분석
+│   │   └── run_daily_analysis.py
+│   ├── screening/              # 종목 스크리닝
+│   │   ├── accumulation_screen.py
+│   │   ├── korean_daily_report.py
+│   │   ├── us_daily_report.py
+│   │   └── korean_ma_*.py
+│   ├── backtesting/            # 백테스팅
 │   │   └── run_backtest.py
-│   └── live/                    # 실시간 모니터링
-│       ├── portfolio_sell_checker.py  # 매도 신호 체커
-│       └── options_tracker.py         # 옵션 추적 봇
-├── config/                      # 설정 파일
-├── screener/                    # 스크리닝 라이브러리
-├── engine/                      # 백테스팅 엔진
-├── discovery/                   # 종목 발굴
-├── portfolio/                   # 포트폴리오 관리
-└── data/                        # 데이터 캐시
+│   └── live/                   # 실시간 모니터링
+│       ├── portfolio_sell_checker.py
+│       └── options_tracker.py
+├── llm/                        # Claude AI 연동
+│   ├── claude_client.py
+│   ├── stock_analyzer.py
+│   └── prompts/
+├── data_enrichment/            # 데이터 수집 모듈
+│   ├── technical.py
+│   ├── fundamental.py
+│   └── news.py
+├── pipeline/                   # 분석 파이프라인
+│   └── report_generator.py
+├── screener/                   # 스크리닝 라이브러리
+│   ├── conditions/             # 스크리닝 조건
+│   └── stock_screener.py
+├── portfolio/                  # 포트폴리오 관리
+│   └── position_sizing.py
+├── config/                     # 설정 파일
+└── data/                       # 데이터 캐시
 ```
 
 ---
 
 ## 문서
 
+- [돌파 조건 (Breakout Conditions)](docs/BREAKOUT_CONDITIONS.md)
 - [한국 주식 MA 스크리너](docs/KOREAN_MA_SCREENER.md)
 - [옵션 추적 봇](docs/OPTIONS_TRACKER_README.md)
 - [마켓 캘린더](docs/MARKET_CALENDAR_README.md)
+- [분석 파이프라인 계획](docs/works/20260211_semi_auto_analysis_pipeline.md)
 
 ---
 

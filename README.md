@@ -43,6 +43,38 @@ python scripts/screening/us_daily_report.py --sector Technology
 
 ---
 
+## AI-Powered Stock Analysis (New!)
+
+Semi-automated analysis pipeline using Claude AI:
+1. Screen stocks touching 240-day MA
+2. Enrich with technical indicators, fundamentals, and news
+3. Analyze with Claude for valuation and entry timing
+4. Generate report with position sizing recommendations
+
+```bash
+# Full analysis (requires ANTHROPIC_API_KEY)
+export ANTHROPIC_API_KEY="your-api-key"
+python scripts/analysis/run_daily_analysis.py
+
+# Single market
+python scripts/analysis/run_daily_analysis.py --market KOSPI
+python scripts/analysis/run_daily_analysis.py --market SP500
+
+# Data enrichment only (no Claude)
+python scripts/analysis/run_daily_analysis.py --enrich-only
+
+# Custom capital for position sizing
+python scripts/analysis/run_daily_analysis.py --capital 50000000
+```
+
+**Output includes:**
+- Valuation score (1-10)
+- Risk assessment
+- Entry recommendation (BUY/WAIT/AVOID)
+- Position sizing with stop-loss
+
+---
+
 ## Stock Screening (Finding Opportunities)
 
 ### Accumulation Zone Detection
@@ -68,9 +100,10 @@ python scripts/screening/korean_ma_below.py
 python scripts/screening/korean_crossover.py
 ```
 
-### Technical Breakout
+### Breakout Detection
 ```bash
-python scripts/screening/tech_breakout.py
+# Use the new condition-based screener
+from screener import StockScreener, BottomBreakoutCondition, BreakoutWithVolumeCondition
 ```
 
 ---
@@ -118,8 +151,14 @@ python scripts/live/options_tracker.py
 | File | Description |
 |------|-------------|
 | `config/portfolio.yaml` | Your holdings & sell conditions |
-| `config/screening_criteria.yaml` | Technical screening parameters |
 | `config/base_config.yaml` | Data paths, API, logging settings |
+
+**Environment Variables:**
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Claude API key for AI analysis |
+| `FINNHUB_API_KEY` | Finnhub API for news (optional) |
+| `MARKETAUX_API_KEY` | Marketaux API for news (optional) |
 
 ---
 
@@ -138,6 +177,7 @@ pip install -r requirements.txt
 
 ## Stack
 - **Python 3.13**
+- **Claude API** - AI-powered stock analysis
 - **Backtesting.py** - Strategy backtesting
 - **yfinance** - US stock data
 - **pykrx** - Korean stock data (KOSPI/KOSDAQ)
@@ -150,33 +190,46 @@ pip install -r requirements.txt
 ```
 quant-investment/
 ├── scripts/
-│   ├── investor_trading.py      # Investor trading analysis
-│   ├── screening/               # Stock screening
+│   ├── analysis/               # AI-powered analysis
+│   │   └── run_daily_analysis.py
+│   ├── screening/              # Stock screening
 │   │   ├── accumulation_screen.py
 │   │   ├── korean_daily_report.py
-│   │   ├── korean_crossover.py
-│   │   ├── korean_ma_below.py
-│   │   └── korean_ma_touch.py
-│   ├── backtesting/             # Strategy backtesting
+│   │   ├── us_daily_report.py
+│   │   └── korean_ma_*.py
+│   ├── backtesting/            # Strategy backtesting
 │   │   └── run_backtest.py
-│   └── live/                    # Live monitoring
+│   └── live/                   # Live monitoring
 │       ├── portfolio_sell_checker.py
 │       └── options_tracker.py
-├── config/                      # Configuration files
-├── screener/                    # Screening library
-├── engine/                      # Backtesting engine
-├── discovery/                   # Stock discovery
-├── portfolio/                   # Portfolio management
-└── data/                        # Data cache
+├── llm/                        # Claude AI integration
+│   ├── claude_client.py
+│   ├── stock_analyzer.py
+│   └── prompts/
+├── data_enrichment/            # Data enrichment modules
+│   ├── technical.py
+│   ├── fundamental.py
+│   └── news.py
+├── pipeline/                   # Analysis pipeline
+│   └── report_generator.py
+├── screener/                   # Screening library
+│   ├── conditions/             # Screening conditions
+│   └── stock_screener.py
+├── portfolio/                  # Portfolio management
+│   └── position_sizing.py
+├── config/                     # Configuration files
+└── data/                       # Data cache
 ```
 
 ---
 
 ## Documentation
 
+- [Breakout Conditions](docs/BREAKOUT_CONDITIONS.md)
 - [Korean MA Screener](docs/KOREAN_MA_SCREENER.md)
 - [Options Tracker Bot](docs/OPTIONS_TRACKER_README.md)
 - [Market Calendar](docs/MARKET_CALENDAR_README.md)
+- [Analysis Pipeline Plan](docs/works/20260211_semi_auto_analysis_pipeline.md)
 
 ---
 
