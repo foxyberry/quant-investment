@@ -44,6 +44,9 @@ from .notifier import (
     Notification, AlertType, Priority,
     format_daily_report, format_order_notification
 )
+from .position_sizing import (
+    PositionSizer, PositionRecommendation, create_position_sizer
+)
 
 __all__ = [
     # Holdings
@@ -77,4 +80,7 @@ __all__ = [
     'BaseNotifier', 'ConsoleNotifier', 'TelegramNotifier', 'SlackNotifier', 'MultiNotifier',
     'Notification', 'AlertType', 'Priority',
     'format_daily_report', 'format_order_notification',
+
+    # Position Sizing
+    'PositionSizer', 'PositionRecommendation', 'create_position_sizer',
 ]
