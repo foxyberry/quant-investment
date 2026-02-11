@@ -6,11 +6,11 @@ Daily Stock Analysis Pipeline
 Automated pipeline for:
 1. Screening 240d MA touch stocks (KOSPI + S&P 500)
 2. Enriching with technical, fundamental, news data
-3. Analyzing with Claude AI
+3. Analyzing with Claude AI (API or Claude Code)
 4. Generating report with position recommendations
 
 Usage:
-    # Full analysis (both markets)
+    # Full analysis with Claude API (requires ANTHROPIC_API_KEY)
     python scripts/analysis/run_daily_analysis.py
 
     # Single market
@@ -20,17 +20,26 @@ Usage:
     # Skip Claude analysis (enrichment only)
     python scripts/analysis/run_daily_analysis.py --enrich-only
 
+    # Claude Code integration (saves JSON, use /analyze-stocks skill)
+    python scripts/analysis/run_daily_analysis.py --claude-code
+
     # Custom capital for position sizing
     python scripts/analysis/run_daily_analysis.py --capital 50000000
 
 Environment:
-    ANTHROPIC_API_KEY: Required for Claude analysis
+    ANTHROPIC_API_KEY: Required for Claude API analysis (not needed with --claude-code)
+
+Claude Code Integration:
+    1. Run with --claude-code flag
+    2. Use /analyze-stocks skill in Claude Code to analyze the saved JSON
+    3. Or ask Claude Code directly to analyze the data file
 """
 
 import sys
 import os
 import logging
 import argparse
+import json
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional
@@ -176,6 +185,39 @@ def enrich_stocks(candidates: List[Dict], show_progress: bool = True) -> List[Di
     return enriched
 
 
+def save_enriched_json(enriched: List[Dict], market: str = "ALL") -> Path:
+    """
+    Save enriched stock data to JSON file for Claude Code analysis.
+
+    Args:
+        enriched: List of enriched stock data
+        market: Market identifier
+
+    Returns:
+        Path to the saved JSON file
+    """
+    output_dir = project_root / "data" / "analysis"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    date_str = datetime.now().strftime("%Y%m%d")
+    filename = f"enriched_{market.lower()}_{date_str}.json"
+    filepath = output_dir / filename
+
+    # Prepare data for JSON serialization
+    output_data = {
+        "generated_at": datetime.now().isoformat(),
+        "market": market,
+        "stock_count": len(enriched),
+        "stocks": enriched
+    }
+
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(output_data, f, ensure_ascii=False, indent=2, default=str)
+
+    print(f"\n  Enriched data saved: {filepath}")
+    return filepath
+
+
 def analyze_with_claude(enriched: List[Dict], show_progress: bool = True) -> List:
     """
     Analyze enriched stocks with Claude.
@@ -302,11 +344,20 @@ def run_pipeline(
     market: str = "ALL",
     capital: float = 10000000,
     enrich_only: bool = False,
+    claude_code: bool = False,
     ma_period: int = 240,
     threshold: float = 0.02,
 ):
     """
     Run the full analysis pipeline.
+
+    Args:
+        market: Market to analyze (ALL, KOSPI, SP500)
+        capital: Total capital for position sizing
+        enrich_only: Only run screening and enrichment
+        claude_code: Save JSON for Claude Code analysis instead of API
+        ma_period: MA period for screening
+        threshold: MA touch threshold
     """
     print("\n" + "#" * 60)
     print("#" + " " * 58 + "#")
@@ -337,16 +388,36 @@ def run_pipeline(
     # 2. Enrichment
     enriched = enrich_stocks(candidates)
 
+    # Save enriched data to JSON
+    json_path = save_enriched_json(enriched, market)
+
     if enrich_only:
-        print("\n--enrich-only flag set. Skipping Claude analysis.")
-        print(f"\nEnriched {len(enriched)} stocks. Data available for manual review.")
+        print("\n--enrich-only flag set. Skipping analysis.")
+        print(f"\nEnriched {len(enriched)} stocks.")
+        print(f"Data saved to: {json_path}")
         return enriched
 
-    # 3. Claude Analysis
+    if claude_code:
+        print("\n--claude-code flag set. Skipping API analysis.")
+        print(f"\nEnriched {len(enriched)} stocks.")
+        print(f"Data saved to: {json_path}")
+        print("\n" + "=" * 60)
+        print(" Next Step: Analyze with Claude Code")
+        print("=" * 60)
+        print(f"\nRun the following command in Claude Code:")
+        print(f"  /analyze-stocks {json_path}")
+        print("\nOr ask Claude Code to analyze the enriched data:")
+        print(f"  'Analyze the stocks in {json_path} and provide")
+        print(f"   buy/wait/avoid recommendations with reasoning.'")
+        return enriched
+
+    # 3. Claude API Analysis
     results = analyze_with_claude(enriched)
 
     if not results:
         print("\nNo analysis results. Check API key or try --enrich-only.")
+        print(f"\nYou can still analyze manually using the saved data:")
+        print(f"  {json_path}")
         return enriched
 
     # 4. Report Generation
@@ -382,6 +453,11 @@ def main():
         help='Only enrich data, skip Claude analysis'
     )
     parser.add_argument(
+        '--claude-code',
+        action='store_true',
+        help='Save JSON for Claude Code analysis (instead of Claude API)'
+    )
+    parser.add_argument(
         '--ma-period',
         type=int,
         default=240,
@@ -400,6 +476,7 @@ def main():
         market=args.market,
         capital=args.capital,
         enrich_only=args.enrich_only,
+        claude_code=args.claude_code,
         ma_period=args.ma_period,
         threshold=args.threshold,
     )

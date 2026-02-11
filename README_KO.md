@@ -54,6 +54,8 @@ Claude AI를 활용한 반자동 분석 파이프라인:
 3. Claude AI로 저평가 분석 및 진입 타이밍 판단
 4. 포지션 사이징 포함 리포트 생성
 
+### 옵션 1: Claude API 사용
+
 ```bash
 # 전체 분석 (ANTHROPIC_API_KEY 필요)
 export ANTHROPIC_API_KEY="your-api-key"
@@ -62,8 +64,22 @@ python scripts/analysis/run_daily_analysis.py
 # 단일 마켓
 python scripts/analysis/run_daily_analysis.py --market KOSPI
 python scripts/analysis/run_daily_analysis.py --market SP500
+```
 
-# 데이터 수집만 (Claude 없이)
+### 옵션 2: Claude Code 연동
+
+```bash
+# 스크리닝 + 데이터 수집, JSON으로 저장
+python scripts/analysis/run_daily_analysis.py --claude-code
+
+# 이후 Claude Code에서 /analyze-stocks 스킬 사용
+# 또는 저장된 JSON 파일을 Claude Code에게 분석 요청
+```
+
+### 기타 옵션
+
+```bash
+# 데이터 수집만 (분석 없이)
 python scripts/analysis/run_daily_analysis.py --enrich-only
 
 # 자본금 설정 (포지션 사이징용)

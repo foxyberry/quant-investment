@@ -51,6 +51,8 @@ Semi-automated analysis pipeline using Claude AI:
 3. Analyze with Claude for valuation and entry timing
 4. Generate report with position sizing recommendations
 
+### Option 1: Claude API
+
 ```bash
 # Full analysis (requires ANTHROPIC_API_KEY)
 export ANTHROPIC_API_KEY="your-api-key"
@@ -59,8 +61,22 @@ python scripts/analysis/run_daily_analysis.py
 # Single market
 python scripts/analysis/run_daily_analysis.py --market KOSPI
 python scripts/analysis/run_daily_analysis.py --market SP500
+```
 
-# Data enrichment only (no Claude)
+### Option 2: Claude Code Integration
+
+```bash
+# Run screening and enrichment, save JSON for Claude Code
+python scripts/analysis/run_daily_analysis.py --claude-code
+
+# Then in Claude Code, use the /analyze-stocks skill
+# or ask Claude Code to analyze the saved JSON file
+```
+
+### Other Options
+
+```bash
+# Data enrichment only (no analysis)
 python scripts/analysis/run_daily_analysis.py --enrich-only
 
 # Custom capital for position sizing
