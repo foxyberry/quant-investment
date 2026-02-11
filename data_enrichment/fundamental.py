@@ -15,6 +15,7 @@ Usage:
 """
 
 import logging
+import re
 from typing import Dict, Any, Optional, Union
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
@@ -302,6 +303,10 @@ class FundamentalEnricher:
         """
         Enrich data using pykrx.
 
+        Note: pykrx only works with historical data available on KRX.
+        For "future" dates (test environments), this will return empty results
+        and Naver Finance scraping will be used instead.
+
         Args:
             data: FundamentalData object to update
             code: Stock code (e.g., "005930")
@@ -311,13 +316,11 @@ class FundamentalEnricher:
 
             # Get latest trading date
             today = date.today()
-            if today.year > 2025:
-                # Handle future date case
-                end_date = date(2025, 1, 24)
-            else:
-                end_date = today
 
-            start_date = end_date - timedelta(days=7)
+            # pykrx works with historical KRX data
+            # Use recent date range (may return empty for future dates)
+            end_date = today
+            start_date = end_date - timedelta(days=14)
 
             # Get fundamental data
             fundamental = pykrx_stock.get_market_fundamental_by_date(
@@ -378,11 +381,11 @@ class FundamentalEnricher:
 
             soup = BeautifulSoup(response.text, 'html.parser')
 
-            # Parse company summary section
-            summary = soup.select_one('div.summary')
-            if summary:
-                # Parse key metrics from Naver Finance
-                self._parse_naver_metrics(data, soup)
+            # Parse PER, PBR, EPS from per_table
+            self._parse_naver_per_table(data, soup)
+
+            # Parse key metrics from Naver Finance
+            self._parse_naver_metrics(data, soup)
 
             # Get sector and industry from Naver
             self._parse_naver_sector(data, soup)
@@ -394,6 +397,78 @@ class FundamentalEnricher:
 
         except Exception as e:
             logger.warning(f"Naver Finance scraping failed for {code}: {e}")
+
+    def _parse_naver_per_table(self, data: FundamentalData, soup: BeautifulSoup) -> None:
+        """
+        Parse PER, PBR, EPS from Naver Finance per_table.
+
+        The per_table contains:
+        - PER (trailing) and EPS
+        - 추정PER (forward) and 추정EPS
+        - PBR and BPS
+        - 배당수익률 (dividend yield)
+        """
+        try:
+            per_table = soup.select_one('#tab_con1 table.per_table')
+            if not per_table:
+                return
+
+            rows = per_table.select('tr')
+            for row in rows:
+                # Get row label text for matching
+                label_text = row.get_text(strip=True)
+
+                # Get em elements which contain the actual values
+                ems = row.select('em')
+                if not ems:
+                    continue
+
+                # Handle dividend yield first (only has 1 em tag)
+                if '배당수익률' in label_text:
+                    div_text = ems[0].get_text(strip=True).replace('%', '').replace(',', '')
+                    try:
+                        div_val = float(div_text) if div_text and div_text != '-' else None
+                        if div_val is not None and data.dividend_yield is None:
+                            data.dividend_yield = div_val
+                    except ValueError:
+                        pass
+                    continue
+
+                # Other metrics require 2 em tags
+                if len(ems) < 2:
+                    continue
+
+                val1_text = ems[0].get_text(strip=True).replace(',', '')
+                val2_text = ems[1].get_text(strip=True).replace(',', '')
+
+                try:
+                    val1 = float(val1_text) if val1_text and val1_text != '-' else None
+                    val2 = float(val2_text) if val2_text and val2_text != '-' else None
+                except ValueError:
+                    val1, val2 = None, None
+
+                # Map based on label
+                if '추정PER' in label_text:
+                    # Forward PER and Forward EPS
+                    if val1 is not None and data.forward_pe is None:
+                        data.forward_pe = val1
+                    # Forward EPS is val2 but we don't have a field for it
+                elif 'PER' in label_text and 'EPS' in label_text:
+                    # Trailing PER and EPS
+                    if val1 is not None and data.pe_ratio is None:
+                        data.pe_ratio = val1
+                    if val2 is not None and data.eps is None:
+                        data.eps = val2
+                elif 'PBR' in label_text and 'BPS' in label_text:
+                    # PBR
+                    if val1 is not None and data.pb_ratio is None:
+                        data.pb_ratio = val1
+                    # BPS is val2 but we don't have a field for it
+
+            logger.debug(f"Parsed per_table: PER={data.pe_ratio}, PBR={data.pb_ratio}, EPS={data.eps}")
+
+        except Exception as e:
+            logger.debug(f"Error parsing Naver per_table: {e}")
 
     def _parse_naver_metrics(self, data: FundamentalData, soup: BeautifulSoup) -> None:
         """Parse financial metrics from Naver Finance page"""
