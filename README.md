@@ -191,6 +191,50 @@ pip install -r requirements.txt
 
 ---
 
+## Development
+
+### Quick Start (API + Web)
+```bash
+# Run both servers
+./scripts/dev.sh
+```
+
+### Individual Services
+```bash
+# API only (FastAPI)
+./scripts/run_api.sh
+
+# Web only (Next.js)
+./scripts/run_web.sh
+```
+
+**Development URLs:**
+| Service | URL |
+|---------|-----|
+| API | http://localhost:8000 |
+| API Docs (Swagger) | http://localhost:8000/docs |
+| API Docs (ReDoc) | http://localhost:8000/redoc |
+| Web | http://localhost:3000 |
+
+### Docker
+
+```bash
+# Build and run all services
+docker-compose up -d
+
+# Build and run specific service
+docker-compose up -d api
+docker-compose up -d web
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
+
+---
+
 ## Stack
 - **Python 3.13**
 - **Claude API** - AI-powered stock analysis

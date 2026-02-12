@@ -55,7 +55,9 @@
       "Bash(npm install:*)",
       "Bash(ruff check:*)",
       "Bash(curl:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(bash:*)",
+      "Bash(docker-compose config:*)"
     ],
     "deny": [],
     "ask": []

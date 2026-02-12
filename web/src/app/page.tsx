@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui';
+import {
+  PortfolioSummaryCard,
+  SellSignalsCard,
+  RecentReportsCard,
+  QuickActionsCard,
+} from '@/components/dashboard';
+import { Wifi, WifiOff, Loader2 } from 'lucide-react';
 
 interface ConnectionStatus {
   connected: boolean;
@@ -30,14 +37,14 @@ export default function Home() {
           setStatus({
             connected: false,
             checking: false,
-            error: `Server returned ${response.status}`
+            error: `Server returned ${response.status}`,
           });
         }
       } catch {
         setStatus({
           connected: false,
           checking: false,
-          error: 'Unable to connect to API server'
+          error: 'Unable to connect to API server',
         });
       }
     };
@@ -47,88 +54,79 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
-      {/* Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-[var(--foreground)]">Dashboard</h1>
-        <p className="text-[var(--foreground-muted)] mt-1">
-          Welcome to your quantitative investment dashboard
-        </p>
-      </div>
+      {/* Page Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Dashboard</h1>
+          <p className="text-[var(--foreground-muted)] mt-1">
+            Welcome to your quantitative investment dashboard
+          </p>
+        </div>
 
-      {/* API Connection Status */}
-      <Card title="API Connection Status">
-        <div className="flex items-center gap-3">
+        {/* Connection Status Badge */}
+        <div className="flex items-center gap-2">
           {status.checking ? (
-            <>
-              <div className="h-3 w-3 animate-pulse rounded-full bg-yellow-500" />
-              <span className="text-[var(--foreground-muted)]">
-                Checking connection...
-              </span>
-            </>
+            <div className="flex items-center gap-2 rounded-full bg-yellow-100 px-3 py-1.5 text-sm text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Connecting...</span>
+            </div>
           ) : status.connected ? (
-            <>
-              <div className="h-3 w-3 rounded-full bg-green-500" />
-              <span className="text-[var(--foreground-muted)]">
-                Connected to API server
-              </span>
-            </>
+            <div className="flex items-center gap-2 rounded-full bg-green-100 px-3 py-1.5 text-sm text-green-800 dark:bg-green-900 dark:text-green-200">
+              <Wifi className="h-4 w-4" />
+              <span>API Connected</span>
+            </div>
           ) : (
-            <>
-              <div className="h-3 w-3 rounded-full bg-red-500" />
-              <span className="text-[var(--foreground-muted)]">
-                {status.error || 'Disconnected'}
-              </span>
-            </>
+            <div className="flex items-center gap-2 rounded-full bg-red-100 px-3 py-1.5 text-sm text-red-800 dark:bg-red-900 dark:text-red-200">
+              <WifiOff className="h-4 w-4" />
+              <span>API Disconnected</span>
+            </div>
           )}
         </div>
-      </Card>
-
-      {/* Dashboard Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* Portfolio Overview Card */}
-        <Card title="Portfolio Overview">
-          <p className="text-3xl font-semibold text-[var(--foreground)]">
-            --
-          </p>
-          <p className="mt-2 text-sm text-[var(--foreground-muted)]">
-            Coming soon
-          </p>
-        </Card>
-
-        {/* Screening Results Card */}
-        <Card title="Screening Results">
-          <p className="text-3xl font-semibold text-[var(--foreground)]">
-            --
-          </p>
-          <p className="mt-2 text-sm text-[var(--foreground-muted)]">
-            Coming soon
-          </p>
-        </Card>
-
-        {/* Market Status Card */}
-        <Card title="Market Status">
-          <p className="text-3xl font-semibold text-[var(--foreground)]">
-            --
-          </p>
-          <p className="mt-2 text-sm text-[var(--foreground-muted)]">
-            Coming soon
-          </p>
-        </Card>
       </div>
 
-      {/* Getting Started Info */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-900 dark:bg-blue-950">
-        <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-100">
-          Getting Started
-        </h3>
-        <p className="text-sm text-blue-800 dark:text-blue-200">
-          This dashboard connects to the FastAPI backend at{' '}
-          <code className="rounded bg-blue-100 px-1 py-0.5 font-mono text-xs dark:bg-blue-900">
-            {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}
-          </code>
-          . Make sure the API server is running to see live data.
-        </p>
+      {/* Main Dashboard Grid */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Portfolio Summary - Full width on mobile, left column on desktop */}
+        <PortfolioSummaryCard />
+
+        {/* Sell Signals Alert */}
+        <SellSignalsCard />
+
+        {/* Recent Reports */}
+        <RecentReportsCard />
+
+        {/* Quick Actions */}
+        <QuickActionsCard />
       </div>
+
+      {/* Getting Started Info - Shown when API is not connected */}
+      {!status.checking && !status.connected && (
+        <Card>
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 rounded-lg bg-blue-100 p-2 dark:bg-blue-900">
+              <WifiOff className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-[var(--foreground)]">
+                Getting Started
+              </h3>
+              <p className="mt-1 text-sm text-[var(--foreground-muted)]">
+                This dashboard connects to the FastAPI backend at{' '}
+                <code className="rounded bg-[var(--background)] px-1.5 py-0.5 font-mono text-xs">
+                  {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}
+                </code>
+                . Make sure the API server is running to see live data.
+              </p>
+              <p className="mt-2 text-sm text-[var(--foreground-muted)]">
+                Start the API server with:{' '}
+                <code className="rounded bg-[var(--background)] px-1.5 py-0.5 font-mono text-xs">
+                  python -m uvicorn api.main:app --reload
+                </code>
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

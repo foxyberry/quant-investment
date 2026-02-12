@@ -1,0 +1,62 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Documentation (not needed in container)
+*.md
+docs/
+README*
+CLAUDE.md
+
+# Test files
+tests/
+test/
+*.test.py
+pytest.ini
+.pytest_cache/
+
+# Web frontend (built separately)
+web/node_modules/
+web/.next/
+web/.git/
+
+# Notebooks
+notebook/
+*.ipynb
+
+# Logs (mounted as volume)
+logs/
+
+# macOS
+.DS_Store
+
+# Environment files (should use env_file in docker-compose)
+.env
+.env.local
+.env.*.local
+
+# Todo and temporary files
+Todo/
+*.tmp
+*.temp
+
+# Reports (generated at runtime)
+reports/

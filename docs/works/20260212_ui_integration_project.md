@@ -71,9 +71,10 @@ pydantic-settings>=2.1.0
 python-multipart>=0.0.6
 ```
 
-### Task 1.1.5: 개발 서버 실행 스크립트
-- [ ] `scripts/run_api.sh` 생성
-- [ ] `scripts/run_api.py` 생성 (Python 버전)
+### Task 1.1.5: 개발 서버 실행 스크립트 ✅ (2026-02-12)
+- [x] `scripts/run_api.sh` 생성
+- [x] `scripts/run_web.sh` 생성
+- [x] `scripts/dev.sh` 생성 (API + Web 동시 실행)
 
 ---
 
@@ -221,21 +222,22 @@ npx create-next-app@latest web --typescript --tailwind --eslint --app --src-dir
 
 ## Epic 2.2: 대시보드 페이지
 
-### Task 2.2.1: 대시보드 레이아웃
-- [ ] `web/src/app/page.tsx` - 메인 대시보드
-- [ ] 포트폴리오 요약 카드
-- [ ] 오늘의 스크리닝 결과 카드
-- [ ] 최근 분석 리포트 카드
+### Task 2.2.1: 대시보드 레이아웃 ✅ (2026-02-12)
+- [x] `web/src/app/page.tsx` - 메인 대시보드 (2x2 그리드)
+- [x] 포트폴리오 요약 카드
+- [x] 매도 신호 카드
+- [x] 최근 분석 리포트 카드
+- [x] 빠른 액션 카드
 
-### Task 2.2.2: 포트폴리오 요약 컴포넌트
-- [ ] `web/src/components/dashboard/PortfolioSummary.tsx`
-- [ ] 총 자산, 수익률, P&L 표시
-- [ ] 종목별 비중 파이차트
+### Task 2.2.2: 포트폴리오 요약 컴포넌트 ✅ (2026-02-12)
+- [x] `web/src/components/dashboard/PortfolioSummaryCard.tsx`
+- [x] 총 자산, 수익률, P&L 표시
+- [x] 수익/손실 색상 코딩
 
-### Task 2.2.3: 스크리닝 요약 컴포넌트
-- [ ] `web/src/components/dashboard/ScreeningSummary.tsx`
-- [ ] 오늘 발견된 종목 수
-- [ ] 프리셋별 결과 요약
+### Task 2.2.3: 기타 대시보드 컴포넌트 ✅ (2026-02-12)
+- [x] `web/src/components/dashboard/SellSignalsCard.tsx`
+- [x] `web/src/components/dashboard/RecentReportsCard.tsx`
+- [x] `web/src/components/dashboard/QuickActionsCard.tsx`
 
 ---
 
@@ -263,26 +265,27 @@ npx create-next-app@latest web --typescript --tailwind --eslint --app --src-dir
 
 ## Epic 2.4: 포트폴리오 페이지
 
-### Task 2.4.1: 포트폴리오 페이지 레이아웃
-- [ ] `web/src/app/portfolio/page.tsx`
-- [ ] 보유 종목 테이블
-- [ ] 종목 추가/수정 모달
+### Task 2.4.1: 포트폴리오 페이지 레이아웃 ✅ (2026-02-12)
+- [x] `web/src/app/portfolio/page.tsx`
+- [x] 보유 종목 테이블
+- [x] 요약 카드 (투자금, 평가금, P&L)
 
-### Task 2.4.2: 보유 종목 테이블
-- [ ] `web/src/components/portfolio/HoldingsTable.tsx`
-- [ ] 종목명, 수량, 평균가, 현재가, 수익률
-- [ ] 수정/삭제 버튼
+### Task 2.4.2: 보유 종목 테이블 ✅ (2026-02-12)
+- [x] `web/src/components/portfolio/HoldingsTable.tsx`
+- [x] 정렬 기능, 수익/손실 색상
+- [x] 수정/삭제 버튼
+- [x] 반응형 (모바일 카드)
 
-### Task 2.4.3: 종목 추가 폼
-- [ ] `web/src/components/portfolio/AddHoldingForm.tsx`
-- [ ] 종목 검색 자동완성
-- [ ] 수량, 매수가 입력
-- [ ] 유효성 검증
+### Task 2.4.3: 종목 추가/수정 모달 ✅ (2026-02-12)
+- [x] `web/src/components/portfolio/AddHoldingModal.tsx`
+- [x] `web/src/components/portfolio/EditHoldingModal.tsx`
+- [x] `web/src/components/portfolio/DeleteConfirmModal.tsx`
+- [x] 유효성 검증
 
-### Task 2.4.4: 매도 신호 알림
-- [ ] `web/src/components/portfolio/SellSignals.tsx`
-- [ ] 매도 조건 충족 종목 하이라이트
-- [ ] 알림 배지
+### Task 2.4.4: 매도 신호 알림 ✅ (2026-02-12)
+- [x] `web/src/components/portfolio/SellSignalBanner.tsx`
+- [x] 매도 조건 충족 종목 표시
+- [x] 닫기 가능
 
 ---
 
@@ -316,16 +319,16 @@ npx create-next-app@latest web --typescript --tailwind --eslint --app --src-dir
 
 ## Epic 3.1: 개발 환경 통합
 
-### Task 3.1.1: Docker Compose 설정
-- [ ] `docker-compose.yml` 생성
-- [ ] FastAPI 서비스 정의
-- [ ] Next.js 서비스 정의
-- [ ] 공유 네트워크 설정
+### Task 3.1.1: Docker Compose 설정 ✅ (2026-02-12)
+- [x] `docker-compose.yml` 생성
+- [x] `Dockerfile.api` - FastAPI 이미지
+- [x] `web/Dockerfile` - Next.js 이미지 (멀티스테이지)
+- [x] `.dockerignore` 파일들
 
-### Task 3.1.2: 개발 실행 스크립트
-- [ ] `scripts/dev.sh` - 전체 개발 서버 실행
-- [ ] 동시에 API + Web 실행
-- [ ] 핫 리로드 지원
+### Task 3.1.2: 개발 실행 스크립트 ✅ (2026-02-12)
+- [x] `scripts/dev.sh` - 전체 개발 서버 실행
+- [x] trap 핸들러로 graceful shutdown
+- [x] `.env.example` 환경변수 예시
 
 ---
 

@@ -3,6 +3,12 @@ import type {
   UniverseInfo,
   ScreeningResponse,
   ScreeningResult,
+  Holding,
+  HoldingCreate,
+  HoldingUpdate,
+  PortfolioSummary,
+  SellSignal,
+  ReportSummary,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -65,4 +71,65 @@ export async function checkStock(
   preset: string
 ): Promise<ScreeningResult> {
   return fetchApi<ScreeningResult>(`/api/screening/check/${ticker}?preset=${encodeURIComponent(preset)}`);
+}
+
+// Portfolio API functions
+
+/**
+ * Get all holdings in the portfolio
+ */
+export async function getHoldings(): Promise<Holding[]> {
+  return fetchApi<Holding[]>('/api/portfolio/holdings');
+}
+
+/**
+ * Add a new holding to the portfolio
+ */
+export async function addHolding(data: HoldingCreate): Promise<Holding> {
+  return fetchApi<Holding>('/api/portfolio/holdings', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update an existing holding
+ */
+export async function updateHolding(ticker: string, data: HoldingUpdate): Promise<Holding> {
+  return fetchApi<Holding>(`/api/portfolio/holdings/${encodeURIComponent(ticker)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete a holding from the portfolio
+ */
+export async function deleteHolding(ticker: string): Promise<void> {
+  return fetchApi<void>(`/api/portfolio/holdings/${encodeURIComponent(ticker)}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Get portfolio summary including total investment, market value, and P&L
+ */
+export async function getPortfolioSummary(): Promise<PortfolioSummary> {
+  return fetchApi<PortfolioSummary>('/api/portfolio/summary');
+}
+
+/**
+ * Get active sell signals (stop loss, take profit, etc.)
+ */
+export async function getSellSignals(): Promise<SellSignal[]> {
+  return fetchApi<SellSignal[]>('/api/portfolio/sell-signals');
+}
+
+// Analysis API functions
+
+/**
+ * Get list of recent analysis reports
+ */
+export async function getReports(limit: number = 10): Promise<ReportSummary[]> {
+  return fetchApi<ReportSummary[]>(`/api/analysis/reports?limit=${limit}`);
 }

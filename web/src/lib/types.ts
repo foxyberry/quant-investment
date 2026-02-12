@@ -48,3 +48,54 @@ export interface ScreeningResponse {
   total_count: number;
   matched_count: number;
 }
+
+// Portfolio types
+export interface Holding {
+  ticker: string;
+  name: string | null;
+  quantity: number;
+  avg_price: number;
+  current_price: number | null;
+  market_value: number | null;
+  pnl: number | null;
+  pnl_pct: number | null;
+  currency: string;
+}
+
+export interface HoldingCreate {
+  ticker: string;
+  quantity: number;
+  avg_price: number;
+  currency?: string;
+}
+
+export interface HoldingUpdate {
+  quantity?: number;
+  avg_price?: number;
+}
+
+export interface PortfolioSummary {
+  total_investment: number;
+  total_market_value: number;
+  total_pnl: number;
+  total_pnl_pct: number;
+  holdings_count: number;
+  currency: string;
+}
+
+export interface SellSignal {
+  ticker: string;
+  name: string | null;
+  signal_type: 'stop_loss' | 'take_profit' | 'trailing_stop' | 'manual';
+  reason: string;
+  current_price: number | null;
+  trigger_price: number | null;
+}
+
+// Analysis types
+export interface ReportSummary {
+  date: string;
+  market: string;
+  filename: string;
+  buy_count?: number;
+}
