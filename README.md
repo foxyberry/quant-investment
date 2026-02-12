@@ -243,6 +243,7 @@ quant-investment/
 
 ### Screener
 - [Screener Conditions Architecture](docs/SCREENER_CONDITIONS.md) - All 28 condition classes and usage
+- [Accumulation Zone Screening](docs/ACCUMULATION_SCREENING.md) - Quiet accumulation detection guide
 - [Breakout Conditions](docs/BREAKOUT_CONDITIONS.md) - Breakout detection conditions
 - [Korean MA Screener](docs/KOREAN_MA_SCREENER.md) - Korean stock MA touch screener
 
