@@ -124,7 +124,8 @@ export async function getPortfolioSummary(): Promise<PortfolioSummary> {
  * Get active sell signals (stop loss, take profit, etc.)
  */
 export async function getSellSignals(): Promise<SellSignal[]> {
-  return fetchApi<SellSignal[]>('/api/portfolio/sell-signals');
+  const response = await fetchApi<{ signals: SellSignal[]; checked_at: string }>('/api/portfolio/sell-signals');
+  return response.signals;
 }
 
 // Analysis API functions
@@ -133,7 +134,8 @@ export async function getSellSignals(): Promise<SellSignal[]> {
  * Get list of recent analysis reports
  */
 export async function getReports(limit: number = 10): Promise<ReportSummary[]> {
-  return fetchApi<ReportSummary[]>(`/api/analysis/reports?limit=${limit}`);
+  const response = await fetchApi<{ reports: ReportSummary[]; total_count: number }>(`/api/analysis/reports?limit=${limit}`);
+  return response.reports;
 }
 
 /**
