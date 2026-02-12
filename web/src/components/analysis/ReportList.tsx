@@ -218,7 +218,7 @@ export default function ReportList({
           <div className="space-y-3">
             {dateReports.map((report, index) => (
               <ReportCard
-                key={`${report.filename}-${index}`}
+                key={`${report.date}-${report.market}-${index}`}
                 report={report}
               />
             ))}

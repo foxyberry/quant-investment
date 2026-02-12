@@ -9,7 +9,7 @@ import type {
   PortfolioSummary,
   SellSignal,
   ReportSummary,
-  AnalysisReport,
+  ReportDetail,
   TickerAnalysis,
 } from './types';
 
@@ -139,10 +139,11 @@ export async function getReports(limit: number = 10): Promise<ReportSummary[]> {
 }
 
 /**
- * Get detailed analysis report by filename
+ * Get detailed analysis report by date
  */
-export async function getReportDetail(filename: string): Promise<AnalysisReport> {
-  return fetchApi<AnalysisReport>(`/api/analysis/reports/${encodeURIComponent(filename)}`);
+export async function getReportDetail(date: string, market?: string): Promise<ReportDetail> {
+  const params = market ? `?market=${encodeURIComponent(market)}` : '';
+  return fetchApi<ReportDetail>(`/api/analysis/reports/${encodeURIComponent(date)}${params}`);
 }
 
 /**

@@ -38,7 +38,11 @@ export default function RecentReportsCard() {
 
   const formatDate = (dateStr: string) => {
     try {
-      const date = new Date(dateStr);
+      // Handle YYYYMMDD format
+      const year = dateStr.slice(0, 4);
+      const month = dateStr.slice(4, 6);
+      const day = dateStr.slice(6, 8);
+      const date = new Date(`${year}-${month}-${day}`);
       return new Intl.DateTimeFormat('en-US', {
         month: 'short',
         day: 'numeric',
@@ -106,8 +110,8 @@ export default function RecentReportsCard() {
       <div className="divide-y divide-[var(--border)]">
         {reports.map((report, index) => (
           <Link
-            key={`${report.filename}-${index}`}
-            href={`/analysis?report=${encodeURIComponent(report.filename)}`}
+            key={`${report.date}-${report.market}-${index}`}
+            href={`/analysis/reports/${report.date}`}
             className="flex items-center gap-4 px-6 py-4 hover:bg-[var(--background)] transition-colors group"
           >
             {/* Report icon */}
@@ -121,7 +125,7 @@ export default function RecentReportsCard() {
                 <span className="font-medium text-[var(--foreground)]">
                   {getMarketLabel(report.market)}
                 </span>
-                {report.buy_count !== undefined && report.buy_count > 0 && (
+                {report.buy_count > 0 && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
                     <TrendingUp className="h-3 w-3" />
                     {report.buy_count} BUY

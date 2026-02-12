@@ -7,6 +7,7 @@ Provides endpoints for stock analysis and data enrichment operations.
 import logging
 from typing import List, Optional
 
+import yfinance as yf
 from fastapi import APIRouter, HTTPException, Query
 
 from api.schemas.analysis import (
@@ -18,8 +19,13 @@ from api.schemas.analysis import (
     ReportDetail,
     ReportListResponse,
     EnrichedDataResponse,
+    OHLCVDataPoint,
+    TickerTechnicalIndicators,
+    TickerFundamental,
+    TickerAnalysisResponse,
 )
 from api.services.analysis_service import get_analysis_service
+from api.services.market_service import MarketService
 
 logger = logging.getLogger(__name__)
 
@@ -320,6 +326,138 @@ async def list_enriched_files() -> List[dict]:
             status_code=500,
             detail=f"Failed to list enriched files: {str(e)}"
         )
+
+
+@router.get(
+    "/ticker/{ticker}",
+    response_model=TickerAnalysisResponse,
+    summary="Get Ticker Analysis",
+    description="Get combined OHLCV data, technical indicators, and fundamental data for a ticker.",
+)
+async def get_ticker_analysis(
+    ticker: str,
+    period: str = Query(
+        default="6mo",
+        description="Period for OHLCV data (1mo, 3mo, 6mo, 1y, 2y)"
+    ),
+) -> TickerAnalysisResponse:
+    """
+    Get combined analysis for a ticker including OHLCV, technical, and fundamental data.
+
+    Args:
+        ticker: Stock ticker symbol (e.g., AAPL, 005930.KS)
+        period: Historical data period
+
+    Returns:
+        TickerAnalysisResponse with all data
+
+    Raises:
+        HTTPException: If ticker data unavailable
+    """
+    market_service = MarketService()
+
+    # Map period string to days
+    period_days_map = {
+        "1mo": 30,
+        "3mo": 90,
+        "6mo": 180,
+        "1y": 365,
+        "2y": 730,
+    }
+    days = period_days_map.get(period, 180)
+
+    # Get OHLCV data
+    ohlcv_result = market_service.get_ohlcv(ticker, days=days)
+    if ohlcv_result is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Data not available for ticker: {ticker}"
+        )
+
+    # Get quote for current price and change
+    quote = market_service.get_quote(ticker)
+    current_price = quote["current_price"] if quote else 0.0
+    change_pct = quote["change_pct"] if quote else 0.0
+    name = (quote.get("name") if quote else None) or ticker
+
+    # Convert OHLCV to response format
+    ohlcv_data = [
+        OHLCVDataPoint(
+            time=item["date"],
+            open=item["open"],
+            high=item["high"],
+            low=item["low"],
+            close=item["close"],
+            volume=item["volume"],
+        )
+        for item in ohlcv_result.get("data", [])
+    ]
+
+    # Get technical indicators
+    technical = TickerTechnicalIndicators()
+    tech_result = market_service.get_technical_indicators(ticker)
+    if tech_result:
+        rsi_val = tech_result.get("rsi")
+        if rsi_val is not None:
+            signal = "neutral"
+            if rsi_val < 30:
+                signal = "oversold"
+            elif rsi_val > 70:
+                signal = "overbought"
+            technical.rsi = {"value": rsi_val, "signal": signal}
+
+        macd_val = tech_result.get("macd")
+        if macd_val is not None:
+            hist = tech_result.get("macd_histogram", 0) or 0
+            trend = "bullish" if hist > 0 else ("bearish" if hist < 0 else "neutral")
+            technical.macd = {
+                "macd": macd_val,
+                "signal": tech_result.get("macd_signal"),
+                "histogram": hist,
+                "trend": trend,
+            }
+
+        bb_upper = tech_result.get("bb_upper")
+        if bb_upper is not None:
+            technical.bollingerBands = {
+                "upper": bb_upper,
+                "middle": tech_result.get("bb_middle"),
+                "lower": tech_result.get("bb_lower"),
+                "position": tech_result.get("bb_position", "within"),
+            }
+
+        ma_20 = tech_result.get("ma_20")
+        if ma_20 is not None:
+            technical.sma = {
+                "sma20": ma_20,
+                "sma50": tech_result.get("ma_60"),
+                "sma200": tech_result.get("ma_240"),
+            }
+
+    # Get fundamental data
+    fundamental = None
+    try:
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        if info:
+            fundamental = TickerFundamental(
+                market_cap=info.get("marketCap"),
+                pe_ratio=info.get("trailingPE"),
+                dividend_yield=info.get("dividendYield"),
+                sector=info.get("sector"),
+            )
+    except Exception as e:
+        logger.warning(f"Failed to get fundamental data for {ticker}: {e}")
+
+    return TickerAnalysisResponse(
+        ticker=ticker,
+        name=name,
+        current_price=current_price,
+        change_pct=change_pct,
+        ohlcv=ohlcv_data,
+        technical=technical,
+        fundamental=fundamental,
+    )
 
 
 @router.get(

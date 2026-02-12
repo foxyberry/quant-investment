@@ -96,8 +96,10 @@ export interface SellSignal {
 export interface ReportSummary {
   date: string;
   market: string;
-  filename: string;
-  buy_count?: number;
+  total_stocks: number;
+  buy_count: number;
+  wait_count: number;
+  avoid_count: number;
 }
 
 // OHLCV data for charts
@@ -140,23 +142,12 @@ export interface TechnicalIndicators {
   };
 }
 
-// Analysis report detail
-export interface AnalysisReport {
+// Report detail with markdown content
+export interface ReportDetail {
   date: string;
   market: string;
-  filename: string;
-  summary: string;
-  recommendations: RecommendationItem[];
-  total_screened: number;
-  matched_count: number;
-}
-
-export interface RecommendationItem {
-  ticker: string;
-  name: string;
-  action: 'BUY' | 'WAIT' | 'AVOID';
-  score: number;
-  reasons: string[];
+  content: string;
+  stocks: Array<Record<string, unknown>>;
 }
 
 // Ticker analysis response

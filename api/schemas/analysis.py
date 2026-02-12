@@ -204,3 +204,66 @@ class EnrichedDataResponse(BaseModel):
         default_factory=list,
         description="List of enriched stock data"
     )
+
+
+class OHLCVDataPoint(BaseModel):
+    """Single OHLCV data point for ticker analysis."""
+
+    time: str = Field(..., description="Date string (YYYY-MM-DD)")
+    open: float = Field(..., description="Opening price")
+    high: float = Field(..., description="Highest price")
+    low: float = Field(..., description="Lowest price")
+    close: float = Field(..., description="Closing price")
+    volume: Optional[int] = Field(None, description="Trading volume")
+
+
+class TickerTechnicalIndicators(BaseModel):
+    """Technical indicators for ticker analysis."""
+
+    rsi: Optional[Dict[str, Any]] = Field(None, description="RSI with value and signal")
+    macd: Optional[Dict[str, Any]] = Field(None, description="MACD with macd, signal, histogram, trend")
+    bollingerBands: Optional[Dict[str, Any]] = Field(None, description="Bollinger Bands")
+    sma: Optional[Dict[str, Any]] = Field(None, description="Simple Moving Averages")
+    volume: Optional[Dict[str, Any]] = Field(None, description="Volume analysis")
+
+
+class TickerFundamental(BaseModel):
+    """Fundamental data for ticker analysis."""
+
+    market_cap: Optional[float] = Field(None, description="Market capitalization")
+    pe_ratio: Optional[float] = Field(None, description="Price-to-earnings ratio")
+    dividend_yield: Optional[float] = Field(None, description="Dividend yield")
+    sector: Optional[str] = Field(None, description="Industry sector")
+
+
+class TickerAnalysisResponse(BaseModel):
+    """
+    Combined ticker analysis response with OHLCV, technical, and fundamental data.
+
+    Attributes:
+        ticker: Stock ticker symbol
+        name: Company name
+        current_price: Current stock price
+        change_pct: Price change percentage
+        ohlcv: Historical OHLCV data
+        technical: Technical indicators
+        fundamental: Fundamental data
+    """
+
+    ticker: str = Field(..., description="Stock ticker symbol")
+    name: str = Field(..., description="Company name")
+    current_price: float = Field(..., description="Current stock price")
+    change_pct: float = Field(0.0, description="Price change percentage")
+    ohlcv: List[OHLCVDataPoint] = Field(default_factory=list, description="OHLCV data")
+    technical: TickerTechnicalIndicators = Field(
+        default_factory=TickerTechnicalIndicators,
+        description="Technical indicators"
+    )
+    fundamental: Optional[TickerFundamental] = Field(None, description="Fundamental data")
+
+
+class SearchResult(BaseModel):
+    """Single search result."""
+
+    ticker: str = Field(..., description="Stock ticker symbol")
+    name: str = Field(..., description="Company name")

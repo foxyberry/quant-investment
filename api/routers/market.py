@@ -4,12 +4,16 @@ Market data router.
 Provides endpoints for OHLCV data, quotes, and technical indicators.
 """
 
-from typing import Annotated
+import logging
+from typing import Annotated, List
 
 from fastapi import APIRouter, HTTPException, Query
 
 from api.schemas.market import OHLCVResponse, QuoteResponse, TechnicalIndicators
+from api.schemas.analysis import SearchResult
 from api.services.market_service import MarketService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/api/market",

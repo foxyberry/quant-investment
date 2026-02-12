@@ -1,15 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   FileText,
   Calendar,
   TrendingUp,
   ChevronDown,
   ChevronUp,
-  Target,
+  ExternalLink,
 } from 'lucide-react';
-import type { ReportSummary, AnalysisReport } from '@/lib/types';
+import type { ReportSummary, ReportDetail } from '@/lib/types';
 import { getReportDetail } from '@/lib/api';
 
 interface ReportCardProps {
@@ -24,13 +25,17 @@ interface ReportCardProps {
  */
 export default function ReportCard({ report, className = '' }: ReportCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [detailData, setDetailData] = useState<AnalysisReport | null>(null);
+  const [detailData, setDetailData] = useState<ReportDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const formatDate = (dateStr: string) => {
     try {
-      const date = new Date(dateStr);
+      // Handle YYYYMMDD format
+      const year = dateStr.slice(0, 4);
+      const month = dateStr.slice(4, 6);
+      const day = dateStr.slice(6, 8);
+      const date = new Date(`${year}-${month}-${day}`);
       return new Intl.DateTimeFormat('en-US', {
         weekday: 'short',
         month: 'short',
@@ -59,7 +64,7 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
       setIsLoading(true);
       setError(null);
       try {
-        const data = await getReportDetail(report.filename);
+        const data = await getReportDetail(report.date);
         setDetailData(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load details');
@@ -70,17 +75,20 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
     setIsExpanded(!isExpanded);
   };
 
-  const getActionColor = (action: string) => {
-    switch (action) {
-      case 'BUY':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'WAIT':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'AVOID':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
+  // Get a text preview from markdown content
+  const getContentPreview = (content: string, maxLength: number = 200): string => {
+    // Strip markdown headers and formatting
+    const stripped = content
+      .replace(/^#+\s+.*/gm, '') // headers
+      .replace(/\*\*([^*]+)\*\*/g, '$1') // bold
+      .replace(/\*([^*]+)\*/g, '$1') // italic
+      .replace(/\|[^|]*\|/g, '') // table cells
+      .replace(/[-=]{3,}/g, '') // horizontal rules
+      .replace(/\n{2,}/g, '\n')
+      .trim();
+
+    if (stripped.length <= maxLength) return stripped;
+    return stripped.slice(0, maxLength).trim() + '...';
   };
 
   return (
@@ -104,10 +112,15 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
             <span className="font-semibold text-[var(--foreground)]">
               {getMarketLabel(report.market)}
             </span>
-            {report.buy_count !== undefined && report.buy_count > 0 && (
+            {report.buy_count > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
                 <TrendingUp className="h-3 w-3" />
                 {report.buy_count} BUY
+              </span>
+            )}
+            {report.total_stocks > 0 && (
+              <span className="text-xs text-[var(--foreground-muted)]">
+                ({report.total_stocks} stocks)
               </span>
             )}
           </div>
@@ -145,86 +158,51 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
           {detailData && !isLoading && (
             <div className="space-y-4">
               {/* Summary stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-lg bg-[var(--background)] p-3">
                   <span className="text-xs text-[var(--foreground-muted)]">
-                    Total Screened
+                    Total Stocks
                   </span>
                   <p className="text-lg font-semibold text-[var(--foreground)]">
-                    {detailData.total_screened.toLocaleString()}
+                    {report.total_stocks.toLocaleString()}
                   </p>
                 </div>
                 <div className="rounded-lg bg-[var(--background)] p-3">
                   <span className="text-xs text-[var(--foreground-muted)]">
-                    Matched
+                    BUY Signals
                   </span>
                   <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                    {detailData.matched_count.toLocaleString()}
+                    {report.buy_count}
                   </p>
                 </div>
-                <div className="rounded-lg bg-[var(--background)] p-3 col-span-2 sm:col-span-1">
+                <div className="rounded-lg bg-[var(--background)] p-3">
                   <span className="text-xs text-[var(--foreground-muted)]">
-                    Match Rate
+                    Stocks Data
                   </span>
                   <p className="text-lg font-semibold text-[var(--foreground)]">
-                    {detailData.total_screened > 0
-                      ? ((detailData.matched_count / detailData.total_screened) * 100).toFixed(1)
-                      : 0}
-                    %
+                    {detailData.stocks.length}
                   </p>
                 </div>
               </div>
 
-              {/* Summary text */}
-              {detailData.summary && (
+              {/* Content preview */}
+              {detailData.content && (
                 <div className="rounded-lg bg-[var(--background)] p-3">
-                  <span className="text-xs text-[var(--foreground-muted)]">Summary</span>
-                  <p className="mt-1 text-sm text-[var(--foreground)]">
-                    {detailData.summary}
+                  <span className="text-xs text-[var(--foreground-muted)]">Preview</span>
+                  <p className="mt-1 text-sm text-[var(--foreground)] line-clamp-3">
+                    {getContentPreview(detailData.content)}
                   </p>
                 </div>
               )}
 
-              {/* Recommendations */}
-              {detailData.recommendations && detailData.recommendations.length > 0 && (
-                <div>
-                  <h4 className="flex items-center gap-2 text-sm font-medium text-[var(--foreground)] mb-2">
-                    <Target className="h-4 w-4" />
-                    Recommendations ({detailData.recommendations.length})
-                  </h4>
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {detailData.recommendations.map((rec, index) => (
-                      <div
-                        key={`${rec.ticker}-${index}`}
-                        className="flex items-center justify-between gap-3 rounded-lg bg-[var(--background)] p-3"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-[var(--foreground)]">
-                              {rec.ticker}
-                            </span>
-                            <span
-                              className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${getActionColor(
-                                rec.action
-                              )}`}
-                            >
-                              {rec.action}
-                            </span>
-                          </div>
-                          <p className="text-sm text-[var(--foreground-muted)] truncate">
-                            {rec.name}
-                          </p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-sm font-medium text-[var(--foreground)]">
-                            Score: {rec.score}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* View full report link */}
+              <Link
+                href={`/analysis/reports/${report.date}`}
+                className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Full Report
+              </Link>
             </div>
           )}
         </div>

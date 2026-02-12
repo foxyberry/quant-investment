@@ -415,3 +415,152 @@ class TestAnalysisStatus:
         assert response.status_code == 200
         data = response.json()
         assert data["claude_available"] is False
+
+
+class TestTickerAnalysis:
+    """Tests for GET /api/analysis/ticker/{ticker} endpoint."""
+
+    def test_get_ticker_analysis_success(self, client):
+        """Test GET /api/analysis/ticker/{ticker} returns combined analysis."""
+        with patch("api.routers.analysis.MarketService") as MockMarketService:
+            mock_service = MagicMock()
+            MockMarketService.return_value = mock_service
+
+            # Mock OHLCV
+            mock_service.get_ohlcv.return_value = {
+                "ticker": "AAPL",
+                "data": [
+                    {
+                        "date": "2026-02-11",
+                        "open": 174.0,
+                        "high": 176.0,
+                        "low": 173.5,
+                        "close": 175.5,
+                        "volume": 50000000,
+                    }
+                ],
+                "period_days": 1,
+            }
+
+            # Mock quote
+            mock_service.get_quote.return_value = {
+                "ticker": "AAPL",
+                "name": "Apple Inc.",
+                "current_price": 175.50,
+                "change": 2.30,
+                "change_pct": 1.33,
+                "volume": 50000000,
+                "timestamp": "2026-02-12T10:00:00",
+            }
+
+            # Mock technical indicators
+            mock_service.get_technical_indicators.return_value = {
+                "ticker": "AAPL",
+                "rsi": 55.5,
+                "rsi_signal": "neutral",
+                "macd": 2.5,
+                "macd_signal": 1.8,
+                "macd_histogram": 0.7,
+                "bb_upper": 180.0,
+                "bb_middle": 175.0,
+                "bb_lower": 170.0,
+                "bb_position": "middle",
+                "ma_20": 174.5,
+                "ma_60": 172.0,
+                "ma_120": 170.0,
+                "ma_240": 165.0,
+            }
+
+            # Mock yfinance for fundamental data
+            with patch("api.routers.analysis.yf") as mock_yf:
+                mock_ticker = MagicMock()
+                mock_yf.Ticker.return_value = mock_ticker
+                mock_ticker.info = {
+                    "marketCap": 2800000000000,
+                    "trailingPE": 28.5,
+                    "dividendYield": 0.005,
+                    "sector": "Technology",
+                }
+
+                # Act
+                response = client.get("/api/analysis/ticker/AAPL?period=6mo")
+
+                # Assert
+                assert response.status_code == 200
+                data = response.json()
+                assert data["ticker"] == "AAPL"
+                assert data["name"] == "Apple Inc."
+                assert data["current_price"] == 175.50
+                assert data["change_pct"] == 1.33
+                assert len(data["ohlcv"]) == 1
+                assert data["ohlcv"][0]["time"] == "2026-02-11"
+                assert data["technical"]["rsi"]["value"] == 55.5
+                assert data["technical"]["rsi"]["signal"] == "neutral"
+                assert data["technical"]["macd"]["trend"] == "bullish"
+                assert data["fundamental"]["sector"] == "Technology"
+
+    def test_get_ticker_analysis_not_found(self, client):
+        """Test GET /api/analysis/ticker/{ticker} with invalid ticker returns 404."""
+        with patch("api.routers.analysis.MarketService") as MockMarketService:
+            mock_service = MagicMock()
+            MockMarketService.return_value = mock_service
+            mock_service.get_ohlcv.return_value = None
+
+            # Act
+            response = client.get("/api/analysis/ticker/INVALIDTICKER")
+
+            # Assert
+            assert response.status_code == 404
+            data = response.json()
+            assert "detail" in data
+
+    def test_get_ticker_analysis_partial_data(self, client):
+        """Test GET /api/analysis/ticker/{ticker} with partial data available."""
+        with patch("api.routers.analysis.MarketService") as MockMarketService:
+            mock_service = MagicMock()
+            MockMarketService.return_value = mock_service
+
+            # OHLCV available
+            mock_service.get_ohlcv.return_value = {
+                "ticker": "NEWSTOCK",
+                "data": [
+                    {
+                        "date": "2026-02-11",
+                        "open": 10.0,
+                        "high": 11.0,
+                        "low": 9.5,
+                        "close": 10.5,
+                        "volume": 100000,
+                    }
+                ],
+                "period_days": 1,
+            }
+
+            # Quote available
+            mock_service.get_quote.return_value = {
+                "ticker": "NEWSTOCK",
+                "name": None,
+                "current_price": 10.5,
+                "change": 0.5,
+                "change_pct": 5.0,
+                "volume": 100000,
+                "timestamp": "2026-02-12T10:00:00",
+            }
+
+            # No technical data
+            mock_service.get_technical_indicators.return_value = None
+
+            # No fundamental data
+            with patch("api.routers.analysis.yf") as mock_yf:
+                mock_yf.Ticker.side_effect = Exception("Not found")
+
+                # Act
+                response = client.get("/api/analysis/ticker/NEWSTOCK")
+
+                # Assert
+                assert response.status_code == 200
+                data = response.json()
+                assert data["ticker"] == "NEWSTOCK"
+                assert data["name"] == "NEWSTOCK"  # Falls back to ticker
+                assert data["technical"]["rsi"] is None
+                assert data["fundamental"] is None
