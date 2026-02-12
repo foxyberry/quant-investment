@@ -15,6 +15,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!web/src/lib/
 lib64/
 parts/
 sdist/
@@ -187,3 +188,9 @@ ibapi/
 
 # Claude Code
 .claude/settings.local.json
+
+# Node.js (web/)
+web/node_modules/
+web/.next/
+web/.env.local
+web/.env*.local
