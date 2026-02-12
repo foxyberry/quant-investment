@@ -9,6 +9,7 @@ Generates a comprehensive daily screening report including:
 
 Usage:
     python scripts/screening/korean_daily_report.py
+    python scripts/screening/korean_daily_report.py --ma-period 200
     python scripts/screening/korean_daily_report.py --output report.txt
     python scripts/screening/korean_daily_report.py --lookback 10
 """
@@ -66,7 +67,8 @@ def print_section(title: str, width: int = 70):
 def run(
     lookback_days: int = 7,
     output_file: str = None,
-    auto_save: bool = True
+    auto_save: bool = True,
+    ma_period: int = 240
 ) -> dict:
     """
     Generate daily comprehensive report.
@@ -75,6 +77,7 @@ def run(
         lookback_days: Days to look back for crossover detection
         output_file: Output file path
         auto_save: Auto-save to reports/ folder
+        ma_period: Long-term moving average period (default: 240)
 
     Returns:
         Comprehensive analysis results
@@ -102,7 +105,7 @@ def run(
         print("#" + " " * 68 + "#")
         print("#" * 70)
         print(f"\nReport Date: {report_date}")
-        print(f"Settings: Crossover lookback {lookback_days}d | Touch threshold ±2%")
+        print(f"Settings: Crossover lookback {lookback_days}d | MA period {ma_period}d | Touch threshold ±2%")
 
         # 1. Fetch KOSPI stock list
         logger.info("Fetching KOSPI stock list...")
@@ -159,48 +162,48 @@ def run(
         else:
             print("  No dead cross detected")
 
-        # 4. 240-day MA Touch
-        print_section("240-day MA Touch (±2%) - Long-term Support Test")
+        # 4. Long-term MA Touch
+        print_section(f"{ma_period}-day MA Touch (±2%) - Long-term Support Test")
         screener = StockScreener(max_workers=10)
         screener.add_condition(MinPriceCondition(min_price))
         screener.add_condition(MinVolumeCondition(min_volume))
-        screener.add_condition(MATouchCondition(period=240, threshold=0.02))
+        screener.add_condition(MATouchCondition(period=ma_period, threshold=0.02))
 
-        ma240_touch = screener.run(tickers=tickers, show_progress=False)
-        if ma240_touch:
-            print(f"\n240d MA Touch - {len(ma240_touch)} stocks:")
-            for i, r in enumerate(ma240_touch[:15], 1):
+        ma_touch = screener.run(tickers=tickers, show_progress=False)
+        if ma_touch:
+            print(f"\n{ma_period}d MA Touch - {len(ma_touch)} stocks:")
+            for i, r in enumerate(ma_touch[:15], 1):
                 name = ticker_info.get(r.ticker, r.name)[:10]
                 details = next((cr.details for cr in r.condition_results
-                               if 'ma_touch_240d' in cr.condition_name), {})
+                               if f'ma_touch_{ma_period}d' in cr.condition_name), {})
                 dist = details.get('distance_pct', 0) * 100
                 print(f"  {i:2}. {name:<10} ({r.ticker}) | {r.current_price:>10,.0f} | {dist:>+5.1f}%")
         else:
-            print("  No stocks touching 240d MA")
+            print(f"  No stocks touching {ma_period}d MA")
 
-        # 5. 240-day MA Below
-        print_section("240-day MA Below - Long-term Decline")
+        # 5. Long-term MA Below
+        print_section(f"{ma_period}-day MA Below - Long-term Decline")
         screener = StockScreener(max_workers=10)
         screener.add_condition(MinPriceCondition(min_price))
         screener.add_condition(MinVolumeCondition(min_volume))
-        screener.add_condition(BelowMACondition(period=240, max_distance_pct=-0.02))
+        screener.add_condition(BelowMACondition(period=ma_period, max_distance_pct=-0.02))
 
-        ma240_below = screener.run(tickers=tickers, show_progress=False)
-        ma240_below_sorted = sorted(
-            ma240_below,
+        ma_below = screener.run(tickers=tickers, show_progress=False)
+        ma_below_sorted = sorted(
+            ma_below,
             key=lambda r: next((cr.details.get('distance_pct', 0) for cr in r.condition_results
-                               if 'below_ma_240d' in cr.condition_name), 0)
+                               if f'below_ma_{ma_period}d' in cr.condition_name), 0)
         )
-        if ma240_below_sorted:
-            print(f"\n240d MA Below - {len(ma240_below_sorted)} stocks:")
-            for i, r in enumerate(ma240_below_sorted[:15], 1):
+        if ma_below_sorted:
+            print(f"\n{ma_period}d MA Below - {len(ma_below_sorted)} stocks:")
+            for i, r in enumerate(ma_below_sorted[:15], 1):
                 name = ticker_info.get(r.ticker, r.name)[:10]
                 details = next((cr.details for cr in r.condition_results
-                               if 'below_ma_240d' in cr.condition_name), {})
+                               if f'below_ma_{ma_period}d' in cr.condition_name), {})
                 dist = details.get('distance_pct', 0) * 100
                 print(f"  {i:2}. {name:<10} ({r.ticker}) | {r.current_price:>10,.0f} | {dist:>+5.1f}%")
         else:
-            print("  No stocks below 240d MA")
+            print(f"  No stocks below {ma_period}d MA")
 
         # 6. 60d & 120d Both Below
         print_section("60d & 120d MA Both Below - Medium-term Weakness")
@@ -235,8 +238,8 @@ def run(
         print(f"""
   Golden Cross: {len(golden_cross)} stocks
   Dead Cross: {len(dead_cross)} stocks
-  240d MA Touch: {len(ma240_touch)} stocks
-  240d MA Below: {len(ma240_below_sorted)} stocks
+  {ma_period}d MA Touch: {len(ma_touch)} stocks
+  {ma_period}d MA Below: {len(ma_below_sorted)} stocks
   60d & 120d Both Below: {len(both_below_sorted)} stocks
 """)
 
@@ -247,8 +250,8 @@ def run(
         return {
             'golden_cross': golden_cross,
             'dead_cross': dead_cross,
-            'ma240_touch': ma240_touch,
-            'ma240_below': ma240_below_sorted,
+            'ma_touch': ma_touch,
+            'ma_below': ma_below_sorted,
             'both_below': both_below_sorted,
         }
 
@@ -275,13 +278,18 @@ def main():
         '--no-save', action='store_true',
         help='Do not save to file (terminal only)'
     )
+    parser.add_argument(
+        '--ma-period', type=int, default=240,
+        help='Long-term MA period for touch/below analysis (default: 240)'
+    )
 
     args = parser.parse_args()
 
     run(
         lookback_days=args.lookback,
         output_file=args.output,
-        auto_save=not args.no_save
+        auto_save=not args.no_save,
+        ma_period=args.ma_period
     )
 
 
