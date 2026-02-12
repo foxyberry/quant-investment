@@ -51,7 +51,11 @@
       "Bash(grep:*)",
       "Bash(npx create-next-app:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(npm install:*)",
+      "Bash(ruff check:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []

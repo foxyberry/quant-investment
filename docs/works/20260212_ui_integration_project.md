@@ -79,12 +79,12 @@ python-multipart>=0.0.6
 
 ## Epic 1.2: 스크리닝 API
 
-### Task 1.2.1: 스크리닝 스키마 정의
-- [ ] `api/schemas/screening.py` 생성
-- [ ] ScreeningRequest 스키마
-- [ ] ScreeningResult 스키마
-- [ ] ConditionResult 스키마
-- [ ] PresetInfo 스키마
+### Task 1.2.1: 스크리닝 스키마 정의 ✅ (2026-02-12)
+- [x] `api/schemas/screening.py` 생성
+- [x] ScreeningRequest 스키마
+- [x] ScreeningResult 스키마
+- [x] ConditionResult 스키마
+- [x] PresetInfo 스키마
 
 **스키마 예시:**
 ```python
@@ -101,17 +101,17 @@ class ScreeningResultItem(BaseModel):
     conditions: List[ConditionResultItem]
 ```
 
-### Task 1.2.2: 스크리닝 라우터 구현
-- [ ] `api/routers/screening.py` 생성
-- [ ] GET `/api/screening/presets` - 프리셋 목록
-- [ ] GET `/api/screening/universes` - 유니버스 목록
-- [ ] POST `/api/screening/run` - 스크리닝 실행
-- [ ] GET `/api/screening/stock/{ticker}` - 단일 종목 검사
+### Task 1.2.2: 스크리닝 라우터 구현 ✅ (2026-02-12)
+- [x] `api/routers/screening.py` 생성
+- [x] GET `/api/screening/presets` - 프리셋 목록 (14개)
+- [x] GET `/api/screening/universes` - 유니버스 목록 (4개)
+- [x] POST `/api/screening/run` - 스크리닝 실행
+- [x] GET `/api/screening/stock/{ticker}` - 단일 종목 검사
 
-### Task 1.2.3: 스크리닝 서비스 레이어
-- [ ] `api/services/` 폴더 생성
-- [ ] `api/services/screening_service.py` 생성
-- [ ] 기존 `screener` 모듈과 연동
+### Task 1.2.3: 스크리닝 서비스 레이어 ✅ (2026-02-12)
+- [x] `api/services/` 폴더 생성
+- [x] `api/services/screening_service.py` 생성
+- [x] 기존 `screener` 모듈과 연동
 
 ---
 
@@ -163,20 +163,22 @@ class ScreeningResultItem(BaseModel):
 
 ## Epic 1.5: 시세 API
 
-### Task 1.5.1: 시세 스키마 정의
-- [ ] `api/schemas/market.py` 생성
-- [ ] OHLCVData 스키마
-- [ ] QuoteResponse 스키마
+### Task 1.5.1: 시세 스키마 정의 ✅ (2026-02-12)
+- [x] `api/schemas/market.py` 생성
+- [x] OHLCVData 스키마
+- [x] QuoteResponse 스키마
+- [x] TechnicalIndicators 스키마
 
-### Task 1.5.2: 시세 라우터 구현
-- [ ] `api/routers/market.py` 생성
-- [ ] GET `/api/market/quote/{ticker}` - 현재가
-- [ ] GET `/api/market/ohlcv/{ticker}` - OHLCV 데이터
-- [ ] GET `/api/market/technical/{ticker}` - 기술적 지표
+### Task 1.5.2: 시세 라우터 구현 ✅ (2026-02-12)
+- [x] `api/routers/market.py` 생성
+- [x] GET `/api/market/quote/{ticker}` - 현재가
+- [x] GET `/api/market/ohlcv/{ticker}` - OHLCV 데이터
+- [x] GET `/api/market/technical/{ticker}` - 기술적 지표
 
-### Task 1.5.3: 캐시 서비스 연동
-- [ ] `api/services/market_service.py` 생성
-- [ ] 기존 `OHLCVCache` 활용
+### Task 1.5.3: 캐시 서비스 연동 ✅ (2026-02-12)
+- [x] `api/services/market_service.py` 생성
+- [x] 기존 `OHLCVCache` 활용
+- [x] TechnicalEnricher 연동
 
 ---
 
@@ -195,11 +197,13 @@ class ScreeningResultItem(BaseModel):
 npx create-next-app@latest web --typescript --tailwind --eslint --app --src-dir
 ```
 
-### Task 2.1.2: 기본 레이아웃 구성
-- [ ] `web/src/app/layout.tsx` - 루트 레이아웃
-- [ ] `web/src/components/layout/Header.tsx` - 헤더
-- [ ] `web/src/components/layout/Sidebar.tsx` - 사이드바
-- [ ] `web/src/components/layout/Footer.tsx` - 푸터
+### Task 2.1.2: 기본 레이아웃 구성 ✅ (2026-02-12)
+- [x] `web/src/app/layout.tsx` - 루트 레이아웃
+- [x] `web/src/components/layout/Header.tsx` - 헤더 (모바일 햄버거)
+- [x] `web/src/components/layout/Sidebar.tsx` - 사이드바 (접기/펼치기)
+- [x] `web/src/components/layout/Footer.tsx` - 푸터
+- [x] `web/src/components/ui/Button.tsx` - 버튼 컴포넌트
+- [x] `web/src/components/ui/Card.tsx` - 카드 컴포넌트
 
 ### Task 2.1.3: API 클라이언트 설정 ✅ (2026-02-12)
 - [x] `web/src/lib/api.ts` - Fetch 래퍼
