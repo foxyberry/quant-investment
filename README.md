@@ -6,6 +6,60 @@ Quantitative investment strategy development and backtesting project
 
 ---
 
+## Web UI (New!)
+
+The platform now includes a web-based dashboard for easy access to all features.
+
+### Quick Start
+
+```bash
+# Start both API and Web servers
+./scripts/dev.sh
+```
+
+### Development URLs
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| Web Dashboard | http://localhost:3000 | Main user interface |
+| API | http://localhost:8000 | REST API backend |
+| Swagger Docs | http://localhost:8000/docs | Interactive API documentation |
+| ReDoc | http://localhost:8000/redoc | Alternative API documentation |
+
+### Individual Services
+
+```bash
+# API only (FastAPI)
+./scripts/run_api.sh
+
+# Web only (Next.js) - requires API running
+./scripts/run_web.sh
+```
+
+### Docker Deployment
+
+```bash
+# Build and run all services
+docker-compose up -d
+
+# Build specific service
+docker-compose up -d api
+docker-compose up -d web
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
+
+### Documentation
+
+- [API Reference](docs/API_REFERENCE.md) - Complete REST API documentation
+- [Development Guide](docs/DEVELOPMENT_GUIDE.md) - Setup and contribution guide
+
+---
+
 ## Daily Routine (Run Every Day)
 
 ### 1. Portfolio Sell Signal Check
@@ -43,7 +97,7 @@ python scripts/screening/us_daily_report.py --sector Technology
 
 ---
 
-## AI-Powered Stock Analysis (New!)
+## AI-Powered Stock Analysis
 
 Semi-automated analysis pipeline using Claude AI:
 1. Screen stocks touching 240-day MA
@@ -191,57 +245,17 @@ pip install -r requirements.txt
 
 ---
 
-## Development
-
-### Quick Start (API + Web)
-```bash
-# Run both servers
-./scripts/dev.sh
-```
-
-### Individual Services
-```bash
-# API only (FastAPI)
-./scripts/run_api.sh
-
-# Web only (Next.js)
-./scripts/run_web.sh
-```
-
-**Development URLs:**
-| Service | URL |
-|---------|-----|
-| API | http://localhost:8000 |
-| API Docs (Swagger) | http://localhost:8000/docs |
-| API Docs (ReDoc) | http://localhost:8000/redoc |
-| Web | http://localhost:3000 |
-
-### Docker
-
-```bash
-# Build and run all services
-docker-compose up -d
-
-# Build and run specific service
-docker-compose up -d api
-docker-compose up -d web
-
-# View logs
-docker-compose logs -f
-
-# Stop all services
-docker-compose down
-```
-
----
-
 ## Stack
+
 - **Python 3.13**
+- **FastAPI** - REST API backend
+- **Next.js 16** - Web frontend (App Router)
 - **Claude API** - AI-powered stock analysis
 - **Backtesting.py** - Strategy backtesting
 - **yfinance** - US stock data
 - **pykrx** - Korean stock data (KOSPI/KOSDAQ)
 - **pandas/numpy** - Data processing
+- **Tailwind CSS** - Frontend styling
 
 ---
 
@@ -249,6 +263,15 @@ docker-compose down
 
 ```
 quant-investment/
+├── api/                        # FastAPI backend
+│   ├── main.py                 # Application entry point
+│   ├── routers/                # API endpoints
+│   ├── schemas/                # Request/response models
+│   └── services/               # Business logic
+├── web/                        # Next.js frontend
+│   ├── src/app/                # Pages (App Router)
+│   ├── src/components/         # React components
+│   └── src/lib/                # Utilities
 ├── scripts/
 │   ├── analysis/               # AI-powered analysis
 │   │   └── run_daily_analysis.py
@@ -259,9 +282,12 @@ quant-investment/
 │   │   └── korean_ma_*.py
 │   ├── backtesting/            # Strategy backtesting
 │   │   └── run_backtest.py
-│   └── live/                   # Live monitoring
-│       ├── portfolio_sell_checker.py
-│       └── options_tracker.py
+│   ├── live/                   # Live monitoring
+│   │   ├── portfolio_sell_checker.py
+│   │   └── options_tracker.py
+│   ├── dev.sh                  # Start all services
+│   ├── run_api.sh              # Start API only
+│   └── run_web.sh              # Start web only
 ├── llm/                        # Claude AI integration
 │   ├── claude_client.py
 │   ├── stock_analyzer.py
@@ -278,12 +304,18 @@ quant-investment/
 ├── portfolio/                  # Portfolio management
 │   └── position_sizing.py
 ├── config/                     # Configuration files
-└── data/                       # Data cache
+├── data/                       # Data cache
+├── docker-compose.yml          # Docker configuration
+└── Dockerfile.api              # API Docker image
 ```
 
 ---
 
 ## Documentation
+
+### API & Development
+- [API Reference](docs/API_REFERENCE.md) - Complete REST API documentation
+- [Development Guide](docs/DEVELOPMENT_GUIDE.md) - Setup and contribution guide
 
 ### Screener
 - [Screener Conditions Architecture](docs/SCREENER_CONDITIONS.md) - All 28 condition classes and usage
@@ -298,6 +330,7 @@ quant-investment/
 
 ### Work Plans
 - [Analysis Pipeline Plan](docs/works/20260211_semi_auto_analysis_pipeline.md)
+- [UI Integration Plan](docs/works/20260212_ui_integration_project.md)
 
 ---
 

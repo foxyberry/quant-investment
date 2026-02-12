@@ -1,68 +1,68 @@
-# UI 연동 프로젝트: FastAPI + Next.js 웹 대시보드
+# UI Integration Project: FastAPI + Next.js Web Dashboard
 
-- **날짜**: 2026-02-12
-- **브랜치**: `feature/ui-integration`
-- **상태**: 계획중
+- **Date**: 2026-02-12
+- **Branch**: `feature/ui-integration`
+- **Status**: In Progress (Phase 1 & 2 Complete, Phase 3 Partial)
 
-## 목표
+## Goal
 
-기존 quant-investment 백엔드를 REST API로 제공하고, Next.js 기반 웹 대시보드를 구축하여 브라우저에서 종목 스크리닝, 포트폴리오 관리, 분석 결과 조회가 가능하도록 한다.
+Expose the existing quant-investment backend as a REST API and build a Next.js-based web dashboard for browser-based stock screening, portfolio management, and analysis result viewing.
 
-## 배경
+## Background
 
-- 현재 CLI 기반으로만 사용 가능
-- 매번 터미널에서 스크립트 실행 필요
-- 시각적인 차트와 대시보드 부재
-- 모바일/원격 접근 불가
+- Currently CLI-based only
+- Requires terminal script execution each time
+- No visual charts or dashboards
+- No mobile/remote access
 
 ---
 
-# Phase 1: FastAPI 백엔드 구축
+# Phase 1: FastAPI Backend - COMPLETE
 
-## Epic 1.1: 프로젝트 구조 설정
+## Epic 1.1: Project Structure Setup
 
-### Task 1.1.1: FastAPI 기본 구조 생성 ✅ (2026-02-12)
-- [x] `api/` 폴더 생성
-- [x] `api/__init__.py` 생성
-- [x] `api/main.py` 생성 (FastAPI 앱 인스턴스)
-- [x] `api/config.py` 생성 (환경변수, 설정)
-- [x] `api/dependencies.py` 생성 (공통 의존성)
+### Task 1.1.1: FastAPI Basic Structure - COMPLETE (2026-02-12)
+- [x] Create `api/` folder
+- [x] Create `api/__init__.py`
+- [x] Create `api/main.py` (FastAPI app instance)
+- [x] Create `api/config.py` (environment variables, settings)
+- [x] Create `api/dependencies.py` (common dependencies)
 
-**변경 파일:**
-| 파일 | 변경 내용 |
-|------|----------|
-| `api/__init__.py` | 신규 생성 |
-| `api/main.py` | FastAPI 앱 초기화, CORS 설정 |
-| `api/config.py` | Settings 클래스 (pydantic-settings) |
-| `api/dependencies.py` | 공통 의존성 주입 |
+**Changed Files:**
+| File | Changes |
+|------|---------|
+| `api/__init__.py` | Created |
+| `api/main.py` | FastAPI app initialization, CORS settings |
+| `api/config.py` | Settings class (pydantic-settings) |
+| `api/dependencies.py` | Common dependency injection |
 
-### Task 1.1.2: 라우터 구조 생성 ✅ (2026-02-12)
-- [x] `api/routers/` 폴더 생성
-- [x] `api/routers/__init__.py` 생성
-- [x] `api/routers/health.py` 생성 (헬스체크)
+### Task 1.1.2: Router Structure - COMPLETE (2026-02-12)
+- [x] Create `api/routers/` folder
+- [x] Create `api/routers/__init__.py`
+- [x] Create `api/routers/health.py` (health check)
 
-**변경 파일:**
-| 파일 | 변경 내용 |
-|------|----------|
-| `api/routers/__init__.py` | 라우터 export |
-| `api/routers/health.py` | GET /health 엔드포인트 |
+**Changed Files:**
+| File | Changes |
+|------|---------|
+| `api/routers/__init__.py` | Router exports |
+| `api/routers/health.py` | GET /health endpoint |
 
-### Task 1.1.3: 스키마 구조 생성 ✅ (2026-02-12)
-- [x] `api/schemas/` 폴더 생성
-- [x] `api/schemas/__init__.py` 생성
-- [x] `api/schemas/common.py` 생성 (공통 응답 스키마)
+### Task 1.1.3: Schema Structure - COMPLETE (2026-02-12)
+- [x] Create `api/schemas/` folder
+- [x] Create `api/schemas/__init__.py`
+- [x] Create `api/schemas/common.py` (common response schemas)
 
-**변경 파일:**
-| 파일 | 변경 내용 |
-|------|----------|
-| `api/schemas/__init__.py` | 스키마 export |
+**Changed Files:**
+| File | Changes |
+|------|---------|
+| `api/schemas/__init__.py` | Schema exports |
 | `api/schemas/common.py` | ApiResponse, PaginatedResponse |
 
-### Task 1.1.4: 의존성 추가 ✅ (2026-02-12)
-- [x] `requirements.txt`에 FastAPI 관련 패키지 추가
-- [x] `requirements-dev.txt` 생성 (테스트, 린팅, 타입체크)
+### Task 1.1.4: Dependencies Added - COMPLETE (2026-02-12)
+- [x] Add FastAPI packages to `requirements.txt`
+- [x] Create `requirements-dev.txt` (testing, linting, type checking)
 
-**추가 패키지:**
+**Added Packages:**
 ```
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
@@ -71,332 +71,345 @@ pydantic-settings>=2.1.0
 python-multipart>=0.0.6
 ```
 
-### Task 1.1.5: 개발 서버 실행 스크립트 ✅ (2026-02-12)
-- [x] `scripts/run_api.sh` 생성
-- [x] `scripts/run_web.sh` 생성
-- [x] `scripts/dev.sh` 생성 (API + Web 동시 실행)
+### Task 1.1.5: Development Server Scripts - COMPLETE (2026-02-12)
+- [x] Create `scripts/run_api.sh`
+- [x] Create `scripts/run_web.sh`
+- [x] Create `scripts/dev.sh` (run API + Web simultaneously)
 
 ---
 
-## Epic 1.2: 스크리닝 API
+## Epic 1.2: Screening API - COMPLETE
 
-### Task 1.2.1: 스크리닝 스키마 정의 ✅ (2026-02-12)
-- [x] `api/schemas/screening.py` 생성
-- [x] ScreeningRequest 스키마
-- [x] ScreeningResult 스키마
-- [x] ConditionResult 스키마
-- [x] PresetInfo 스키마
+### Task 1.2.1: Screening Schema Definition - COMPLETE (2026-02-12)
+- [x] Create `api/schemas/screening.py`
+- [x] ScreeningRequest schema
+- [x] ScreeningResult schema
+- [x] ConditionResult schema
+- [x] PresetInfo schema
 
-**스키마 예시:**
-```python
-class ScreeningRequest(BaseModel):
-    preset: str = "accumulation_basic"
-    universe: str = "KOSPI"
-    params: Optional[Dict[str, Any]] = None
+### Task 1.2.2: Screening Router Implementation - COMPLETE (2026-02-12)
+- [x] Create `api/routers/screening.py`
+- [x] GET `/api/screening/presets` - Preset list (14 presets)
+- [x] GET `/api/screening/universes` - Universe list (4 universes)
+- [x] POST `/api/screening/run` - Run screening
+- [x] GET `/api/screening/stock/{ticker}` - Check single stock
 
-class ScreeningResultItem(BaseModel):
-    ticker: str
-    name: str
-    current_price: float
-    matched: bool
-    conditions: List[ConditionResultItem]
-```
-
-### Task 1.2.2: 스크리닝 라우터 구현 ✅ (2026-02-12)
-- [x] `api/routers/screening.py` 생성
-- [x] GET `/api/screening/presets` - 프리셋 목록 (14개)
-- [x] GET `/api/screening/universes` - 유니버스 목록 (4개)
-- [x] POST `/api/screening/run` - 스크리닝 실행
-- [x] GET `/api/screening/stock/{ticker}` - 단일 종목 검사
-
-### Task 1.2.3: 스크리닝 서비스 레이어 ✅ (2026-02-12)
-- [x] `api/services/` 폴더 생성
-- [x] `api/services/screening_service.py` 생성
-- [x] 기존 `screener` 모듈과 연동
+### Task 1.2.3: Screening Service Layer - COMPLETE (2026-02-12)
+- [x] Create `api/services/` folder
+- [x] Create `api/services/screening_service.py`
+- [x] Integration with existing `screener` module
 
 ---
 
-## Epic 1.3: 포트폴리오 API
+## Epic 1.3: Portfolio API - COMPLETE
 
-### Task 1.3.1: 포트폴리오 스키마 정의 ✅ (2026-02-12)
-- [x] `api/schemas/portfolio.py` 생성
-- [x] HoldingCreate, HoldingUpdate 스키마
-- [x] HoldingResponse 스키마
-- [x] PortfolioSummary 스키마
-- [x] SellSignalResponse 스키마
+### Task 1.3.1: Portfolio Schema Definition - COMPLETE (2026-02-12)
+- [x] Create `api/schemas/portfolio.py`
+- [x] HoldingCreate, HoldingUpdate schemas
+- [x] HoldingResponse schema
+- [x] PortfolioSummary schema
+- [x] SellSignalResponse schema
 
-### Task 1.3.2: 포트폴리오 라우터 구현 ✅ (2026-02-12)
-- [x] `api/routers/portfolio.py` 생성
-- [x] GET `/api/portfolio` - 전체 포트폴리오
-- [x] POST `/api/portfolio/holdings` - 종목 추가
-- [x] PUT `/api/portfolio/holdings/{ticker}` - 종목 수정
-- [x] DELETE `/api/portfolio/holdings/{ticker}` - 종목 삭제
-- [x] GET `/api/portfolio/summary` - P&L 요약
-- [x] GET `/api/portfolio/sell-signals` - 매도 신호
+### Task 1.3.2: Portfolio Router Implementation - COMPLETE (2026-02-12)
+- [x] Create `api/routers/portfolio.py`
+- [x] GET `/api/portfolio` - Full portfolio
+- [x] POST `/api/portfolio/holdings` - Add stock
+- [x] PUT `/api/portfolio/holdings/{ticker}` - Update stock
+- [x] DELETE `/api/portfolio/holdings/{ticker}` - Delete stock
+- [x] GET `/api/portfolio/summary` - P&L summary
+- [x] GET `/api/portfolio/sell-signals` - Sell signals
 
-### Task 1.3.3: 포트폴리오 서비스 레이어 ✅ (2026-02-12)
-- [x] `api/services/portfolio_service.py` 생성
-- [x] JSON 파일 기반 저장 (`data/portfolio.json`)
-- [x] OHLCVCache 연동 (현재가 조회)
-
----
-
-## Epic 1.4: 분석 API
-
-### Task 1.4.1: 분석 스키마 정의 ✅ (2026-02-12)
-- [x] `api/schemas/analysis.py` 생성
-- [x] EnrichRequest, EnrichedStock 스키마
-- [x] AnalysisResult 스키마
-- [x] ReportSummary, ReportDetail 스키마
-
-### Task 1.4.2: 분석 라우터 구현 ✅ (2026-02-12)
-- [x] `api/routers/analysis.py` 생성
-- [x] POST `/api/analysis/enrich` - 데이터 강화
-- [x] POST `/api/analysis/analyze` - AI 분석 (Claude)
-- [x] GET `/api/analysis/reports` - 리포트 목록
-- [x] GET `/api/analysis/reports/{date}` - 리포트 조회
-- [x] GET `/api/analysis/enriched/{date}` - enriched JSON
-
-### Task 1.4.3: 분석 서비스 레이어 ✅ (2026-02-12)
-- [x] `api/services/analysis_service.py` 생성
-- [x] 기존 `data_enrichment`, `llm` 모듈과 연동
-- [x] data/analysis/ 폴더 리포트 조회
+### Task 1.3.3: Portfolio Service Layer - COMPLETE (2026-02-12)
+- [x] Create `api/services/portfolio_service.py`
+- [x] JSON file-based storage (`data/portfolio.json`)
+- [x] OHLCVCache integration (current price lookup)
 
 ---
 
-## Epic 1.5: 시세 API
+## Epic 1.4: Analysis API - COMPLETE
 
-### Task 1.5.1: 시세 스키마 정의 ✅ (2026-02-12)
-- [x] `api/schemas/market.py` 생성
-- [x] OHLCVData 스키마
-- [x] QuoteResponse 스키마
-- [x] TechnicalIndicators 스키마
+### Task 1.4.1: Analysis Schema Definition - COMPLETE (2026-02-12)
+- [x] Create `api/schemas/analysis.py`
+- [x] EnrichRequest, EnrichedStock schemas
+- [x] AnalysisResult schema
+- [x] ReportSummary, ReportDetail schemas
 
-### Task 1.5.2: 시세 라우터 구현 ✅ (2026-02-12)
-- [x] `api/routers/market.py` 생성
-- [x] GET `/api/market/quote/{ticker}` - 현재가
-- [x] GET `/api/market/ohlcv/{ticker}` - OHLCV 데이터
-- [x] GET `/api/market/technical/{ticker}` - 기술적 지표
+### Task 1.4.2: Analysis Router Implementation - COMPLETE (2026-02-12)
+- [x] Create `api/routers/analysis.py`
+- [x] POST `/api/analysis/enrich` - Data enrichment
+- [x] POST `/api/analysis/analyze` - AI analysis (Claude)
+- [x] GET `/api/analysis/reports` - Report list
+- [x] GET `/api/analysis/reports/{date}` - Report detail
+- [x] GET `/api/analysis/enriched/{date}` - Enriched JSON
 
-### Task 1.5.3: 캐시 서비스 연동 ✅ (2026-02-12)
-- [x] `api/services/market_service.py` 생성
-- [x] 기존 `OHLCVCache` 활용
-- [x] TechnicalEnricher 연동
-
----
-
-# Phase 2: Next.js 프론트엔드 구축
-
-## Epic 2.1: 프로젝트 초기 설정
-
-### Task 2.1.1: Next.js 프로젝트 생성 ✅ (2026-02-12)
-- [x] `web/` 폴더에 Next.js 16 (App Router) 프로젝트 생성
-- [x] TypeScript 설정
-- [x] ESLint 설정
-- [x] Tailwind CSS 설정
-
-**명령어:**
-```bash
-npx create-next-app@latest web --typescript --tailwind --eslint --app --src-dir
-```
-
-### Task 2.1.2: 기본 레이아웃 구성 ✅ (2026-02-12)
-- [x] `web/src/app/layout.tsx` - 루트 레이아웃
-- [x] `web/src/components/layout/Header.tsx` - 헤더 (모바일 햄버거)
-- [x] `web/src/components/layout/Sidebar.tsx` - 사이드바 (접기/펼치기)
-- [x] `web/src/components/layout/Footer.tsx` - 푸터
-- [x] `web/src/components/ui/Button.tsx` - 버튼 컴포넌트
-- [x] `web/src/components/ui/Card.tsx` - 카드 컴포넌트
-
-### Task 2.1.3: API 클라이언트 설정 ✅ (2026-02-12)
-- [x] `web/src/lib/api.ts` - Fetch 래퍼
-- [x] `web/src/lib/types.ts` - API 타입 정의
-- [x] 환경변수 설정 (`.env.local`)
-
-### Task 2.1.4: 상태 관리 설정
-- [ ] Zustand 또는 React Query 설치
-- [ ] `web/src/stores/` 폴더 구조
-- [ ] `web/src/hooks/` 커스텀 훅
+### Task 1.4.3: Analysis Service Layer - COMPLETE (2026-02-12)
+- [x] Create `api/services/analysis_service.py`
+- [x] Integration with existing `data_enrichment`, `llm` modules
+- [x] data/analysis/ folder report retrieval
 
 ---
 
-## Epic 2.2: 대시보드 페이지
+## Epic 1.5: Market Data API - COMPLETE
 
-### Task 2.2.1: 대시보드 레이아웃 ✅ (2026-02-12)
-- [x] `web/src/app/page.tsx` - 메인 대시보드 (2x2 그리드)
-- [x] 포트폴리오 요약 카드
-- [x] 매도 신호 카드
-- [x] 최근 분석 리포트 카드
-- [x] 빠른 액션 카드
+### Task 1.5.1: Market Schema Definition - COMPLETE (2026-02-12)
+- [x] Create `api/schemas/market.py`
+- [x] OHLCVData schema
+- [x] QuoteResponse schema
+- [x] TechnicalIndicators schema
 
-### Task 2.2.2: 포트폴리오 요약 컴포넌트 ✅ (2026-02-12)
+### Task 1.5.2: Market Router Implementation - COMPLETE (2026-02-12)
+- [x] Create `api/routers/market.py`
+- [x] GET `/api/market/quote/{ticker}` - Current price
+- [x] GET `/api/market/ohlcv/{ticker}` - OHLCV data
+- [x] GET `/api/market/technical/{ticker}` - Technical indicators
+
+### Task 1.5.3: Cache Service Integration - COMPLETE (2026-02-12)
+- [x] Create `api/services/market_service.py`
+- [x] Utilize existing `OHLCVCache`
+- [x] TechnicalEnricher integration
+
+---
+
+# Phase 2: Next.js Frontend - MOSTLY COMPLETE
+
+## Epic 2.1: Initial Project Setup
+
+### Task 2.1.1: Next.js Project Creation - COMPLETE (2026-02-12)
+- [x] Create Next.js 16 (App Router) project in `web/` folder
+- [x] TypeScript configuration
+- [x] ESLint configuration
+- [x] Tailwind CSS configuration
+
+### Task 2.1.2: Basic Layout Configuration - COMPLETE (2026-02-12)
+- [x] `web/src/app/layout.tsx` - Root layout
+- [x] `web/src/components/layout/Header.tsx` - Header (mobile hamburger)
+- [x] `web/src/components/layout/Sidebar.tsx` - Sidebar (collapsible)
+- [x] `web/src/components/layout/Footer.tsx` - Footer
+- [x] `web/src/components/ui/Button.tsx` - Button component
+- [x] `web/src/components/ui/Card.tsx` - Card component
+
+### Task 2.1.3: API Client Setup - COMPLETE (2026-02-12)
+- [x] `web/src/lib/api.ts` - Fetch wrapper
+- [x] `web/src/lib/types.ts` - API type definitions
+- [x] Environment variable setup (`.env.local`)
+
+### Task 2.1.4: State Management Setup - PENDING
+- [ ] Install Zustand or React Query
+- [ ] `web/src/stores/` folder structure
+- [ ] `web/src/hooks/` custom hooks
+
+---
+
+## Epic 2.2: Dashboard Page - COMPLETE
+
+### Task 2.2.1: Dashboard Layout - COMPLETE (2026-02-12)
+- [x] `web/src/app/page.tsx` - Main dashboard (2x2 grid)
+- [x] Portfolio summary card
+- [x] Sell signals card
+- [x] Recent analysis reports card
+- [x] Quick actions card
+
+### Task 2.2.2: Portfolio Summary Component - COMPLETE (2026-02-12)
 - [x] `web/src/components/dashboard/PortfolioSummaryCard.tsx`
-- [x] 총 자산, 수익률, P&L 표시
-- [x] 수익/손실 색상 코딩
+- [x] Total assets, returns, P&L display
+- [x] Profit/loss color coding
 
-### Task 2.2.3: 기타 대시보드 컴포넌트 ✅ (2026-02-12)
+### Task 2.2.3: Other Dashboard Components - COMPLETE (2026-02-12)
 - [x] `web/src/components/dashboard/SellSignalsCard.tsx`
 - [x] `web/src/components/dashboard/RecentReportsCard.tsx`
 - [x] `web/src/components/dashboard/QuickActionsCard.tsx`
 
 ---
 
-## Epic 2.3: 스크리닝 페이지
+## Epic 2.3: Screening Page - COMPLETE
 
-### Task 2.3.1: 스크리닝 페이지 레이아웃 ✅ (2026-02-12)
+### Task 2.3.1: Screening Page Layout - COMPLETE (2026-02-12)
 - [x] `web/src/app/screening/page.tsx`
-- [x] 프리셋 선택 UI
-- [x] 유니버스 선택
-- [x] 실행 버튼 + 로딩 상태
+- [x] Preset selection UI
+- [x] Universe selection
+- [x] Run button + loading state
 
-### Task 2.3.2: 스크리닝 결과 테이블 ✅ (2026-02-12)
+### Task 2.3.2: Screening Results Table - COMPLETE (2026-02-12)
 - [x] `web/src/components/screening/ResultTable.tsx`
-- [x] 정렬 기능 (티커, 종목명, 가격)
-- [x] 확장 가능 행 (조건 상세)
-- [x] 모바일 반응형 (카드 레이아웃)
+- [x] Sorting (ticker, name, price)
+- [x] Expandable rows (condition details)
+- [x] Mobile responsive (card layout)
 
-### Task 2.3.3: 스크리닝 필터 컴포넌트 ✅ (2026-02-12)
+### Task 2.3.3: Screening Filter Component - COMPLETE (2026-02-12)
 - [x] `web/src/components/screening/FilterPanel.tsx`
-- [x] 프리셋 드롭다운 (API에서 로드)
-- [x] 유니버스 선택
-- [x] `web/src/components/screening/ConditionDetails.tsx` - 조건 상세
+- [x] Preset dropdown (loaded from API)
+- [x] Universe selection
+- [x] `web/src/components/screening/ConditionDetails.tsx` - Condition details
 
 ---
 
-## Epic 2.4: 포트폴리오 페이지
+## Epic 2.4: Portfolio Page - COMPLETE
 
-### Task 2.4.1: 포트폴리오 페이지 레이아웃 ✅ (2026-02-12)
+### Task 2.4.1: Portfolio Page Layout - COMPLETE (2026-02-12)
 - [x] `web/src/app/portfolio/page.tsx`
-- [x] 보유 종목 테이블
-- [x] 요약 카드 (투자금, 평가금, P&L)
+- [x] Holdings table
+- [x] Summary card (investment, value, P&L)
 
-### Task 2.4.2: 보유 종목 테이블 ✅ (2026-02-12)
+### Task 2.4.2: Holdings Table - COMPLETE (2026-02-12)
 - [x] `web/src/components/portfolio/HoldingsTable.tsx`
-- [x] 정렬 기능, 수익/손실 색상
-- [x] 수정/삭제 버튼
-- [x] 반응형 (모바일 카드)
+- [x] Sorting, profit/loss colors
+- [x] Edit/Delete buttons
+- [x] Responsive (mobile cards)
 
-### Task 2.4.3: 종목 추가/수정 모달 ✅ (2026-02-12)
+### Task 2.4.3: Add/Edit Holding Modals - COMPLETE (2026-02-12)
 - [x] `web/src/components/portfolio/AddHoldingModal.tsx`
 - [x] `web/src/components/portfolio/EditHoldingModal.tsx`
 - [x] `web/src/components/portfolio/DeleteConfirmModal.tsx`
-- [x] 유효성 검증
+- [x] Validation
 
-### Task 2.4.4: 매도 신호 알림 ✅ (2026-02-12)
+### Task 2.4.4: Sell Signal Banner - COMPLETE (2026-02-12)
 - [x] `web/src/components/portfolio/SellSignalBanner.tsx`
-- [x] 매도 조건 충족 종목 표시
-- [x] 닫기 가능
+- [x] Display stocks meeting sell conditions
+- [x] Dismissible
 
 ---
 
-## Epic 2.5: 차트 및 분석 페이지
+## Epic 2.5: Chart and Analysis Pages - PENDING
 
-### Task 2.5.1: 종목 상세 페이지
+### Task 2.5.1: Stock Detail Page
 - [ ] `web/src/app/stock/[ticker]/page.tsx`
-- [ ] 캔들 차트 (TradingView Lightweight Charts)
-- [ ] 기술적 지표 오버레이
-- [ ] 재무 데이터 표시
+- [ ] Candlestick chart (TradingView Lightweight Charts)
+- [ ] Technical indicator overlays
+- [ ] Financial data display
 
-### Task 2.5.2: 캔들 차트 컴포넌트
+### Task 2.5.2: Candlestick Chart Component
 - [ ] `web/src/components/chart/CandleChart.tsx`
-- [ ] TradingView Lightweight Charts 연동
-- [ ] 이동평균선, 볼린저밴드 오버레이
-- [ ] 거래량 바 차트
+- [ ] TradingView Lightweight Charts integration
+- [ ] Moving average, Bollinger Bands overlays
+- [ ] Volume bar chart
 
-### Task 2.5.3: 기술적 지표 패널
+### Task 2.5.3: Technical Indicator Panel
 - [ ] `web/src/components/chart/IndicatorPanel.tsx`
-- [ ] RSI, MACD, Stochastic 표시
-- [ ] 신호 해석 텍스트
+- [ ] RSI, MACD, Stochastic display
+- [ ] Signal interpretation text
 
-### Task 2.5.4: 분석 리포트 페이지
+### Task 2.5.4: Analysis Report Page
 - [ ] `web/src/app/analysis/page.tsx`
-- [ ] 일자별 리포트 목록
-- [ ] Markdown 렌더링
+- [ ] Daily report list
+- [ ] Markdown rendering
 
 ---
 
-# Phase 3: 통합 및 배포
+# Phase 3: Integration and Deployment - PARTIAL
 
-## Epic 3.1: 개발 환경 통합
+## Epic 3.1: Development Environment Integration
 
-### Task 3.1.1: Docker Compose 설정 ✅ (2026-02-12)
-- [x] `docker-compose.yml` 생성
-- [x] `Dockerfile.api` - FastAPI 이미지
-- [x] `web/Dockerfile` - Next.js 이미지 (멀티스테이지)
-- [x] `.dockerignore` 파일들
+### Task 3.1.1: Docker Compose Setup - COMPLETE (2026-02-12)
+- [x] Create `docker-compose.yml`
+- [x] `Dockerfile.api` - FastAPI image
+- [x] `web/Dockerfile` - Next.js image (multi-stage)
+- [x] `.dockerignore` files
 
-### Task 3.1.2: 개발 실행 스크립트 ✅ (2026-02-12)
-- [x] `scripts/dev.sh` - 전체 개발 서버 실행
-- [x] trap 핸들러로 graceful shutdown
-- [x] `.env.example` 환경변수 예시
-
----
-
-## Epic 3.2: 테스트
-
-### Task 3.2.1: API 테스트
-- [ ] `api/tests/` 폴더 구조
-- [ ] pytest + httpx 설정
-- [ ] 각 엔드포인트 테스트
-
-### Task 3.2.2: 프론트엔드 테스트
-- [ ] Jest + React Testing Library 설정
-- [ ] 주요 컴포넌트 테스트
+### Task 3.1.2: Development Scripts - COMPLETE (2026-02-12)
+- [x] `scripts/dev.sh` - Full development server
+- [x] Trap handler for graceful shutdown
+- [x] `.env.example` environment variable examples
 
 ---
 
-## Epic 3.3: 문서화
+## Epic 3.2: Testing - PENDING
 
-### Task 3.3.1: API 문서
-- [ ] FastAPI 자동 생성 Swagger 활용
-- [ ] README에 API 사용법 추가
+### Task 3.2.1: API Tests
+- [ ] `api/tests/` folder structure
+- [ ] pytest + httpx setup
+- [ ] Tests for each endpoint
 
-### Task 3.3.2: 개발 가이드
-- [ ] `docs/DEVELOPMENT.md` 작성
-- [ ] 로컬 개발 환경 설정 방법
-- [ ] 아키텍처 설명
-
----
-
-# 작업 우선순위 및 일정
-
-## 추천 진행 순서
-
-| 순서 | Epic | 예상 작업량 |
-|------|------|------------|
-| 1 | 1.1 프로젝트 구조 설정 | 0.5일 |
-| 2 | 1.2 스크리닝 API | 1일 |
-| 3 | 1.5 시세 API | 0.5일 |
-| 4 | 2.1 Next.js 초기 설정 | 0.5일 |
-| 5 | 2.3 스크리닝 페이지 | 1일 |
-| 6 | 1.3 포트폴리오 API | 1일 |
-| 7 | 2.4 포트폴리오 페이지 | 1일 |
-| 8 | 2.5 차트 및 분석 | 1.5일 |
-| 9 | 1.4 분석 API | 1일 |
-| 10 | 2.2 대시보드 | 1일 |
-| 11 | 3.x 통합 및 배포 | 1일 |
-
-**총 예상**: 10일
+### Task 3.2.2: Frontend Tests
+- [ ] Jest + React Testing Library setup
+- [ ] Key component tests
 
 ---
 
-# 기술적 고려사항
+## Epic 3.3: Documentation - COMPLETE (2026-02-12)
 
-## 주의점
+### Task 3.3.1: API Documentation - COMPLETE
+- [x] FastAPI auto-generated Swagger
+- [x] `docs/API_REFERENCE.md` - Complete API reference
 
-1. **CORS 설정**: FastAPI에서 Next.js 개발 서버(localhost:3000) 허용 필요
-2. **환경변수 관리**: API 키 (ANTHROPIC_API_KEY 등) 안전하게 관리
-3. **캐시 전략**: OHLCV 데이터는 기존 Parquet 캐시 활용
-4. **비동기 처리**: 스크리닝, AI 분석은 시간이 오래 걸릴 수 있음 → 폴링 또는 WebSocket
-
-## 의존성 충돌 방지
-
-- Python 가상환경 분리 유지
-- Node.js는 `web/` 폴더 내에서만 관리
-- 공유 데이터는 `data/` 폴더 사용
+### Task 3.3.2: Development Guide - COMPLETE
+- [x] `docs/DEVELOPMENT_GUIDE.md` - Complete development guide
+- [x] Local development setup instructions
+- [x] Architecture explanation
+- [x] README.md updated with Web UI section
 
 ---
 
-# 결과
+# Work Priority and Schedule
 
-(완료 후 작성)
+## Recommended Order
+
+| Order | Epic | Estimated Time | Status |
+|-------|------|----------------|--------|
+| 1 | 1.1 Project Structure Setup | 0.5 days | COMPLETE |
+| 2 | 1.2 Screening API | 1 day | COMPLETE |
+| 3 | 1.5 Market Data API | 0.5 days | COMPLETE |
+| 4 | 2.1 Next.js Initial Setup | 0.5 days | COMPLETE |
+| 5 | 2.3 Screening Page | 1 day | COMPLETE |
+| 6 | 1.3 Portfolio API | 1 day | COMPLETE |
+| 7 | 2.4 Portfolio Page | 1 day | COMPLETE |
+| 8 | 2.5 Charts and Analysis | 1.5 days | PENDING |
+| 9 | 1.4 Analysis API | 1 day | COMPLETE |
+| 10 | 2.2 Dashboard | 1 day | COMPLETE |
+| 11 | 3.x Integration and Deployment | 1 day | PARTIAL |
+
+**Total Estimated**: 10 days
+**Completed**: ~8 days
+**Remaining**: ~2 days (Charts, Tests)
+
+---
+
+# Technical Considerations
+
+## Notes
+
+1. **CORS Configuration**: FastAPI allows Next.js dev server (localhost:3000)
+2. **Environment Variable Management**: API keys (ANTHROPIC_API_KEY etc.) managed securely
+3. **Cache Strategy**: OHLCV data uses existing Parquet cache
+4. **Async Processing**: Screening and AI analysis can take time - polling or WebSocket for future
+
+## Dependency Conflict Prevention
+
+- Maintain Python virtual environment separation
+- Node.js managed only within `web/` folder
+- Shared data uses `data/` folder
+
+---
+
+# Results
+
+## Completed Items (2026-02-12)
+
+### Backend (FastAPI)
+- Full REST API with 5 routers (health, screening, market, portfolio, analysis)
+- 20+ endpoints implemented
+- Pydantic schemas for all request/response validation
+- Service layer with business logic separation
+- Integration with existing modules (screener, data_enrichment, llm)
+
+### Frontend (Next.js)
+- Dashboard with 4 summary cards
+- Screening page with preset/universe selection and results table
+- Portfolio page with CRUD operations and P&L calculations
+- Responsive design with mobile support
+- API client with type definitions
+
+### Infrastructure
+- Docker Compose configuration for multi-service deployment
+- Development scripts (dev.sh, run_api.sh, run_web.sh)
+- Graceful shutdown handling
+
+### Documentation
+- Complete API Reference (docs/API_REFERENCE.md)
+- Development Guide (docs/DEVELOPMENT_GUIDE.md)
+- Updated README with Web UI section
+
+## Pending Items
+- Stock detail page with charts (TradingView Lightweight Charts)
+- Analysis report page with Markdown rendering
+- State management (Zustand/React Query)
+- API and frontend tests

@@ -9,6 +9,8 @@ import type {
   PortfolioSummary,
   SellSignal,
   ReportSummary,
+  AnalysisReport,
+  TickerAnalysis,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -132,4 +134,25 @@ export async function getSellSignals(): Promise<SellSignal[]> {
  */
 export async function getReports(limit: number = 10): Promise<ReportSummary[]> {
   return fetchApi<ReportSummary[]>(`/api/analysis/reports?limit=${limit}`);
+}
+
+/**
+ * Get detailed analysis report by filename
+ */
+export async function getReportDetail(filename: string): Promise<AnalysisReport> {
+  return fetchApi<AnalysisReport>(`/api/analysis/reports/${encodeURIComponent(filename)}`);
+}
+
+/**
+ * Get ticker analysis with OHLCV data and technical indicators
+ */
+export async function getTickerAnalysis(ticker: string, period: string = '6mo'): Promise<TickerAnalysis> {
+  return fetchApi<TickerAnalysis>(`/api/analysis/ticker/${encodeURIComponent(ticker)}?period=${period}`);
+}
+
+/**
+ * Search tickers by name or symbol
+ */
+export async function searchTickers(query: string): Promise<Array<{ ticker: string; name: string }>> {
+  return fetchApi<Array<{ ticker: string; name: string }>>(`/api/search?q=${encodeURIComponent(query)}`);
 }
