@@ -117,47 +117,49 @@ class ScreeningResultItem(BaseModel):
 
 ## Epic 1.3: 포트폴리오 API
 
-### Task 1.3.1: 포트폴리오 스키마 정의
-- [ ] `api/schemas/portfolio.py` 생성
-- [ ] HoldingCreate, HoldingUpdate 스키마
-- [ ] HoldingResponse 스키마
-- [ ] PortfolioSummary 스키마
-- [ ] SellSignalResponse 스키마
+### Task 1.3.1: 포트폴리오 스키마 정의 ✅ (2026-02-12)
+- [x] `api/schemas/portfolio.py` 생성
+- [x] HoldingCreate, HoldingUpdate 스키마
+- [x] HoldingResponse 스키마
+- [x] PortfolioSummary 스키마
+- [x] SellSignalResponse 스키마
 
-### Task 1.3.2: 포트폴리오 라우터 구현
-- [ ] `api/routers/portfolio.py` 생성
-- [ ] GET `/api/portfolio` - 전체 포트폴리오
-- [ ] POST `/api/portfolio/holdings` - 종목 추가
-- [ ] PUT `/api/portfolio/holdings/{ticker}` - 종목 수정
-- [ ] DELETE `/api/portfolio/holdings/{ticker}` - 종목 삭제
-- [ ] GET `/api/portfolio/summary` - P&L 요약
-- [ ] GET `/api/portfolio/sell-signals` - 매도 신호
+### Task 1.3.2: 포트폴리오 라우터 구현 ✅ (2026-02-12)
+- [x] `api/routers/portfolio.py` 생성
+- [x] GET `/api/portfolio` - 전체 포트폴리오
+- [x] POST `/api/portfolio/holdings` - 종목 추가
+- [x] PUT `/api/portfolio/holdings/{ticker}` - 종목 수정
+- [x] DELETE `/api/portfolio/holdings/{ticker}` - 종목 삭제
+- [x] GET `/api/portfolio/summary` - P&L 요약
+- [x] GET `/api/portfolio/sell-signals` - 매도 신호
 
-### Task 1.3.3: 포트폴리오 서비스 레이어
-- [ ] `api/services/portfolio_service.py` 생성
-- [ ] 기존 `portfolio` 모듈과 연동
-- [ ] YAML 파일 대신 SQLite 사용 고려
+### Task 1.3.3: 포트폴리오 서비스 레이어 ✅ (2026-02-12)
+- [x] `api/services/portfolio_service.py` 생성
+- [x] JSON 파일 기반 저장 (`data/portfolio.json`)
+- [x] OHLCVCache 연동 (현재가 조회)
 
 ---
 
 ## Epic 1.4: 분석 API
 
-### Task 1.4.1: 분석 스키마 정의
-- [ ] `api/schemas/analysis.py` 생성
-- [ ] EnrichRequest, EnrichResponse 스키마
-- [ ] AnalysisResult 스키마
-- [ ] TechnicalData, FundamentalData 스키마
+### Task 1.4.1: 분석 스키마 정의 ✅ (2026-02-12)
+- [x] `api/schemas/analysis.py` 생성
+- [x] EnrichRequest, EnrichedStock 스키마
+- [x] AnalysisResult 스키마
+- [x] ReportSummary, ReportDetail 스키마
 
-### Task 1.4.2: 분석 라우터 구현
-- [ ] `api/routers/analysis.py` 생성
-- [ ] POST `/api/analysis/enrich` - 데이터 강화
-- [ ] POST `/api/analysis/analyze` - AI 분석 (단일)
-- [ ] GET `/api/analysis/reports` - 리포트 목록
-- [ ] GET `/api/analysis/reports/{date}` - 리포트 조회
+### Task 1.4.2: 분석 라우터 구현 ✅ (2026-02-12)
+- [x] `api/routers/analysis.py` 생성
+- [x] POST `/api/analysis/enrich` - 데이터 강화
+- [x] POST `/api/analysis/analyze` - AI 분석 (Claude)
+- [x] GET `/api/analysis/reports` - 리포트 목록
+- [x] GET `/api/analysis/reports/{date}` - 리포트 조회
+- [x] GET `/api/analysis/enriched/{date}` - enriched JSON
 
-### Task 1.4.3: 분석 서비스 레이어
-- [ ] `api/services/analysis_service.py` 생성
-- [ ] 기존 `data_enrichment`, `llm` 모듈과 연동
+### Task 1.4.3: 분석 서비스 레이어 ✅ (2026-02-12)
+- [x] `api/services/analysis_service.py` 생성
+- [x] 기존 `data_enrichment`, `llm` 모듈과 연동
+- [x] data/analysis/ 폴더 리포트 조회
 
 ---
 
@@ -239,23 +241,23 @@ npx create-next-app@latest web --typescript --tailwind --eslint --app --src-dir
 
 ## Epic 2.3: 스크리닝 페이지
 
-### Task 2.3.1: 스크리닝 페이지 레이아웃
-- [ ] `web/src/app/screening/page.tsx`
-- [ ] 프리셋 선택 UI
-- [ ] 파라미터 조정 폼
-- [ ] 실행 버튼
+### Task 2.3.1: 스크리닝 페이지 레이아웃 ✅ (2026-02-12)
+- [x] `web/src/app/screening/page.tsx`
+- [x] 프리셋 선택 UI
+- [x] 유니버스 선택
+- [x] 실행 버튼 + 로딩 상태
 
-### Task 2.3.2: 스크리닝 결과 테이블
-- [ ] `web/src/components/screening/ResultTable.tsx`
-- [ ] AG-Grid 또는 TanStack Table 사용
-- [ ] 정렬, 필터, 페이지네이션
-- [ ] 종목 클릭 시 상세 정보
+### Task 2.3.2: 스크리닝 결과 테이블 ✅ (2026-02-12)
+- [x] `web/src/components/screening/ResultTable.tsx`
+- [x] 정렬 기능 (티커, 종목명, 가격)
+- [x] 확장 가능 행 (조건 상세)
+- [x] 모바일 반응형 (카드 레이아웃)
 
-### Task 2.3.3: 스크리닝 필터 컴포넌트
-- [ ] `web/src/components/screening/FilterPanel.tsx`
-- [ ] 프리셋 드롭다운
-- [ ] 파라미터 슬라이더 (BB 폭, 거래량 등)
-- [ ] 유니버스 선택
+### Task 2.3.3: 스크리닝 필터 컴포넌트 ✅ (2026-02-12)
+- [x] `web/src/components/screening/FilterPanel.tsx`
+- [x] 프리셋 드롭다운 (API에서 로드)
+- [x] 유니버스 선택
+- [x] `web/src/components/screening/ConditionDetails.tsx` - 조건 상세
 
 ---
 

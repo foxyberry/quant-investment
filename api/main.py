@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import get_settings
-from api.routers import health_router, screening_router
+from api.routers import analysis_router, health_router, portfolio_router, screening_router
 from api.routers.market import router as market_router
 
 
@@ -74,10 +74,11 @@ def create_app() -> FastAPI:
     # Register routers (라우터 등록)
     app.include_router(health_router)
     app.include_router(market_router)
+    app.include_router(analysis_router)
+    app.include_router(portfolio_router)
     app.include_router(screening_router)
 
     # Future routers (추후 추가될 라우터)
-    # app.include_router(portfolio_router, prefix="/api/v1")
     # app.include_router(backtest_router, prefix="/api/v1")
     # app.include_router(news_router, prefix="/api/v1")
 
