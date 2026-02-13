@@ -26,6 +26,7 @@ import LogicNode from '@/components/strategy/nodes/LogicNode';
 import OutputNode from '@/components/strategy/nodes/OutputNode';
 import NodePalette from '@/components/strategy/NodePalette';
 import PropertiesPanel from '@/components/strategy/PropertiesPanel';
+import BacktestPanel from '@/components/backtest/BacktestPanel';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
@@ -72,6 +73,7 @@ export default function StrategyPage() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [results, setResults] = useState<StrategyResultItem[] | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
+  const [showBacktest, setShowBacktest] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
@@ -278,6 +280,7 @@ export default function StrategyPage() {
         </button>
         <button
           type="button"
+          onClick={() => setShowBacktest(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
         >
           <TestTube className="h-3.5 w-3.5" />
@@ -415,6 +418,12 @@ export default function StrategyPage() {
           </table>
         </div>
       )}
+
+      {/* Backtest slide-over panel */}
+      <BacktestPanel
+        isOpen={showBacktest}
+        onClose={() => setShowBacktest(false)}
+      />
     </div>
   );
 }

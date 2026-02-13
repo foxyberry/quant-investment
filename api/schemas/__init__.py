@@ -44,6 +44,18 @@ from api.schemas.screening import (
     UniverseInfo,
     SingleStockRequest,
 )
+from api.schemas.backtest import (
+    StrategyParamInfo,
+    StrategyInfo,
+    StrategiesListResponse,
+    BacktestRequest,
+    BacktestMetrics,
+    TradeRecord,
+    EquityPoint,
+    BacktestResponse,
+    OptimizeRequest,
+    OptimizeResponse,
+)
 from api.schemas.strategy import (
     StrategyNodeData,
     StrategyNode,
@@ -97,6 +109,17 @@ __all__ = [
     "PresetInfo",
     "UniverseInfo",
     "SingleStockRequest",
+    # Backtest
+    "StrategyParamInfo",
+    "StrategyInfo",
+    "StrategiesListResponse",
+    "BacktestRequest",
+    "BacktestMetrics",
+    "TradeRecord",
+    "EquityPoint",
+    "BacktestResponse",
+    "OptimizeRequest",
+    "OptimizeResponse",
     # Strategy
     "StrategyNodeData",
     "StrategyNode",

@@ -220,3 +220,113 @@ export async function runStrategy(
     }),
   });
 }
+
+// Backtest types
+
+export interface BacktestStrategyParam {
+  name: string;
+  type: 'int' | 'float' | 'str' | 'bool';
+  default: unknown;
+  description: string;
+}
+
+export interface BacktestStrategy {
+  name: string;
+  label: string;
+  description: string;
+  params: BacktestStrategyParam[];
+}
+
+export interface BacktestStrategiesResponse {
+  strategies: BacktestStrategy[];
+}
+
+export interface BacktestRequest {
+  ticker: string;
+  strategy: string;
+  period?: string;
+  start_date?: string;
+  end_date?: string;
+  cash?: number;
+  commission?: number;
+  strategy_params?: Record<string, unknown>;
+}
+
+export interface BacktestMetrics {
+  total_return: number;
+  sharpe_ratio: number;
+  sortino_ratio: number;
+  max_drawdown: number;
+  win_rate: number;
+  profit_factor: number;
+  cagr: number;
+  num_trades: number;
+  avg_trade_return: number;
+  max_consecutive_wins: number;
+  max_consecutive_losses: number;
+}
+
+export interface BacktestTrade {
+  entry_date: string;
+  exit_date: string;
+  entry_price: number;
+  exit_price: number;
+  pnl: number;
+  return_pct: number;
+  size: number;
+}
+
+export interface EquityPoint {
+  date: string;
+  equity: number;
+}
+
+export interface BacktestResponse {
+  metrics: BacktestMetrics;
+  trades: BacktestTrade[];
+  equity_curve: EquityPoint[];
+  ticker: string;
+  strategy: string;
+  period: string;
+}
+
+export interface OptimizeRequest {
+  ticker: string;
+  strategy: string;
+  period?: string;
+  cash?: number;
+  param_ranges: Record<string, number[]>;
+  maximize?: string;
+}
+
+export interface OptimizeResponse {
+  optimal_params: Record<string, unknown>;
+  best_metrics: BacktestMetrics;
+}
+
+/**
+ * Get available backtest strategies with their parameters
+ */
+export async function getBacktestStrategies(): Promise<BacktestStrategiesResponse> {
+  return fetchApi<BacktestStrategiesResponse>('/api/backtest/strategies');
+}
+
+/**
+ * Run a backtest with specified strategy and parameters
+ */
+export async function runBacktest(request: BacktestRequest): Promise<BacktestResponse> {
+  return fetchApi<BacktestResponse>('/api/backtest/run', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
+}
+
+/**
+ * Optimize strategy parameters for best performance
+ */
+export async function runOptimize(request: OptimizeRequest): Promise<OptimizeResponse> {
+  return fetchApi<OptimizeResponse>('/api/backtest/optimize', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
+}

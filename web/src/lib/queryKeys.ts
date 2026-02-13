@@ -28,4 +28,8 @@ export const queryKeys = {
     all: ['strategy'] as const,
     conditions: () => [...queryKeys.strategy.all, 'conditions'] as const,
   },
+  backtest: {
+    all: ['backtest'] as const,
+    strategies: () => [...queryKeys.backtest.all, 'strategies'] as const,
+  },
 } as const;
