@@ -8,6 +8,7 @@ import {
   Search,
   PieChart,
   BarChart3,
+  Workflow,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -23,6 +24,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/screening', label: 'Screening', icon: Search },
+  { href: '/strategy', label: 'Strategy', icon: Workflow },
   { href: '/portfolio', label: 'Portfolio', icon: PieChart },
   { href: '/analysis', label: 'Analysis', icon: BarChart3 },
   { href: '/settings', label: 'Settings', icon: Settings },

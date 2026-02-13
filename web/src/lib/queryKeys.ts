@@ -24,4 +24,8 @@ export const queryKeys = {
     all: ['market'] as const,
     search: (query: string) => [...queryKeys.market.all, 'search', query] as const,
   },
+  strategy: {
+    all: ['strategy'] as const,
+    conditions: () => [...queryKeys.strategy.all, 'conditions'] as const,
+  },
 } as const;

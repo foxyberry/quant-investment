@@ -159,3 +159,64 @@ export async function getTickerAnalysis(ticker: string, period: string = '6mo'):
 export async function searchTickers(query: string): Promise<Array<{ ticker: string; name: string }>> {
   return fetchApi<Array<{ ticker: string; name: string }>>(`/api/search?q=${encodeURIComponent(query)}`);
 }
+
+// Strategy API functions
+
+import type { StrategyGraph } from './strategy/graphSerializer';
+
+export interface StrategyConditionInfo {
+  key: string;
+  label: string;
+  description: string;
+  category: string;
+  params: Array<{
+    name: string;
+    type: string;
+    default: unknown;
+    description: string;
+  }>;
+}
+
+export interface StrategyConditionsResponse {
+  conditions: StrategyConditionInfo[];
+  categories: string[];
+}
+
+export interface StrategyResultItem {
+  ticker: string;
+  name: string;
+  current_price: number | null;
+  matched: boolean;
+  conditions: Array<Record<string, unknown>>;
+}
+
+export interface StrategyExecuteResponse {
+  results: StrategyResultItem[];
+  total_count: number;
+  matched_count: number;
+  universe: string;
+  conditions_used: string[];
+}
+
+/**
+ * Get available strategy conditions
+ */
+export async function getStrategyConditions(): Promise<StrategyConditionsResponse> {
+  return fetchApi<StrategyConditionsResponse>('/api/strategy/conditions');
+}
+
+/**
+ * Execute a visual strategy graph
+ */
+export async function runStrategy(
+  graph: StrategyGraph,
+  universeOverride?: string
+): Promise<StrategyExecuteResponse> {
+  return fetchApi<StrategyExecuteResponse>('/api/strategy/run', {
+    method: 'POST',
+    body: JSON.stringify({
+      graph,
+      universe_override: universeOverride,
+    }),
+  });
+}
