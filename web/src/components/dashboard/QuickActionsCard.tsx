@@ -1,60 +1,60 @@
 'use client';
 
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card, Button } from '@/components/ui';
 import { Search, BarChart3, Briefcase, Settings } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 
 interface QuickAction {
-  label: string;
-  description: string;
-  href: string;
+  labelKey: string;
+  descKey: string;
+  href: '/' | '/screening' | '/analysis' | '/portfolio' | '/settings';
   icon: typeof Search;
   variant: 'primary' | 'secondary' | 'outline';
 }
 
 const quickActions: QuickAction[] = [
   {
-    label: 'Run Screening',
-    description: 'Find stocks matching your criteria',
+    labelKey: 'runScreening',
+    descKey: 'runScreeningDesc',
     href: '/screening',
     icon: Search,
     variant: 'primary',
   },
   {
-    label: 'View Analysis',
-    description: 'Browse analysis reports',
+    labelKey: 'viewAnalysis',
+    descKey: 'viewAnalysisDesc',
     href: '/analysis',
     icon: BarChart3,
     variant: 'secondary',
   },
   {
-    label: 'Portfolio',
-    description: 'Manage your holdings',
+    labelKey: 'portfolioAction',
+    descKey: 'portfolioActionDesc',
     href: '/portfolio',
     icon: Briefcase,
     variant: 'outline',
   },
   {
-    label: 'Settings',
-    description: 'Configure preferences',
+    labelKey: 'settingsAction',
+    descKey: 'settingsActionDesc',
     href: '/settings',
     icon: Settings,
     variant: 'outline',
   },
 ];
 
-/**
- * Quick action buttons for common tasks
- */
 export default function QuickActionsCard() {
+  const t = useTranslations('dashboard');
+
   return (
-    <Card title="Quick Actions">
+    <Card title={t('quickActions')}>
       <div className="grid gap-3 sm:grid-cols-2">
         {quickActions.map((action) => {
           const Icon = action.icon;
 
           return (
-            <Link key={action.label} href={action.href} className="block">
+            <Link key={action.labelKey} href={action.href} className="block">
               <Button
                 variant={action.variant}
                 fullWidth
@@ -62,8 +62,8 @@ export default function QuickActionsCard() {
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
                 <div className="text-left">
-                  <div className="font-medium">{action.label}</div>
-                  <div className="text-xs opacity-80">{action.description}</div>
+                  <div className="font-medium">{t(action.labelKey)}</div>
+                  <div className="text-xs opacity-80">{t(action.descKey)}</div>
                 </div>
               </Button>
             </Link>

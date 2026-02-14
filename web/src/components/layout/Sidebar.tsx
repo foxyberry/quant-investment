@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { Link, usePathname } from '@/i18n/navigation';
 import {
   LayoutDashboard,
   Search,
@@ -16,33 +16,29 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 interface NavItem {
-  href: string;
-  label: string;
+  href: '/' | '/screening' | '/strategy' | '/portfolio' | '/analysis' | '/settings';
+  labelKey: string;
   icon: LucideIcon;
 }
 
 const navItems: NavItem[] = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/screening', label: 'Screening', icon: Search },
-  { href: '/strategy', label: 'Strategy', icon: Workflow },
-  { href: '/portfolio', label: 'Portfolio', icon: PieChart },
-  { href: '/analysis', label: 'Analysis', icon: BarChart3 },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/', labelKey: 'dashboard', icon: LayoutDashboard },
+  { href: '/screening', labelKey: 'screening', icon: Search },
+  { href: '/strategy', labelKey: 'strategy', icon: Workflow },
+  { href: '/portfolio', labelKey: 'portfolio', icon: PieChart },
+  { href: '/analysis', labelKey: 'analysis', icon: BarChart3 },
+  { href: '/settings', labelKey: 'settings', icon: Settings },
 ];
 
 interface SidebarProps {
-  /** Whether sidebar is open on mobile */
   isOpen?: boolean;
-  /** Callback when sidebar should close on mobile */
   onClose?: () => void;
 }
 
-/**
- * Sidebar navigation component with collapsible functionality
- */
 export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
+  const t = useTranslations('nav');
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -100,7 +96,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                     >
                       <Icon className="h-5 w-5 flex-shrink-0" />
                       {!isCollapsed && (
-                        <span className="truncate">{item.label}</span>
+                        <span className="truncate">{t(item.labelKey)}</span>
                       )}
                     </Link>
                   </li>
@@ -115,14 +111,14 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               type="button"
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[var(--foreground-muted)] hover:bg-[var(--border)] hover:text-[var(--foreground)] transition-colors"
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={isCollapsed ? t('expandSidebar') : t('collapseSidebar')}
             >
               {isCollapsed ? (
                 <ChevronRight className="h-5 w-5" />
               ) : (
                 <>
                   <ChevronLeft className="h-5 w-5" />
-                  <span>Collapse</span>
+                  <span>{t('collapseSidebar')}</span>
                 </>
               )}
             </button>
