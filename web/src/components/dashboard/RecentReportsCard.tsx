@@ -53,7 +53,7 @@ export default function RecentReportsCard() {
   };
 
   const getMarketLabel = (market: string) => {
-    const key = market.toLowerCase();
+    const key = market.toLowerCase().replace(/[^a-z0-9]/g, '');
     try {
       return tMarkets(key);
     } catch {
