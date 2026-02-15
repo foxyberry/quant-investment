@@ -276,19 +276,36 @@ export default function PropertiesPanel({
           </>
         )}
 
-        {/* Logic node */}
+        {/* Logic / Group node */}
         {nodeData.node_type === 'logic' && (
-          <div>
-            <FieldLabel>{t('logicOperator')}</FieldLabel>
-            <SelectInput
-              value={nodeData.logic_operator || 'and'}
-              onChange={(v) => onUpdate(node.id, { logic_operator: v })}
-            >
-              <option value="and">{t('andAllMustMatch')}</option>
-              <option value="or">{t('orAnyMustMatch')}</option>
-              <option value="not">{t('notInvertFirst')}</option>
-            </SelectInput>
-          </div>
+          <>
+            <div>
+              <FieldLabel>{t('displayName')}</FieldLabel>
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-[#1e1e1f] px-3 py-2 rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30]">
+                {t(
+                  nodeData.logic_operator === 'or'
+                    ? 'orGroup'
+                    : nodeData.logic_operator === 'not'
+                      ? 'notGroup'
+                      : 'andGroup'
+                )}
+              </div>
+            </div>
+            <div>
+              <FieldLabel>{t('logicOperator')}</FieldLabel>
+              <SelectInput
+                value={nodeData.logic_operator || 'and'}
+                onChange={(v) => onUpdate(node.id, { logic_operator: v })}
+              >
+                <option value="and">{t('andAllMustMatch')}</option>
+                <option value="or">{t('orAnyMustMatch')}</option>
+                <option value="not">{t('notInvertFirst')}</option>
+              </SelectInput>
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+              {t('groupInstruction')}
+            </div>
+          </>
         )}
 
         {/* Output node */}

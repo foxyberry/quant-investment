@@ -27,6 +27,9 @@ class StrategyNodeData(BaseModel):
     universe: Optional[str] = Field(
         None, description="Universe name (e.g., 'KOSPI', 'SP500')"
     )
+    child_node_ids: Optional[List[str]] = Field(
+        None, description="Child node IDs for group/logic nodes"
+    )
 
 
 class StrategyNode(BaseModel):

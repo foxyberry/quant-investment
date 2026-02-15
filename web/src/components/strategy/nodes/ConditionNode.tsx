@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { Handle, Position } from '@xyflow/react';
+import { Handle, Position, useNodeId, useReactFlow } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { Filter } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -16,6 +16,11 @@ function ConditionNode({ data, selected }: NodeProps) {
     : null;
 
   const label = meta?.label || nodeData.label || t('condition');
+
+  const nodeId = useNodeId();
+  const { getNode } = useReactFlow();
+  const currentNode = nodeId ? getNode(nodeId) : null;
+  const isInsideGroup = !!currentNode?.parentId;
 
   // Show key params as summary
   const paramSummary = nodeData.params
@@ -34,11 +39,13 @@ function ConditionNode({ data, selected }: NodeProps) {
           : 'border-[#e1e3e5] dark:border-[#2e2e30] shadow-sm hover:shadow-md'
       }`}
     >
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-top-[7px] hover:!scale-125 !transition-transform"
-      />
+      {!isInsideGroup && (
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-top-[7px] hover:!scale-125 !transition-transform"
+        />
+      )}
       <div className="flex items-center gap-2 mb-2">
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-[#1313ec] dark:text-blue-400 text-[10px] font-semibold uppercase tracking-wider">
           <Filter className="h-3 w-3" />
@@ -55,11 +62,13 @@ function ConditionNode({ data, selected }: NodeProps) {
           </span>
         </div>
       )}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-bottom-[7px] hover:!scale-125 !transition-transform"
-      />
+      {!isInsideGroup && (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-bottom-[7px] hover:!scale-125 !transition-transform"
+        />
+      )}
     </div>
   );
 }

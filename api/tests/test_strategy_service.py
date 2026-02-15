@@ -227,6 +227,100 @@ class TestBuildConditionsFromGraph:
         _, universe = build_conditions_from_graph(graph)
         assert universe == "KOSPI"
 
+    def test_group_and_with_child_node_ids(self):
+        """AND group with child_node_ids (new container approach)."""
+        graph = self._make_graph(
+            nodes=[
+                {"id": "u1", "data": {"node_type": "universe", "universe": "KOSPI"}},
+                {"id": "g1", "data": {"node_type": "logic", "logic_operator": "and", "child_node_ids": ["c1", "c2"]}},
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "min_price", "params": {"min_price": 5000}}},
+                {"id": "c2", "data": {"node_type": "condition", "condition_type": "volume_spike", "params": {"multiplier": 2.0, "period": 20}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[
+                {"id": "e1", "source": "u1", "target": "g1"},
+                {"id": "e2", "source": "g1", "target": "o1"},
+            ],
+        )
+        conditions, universe = build_conditions_from_graph(graph)
+        assert len(conditions) == 1
+        assert isinstance(conditions[0], AndCondition)
+
+    def test_group_or_with_child_node_ids(self):
+        """OR group with child_node_ids."""
+        graph = self._make_graph(
+            nodes=[
+                {"id": "u1", "data": {"node_type": "universe", "universe": "KOSPI"}},
+                {"id": "g1", "data": {"node_type": "logic", "logic_operator": "or", "child_node_ids": ["c1", "c2"]}},
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "rsi_oversold", "params": {"threshold": 30}}},
+                {"id": "c2", "data": {"node_type": "condition", "condition_type": "ma_touch", "params": {"period": 200}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[
+                {"id": "e1", "source": "u1", "target": "g1"},
+                {"id": "e2", "source": "g1", "target": "o1"},
+            ],
+        )
+        conditions, universe = build_conditions_from_graph(graph)
+        assert len(conditions) == 1
+        assert isinstance(conditions[0], OrCondition)
+
+    def test_group_not_with_child_node_ids(self):
+        """NOT group with single child_node_id."""
+        graph = self._make_graph(
+            nodes=[
+                {"id": "u1", "data": {"node_type": "universe", "universe": "KOSPI"}},
+                {"id": "g1", "data": {"node_type": "logic", "logic_operator": "not", "child_node_ids": ["c1"]}},
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "rsi_overbought", "params": {"threshold": 70}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[
+                {"id": "e1", "source": "u1", "target": "g1"},
+                {"id": "e2", "source": "g1", "target": "o1"},
+            ],
+        )
+        conditions, universe = build_conditions_from_graph(graph)
+        assert len(conditions) == 1
+        assert isinstance(conditions[0], NotCondition)
+
+    def test_group_single_child_returns_unwrapped(self):
+        """AND group with a single child returns the condition directly."""
+        graph = self._make_graph(
+            nodes=[
+                {"id": "u1", "data": {"node_type": "universe", "universe": "KOSPI"}},
+                {"id": "g1", "data": {"node_type": "logic", "logic_operator": "and", "child_node_ids": ["c1"]}},
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "min_price", "params": {"min_price": 5000}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[
+                {"id": "e1", "source": "u1", "target": "g1"},
+                {"id": "e2", "source": "g1", "target": "o1"},
+            ],
+        )
+        conditions, _ = build_conditions_from_graph(graph)
+        assert len(conditions) == 1
+        assert isinstance(conditions[0], MinPriceCondition)
+
+    def test_edge_based_logic_still_works(self):
+        """Backward compatibility: edge-based AND gate still works."""
+        graph = self._make_graph(
+            nodes=[
+                {"id": "u1", "data": {"node_type": "universe", "universe": "KOSPI"}},
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "min_price", "params": {"min_price": 5000}}},
+                {"id": "c2", "data": {"node_type": "condition", "condition_type": "volume_spike", "params": {"multiplier": 2.0}}},
+                {"id": "l1", "data": {"node_type": "logic", "logic_operator": "and"}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[
+                {"id": "e1", "source": "c1", "target": "l1"},
+                {"id": "e2", "source": "c2", "target": "l1"},
+                {"id": "e3", "source": "l1", "target": "o1"},
+            ],
+        )
+        conditions, _ = build_conditions_from_graph(graph)
+        assert len(conditions) == 1
+        assert isinstance(conditions[0], AndCondition)
+
 
 class TestGetAvailableConditions:
     """Test the conditions listing function."""

@@ -190,6 +190,12 @@
     "andGate": "AND 게이트",
     "orGate": "OR 게이트",
     "notGate": "NOT 게이트",
+    "andGroup": "AND 그룹",
+    "orGroup": "OR 그룹",
+    "notGroup": "NOT 그룹",
+    "dropConditionHere": "조건을 여기에 드롭하세요",
+    "emptyGroup": "조건을 이 그룹에 드래그하세요",
+    "groupInstruction": "조건 노드를 이 그룹 컨테이너에 드래그한 후, 그룹을 출력에 연결하세요.",
     "finalOutput": "최종 출력",
 
     "nodeProperties": "노드 속성",

@@ -46,6 +46,43 @@ export function validateGraph(
     }
   }
 
+  // Build set of nodes that are children of group nodes
+  const childNodeIds = new Set<string>();
+  for (const node of nodes) {
+    if (node.parentId) {
+      childNodeIds.add(node.id);
+    }
+  }
+
+  // Group node validation
+  for (const node of nodes) {
+    if (node.data.node_type === 'logic') {
+      // Count children (nodes with parentId pointing to this group)
+      const children = nodes.filter((n) => n.parentId === node.id);
+      const hasChildNodeIds = children.length > 0;
+      // Also check edge-based children (backward compatibility)
+      const incomingEdges = edges.filter((e) => e.target === node.id);
+      const hasEdgeInputs = incomingEdges.some((e) => {
+        const srcNode = nodes.find((n) => n.id === e.source);
+        return srcNode && srcNode.data.node_type !== 'universe';
+      });
+
+      if (!hasChildNodeIds && !hasEdgeInputs) {
+        errors.push(
+          `Group node "${node.id}" has no conditions. Add conditions to the group.`
+        );
+      }
+
+      // NOT group: max 1 child
+      const op = (node.data.logic_operator || 'and').toLowerCase();
+      if (op === 'not' && children.length > 1) {
+        errors.push(
+          `NOT group "${node.id}" can only have one condition.`
+        );
+      }
+    }
+  }
+
   // Check output node has incoming connections
   if (outputNodes.length > 0) {
     const outputId = outputNodes[0].id;
@@ -56,14 +93,14 @@ export function validateGraph(
   }
 
   // Check for disconnected condition/logic nodes (no outgoing edges)
-  const nodeIds = new Set(nodes.map((n) => n.id));
+  // Skip condition nodes that are inside a group (they connect via parentId, not edges)
   const nodesWithOutgoing = new Set(edges.map((e) => e.source));
   for (const node of nodes) {
     if (
       node.data.node_type !== 'output' &&
-      !nodesWithOutgoing.has(node.id)
+      !nodesWithOutgoing.has(node.id) &&
+      !childNodeIds.has(node.id)
     ) {
-      // Node has no outgoing edge - it's disconnected
       errors.push(
         `Node "${node.data.label || node.id}" is not connected to anything.`
       );
@@ -83,6 +120,7 @@ export function validateGraph(
 
   const visited = new Set<string>();
   const recursionStack = new Set<string>();
+  const nodeIds = new Set(nodes.map((n) => n.id));
 
   function hasCycle(nodeId: string): boolean {
     visited.add(nodeId);

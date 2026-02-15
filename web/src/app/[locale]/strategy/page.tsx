@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ReactFlow,
@@ -17,13 +17,14 @@ import {
   type Node,
   type NodeTypes,
   type ReactFlowInstance,
+  type NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { Loader2, Zap, RotateCcw, Save, TestTube } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
-import LogicNode from '@/components/strategy/nodes/LogicNode';
+import GroupNode from '@/components/strategy/nodes/GroupNode';
 import OutputNode from '@/components/strategy/nodes/OutputNode';
 import NodePalette from '@/components/strategy/NodePalette';
 import PropertiesPanel from '@/components/strategy/PropertiesPanel';
@@ -38,9 +39,17 @@ import type { StrategyResultItem } from '@/lib/api';
 const nodeTypes: NodeTypes = {
   universeNode: UniverseNode,
   conditionNode: ConditionNode,
-  logicNode: LogicNode,
+  groupNode: GroupNode,
   outputNode: OutputNode,
 };
+
+const GROUP_PADDING_TOP = 40;
+const GROUP_PADDING_BOTTOM = 20;
+const GROUP_PADDING_X = 16;
+const CHILD_SPACING = 8;
+const CHILD_HEIGHT = 80;
+const GROUP_MIN_WIDTH = 280;
+const GROUP_MIN_HEIGHT = 200;
 
 let nodeId = 0;
 function getNodeId() {
@@ -104,6 +113,32 @@ export default function StrategyPage() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  // Find group node at a given position
+  const findGroupAtPosition = useCallback(
+    (flowPosition: { x: number; y: number }): Node | null => {
+      // Check all group nodes to see if position is inside
+      const groupNodes = nodes.filter(
+        (n) => n.type === 'groupNode'
+      );
+      for (const group of groupNodes) {
+        const gx = group.position.x;
+        const gy = group.position.y;
+        const gw = (group.style?.width as number) || GROUP_MIN_WIDTH;
+        const gh = (group.style?.height as number) || GROUP_MIN_HEIGHT;
+        if (
+          flowPosition.x >= gx &&
+          flowPosition.x <= gx + gw &&
+          flowPosition.y >= gy &&
+          flowPosition.y <= gy + gh
+        ) {
+          return group;
+        }
+      }
+      return null;
+    },
+    [nodes]
+  );
+
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -134,7 +169,7 @@ export default function StrategyPage() {
           params,
         };
       } else if (type.startsWith('logic_')) {
-        nodeType = 'logicNode';
+        nodeType = 'groupNode';
         const operator = type.replace('logic_', '');
         data = { node_type: 'logic', logic_operator: operator };
       } else if (type === 'output') {
@@ -144,16 +179,130 @@ export default function StrategyPage() {
         return;
       }
 
+      const newNodeId = getNodeId();
+
+      // If dropping a condition, check if it lands inside a group
+      if (nodeType === 'conditionNode') {
+        const targetGroup = findGroupAtPosition(position);
+        if (targetGroup) {
+          // Count existing children in this group
+          const childrenInGroup = nodes.filter(
+            (n) => n.parentId === targetGroup.id
+          );
+          const childIndex = childrenInGroup.length;
+          const relativePosition = {
+            x: GROUP_PADDING_X,
+            y: GROUP_PADDING_TOP + childIndex * (CHILD_HEIGHT + CHILD_SPACING),
+          };
+
+          const newNode: Node = {
+            id: newNodeId,
+            type: nodeType,
+            position: relativePosition,
+            parentId: targetGroup.id,
+            extent: 'parent' as const,
+            data: data as unknown as Record<string, unknown>,
+          };
+
+          setNodes((nds) => [...nds, newNode]);
+          return;
+        }
+      }
+
+      // Normal drop (not inside a group)
       const newNode: Node = {
-        id: getNodeId(),
+        id: newNodeId,
         type: nodeType,
         position,
         data: data as unknown as Record<string, unknown>,
+        ...(nodeType === 'groupNode'
+          ? {
+              style: { width: GROUP_MIN_WIDTH, height: GROUP_MIN_HEIGHT },
+            }
+          : {}),
       };
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [reactFlowInstance, setNodes]
+    [reactFlowInstance, setNodes, findGroupAtPosition, nodes]
+  );
+
+  // Auto-resize group nodes when children change
+  useEffect(() => {
+    setNodes((nds) => {
+      const groupNodes = nds.filter((n) => n.type === 'groupNode');
+      let changed = false;
+      const updatedNodes = nds.map((n) => {
+        if (n.type !== 'groupNode') return n;
+        const children = nds.filter((c) => c.parentId === n.id);
+        const childCount = children.length;
+        const neededHeight = Math.max(
+          GROUP_MIN_HEIGHT,
+          GROUP_PADDING_TOP +
+            childCount * (CHILD_HEIGHT + CHILD_SPACING) +
+            GROUP_PADDING_BOTTOM
+        );
+        const neededWidth = GROUP_MIN_WIDTH;
+        const currentWidth = (n.style?.width as number) || GROUP_MIN_WIDTH;
+        const currentHeight = (n.style?.height as number) || GROUP_MIN_HEIGHT;
+        if (
+          Math.abs(currentHeight - neededHeight) > 1 ||
+          Math.abs(currentWidth - neededWidth) > 1
+        ) {
+          changed = true;
+          return {
+            ...n,
+            style: { ...n.style, width: neededWidth, height: neededHeight },
+          };
+        }
+        return n;
+      });
+      return changed ? updatedNodes : nds;
+    });
+  }, [nodes.length, setNodes]);
+
+  // Handle removing condition from group when dragged outside
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      onNodesChange(changes);
+
+      // Check position changes to detect drag-out from group
+      for (const change of changes) {
+        if (change.type === 'position' && change.dragging === false && change.id) {
+          setNodes((nds) => {
+            const node = nds.find((n) => n.id === change.id);
+            if (!node || !node.parentId) return nds;
+
+            const parent = nds.find((n) => n.id === node.parentId);
+            if (!parent) return nds;
+
+            // Check if node was dragged outside parent bounds
+            const pw = (parent.style?.width as number) || GROUP_MIN_WIDTH;
+            const ph = (parent.style?.height as number) || GROUP_MIN_HEIGHT;
+            const nx = node.position.x;
+            const ny = node.position.y;
+
+            if (nx < -50 || ny < -50 || nx > pw + 50 || ny > ph + 50) {
+              // Remove from group - convert to absolute position
+              return nds.map((n) => {
+                if (n.id !== change.id) return n;
+                return {
+                  ...n,
+                  position: {
+                    x: parent.position.x + nx,
+                    y: parent.position.y + ny,
+                  },
+                  parentId: undefined,
+                  extent: undefined,
+                };
+              });
+            }
+            return nds;
+          });
+        }
+      }
+    },
+    [onNodesChange, setNodes]
   );
 
   const handleUpdateNode = useCallback(
@@ -313,7 +462,7 @@ export default function StrategyPage() {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
+            onNodesChange={handleNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
