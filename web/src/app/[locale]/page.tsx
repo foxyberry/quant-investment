@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui';
 import {
   PortfolioSummaryCard,
@@ -17,6 +18,7 @@ interface ConnectionStatus {
 }
 
 export default function Home() {
+  const t = useTranslations('dashboard');
   const [status, setStatus] = useState<ConnectionStatus>({
     connected: false,
     checking: true,
@@ -52,14 +54,16 @@ export default function Home() {
     checkConnection();
   }, []);
 
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('title')}</h1>
           <p className="text-[var(--foreground-muted)] mt-1">
-            Welcome to your quantitative investment dashboard
+            {t('subtitle')}
           </p>
         </div>
 
@@ -68,17 +72,17 @@ export default function Home() {
           {status.checking ? (
             <div className="flex items-center gap-2 rounded-full bg-yellow-100 px-3 py-1.5 text-sm text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Connecting...</span>
+              <span>{t('connecting')}</span>
             </div>
           ) : status.connected ? (
             <div className="flex items-center gap-2 rounded-full bg-green-100 px-3 py-1.5 text-sm text-green-800 dark:bg-green-900 dark:text-green-200">
               <Wifi className="h-4 w-4" />
-              <span>API Connected</span>
+              <span>{t('apiConnected')}</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 rounded-full bg-red-100 px-3 py-1.5 text-sm text-red-800 dark:bg-red-900 dark:text-red-200">
               <WifiOff className="h-4 w-4" />
-              <span>API Disconnected</span>
+              <span>{t('apiDisconnected')}</span>
             </div>
           )}
         </div>
@@ -86,20 +90,13 @@ export default function Home() {
 
       {/* Main Dashboard Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Portfolio Summary - Full width on mobile, left column on desktop */}
         <PortfolioSummaryCard />
-
-        {/* Sell Signals Alert */}
         <SellSignalsCard />
-
-        {/* Recent Reports */}
         <RecentReportsCard />
-
-        {/* Quick Actions */}
         <QuickActionsCard />
       </div>
 
-      {/* Getting Started Info - Shown when API is not connected */}
+      {/* Getting Started Info */}
       {!status.checking && !status.connected && (
         <Card>
           <div className="flex items-start gap-4">
@@ -108,17 +105,13 @@ export default function Home() {
             </div>
             <div>
               <h3 className="font-semibold text-[var(--foreground)]">
-                Getting Started
+                {t('gettingStarted')}
               </h3>
               <p className="mt-1 text-sm text-[var(--foreground-muted)]">
-                This dashboard connects to the FastAPI backend at{' '}
-                <code className="rounded bg-[var(--background)] px-1.5 py-0.5 font-mono text-xs">
-                  {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}
-                </code>
-                . Make sure the API server is running to see live data.
+                {t('gettingStartedDesc', { url: apiUrl })}
               </p>
               <p className="mt-2 text-sm text-[var(--foreground-muted)]">
-                Start the API server with:{' '}
+                {t('startServer')}{' '}
                 <code className="rounded bg-[var(--background)] px-1.5 py-0.5 font-mono text-xs">
                   python -m uvicorn api.main:app --reload
                 </code>

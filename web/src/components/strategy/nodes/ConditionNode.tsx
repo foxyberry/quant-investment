@@ -4,16 +4,18 @@ import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { Filter } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { getConditionMeta } from '@/lib/strategy/conditionRegistry';
 
 function ConditionNode({ data, selected }: NodeProps) {
+  const t = useTranslations('strategy');
   const nodeData = data as unknown as StrategyNodeData;
   const meta = nodeData.condition_type
     ? getConditionMeta(nodeData.condition_type)
     : null;
 
-  const label = meta?.label || nodeData.label || 'Condition';
+  const label = meta?.label || nodeData.label || t('condition');
 
   // Show key params as summary
   const paramSummary = nodeData.params
@@ -40,7 +42,7 @@ function ConditionNode({ data, selected }: NodeProps) {
       <div className="flex items-center gap-2 mb-2">
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-[#1313ec] dark:text-blue-400 text-[10px] font-semibold uppercase tracking-wider">
           <Filter className="h-3 w-3" />
-          Screening
+          {t('screeningBadge')}
         </span>
       </div>
       <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
