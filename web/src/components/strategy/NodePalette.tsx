@@ -11,6 +11,7 @@ import {
   GripVertical,
   Search,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import {
   CATEGORIES,
   getConditionsByCategory,
@@ -18,11 +19,11 @@ import {
 import type { ConditionMeta } from '@/lib/strategy/conditionRegistry';
 
 const SPECIAL_NODES = [
-  { type: 'universe', label: 'Market Selection', icon: Globe, color: 'text-emerald-600 dark:text-emerald-400' },
-  { type: 'logic_and', label: 'AND Gate', icon: GitMerge, color: 'text-[#1313ec] dark:text-blue-400' },
-  { type: 'logic_or', label: 'OR Gate', icon: GitMerge, color: 'text-purple-600 dark:text-purple-400' },
-  { type: 'logic_not', label: 'NOT Gate', icon: GitMerge, color: 'text-red-600 dark:text-red-400' },
-  { type: 'output', label: 'Final Output', icon: Flag, color: 'text-orange-600 dark:text-orange-400' },
+  { type: 'universe', labelKey: 'marketSelection', icon: Globe, color: 'text-emerald-600 dark:text-emerald-400' },
+  { type: 'logic_and', labelKey: 'andGate', icon: GitMerge, color: 'text-[#1313ec] dark:text-blue-400' },
+  { type: 'logic_or', labelKey: 'orGate', icon: GitMerge, color: 'text-purple-600 dark:text-purple-400' },
+  { type: 'logic_not', labelKey: 'notGate', icon: GitMerge, color: 'text-red-600 dark:text-red-400' },
+  { type: 'output', labelKey: 'finalOutput', icon: Flag, color: 'text-orange-600 dark:text-orange-400' },
 ];
 
 function DraggableItem({
@@ -69,6 +70,8 @@ function DraggableItem({
 }
 
 export default function NodePalette() {
+  const t = useTranslations('strategy');
+  const tCond = useTranslations('conditions');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set(CATEGORIES)
   );
@@ -110,7 +113,7 @@ export default function NodePalette() {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search components..."
+            placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-gray-50 dark:bg-[#1e1e1f] text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-[#1313ec] focus:ring-1 focus:ring-[#1313ec]/20 transition-colors"
@@ -123,13 +126,13 @@ export default function NodePalette() {
         {!searchQuery && (
           <div className="mb-2">
             <div className="px-2 py-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-              Input Nodes
+              {t('inputNodes')}
             </div>
             {SPECIAL_NODES.filter((n) => n.type === 'universe').map((node) => (
               <DraggableItem
                 key={node.type}
                 type={node.type}
-                label={node.label}
+                label={t(node.labelKey)}
                 icon={node.icon}
                 color={node.color}
               />
@@ -141,7 +144,7 @@ export default function NodePalette() {
         <div className="mb-2">
           {!searchQuery && (
             <div className="px-2 py-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-              Filter Nodes
+              {t('filterNodes')}
             </div>
           )}
           {CATEGORIES.map((category) => {
@@ -161,7 +164,7 @@ export default function NodePalette() {
                   ) : (
                     <ChevronRight className="h-3 w-3" />
                   )}
-                  <span>{category}</span>
+                  <span>{tCond('categories.' + category)}</span>
                   <span className="ml-auto text-[10px] font-normal text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 rounded-full">
                     {conditions.length}
                   </span>
@@ -171,8 +174,8 @@ export default function NodePalette() {
                     <DraggableItem
                       key={cond.key}
                       type="condition"
-                      label={cond.label}
-                      description={cond.description}
+                      label={tCond(cond.key + '.label')}
+                      description={tCond(cond.key + '.desc')}
                       icon={Filter}
                       color="text-[#1313ec] dark:text-blue-400"
                       conditionKey={cond.key}
@@ -187,7 +190,7 @@ export default function NodePalette() {
         {!searchQuery && (
           <div>
             <div className="px-2 py-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-              Logic Operators
+              {t('logicOperators')}
             </div>
             <div className="flex gap-2 px-2 pt-1">
               {SPECIAL_NODES.filter((n) => n.type.startsWith('logic_')).map((node) => {
@@ -213,7 +216,7 @@ export default function NodePalette() {
                 <DraggableItem
                   key={node.type}
                   type={node.type}
-                  label={node.label}
+                  label={t(node.labelKey)}
                   icon={node.icon}
                   color={node.color}
                 />

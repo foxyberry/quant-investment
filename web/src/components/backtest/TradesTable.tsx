@@ -1,6 +1,7 @@
 'use client';
 
 import type { BacktestTrade } from '@/lib/api';
+import { useTranslations } from 'next-intl';
 
 interface TradesTableProps {
   trades: BacktestTrade[];
@@ -33,10 +34,11 @@ function formatReturn(pct: number): string {
 }
 
 export default function TradesTable({ trades }: TradesTableProps) {
-  const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
+  const t = useTranslations('backtest');
+  const totalPnl = trades.reduce((sum, tr) => sum + tr.pnl, 0);
   const avgReturn =
     trades.length > 0
-      ? trades.reduce((sum, t) => sum + t.return_pct, 0) / trades.length
+      ? trades.reduce((sum, tr) => sum + tr.return_pct, 0) / trades.length
       : 0;
 
   return (
@@ -45,12 +47,12 @@ export default function TradesTable({ trades }: TradesTableProps) {
         <table className="w-full text-xs">
           <thead className="sticky top-0 bg-gray-50 dark:bg-[#1e1e1f] z-10">
             <tr className="text-left text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider border-b border-[#e1e3e5] dark:border-[#2e2e30]">
-              <th className="px-3 py-2">Entry</th>
-              <th className="px-3 py-2">Exit</th>
-              <th className="px-3 py-2 text-right">Entry Price</th>
-              <th className="px-3 py-2 text-right">Exit Price</th>
-              <th className="px-3 py-2 text-right">P&L</th>
-              <th className="px-3 py-2 text-right">Return</th>
+              <th className="px-3 py-2">{t('entry')}</th>
+              <th className="px-3 py-2">{t('exit')}</th>
+              <th className="px-3 py-2 text-right">{t('entryPrice')}</th>
+              <th className="px-3 py-2 text-right">{t('exitPrice')}</th>
+              <th className="px-3 py-2 text-right">{t('pnl')}</th>
+              <th className="px-3 py-2 text-right">{t('return')}</th>
             </tr>
           </thead>
           <tbody>
@@ -99,7 +101,7 @@ export default function TradesTable({ trades }: TradesTableProps) {
                   colSpan={4}
                   className="px-3 py-2 text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider"
                 >
-                  Total ({trades.length} trades)
+                  {t('totalTrades', { count: trades.length })}
                 </td>
                 <td
                   className={`px-3 py-2 text-right font-bold ${

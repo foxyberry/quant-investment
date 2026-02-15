@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ReactFlow,
   addEdge,
@@ -68,6 +69,7 @@ function getNodeData(node: Node): StrategyNodeData {
 }
 
 export default function StrategyPage() {
+  const t = useTranslations('strategy');
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -201,11 +203,11 @@ export default function StrategyPage() {
           );
         },
         onError: (error) => {
-          setErrors([error instanceof Error ? error.message : 'Execution failed']);
+          setErrors([error instanceof Error ? error.message : t('executionFailed')]);
         },
       }
     );
-  }, [nodes, edges, runStrategy, setNodes]);
+  }, [nodes, edges, runStrategy, setNodes, t]);
 
   const handleClear = useCallback(() => {
     setNodes(initialNodes);
@@ -236,16 +238,16 @@ export default function StrategyPage() {
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-[#1313ec]" />
           <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            QuantCanvas
+            {t('title')}
           </span>
         </div>
         <span className="text-gray-300 dark:text-gray-600">|</span>
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          My Strategies
+          {t('myStrategies')}
         </span>
         <span className="text-gray-300 dark:text-gray-600">/</span>
         <span className="text-sm text-gray-700 dark:text-gray-200 font-medium">
-          Untitled Strategy
+          {t('untitled')}
         </span>
 
         <div className="flex-1" />
@@ -254,12 +256,12 @@ export default function StrategyPage() {
         {errors.length > 0 && (
           <div className="text-sm text-red-500">
             {errors[0]}
-            {errors.length > 1 && ` (+${errors.length - 1} more)`}
+            {errors.length > 1 && ` (${t('moreErrors', { count: errors.length - 1 })})`}
           </div>
         )}
         {results && (
           <div className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
-            {results.length} stocks matched
+            {t('stocksMatched', { count: results.length })}
           </div>
         )}
 
@@ -269,14 +271,14 @@ export default function StrategyPage() {
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
         >
           <RotateCcw className="h-3.5 w-3.5" />
-          Reset
+          {t('reset')}
         </button>
         <button
           type="button"
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
         >
           <Save className="h-3.5 w-3.5" />
-          Save Strategy
+          {t('saveStrategy')}
         </button>
         <button
           type="button"
@@ -284,7 +286,7 @@ export default function StrategyPage() {
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
         >
           <TestTube className="h-3.5 w-3.5" />
-          Backtest
+          {t('backtest')}
         </button>
         <button
           type="button"
@@ -297,7 +299,7 @@ export default function StrategyPage() {
           ) : (
             <Zap className="h-4 w-4" />
           )}
-          Deploy Strategy
+          {t('deployStrategy')}
         </button>
       </div>
 
@@ -359,17 +361,17 @@ export default function StrategyPage() {
       {/* Bottom status bar */}
       <div className="flex items-center justify-between px-4 py-1.5 border-t border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] text-[11px] text-gray-400 dark:text-gray-500">
         <div className="flex items-center gap-4">
-          <span>Nodes: {nodeCount}</span>
-          <span>Filters: {conditionCount}</span>
+          <span>{t('nodes')}: {nodeCount}</span>
+          <span>{t('filters')}: {conditionCount}</span>
           {results && (
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-              Matched: {results.length}
+              {t('matched')}: {results.length}
             </span>
           )}
         </div>
         <div className="flex items-center gap-4">
-          <span>KOSPI Data</span>
-          <span>Last run: {results ? 'Just now' : 'Never'}</span>
+          <span>{t('kospiData')}</span>
+          <span>{results ? t('lastRunJustNow') : t('lastRunNever')}</span>
         </div>
       </div>
 
@@ -378,16 +380,16 @@ export default function StrategyPage() {
         <div className="border-t border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] max-h-64 overflow-y-auto">
           <div className="px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
             <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              Results ({results.length} matched)
+              {t('results', { count: results.length })}
             </span>
           </div>
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider border-b border-[#e1e3e5] dark:border-[#2e2e30]">
-                <th className="px-4 py-2">Ticker</th>
-                <th className="px-4 py-2">Name</th>
-                <th className="px-4 py-2 text-right">Price</th>
-                <th className="px-4 py-2 text-center">Status</th>
+                <th className="px-4 py-2">{t('ticker')}</th>
+                <th className="px-4 py-2">{t('name')}</th>
+                <th className="px-4 py-2 text-right">{t('price')}</th>
+                <th className="px-4 py-2 text-center">{t('status')}</th>
               </tr>
             </thead>
             <tbody>

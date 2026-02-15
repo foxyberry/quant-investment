@@ -16,7 +16,13 @@
     "no": "No",
     "version": "Version {version}",
     "copyright": "\u00a9 {year} Quant Investment. All rights reserved.",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "up": "Up",
+    "down": "Down",
+    "below": "Below",
+    "above": "Above"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -152,11 +158,53 @@
     "deployStrategy": "Deploy Strategy",
     "nodes": "Nodes",
     "filters": "Filters",
+    "matched": "Matched",
     "results": "Results ({count} matched)",
     "hide": "Hide",
     "show": "Show",
     "lastRunJustNow": "Last run: Just now",
-    "lastRunNever": "Last run: Never"
+    "lastRunNever": "Last run: Never",
+    "stocksMatched": "{count} stocks matched",
+    "executionFailed": "Execution failed",
+    "moreErrors": "+{count} more",
+    "kospiData": "KOSPI Data",
+    "ticker": "Ticker",
+    "name": "Name",
+    "price": "Price",
+    "status": "Status",
+
+    "inputBadge": "Input",
+    "screeningBadge": "Screening",
+    "outputBadge": "Output",
+    "marketSelection": "Market Selection",
+    "composite": "{universe} Composite",
+    "condition": "Condition",
+    "finalSelection": "Final Selection",
+    "estimatedItems": "{count} estimated items",
+    "connectAndRun": "Connect nodes and run",
+
+    "searchPlaceholder": "Search components...",
+    "inputNodes": "Input Nodes",
+    "filterNodes": "Filter Nodes",
+    "logicOperators": "Logic Operators",
+    "andGate": "AND Gate",
+    "orGate": "OR Gate",
+    "notGate": "NOT Gate",
+    "finalOutput": "Final Output",
+
+    "nodeProperties": "Node Properties",
+    "displayName": "Display Name",
+    "stockUniverse": "Stock Universe",
+    "conditionLogic": "Condition Logic",
+    "selectCondition": "Select condition...",
+    "quickInsight": "Quick Insight",
+    "logicOperator": "Logic Operator",
+    "andAllMustMatch": "AND (all must match)",
+    "orAnyMustMatch": "OR (any must match)",
+    "notInvertFirst": "NOT (invert first input)",
+    "outputInstruction": "Connect condition nodes to this output, then click \"Deploy Strategy\" to execute the screening.",
+    "removeNode": "Remove Node",
+    "applyChanges": "Apply Changes"
   },
   "analysis": {
     "title": "Charts & Analysis",
@@ -198,7 +246,170 @@
     "maxConsecWins": "Max Consec. Wins",
     "maxConsecLosses": "Max Consec. Losses",
     "individualTrades": "Individual Trades",
-    "failed": "Backtest failed. Please check your inputs and try again."
+    "failed": "Backtest failed. Please check your inputs and try again.",
+    "totalReturn": "Total Return",
+    "sharpeRatio": "Sharpe Ratio",
+    "maxDrawdown": "Max Drawdown",
+    "winRate": "Win Rate",
+    "cagr": "CAGR",
+    "profitFactor": "Profit Factor",
+    "entry": "Entry",
+    "exit": "Exit",
+    "entryPrice": "Entry Price",
+    "exitPrice": "Exit Price",
+    "pnl": "P&L",
+    "return": "Return",
+    "totalTrades": "Total ({count} trades)"
+  },
+  "conditions": {
+    "categories": {
+      "price": "Price",
+      "volume": "Volume",
+      "movingAverage": "Moving Average",
+      "rsi": "RSI",
+      "accumulation": "Accumulation",
+      "breakout": "Breakout"
+    },
+    "min_price": {
+      "label": "Min Price",
+      "desc": "Stock price >= threshold",
+      "params": { "min_price": "Minimum price" }
+    },
+    "max_price": {
+      "label": "Max Price",
+      "desc": "Stock price <= threshold",
+      "params": { "max_price": "Maximum price" }
+    },
+    "price_range": {
+      "label": "Price Range",
+      "desc": "Stock price within range",
+      "params": { "min_price": "Min price", "max_price": "Max price" }
+    },
+    "price_change": {
+      "label": "Price Change %",
+      "desc": "Price change over N days",
+      "params": { "min_change_pct": "Min change %", "max_change_pct": "Max change %", "days": "Period (days)" }
+    },
+    "min_volume": {
+      "label": "Min Volume",
+      "desc": "Volume >= threshold",
+      "params": { "min_volume": "Minimum volume" }
+    },
+    "volume_above_avg": {
+      "label": "Volume Above Avg",
+      "desc": "Volume above moving average",
+      "params": { "multiplier": "Avg multiplier", "period": "Average period" }
+    },
+    "volume_spike": {
+      "label": "Volume Spike",
+      "desc": "Sudden volume increase",
+      "params": { "multiplier": "Spike multiplier", "period": "Average period" }
+    },
+    "ma_touch": {
+      "label": "MA Touch",
+      "desc": "Price near moving average",
+      "params": { "period": "MA period", "threshold": "Touch threshold (ratio)" }
+    },
+    "above_ma": {
+      "label": "Above MA",
+      "desc": "Price above moving average",
+      "params": { "period": "MA period", "min_distance_pct": "Min distance %" }
+    },
+    "below_ma": {
+      "label": "Below MA",
+      "desc": "Price below moving average",
+      "params": { "period": "MA period", "max_distance_pct": "Max distance %" }
+    },
+    "ma_cross_up": {
+      "label": "MA Cross Up",
+      "desc": "Golden cross",
+      "params": { "short_period": "Short MA period", "long_period": "Long MA period", "lookback_days": "Lookback days" }
+    },
+    "ma_cross_down": {
+      "label": "MA Cross Down",
+      "desc": "Death cross",
+      "params": { "short_period": "Short MA period", "long_period": "Long MA period", "lookback_days": "Lookback days" }
+    },
+    "rsi_oversold": {
+      "label": "RSI Oversold",
+      "desc": "RSI below threshold",
+      "params": { "threshold": "RSI threshold", "period": "RSI period" }
+    },
+    "rsi_overbought": {
+      "label": "RSI Overbought",
+      "desc": "RSI above threshold",
+      "params": { "threshold": "RSI threshold", "period": "RSI period" }
+    },
+    "rsi_range": {
+      "label": "RSI Range",
+      "desc": "RSI within range",
+      "params": { "lower": "Lower bound", "upper": "Upper bound", "period": "RSI period" }
+    },
+    "bollinger_width": {
+      "label": "Bollinger Width",
+      "desc": "BB width contraction",
+      "params": { "max_width_pct": "Max BB width %", "period": "BB period", "std_dev": "Std deviation" }
+    },
+    "volume_below_avg": {
+      "label": "Volume Below Avg",
+      "desc": "Quiet volume zone",
+      "params": { "multiplier": "Max ratio to avg", "period": "Average period" }
+    },
+    "price_flat": {
+      "label": "Price Flat",
+      "desc": "Price consolidation",
+      "params": { "max_range_pct": "Max range %", "period": "Period" }
+    },
+    "obv_trend": {
+      "label": "OBV Trend",
+      "desc": "On-Balance Volume trend",
+      "params": { "direction": "Trend direction (up/down)", "lookback": "Lookback period" }
+    },
+    "stochastic_level": {
+      "label": "Stochastic Level",
+      "desc": "Stochastic oscillator level",
+      "params": { "threshold": "Level threshold", "condition": "below or above", "k_period": "%K period", "d_period": "%D period" }
+    },
+    "vpci_trend": {
+      "label": "VPCI Trend",
+      "desc": "VPCI trend direction",
+      "params": { "direction": "Trend direction (up/down)", "short_period": "Short period", "long_period": "Long period", "lookback": "Lookback period" }
+    },
+    "obv_divergence": {
+      "label": "OBV Divergence",
+      "desc": "Price flat + OBV rising",
+      "params": { "price_max_range_pct": "Price range %", "obv_min_change_pct": "OBV change %", "period": "Period" }
+    },
+    "stochastic_divergence": {
+      "label": "Stochastic Divergence",
+      "desc": "Bullish stochastic divergence",
+      "params": { "k_period": "%K period", "d_period": "%D period", "lookback": "Lookback period", "divergence_threshold": "Threshold %" }
+    },
+    "vpci_divergence": {
+      "label": "VPCI Divergence",
+      "desc": "Price flat + VPCI rising",
+      "params": { "price_max_range_pct": "Price range %", "short_period": "Short period", "long_period": "Long period", "lookback": "Lookback period" }
+    },
+    "bottom_breakout": {
+      "label": "Bottom Breakout",
+      "desc": "N-day low breakout",
+      "params": { "lookback_days": "Lookback days", "breakout_pct": "Breakout %" }
+    },
+    "fresh_breakout": {
+      "label": "Fresh Breakout",
+      "desc": "First-time breakout",
+      "params": { "lookback_days": "Lookback days", "breakout_pct": "Breakout %" }
+    },
+    "breakout_with_volume": {
+      "label": "Breakout + Volume",
+      "desc": "Breakout with volume confirmation",
+      "params": { "lookback_days": "Lookback days", "breakout_pct": "Breakout %", "volume_ratio": "Volume ratio", "volume_avg_days": "Volume avg days", "fresh_only": "Fresh breakout only" }
+    },
+    "resistance_breakout": {
+      "label": "Resistance Breakout",
+      "desc": "Resistance level breakout",
+      "params": { "lookback_days": "Lookback days", "breakout_margin_pct": "Margin above resistance %" }
+    }
   },
   "markets": {
     "us": "US Market",
