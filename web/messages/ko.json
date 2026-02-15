@@ -16,7 +16,13 @@
     "no": "아니오",
     "version": "버전 {version}",
     "copyright": "\u00a9 {year} Quant Investment. All rights reserved.",
-    "collapse": "접기"
+    "collapse": "접기",
+    "enabled": "활성",
+    "disabled": "비활성",
+    "up": "상승",
+    "down": "하락",
+    "below": "이하",
+    "above": "이상"
   },
   "nav": {
     "dashboard": "대시보드",
@@ -152,11 +158,53 @@
     "deployStrategy": "전략 배포",
     "nodes": "노드",
     "filters": "필터",
+    "matched": "매치",
     "results": "결과 ({count}개 매치)",
     "hide": "숨기기",
     "show": "보기",
     "lastRunJustNow": "마지막 실행: 방금",
-    "lastRunNever": "마지막 실행: 없음"
+    "lastRunNever": "마지막 실행: 없음",
+    "stocksMatched": "{count}개 종목 매치",
+    "executionFailed": "실행 실패",
+    "moreErrors": "+{count}개 추가",
+    "kospiData": "KOSPI 데이터",
+    "ticker": "종목코드",
+    "name": "종목명",
+    "price": "가격",
+    "status": "상태",
+
+    "inputBadge": "입력",
+    "screeningBadge": "스크리닝",
+    "outputBadge": "출력",
+    "marketSelection": "시장 선택",
+    "composite": "{universe} 종합",
+    "condition": "조건",
+    "finalSelection": "최종 선택",
+    "estimatedItems": "예상 {count}개",
+    "connectAndRun": "노드를 연결하고 실행하세요",
+
+    "searchPlaceholder": "컴포넌트 검색...",
+    "inputNodes": "입력 노드",
+    "filterNodes": "필터 노드",
+    "logicOperators": "논리 연산자",
+    "andGate": "AND 게이트",
+    "orGate": "OR 게이트",
+    "notGate": "NOT 게이트",
+    "finalOutput": "최종 출력",
+
+    "nodeProperties": "노드 속성",
+    "displayName": "표시 이름",
+    "stockUniverse": "종목 유니버스",
+    "conditionLogic": "조건 로직",
+    "selectCondition": "조건 선택...",
+    "quickInsight": "요약 정보",
+    "logicOperator": "논리 연산자",
+    "andAllMustMatch": "AND (모두 충족)",
+    "orAnyMustMatch": "OR (하나 이상 충족)",
+    "notInvertFirst": "NOT (첫 번째 입력 반전)",
+    "outputInstruction": "조건 노드를 이 출력에 연결한 후 \"전략 배포\"를 클릭하여 스크리닝을 실행하세요.",
+    "removeNode": "노드 삭제",
+    "applyChanges": "변경 적용"
   },
   "analysis": {
     "title": "차트 & 분석",
@@ -198,7 +246,170 @@
     "maxConsecWins": "최대 연속 수익",
     "maxConsecLosses": "최대 연속 손실",
     "individualTrades": "개별 거래",
-    "failed": "백테스트에 실패했습니다. 입력값을 확인하고 다시 시도해 주세요."
+    "failed": "백테스트에 실패했습니다. 입력값을 확인하고 다시 시도해 주세요.",
+    "totalReturn": "총 수익률",
+    "sharpeRatio": "샤프 비율",
+    "maxDrawdown": "최대 낙폭",
+    "winRate": "승률",
+    "cagr": "연평균 수익률",
+    "profitFactor": "수익 팩터",
+    "entry": "진입",
+    "exit": "청산",
+    "entryPrice": "진입가",
+    "exitPrice": "청산가",
+    "pnl": "손익",
+    "return": "수익률",
+    "totalTrades": "합계 ({count}건)"
+  },
+  "conditions": {
+    "categories": {
+      "price": "가격",
+      "volume": "거래량",
+      "movingAverage": "이동평균",
+      "rsi": "RSI",
+      "accumulation": "매집",
+      "breakout": "돌파"
+    },
+    "min_price": {
+      "label": "최소 가격",
+      "desc": "주가 >= 기준값",
+      "params": { "min_price": "최소 가격" }
+    },
+    "max_price": {
+      "label": "최대 가격",
+      "desc": "주가 <= 기준값",
+      "params": { "max_price": "최대 가격" }
+    },
+    "price_range": {
+      "label": "가격 범위",
+      "desc": "주가가 범위 내",
+      "params": { "min_price": "최소 가격", "max_price": "최대 가격" }
+    },
+    "price_change": {
+      "label": "가격 변동률",
+      "desc": "N일간 가격 변동",
+      "params": { "min_change_pct": "최소 변동 %", "max_change_pct": "최대 변동 %", "days": "기간 (일)" }
+    },
+    "min_volume": {
+      "label": "최소 거래량",
+      "desc": "거래량 >= 기준값",
+      "params": { "min_volume": "최소 거래량" }
+    },
+    "volume_above_avg": {
+      "label": "평균 이상 거래량",
+      "desc": "이동평균 대비 거래량 초과",
+      "params": { "multiplier": "평균 배수", "period": "평균 기간" }
+    },
+    "volume_spike": {
+      "label": "거래량 급증",
+      "desc": "갑작스러운 거래량 증가",
+      "params": { "multiplier": "급증 배수", "period": "평균 기간" }
+    },
+    "ma_touch": {
+      "label": "MA 터치",
+      "desc": "이동평균선 근접",
+      "params": { "period": "MA 기간", "threshold": "터치 임계값 (비율)" }
+    },
+    "above_ma": {
+      "label": "MA 위",
+      "desc": "이동평균선 상방",
+      "params": { "period": "MA 기간", "min_distance_pct": "최소 이격도 %" }
+    },
+    "below_ma": {
+      "label": "MA 아래",
+      "desc": "이동평균선 하방",
+      "params": { "period": "MA 기간", "max_distance_pct": "최대 이격도 %" }
+    },
+    "ma_cross_up": {
+      "label": "MA 골든크로스",
+      "desc": "골든크로스",
+      "params": { "short_period": "단기 MA 기간", "long_period": "장기 MA 기간", "lookback_days": "확인 기간" }
+    },
+    "ma_cross_down": {
+      "label": "MA 데드크로스",
+      "desc": "데드크로스",
+      "params": { "short_period": "단기 MA 기간", "long_period": "장기 MA 기간", "lookback_days": "확인 기간" }
+    },
+    "rsi_oversold": {
+      "label": "RSI 과매도",
+      "desc": "RSI 기준값 이하",
+      "params": { "threshold": "RSI 기준값", "period": "RSI 기간" }
+    },
+    "rsi_overbought": {
+      "label": "RSI 과매수",
+      "desc": "RSI 기준값 이상",
+      "params": { "threshold": "RSI 기준값", "period": "RSI 기간" }
+    },
+    "rsi_range": {
+      "label": "RSI 범위",
+      "desc": "RSI가 범위 내",
+      "params": { "lower": "하한값", "upper": "상한값", "period": "RSI 기간" }
+    },
+    "bollinger_width": {
+      "label": "볼린저 밴드 폭",
+      "desc": "BB 밴드 수축",
+      "params": { "max_width_pct": "최대 BB 폭 %", "period": "BB 기간", "std_dev": "표준편차" }
+    },
+    "volume_below_avg": {
+      "label": "평균 이하 거래량",
+      "desc": "거래량 침체 구간",
+      "params": { "multiplier": "평균 대비 최대 비율", "period": "평균 기간" }
+    },
+    "price_flat": {
+      "label": "가격 횡보",
+      "desc": "가격 횡보 구간",
+      "params": { "max_range_pct": "최대 변동폭 %", "period": "기간" }
+    },
+    "obv_trend": {
+      "label": "OBV 추세",
+      "desc": "거래량 가중 추세",
+      "params": { "direction": "추세 방향 (상승/하락)", "lookback": "확인 기간" }
+    },
+    "stochastic_level": {
+      "label": "스토캐스틱 레벨",
+      "desc": "스토캐스틱 오실레이터 수준",
+      "params": { "threshold": "레벨 기준값", "condition": "이하 또는 이상", "k_period": "%K 기간", "d_period": "%D 기간" }
+    },
+    "vpci_trend": {
+      "label": "VPCI 추세",
+      "desc": "VPCI 추세 방향",
+      "params": { "direction": "추세 방향 (상승/하락)", "short_period": "단기 기간", "long_period": "장기 기간", "lookback": "확인 기간" }
+    },
+    "obv_divergence": {
+      "label": "OBV 다이버전스",
+      "desc": "가격 횡보 + OBV 상승",
+      "params": { "price_max_range_pct": "가격 변동폭 %", "obv_min_change_pct": "OBV 변화 %", "period": "기간" }
+    },
+    "stochastic_divergence": {
+      "label": "스토캐스틱 다이버전스",
+      "desc": "강세 스토캐스틱 다이버전스",
+      "params": { "k_period": "%K 기간", "d_period": "%D 기간", "lookback": "확인 기간", "divergence_threshold": "임계값 %" }
+    },
+    "vpci_divergence": {
+      "label": "VPCI 다이버전스",
+      "desc": "가격 횡보 + VPCI 상승",
+      "params": { "price_max_range_pct": "가격 변동폭 %", "short_period": "단기 기간", "long_period": "장기 기간", "lookback": "확인 기간" }
+    },
+    "bottom_breakout": {
+      "label": "저점 돌파",
+      "desc": "N일 저점 돌파",
+      "params": { "lookback_days": "확인 기간", "breakout_pct": "돌파 %" }
+    },
+    "fresh_breakout": {
+      "label": "신규 돌파",
+      "desc": "최초 돌파",
+      "params": { "lookback_days": "확인 기간", "breakout_pct": "돌파 %" }
+    },
+    "breakout_with_volume": {
+      "label": "돌파 + 거래량",
+      "desc": "거래량 동반 돌파",
+      "params": { "lookback_days": "확인 기간", "breakout_pct": "돌파 %", "volume_ratio": "거래량 배수", "volume_avg_days": "거래량 평균 기간", "fresh_only": "신규 돌파만" }
+    },
+    "resistance_breakout": {
+      "label": "저항선 돌파",
+      "desc": "저항 수준 돌파",
+      "params": { "lookback_days": "확인 기간", "breakout_margin_pct": "저항선 위 마진 %" }
+    }
   },
   "markets": {
     "us": "미국 시장",

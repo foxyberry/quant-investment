@@ -4,9 +4,11 @@ import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { Globe } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 
 function UniverseNode({ data, selected }: NodeProps) {
+  const t = useTranslations('strategy');
   const nodeData = data as unknown as StrategyNodeData;
 
   return (
@@ -20,14 +22,14 @@ function UniverseNode({ data, selected }: NodeProps) {
       <div className="flex items-center gap-2 mb-2">
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold uppercase tracking-wider">
           <Globe className="h-3 w-3" />
-          Input
+          {t('inputBadge')}
         </span>
       </div>
       <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-        Market Selection
+        {t('marketSelection')}
       </div>
       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-        {nodeData.universe || 'KOSPI'} Composite
+        {t('composite', { universe: nodeData.universe || 'KOSPI' })}
       </div>
       <Handle
         type="source"

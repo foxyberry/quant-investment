@@ -1,13 +1,14 @@
 'use client';
 
 import type { BacktestMetrics } from '@/lib/api';
+import { useTranslations } from 'next-intl';
 
 interface MetricsCardsProps {
   metrics: BacktestMetrics;
 }
 
 interface MetricCardDef {
-  label: string;
+  labelKey: string;
   key: keyof BacktestMetrics;
   format: (v: number) => string;
   colorMode: 'pnl' | 'neutral';
@@ -15,37 +16,37 @@ interface MetricCardDef {
 
 const METRIC_CARDS: MetricCardDef[] = [
   {
-    label: 'Total Return',
+    labelKey: 'totalReturn',
     key: 'total_return',
     format: (v) => `${(v * 100).toFixed(2)}%`,
     colorMode: 'pnl',
   },
   {
-    label: 'Sharpe Ratio',
+    labelKey: 'sharpeRatio',
     key: 'sharpe_ratio',
     format: (v) => v.toFixed(2),
     colorMode: 'pnl',
   },
   {
-    label: 'Max Drawdown',
+    labelKey: 'maxDrawdown',
     key: 'max_drawdown',
     format: (v) => `${(v * 100).toFixed(2)}%`,
     colorMode: 'pnl',
   },
   {
-    label: 'Win Rate',
+    labelKey: 'winRate',
     key: 'win_rate',
     format: (v) => `${(v * 100).toFixed(1)}%`,
     colorMode: 'neutral',
   },
   {
-    label: 'CAGR',
+    labelKey: 'cagr',
     key: 'cagr',
     format: (v) => `${(v * 100).toFixed(2)}%`,
     colorMode: 'pnl',
   },
   {
-    label: 'Profit Factor',
+    labelKey: 'profitFactor',
     key: 'profit_factor',
     format: (v) => v.toFixed(2),
     colorMode: 'pnl',
@@ -62,6 +63,7 @@ function getValueColor(value: number, mode: 'pnl' | 'neutral'): string {
 }
 
 export default function MetricsCards({ metrics }: MetricsCardsProps) {
+  const t = useTranslations('backtest');
   return (
     <div className="grid grid-cols-2 gap-2.5">
       {METRIC_CARDS.map((card) => {
@@ -72,7 +74,7 @@ export default function MetricsCards({ metrics }: MetricsCardsProps) {
             className="rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] p-3 shadow-sm"
           >
             <div className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">
-              {card.label}
+              {t(card.labelKey)}
             </div>
             <div
               className={`text-lg font-bold ${getValueColor(value, card.colorMode)}`}

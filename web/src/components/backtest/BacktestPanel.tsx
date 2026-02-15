@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { X, Loader2, AlertCircle, TrendingUp, BarChart3 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useBacktestStrategies, useRunBacktest } from '@/hooks/useBacktest';
 import type {
   BacktestStrategy,
@@ -16,12 +17,12 @@ interface BacktestPanelProps {
 }
 
 const PERIODS = [
-  { value: '1mo', label: '1 Month' },
-  { value: '3mo', label: '3 Months' },
-  { value: '6mo', label: '6 Months' },
-  { value: '1y', label: '1 Year' },
-  { value: '2y', label: '2 Years' },
-  { value: '5y', label: '5 Years' },
+  { value: '1mo', labelKey: 'period1m' },
+  { value: '3mo', labelKey: 'period3m' },
+  { value: '6mo', labelKey: 'period6m' },
+  { value: '1y', labelKey: 'period1y' },
+  { value: '2y', labelKey: 'period2y' },
+  { value: '5y', labelKey: 'period5y' },
 ];
 
 /**
@@ -29,6 +30,7 @@ const PERIODS = [
  * Uses viewBox so it scales to the container width while maintaining a fixed aspect ratio.
  */
 function EquityCurve({ points }: { points: Array<{ date: string; equity: number }> }) {
+  const t = useTranslations('backtest');
   if (!points || points.length < 2) return null;
 
   const width = 360;
@@ -69,7 +71,7 @@ function EquityCurve({ points }: { points: Array<{ date: string; equity: number 
   return (
     <div className="rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] p-3">
       <div className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-        Equity Curve
+        {t('equityCurve')}
       </div>
       <svg
         viewBox={`0 0 ${width} ${height}`}
@@ -108,11 +110,12 @@ function TradeSummary({
   maxConsecutiveWins: number;
   maxConsecutiveLosses: number;
 }) {
+  const t = useTranslations('backtest');
   return (
     <div className="grid grid-cols-2 gap-2.5">
       <div className="rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] px-3 py-2">
         <div className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-          Trades
+          {t('trades')}
         </div>
         <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
           {numTrades}
@@ -120,7 +123,7 @@ function TradeSummary({
       </div>
       <div className="rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] px-3 py-2">
         <div className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-          Avg Return
+          {t('avgReturn')}
         </div>
         <div
           className={`text-sm font-bold ${
@@ -135,7 +138,7 @@ function TradeSummary({
       </div>
       <div className="rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] px-3 py-2">
         <div className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-          Max Consec. Wins
+          {t('maxConsecWins')}
         </div>
         <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
           {maxConsecutiveWins}
@@ -143,7 +146,7 @@ function TradeSummary({
       </div>
       <div className="rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] px-3 py-2">
         <div className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-          Max Consec. Losses
+          {t('maxConsecLosses')}
         </div>
         <div className="text-sm font-bold text-red-600 dark:text-red-400">
           {maxConsecutiveLosses}
@@ -154,6 +157,7 @@ function TradeSummary({
 }
 
 export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
+  const t = useTranslations('backtest');
   // --- Form state ---
   const [ticker, setTicker] = useState('');
   const [selectedStrategy, setSelectedStrategy] = useState('');
@@ -260,7 +264,7 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
           <div className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-[#1313ec]" />
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              Backtest Strategy
+              {t('title')}
             </h2>
           </div>
           <button
@@ -279,13 +283,13 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
             {/* Ticker */}
             <div>
               <label className="block text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
-                Ticker
+                {t('ticker')}
               </label>
               <input
                 type="text"
                 value={ticker}
                 onChange={(e) => setTicker(e.target.value)}
-                placeholder="e.g. AAPL or 005930.KS"
+                placeholder={t('tickerPlaceholder')}
                 className={inputCls}
               />
             </div>
@@ -293,12 +297,12 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
             {/* Strategy selector */}
             <div>
               <label className="block text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
-                Strategy
+                {t('strategy')}
               </label>
               {strategiesLoading ? (
                 <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Loading strategies...
+                  {t('loadingStrategies')}
                 </div>
               ) : (
                 <select
@@ -323,7 +327,7 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
             {/* Period */}
             <div>
               <label className="block text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
-                Period
+                {t('period')}
               </label>
               <select
                 value={period}
@@ -332,7 +336,7 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
               >
                 {PERIODS.map((p) => (
                   <option key={p.value} value={p.value}>
-                    {p.label}
+                    {t(p.labelKey)}
                   </option>
                 ))}
               </select>
@@ -341,7 +345,7 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
             {/* Initial Cash */}
             <div>
               <label className="block text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
-                Initial Cash
+                {t('initialCash')}
               </label>
               <input
                 type="number"
@@ -355,7 +359,7 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
             {currentStrategy && currentStrategy.params.length > 0 && (
               <div className="space-y-3">
                 <div className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                  Strategy Parameters
+                  {t('strategyParams')}
                 </div>
                 {currentStrategy.params.map((param) => (
                   <div key={param.name}>
@@ -376,8 +380,8 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
                         />
                         <span className="text-gray-600 dark:text-gray-300">
                           {Boolean(strategyParams[param.name] ?? param.default)
-                            ? 'Enabled'
-                            : 'Disabled'}
+                            ? t('enabled')
+                            : t('disabled')}
                         </span>
                       </label>
                     ) : param.type === 'str' ? (
@@ -434,12 +438,12 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
               {runBacktest.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Running backtest...
+                  {t('running')}
                 </>
               ) : (
                 <>
                   <TrendingUp className="h-4 w-4" />
-                  Run Backtest
+                  {t('runBacktest')}
                 </>
               )}
             </button>
@@ -452,7 +456,7 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
               <div className="text-sm text-red-700 dark:text-red-300">
                 {runBacktest.error instanceof Error
                   ? runBacktest.error.message
-                  : 'Backtest failed. Please check your inputs and try again.'}
+                  : t('failed')}
               </div>
             </div>
           )}
@@ -461,8 +465,8 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
           {runBacktest.isPending && (
             <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-500">
               <Loader2 className="h-8 w-8 animate-spin mb-3" />
-              <span className="text-sm">Running backtest...</span>
-              <span className="text-xs mt-1">This may take a few seconds</span>
+              <span className="text-sm">{t('running')}</span>
+              <span className="text-xs mt-1">{t('runningNote')}</span>
             </div>
           )}
 
@@ -473,7 +477,7 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-[#1313ec]" />
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  Results
+                  {t('results')}
                 </span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">
                   {result.ticker} / {result.strategy} / {result.period}
@@ -498,7 +502,7 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
               {result.trades.length > 0 && (
                 <div>
                   <div className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-                    Individual Trades
+                    {t('individualTrades')}
                   </div>
                   <TradesTable trades={result.trades} />
                 </div>
