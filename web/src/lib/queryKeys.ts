@@ -27,6 +27,8 @@ export const queryKeys = {
   strategy: {
     all: ['strategy'] as const,
     conditions: () => [...queryKeys.strategy.all, 'conditions'] as const,
+    saved: () => [...queryKeys.strategy.all, 'saved'] as const,
+    detail: (id: string) => [...queryKeys.strategy.all, 'saved', id] as const,
   },
   backtest: {
     all: ['backtest'] as const,
