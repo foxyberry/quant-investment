@@ -52,9 +52,8 @@ const CHILD_HEIGHT = 80;
 const GROUP_MIN_WIDTH = 280;
 const GROUP_MIN_HEIGHT = 200;
 
-let nodeId = 0;
 function getNodeId() {
-  return `node_${++nodeId}`;
+  return `node_${crypto.randomUUID().slice(0, 8)}`;
 }
 
 const initialNodes: Node[] = [
@@ -385,7 +384,6 @@ export default function StrategyPage() {
     setSelectedNodeId(null);
     setResults(null);
     setErrors([]);
-    nodeId = 0;
   }, [setNodes, setEdges]);
 
   const currentSelectedNode = useMemo(() => {
