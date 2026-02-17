@@ -27,8 +27,8 @@ function LogicNode({ data, selected }: NodeProps) {
     >
       <Handle
         type="target"
-        position={Position.Top}
-        className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-top-[7px] hover:!scale-125 !transition-transform"
+        position={Position.Left}
+        className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-left-[7px] hover:!scale-125 !transition-transform"
       />
       <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${style.bg}`}>
         <GitMerge className={`h-3.5 w-3.5 ${style.text}`} />
@@ -36,8 +36,8 @@ function LogicNode({ data, selected }: NodeProps) {
       </div>
       <Handle
         type="source"
-        position={Position.Bottom}
-        className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-bottom-[7px] hover:!scale-125 !transition-transform"
+        position={Position.Right}
+        className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-right-[7px] hover:!scale-125 !transition-transform"
       />
     </div>
   );
