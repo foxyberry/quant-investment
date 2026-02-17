@@ -255,39 +255,31 @@ export default function StrategyPage() {
     [reactFlowInstance, setNodes, findGroupAtPosition, nodes, showToast, t]
   );
 
-  // Auto-resize group nodes when children change (supports nested groups)
+  // Auto-expand group nodes when children overflow (only expand, never shrink)
   useEffect(() => {
     setNodes((nds) => {
       let changed = false;
       const updatedNodes = nds.map((n) => {
         if (n.type !== 'groupNode') return n;
         const children = nds.filter((c) => c.parentId === n.id);
-        // Calculate total height based on actual child sizes
         const totalChildrenHeight = children.reduce((acc, child) => {
           const h = child.type === 'groupNode'
             ? ((child.style?.height as number) || GROUP_MIN_HEIGHT)
             : CHILD_HEIGHT;
           return acc + h + CHILD_SPACING;
         }, 0);
-        const neededHeight = Math.max(
+        const minHeight = Math.max(
           GROUP_MIN_HEIGHT,
           GROUP_PADDING_TOP + totalChildrenHeight + GROUP_PADDING_BOTTOM
         );
-        // Nested groups are narrower; top-level groups use full width
-        const isNested = !!n.parentId;
-        const neededWidth = isNested
-          ? GROUP_MIN_WIDTH - GROUP_PADDING_X * 2
-          : GROUP_MIN_WIDTH;
-        const currentWidth = (n.style?.width as number) || GROUP_MIN_WIDTH;
         const currentHeight = (n.style?.height as number) || GROUP_MIN_HEIGHT;
-        if (
-          Math.abs(currentHeight - neededHeight) > 1 ||
-          Math.abs(currentWidth - neededWidth) > 1
-        ) {
+        // Only expand height when children need more space; never shrink
+        // Width is fully controlled by NodeResizer, don't auto-set
+        if (currentHeight < minHeight) {
           changed = true;
           return {
             ...n,
-            style: { ...n.style, width: neededWidth, height: neededHeight },
+            style: { ...n.style, height: minHeight },
           };
         }
         return n;

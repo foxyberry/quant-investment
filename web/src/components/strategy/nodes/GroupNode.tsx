@@ -78,6 +78,7 @@ function GroupNode({ id, data, selected }: NodeProps) {
           : 'shadow-sm hover:shadow-md'
       }`}
       style={{ width: '100%', height: '100%', minWidth: 280, minHeight: 200 }}
+      onDragOver={(e) => e.preventDefault()}
     >
       <NodeResizer
         isVisible={selected}
