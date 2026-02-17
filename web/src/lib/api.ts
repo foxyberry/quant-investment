@@ -164,6 +164,22 @@ export async function searchTickers(query: string): Promise<Array<{ ticker: stri
 
 import type { StrategyGraph } from './strategy/graphSerializer';
 
+// Saved strategy types
+
+export interface SavedStrategy {
+  id: string;
+  name: string;
+  description: string | null;
+  graph: StrategyGraph;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedStrategiesListResponse {
+  strategies: SavedStrategy[];
+  total_count: number;
+}
+
 export interface StrategyConditionInfo {
   key: string;
   label: string;
@@ -218,6 +234,49 @@ export async function runStrategy(
       graph,
       universe_override: universeOverride,
     }),
+  });
+}
+
+/**
+ * List all saved strategies
+ */
+export async function listSavedStrategies(): Promise<SavedStrategiesListResponse> {
+  return fetchApi<SavedStrategiesListResponse>('/api/strategy/saved');
+}
+
+/**
+ * Save a new strategy
+ */
+export async function saveNewStrategy(data: {
+  name: string;
+  description?: string;
+  graph: StrategyGraph;
+}): Promise<SavedStrategy> {
+  return fetchApi<SavedStrategy>('/api/strategy/saved', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update an existing saved strategy
+ */
+export async function updateSavedStrategy(
+  id: string,
+  data: { name?: string; description?: string; graph?: StrategyGraph }
+): Promise<SavedStrategy> {
+  return fetchApi<SavedStrategy>(`/api/strategy/saved/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete a saved strategy
+ */
+export async function deleteSavedStrategy(id: string): Promise<void> {
+  return fetchApi<void>(`/api/strategy/saved/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
   });
 }
 

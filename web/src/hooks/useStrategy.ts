@@ -1,8 +1,15 @@
 'use client';
 
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { getStrategyConditions, runStrategy } from '@/lib/api';
+import {
+  getStrategyConditions,
+  runStrategy,
+  listSavedStrategies,
+  saveNewStrategy,
+  updateSavedStrategy,
+  deleteSavedStrategy,
+} from '@/lib/api';
 import type { StrategyGraph } from '@/lib/strategy/graphSerializer';
 
 export function useStrategyConditions() {
@@ -22,5 +29,49 @@ export function useRunStrategy() {
       graph: StrategyGraph;
       universeOverride?: string;
     }) => runStrategy(graph, universeOverride),
+  });
+}
+
+export function useSavedStrategies() {
+  return useQuery({
+    queryKey: queryKeys.strategy.saved(),
+    queryFn: listSavedStrategies,
+  });
+}
+
+export function useSaveStrategy() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { name: string; description?: string; graph: StrategyGraph }) =>
+      saveNewStrategy(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.strategy.saved() });
+    },
+  });
+}
+
+export function useUpdateStrategy() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { name?: string; description?: string; graph?: StrategyGraph };
+    }) => updateSavedStrategy(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.strategy.saved() });
+    },
+  });
+}
+
+export function useDeleteStrategy() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteSavedStrategy(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.strategy.saved() });
+    },
   });
 }

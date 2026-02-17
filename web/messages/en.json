@@ -217,7 +217,25 @@
     "removeNode": "Remove Node",
     "applyChanges": "Apply Changes",
     "exportJson": "Export JSON",
-    "nodeLimit": "Node limit: {count}/{max}"
+    "nodeLimit": "Node limit: {count}/{max}",
+
+    "saveDialogTitle": "Save Strategy",
+    "strategyName": "Strategy Name",
+    "strategyNamePlaceholder": "e.g., RSI Oversold + Volume Spike",
+    "strategyDescription": "Description (optional)",
+    "strategyDescPlaceholder": "Describe what this strategy does...",
+    "strategySaved": "Strategy saved successfully",
+    "strategyUpdated": "Strategy updated",
+    "strategyDeleted": "Strategy deleted",
+    "saveFailed": "Failed to save strategy",
+    "loadStrategy": "Load Strategy",
+    "noSavedStrategies": "No saved strategies yet",
+    "savedStrategies": "Saved Strategies",
+    "loadSelected": "Load",
+    "deleteConfirm": "Delete this strategy?",
+    "unsavedChanges": "You have unsaved changes",
+    "lastSaved": "Last saved: {time}",
+    "strategyNameRequired": "Strategy name is required"
   },
   "analysis": {
     "title": "Charts & Analysis",

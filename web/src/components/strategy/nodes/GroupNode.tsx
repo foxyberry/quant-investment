@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useMemo } from 'react';
-import { Handle, Position, useReactFlow } from '@xyflow/react';
+import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { GitMerge } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -49,6 +49,12 @@ const OPERATOR_LABELS: Record<string, string> = {
   not: 'notGroup',
 };
 
+const OPERATOR_RESIZER_COLORS: Record<string, string> = {
+  and: '#1313ec',
+  or: '#9333ea',
+  not: '#dc2626',
+};
+
 function GroupNode({ id, data, selected }: NodeProps) {
   const t = useTranslations('strategy');
   const nodeData = data as unknown as StrategyNodeData;
@@ -56,6 +62,7 @@ function GroupNode({ id, data, selected }: NodeProps) {
   const style = OPERATOR_STYLES[op] || OPERATOR_STYLES.and;
   const titleKey = OPERATOR_TITLES[op] || 'andGroupTitle';
   const labelKey = OPERATOR_LABELS[op] || 'andGroup';
+  const resizerColor = OPERATOR_RESIZER_COLORS[op] || OPERATOR_RESIZER_COLORS.and;
 
   const { getNodes } = useReactFlow();
 
@@ -72,6 +79,14 @@ function GroupNode({ id, data, selected }: NodeProps) {
       }`}
       style={{ width: '100%', height: '100%', minWidth: 280, minHeight: 200 }}
     >
+      <NodeResizer
+        isVisible={selected}
+        minWidth={280}
+        minHeight={200}
+        color={resizerColor}
+        lineStyle={{ borderColor: resizerColor }}
+      />
+
       <Handle
         type="target"
         position={Position.Left}

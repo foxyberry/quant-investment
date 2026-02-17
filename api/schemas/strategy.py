@@ -108,3 +108,37 @@ class ConditionsListResponse(BaseModel):
 
     conditions: List[ConditionInfo]
     categories: List[str]
+
+
+class StrategySaveRequest(BaseModel):
+    """Request to save a strategy graph."""
+
+    name: str = Field(..., description="Strategy name")
+    description: Optional[str] = Field(None, description="Strategy description")
+    graph: StrategyGraph
+
+
+class StrategyUpdateRequest(BaseModel):
+    """Request to partially update a saved strategy."""
+
+    name: Optional[str] = Field(None, description="Strategy name")
+    description: Optional[str] = Field(None, description="Strategy description")
+    graph: Optional[StrategyGraph] = None
+
+
+class SavedStrategyResponse(BaseModel):
+    """Saved strategy response model."""
+
+    id: str
+    name: str
+    description: Optional[str] = None
+    graph: StrategyGraph
+    created_at: str
+    updated_at: str
+
+
+class SavedStrategiesListResponse(BaseModel):
+    """Response listing saved strategies."""
+
+    strategies: List[SavedStrategyResponse]
+    total_count: int
