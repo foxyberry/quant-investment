@@ -33,7 +33,7 @@ import { Toast, useToast } from '@/components/ui/Toast';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
-import { getDefaultParams } from '@/lib/strategy/conditionRegistry';
+import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
 import { useRunStrategy } from '@/hooks/useStrategy';
 import type { StrategyResultItem } from '@/lib/api';
 
@@ -78,8 +78,9 @@ function getNodeData(node: Node): StrategyNodeData {
   return node.data as unknown as StrategyNodeData;
 }
 
-export default function StrategyPage() {
+function StrategyPageInner() {
   const t = useTranslations('strategy');
+  const { getDefaultParams } = useConditions();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -606,5 +607,13 @@ export default function StrategyPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function StrategyPage() {
+  return (
+    <ConditionsProvider>
+      <StrategyPageInner />
+    </ConditionsProvider>
   );
 }

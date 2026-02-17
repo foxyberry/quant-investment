@@ -27,6 +27,7 @@ import pandas as pd
 import numpy as np
 
 from .base import BaseCondition, ConditionResult
+from .registry import register_condition
 from discovery.indicators import (
     calculate_obv,
     calculate_stochastic,
@@ -39,6 +40,17 @@ from discovery.indicators import (
 # Layer 1: Primitive Conditions
 # ============================================================
 
+@register_condition(
+    key="bollinger_width",
+    label="Bollinger Width",
+    description="BB width contraction",
+    category="accumulation",
+    params=[
+        {"name": "max_width_pct", "type": "float", "default": 10.0, "description": "Max BB width %"},
+        {"name": "period", "type": "int", "default": 20, "description": "BB period"},
+        {"name": "std_dev", "type": "float", "default": 2.0, "description": "Std deviation"},
+    ],
+)
 class BollingerWidthCondition(BaseCondition):
     """
     볼린저 밴드 폭 조건
@@ -98,6 +110,16 @@ class BollingerWidthCondition(BaseCondition):
         return f"BollingerWidthCondition(max_width_pct={self.max_width_pct}, period={self.period})"
 
 
+@register_condition(
+    key="volume_below_avg",
+    label="Volume Below Avg",
+    description="Quiet volume zone",
+    category="accumulation",
+    params=[
+        {"name": "multiplier", "type": "float", "default": 0.8, "description": "Max ratio to avg"},
+        {"name": "period", "type": "int", "default": 20, "description": "Average period"},
+    ],
+)
 class VolumeBelowAvgCondition(BaseCondition):
     """
     평균 거래량 이하 조건
@@ -159,6 +181,16 @@ class VolumeBelowAvgCondition(BaseCondition):
         return f"VolumeBelowAvgCondition(multiplier={self.multiplier}, period={self.period})"
 
 
+@register_condition(
+    key="price_flat",
+    label="Price Flat",
+    description="Price consolidation (low volatility)",
+    category="accumulation",
+    params=[
+        {"name": "max_range_pct", "type": "float", "default": 5.0, "description": "Max range %"},
+        {"name": "period", "type": "int", "default": 20, "description": "Period"},
+    ],
+)
 class PriceFlatCondition(BaseCondition):
     """
     가격 횡보 조건
@@ -221,6 +253,16 @@ class PriceFlatCondition(BaseCondition):
         return f"PriceFlatCondition(max_range_pct={self.max_range_pct}, period={self.period})"
 
 
+@register_condition(
+    key="obv_trend",
+    label="OBV Trend",
+    description="On-Balance Volume trend direction",
+    category="accumulation",
+    params=[
+        {"name": "direction", "type": "str", "default": "up", "description": "Trend direction (up/down)"},
+        {"name": "lookback", "type": "int", "default": 20, "description": "Lookback period"},
+    ],
+)
 class OBVTrendCondition(BaseCondition):
     """
     OBV 추세 조건
@@ -283,6 +325,18 @@ class OBVTrendCondition(BaseCondition):
         return f"OBVTrendCondition(direction='{self.direction}', lookback={self.lookback})"
 
 
+@register_condition(
+    key="stochastic_level",
+    label="Stochastic Level",
+    description="Stochastic oscillator level",
+    category="accumulation",
+    params=[
+        {"name": "threshold", "type": "float", "default": 20.0, "description": "Level threshold"},
+        {"name": "condition", "type": "str", "default": "below", "description": "below or above"},
+        {"name": "k_period", "type": "int", "default": 14, "description": "%K period"},
+        {"name": "d_period", "type": "int", "default": 3, "description": "%D period"},
+    ],
+)
 class StochasticLevelCondition(BaseCondition):
     """
     스토캐스틱 레벨 조건
@@ -360,6 +414,18 @@ class StochasticLevelCondition(BaseCondition):
         return f"StochasticLevelCondition(threshold={self.threshold}, condition='{self.condition}')"
 
 
+@register_condition(
+    key="vpci_trend",
+    label="VPCI Trend",
+    description="Volume Price Confirmation Indicator trend",
+    category="accumulation",
+    params=[
+        {"name": "direction", "type": "str", "default": "up", "description": "Trend direction (up/down)"},
+        {"name": "short_period", "type": "int", "default": 5, "description": "Short period"},
+        {"name": "long_period", "type": "int", "default": 20, "description": "Long period"},
+        {"name": "lookback", "type": "int", "default": 10, "description": "Lookback period"},
+    ],
+)
 class VPCITrendCondition(BaseCondition):
     """
     VPCI 추세 조건
@@ -444,6 +510,17 @@ class VPCITrendCondition(BaseCondition):
 # Layer 2: Divergence Conditions
 # ============================================================
 
+@register_condition(
+    key="obv_divergence",
+    label="OBV Divergence",
+    description="Price flat + OBV rising (accumulation signal)",
+    category="accumulation",
+    params=[
+        {"name": "price_max_range_pct", "type": "float", "default": 5.0, "description": "Price range %"},
+        {"name": "obv_min_change_pct", "type": "float", "default": 5.0, "description": "OBV change %"},
+        {"name": "period", "type": "int", "default": 20, "description": "Period"},
+    ],
+)
 class OBVDivergenceCondition(BaseCondition):
     """
     OBV 다이버전스 조건
@@ -524,6 +601,18 @@ class OBVDivergenceCondition(BaseCondition):
         return f"OBVDivergenceCondition(period={self.period})"
 
 
+@register_condition(
+    key="stochastic_divergence",
+    label="Stochastic Divergence",
+    description="Price lower low + Stochastic higher low",
+    category="accumulation",
+    params=[
+        {"name": "k_period", "type": "int", "default": 14, "description": "%K period"},
+        {"name": "d_period", "type": "int", "default": 3, "description": "%D period"},
+        {"name": "lookback", "type": "int", "default": 20, "description": "Lookback period"},
+        {"name": "divergence_threshold", "type": "float", "default": 5.0, "description": "Threshold %"},
+    ],
+)
 class StochasticDivergenceCondition(BaseCondition):
     """
     스토캐스틱 다이버전스 조건
@@ -612,6 +701,18 @@ class StochasticDivergenceCondition(BaseCondition):
         return f"StochasticDivergenceCondition(lookback={self.lookback})"
 
 
+@register_condition(
+    key="vpci_divergence",
+    label="VPCI Divergence",
+    description="Price flat + VPCI rising (quiet accumulation)",
+    category="accumulation",
+    params=[
+        {"name": "price_max_range_pct", "type": "float", "default": 5.0, "description": "Price range %"},
+        {"name": "short_period", "type": "int", "default": 5, "description": "Short period"},
+        {"name": "long_period", "type": "int", "default": 20, "description": "Long period"},
+        {"name": "lookback", "type": "int", "default": 20, "description": "Lookback period"},
+    ],
+)
 class VPCIDivergenceCondition(BaseCondition):
     """
     VPCI 다이버전스 조건

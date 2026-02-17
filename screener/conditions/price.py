@@ -10,8 +10,16 @@ from typing import Optional
 import pandas as pd
 
 from .base import BaseCondition, ConditionResult
+from .registry import register_condition
 
 
+@register_condition(
+    key="min_price",
+    label="Min Price",
+    description="Stock price >= threshold",
+    category="price",
+    params=[{"name": "min_price", "type": "float", "default": 5000, "description": "Minimum price"}],
+)
 class MinPriceCondition(BaseCondition):
     """최소 주가 조건"""
 
@@ -54,6 +62,13 @@ class MinPriceCondition(BaseCondition):
         return f"MinPriceCondition(min_price={self.min_price})"
 
 
+@register_condition(
+    key="max_price",
+    label="Max Price",
+    description="Stock price <= threshold",
+    category="price",
+    params=[{"name": "max_price", "type": "float", "default": 100000, "description": "Maximum price"}],
+)
 class MaxPriceCondition(BaseCondition):
     """최대 주가 조건"""
 
@@ -96,6 +111,16 @@ class MaxPriceCondition(BaseCondition):
         return f"MaxPriceCondition(max_price={self.max_price})"
 
 
+@register_condition(
+    key="price_range",
+    label="Price Range",
+    description="Stock price within range",
+    category="price",
+    params=[
+        {"name": "min_price", "type": "float", "default": 0, "description": "Min price"},
+        {"name": "max_price", "type": "float", "default": 999999, "description": "Max price"},
+    ],
+)
 class PriceRangeCondition(BaseCondition):
     """가격 범위 조건"""
 
@@ -141,6 +166,17 @@ class PriceRangeCondition(BaseCondition):
         return f"PriceRangeCondition(min={self.min_price}, max={self.max_price})"
 
 
+@register_condition(
+    key="price_change",
+    label="Price Change %",
+    description="Price change over N days",
+    category="price",
+    params=[
+        {"name": "min_change_pct", "type": "float", "default": None, "description": "Min change %"},
+        {"name": "max_change_pct", "type": "float", "default": None, "description": "Max change %"},
+        {"name": "days", "type": "int", "default": 1, "description": "Period (days)"},
+    ],
+)
 class PriceChangeCondition(BaseCondition):
     """가격 변동률 조건"""
 

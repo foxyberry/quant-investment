@@ -9,8 +9,19 @@ Usage:
 import pandas as pd
 
 from .base import BaseCondition, ConditionResult
+from .registry import register_condition
 
 
+@register_condition(
+    key="ma_touch",
+    label="MA Touch",
+    description="Price near moving average",
+    category="movingAverage",
+    params=[
+        {"name": "period", "type": "int", "default": 20, "description": "MA period"},
+        {"name": "threshold", "type": "float", "default": 0.02, "description": "Touch threshold (ratio)"},
+    ],
+)
 class MATouchCondition(BaseCondition):
     """이동평균선 터치 조건"""
 
@@ -71,6 +82,16 @@ class MATouchCondition(BaseCondition):
         return f"MATouchCondition(period={self.period}, threshold={self.threshold})"
 
 
+@register_condition(
+    key="above_ma",
+    label="Above MA",
+    description="Price above moving average",
+    category="movingAverage",
+    params=[
+        {"name": "period", "type": "int", "default": 20, "description": "MA period"},
+        {"name": "min_distance_pct", "type": "float", "default": 0, "description": "Min distance %"},
+    ],
+)
 class AboveMACondition(BaseCondition):
     """이동평균선 위 조건"""
 
@@ -130,6 +151,16 @@ class AboveMACondition(BaseCondition):
         return f"AboveMACondition(period={self.period})"
 
 
+@register_condition(
+    key="below_ma",
+    label="Below MA",
+    description="Price below moving average",
+    category="movingAverage",
+    params=[
+        {"name": "period", "type": "int", "default": 20, "description": "MA period"},
+        {"name": "max_distance_pct", "type": "float", "default": 0, "description": "Max distance %"},
+    ],
+)
 class BelowMACondition(BaseCondition):
     """이동평균선 아래 조건"""
 
@@ -189,6 +220,17 @@ class BelowMACondition(BaseCondition):
         return f"BelowMACondition(period={self.period})"
 
 
+@register_condition(
+    key="ma_cross_up",
+    label="MA Cross Up",
+    description="Golden cross (short MA crosses above long MA)",
+    category="movingAverage",
+    params=[
+        {"name": "short_period", "type": "int", "default": 20, "description": "Short MA period"},
+        {"name": "long_period", "type": "int", "default": 60, "description": "Long MA period"},
+        {"name": "lookback_days", "type": "int", "default": 5, "description": "Lookback days"},
+    ],
+)
 class MACrossUpCondition(BaseCondition):
     """골든크로스 조건 (단기 MA가 장기 MA 상향 돌파)"""
 
@@ -257,6 +299,17 @@ class MACrossUpCondition(BaseCondition):
         return f"MACrossUpCondition(short={self.short_period}, long={self.long_period})"
 
 
+@register_condition(
+    key="ma_cross_down",
+    label="MA Cross Down",
+    description="Death cross (short MA crosses below long MA)",
+    category="movingAverage",
+    params=[
+        {"name": "short_period", "type": "int", "default": 20, "description": "Short MA period"},
+        {"name": "long_period", "type": "int", "default": 60, "description": "Long MA period"},
+        {"name": "lookback_days", "type": "int", "default": 5, "description": "Lookback days"},
+    ],
+)
 class MACrossDownCondition(BaseCondition):
     """데드크로스 조건 (단기 MA가 장기 MA 하향 돌파)"""
 
