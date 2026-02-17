@@ -520,12 +520,32 @@ def build_conditions_from_graph(graph: StrategyGraph) -> tuple[List[BaseConditio
                 raise ValueError(f"Unknown logic operator: {operator}")
 
         if node.data.node_type == "output":
-            # Resolve all incoming nodes to the output
+            # Resolve all incoming nodes to the output via edges
             sub_conditions = []
+            resolved_ids = set()
             for src_id in incoming.get(node_id, []):
+                resolved_ids.add(src_id)
                 cond = _resolve_node(src_id)
                 if cond is not None:
                     sub_conditions.append(cond)
+
+            # Also resolve top-level logic/condition nodes not connected
+            # via edges (e.g., group nodes using child_node_ids containment)
+            child_ids_set: set[str] = set()
+            for n in graph.nodes:
+                if n.data.child_node_ids:
+                    child_ids_set.update(n.data.child_node_ids)
+
+            for n in graph.nodes:
+                if (
+                    n.data.node_type in ("logic", "condition")
+                    and n.id not in child_ids_set  # not a child of a group
+                    and n.id not in resolved_ids  # not already resolved via edge
+                ):
+                    cond = _resolve_node(n.id)
+                    if cond is not None:
+                        sub_conditions.append(cond)
+
             return sub_conditions  # type: ignore
 
         return None
