@@ -217,7 +217,25 @@
     "removeNode": "노드 삭제",
     "applyChanges": "변경 적용",
     "exportJson": "JSON 내보내기",
-    "nodeLimit": "노드 제한: {count}/{max}"
+    "nodeLimit": "노드 제한: {count}/{max}",
+
+    "saveDialogTitle": "전략 저장",
+    "strategyName": "전략 이름",
+    "strategyNamePlaceholder": "예: RSI 과매도 + 거래량 급증",
+    "strategyDescription": "설명 (선택사항)",
+    "strategyDescPlaceholder": "이 전략이 하는 일을 설명하세요...",
+    "strategySaved": "전략이 저장되었습니다",
+    "strategyUpdated": "전략이 업데이트되었습니다",
+    "strategyDeleted": "전략이 삭제되었습니다",
+    "saveFailed": "전략 저장에 실패했습니다",
+    "loadStrategy": "전략 불러오기",
+    "noSavedStrategies": "저장된 전략이 없습니다",
+    "savedStrategies": "저장된 전략",
+    "loadSelected": "불러오기",
+    "deleteConfirm": "이 전략을 삭제할까요?",
+    "unsavedChanges": "저장되지 않은 변경 사항이 있습니다",
+    "lastSaved": "마지막 저장: {time}",
+    "strategyNameRequired": "전략 이름을 입력하세요"
   },
   "analysis": {
     "title": "차트 & 분석",

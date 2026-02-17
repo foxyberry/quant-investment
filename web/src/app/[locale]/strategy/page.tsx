@@ -21,7 +21,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { Loader2, Zap, RotateCcw, Save, TestTube, Download } from 'lucide-react';
+import { Loader2, Zap, RotateCcw, Save, TestTube, Download, FolderOpen, X } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
 import GroupNode from '@/components/strategy/nodes/GroupNode';
@@ -35,8 +35,8 @@ import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
 import { getDefaultParams } from '@/lib/strategy/conditionRegistry';
-import { useRunStrategy } from '@/hooks/useStrategy';
-import type { StrategyResultItem } from '@/lib/api';
+import { useRunStrategy, useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
+import type { StrategyResultItem, SavedStrategy } from '@/lib/api';
 
 const nodeTypes: NodeTypes = {
   universeNode: UniverseNode,
@@ -93,7 +93,17 @@ export default function StrategyPage() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
+  // Save/Load state
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [strategyName, setStrategyName] = useState('');
+  const [strategyDescription, setStrategyDescription] = useState('');
+  const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(null);
+
   const runStrategy = useRunStrategy();
+  const savedStrategies = useSavedStrategies();
+  const saveStrategy = useSaveStrategy();
+  const updateStrategy = useUpdateStrategy();
   const { toast, showToast, hideToast } = useToast();
 
   const onConnect = useCallback(
@@ -245,39 +255,31 @@ export default function StrategyPage() {
     [reactFlowInstance, setNodes, findGroupAtPosition, nodes, showToast, t]
   );
 
-  // Auto-resize group nodes when children change (supports nested groups)
+  // Auto-expand group nodes when children overflow (only expand, never shrink)
   useEffect(() => {
     setNodes((nds) => {
       let changed = false;
       const updatedNodes = nds.map((n) => {
         if (n.type !== 'groupNode') return n;
         const children = nds.filter((c) => c.parentId === n.id);
-        // Calculate total height based on actual child sizes
         const totalChildrenHeight = children.reduce((acc, child) => {
           const h = child.type === 'groupNode'
             ? ((child.style?.height as number) || GROUP_MIN_HEIGHT)
             : CHILD_HEIGHT;
           return acc + h + CHILD_SPACING;
         }, 0);
-        const neededHeight = Math.max(
+        const minHeight = Math.max(
           GROUP_MIN_HEIGHT,
           GROUP_PADDING_TOP + totalChildrenHeight + GROUP_PADDING_BOTTOM
         );
-        // Nested groups are narrower; top-level groups use full width
-        const isNested = !!n.parentId;
-        const neededWidth = isNested
-          ? GROUP_MIN_WIDTH - GROUP_PADDING_X * 2
-          : GROUP_MIN_WIDTH;
-        const currentWidth = (n.style?.width as number) || GROUP_MIN_WIDTH;
         const currentHeight = (n.style?.height as number) || GROUP_MIN_HEIGHT;
-        if (
-          Math.abs(currentHeight - neededHeight) > 1 ||
-          Math.abs(currentWidth - neededWidth) > 1
-        ) {
+        // Only expand height when children need more space; never shrink
+        // Width is fully controlled by NodeResizer, don't auto-set
+        if (currentHeight < minHeight) {
           changed = true;
           return {
             ...n,
-            style: { ...n.style, width: neededWidth, height: neededHeight },
+            style: { ...n.style, height: minHeight },
           };
         }
         return n;
@@ -389,6 +391,9 @@ export default function StrategyPage() {
     setSelectedNodeId(null);
     setResults(null);
     setErrors([]);
+    setStrategyName('');
+    setStrategyDescription('');
+    setCurrentStrategyId(null);
   }, [setNodes, setEdges]);
 
   const handleExportJson = useCallback(() => {
@@ -402,6 +407,102 @@ export default function StrategyPage() {
     a.click();
     URL.revokeObjectURL(url);
   }, [nodes, edges]);
+
+  const handleSave = useCallback(() => {
+    if (!strategyName.trim()) {
+      setShowSaveDialog(true);
+      return;
+    }
+
+    const typedNodes = nodes as unknown as Node<StrategyNodeData>[];
+    const graph = serializeGraph(typedNodes, edges);
+
+    if (currentStrategyId) {
+      updateStrategy.mutate(
+        { id: currentStrategyId, data: { name: strategyName, description: strategyDescription || undefined, graph } },
+        {
+          onSuccess: () => showToast(t('strategyUpdated'), 'info'),
+          onError: () => showToast(t('saveFailed'), 'error'),
+        }
+      );
+    } else {
+      saveStrategy.mutate(
+        { name: strategyName, description: strategyDescription || undefined, graph },
+        {
+          onSuccess: (saved) => {
+            setCurrentStrategyId(saved.id);
+            setShowSaveDialog(false);
+            showToast(t('strategySaved'), 'info');
+          },
+          onError: () => showToast(t('saveFailed'), 'error'),
+        }
+      );
+    }
+  }, [strategyName, strategyDescription, currentStrategyId, nodes, edges, saveStrategy, updateStrategy, showToast, t]);
+
+  const handleSaveDialogSubmit = useCallback(() => {
+    if (!strategyName.trim()) {
+      showToast(t('strategyNameRequired'), 'warning');
+      return;
+    }
+    handleSave();
+  }, [strategyName, handleSave, showToast, t]);
+
+  const handleLoadStrategy = useCallback(
+    (saved: SavedStrategy) => {
+      // Reconstruct nodes and edges from saved graph
+      const loadedNodes: Node[] = saved.graph.nodes.map((n) => {
+        const isGroup = n.data.node_type === 'logic';
+        return {
+          id: n.id,
+          type:
+            n.data.node_type === 'universe'
+              ? 'universeNode'
+              : n.data.node_type === 'condition'
+                ? 'conditionNode'
+                : n.data.node_type === 'logic'
+                  ? 'groupNode'
+                  : 'outputNode',
+          position: n.position || { x: 0, y: 0 },
+          data: n.data as unknown as Record<string, unknown>,
+          ...(isGroup ? { style: { width: GROUP_MIN_WIDTH, height: GROUP_MIN_HEIGHT } } : {}),
+        };
+      });
+
+      // Restore parent-child relationships from child_node_ids
+      for (const n of saved.graph.nodes) {
+        if (n.data.child_node_ids && n.data.child_node_ids.length > 0) {
+          for (const childId of n.data.child_node_ids) {
+            const childNode = loadedNodes.find((ln) => ln.id === childId);
+            if (childNode) {
+              childNode.parentId = n.id;
+              childNode.extent = 'parent' as const;
+            }
+          }
+        }
+      }
+
+      const loadedEdges: Edge[] = saved.graph.edges.map((e) => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        type: 'labeled',
+        animated: true,
+        style: { stroke: '#1313ec', strokeWidth: 2, opacity: 0.6 },
+      }));
+
+      setNodes(loadedNodes);
+      setEdges(loadedEdges);
+      setStrategyName(saved.name);
+      setStrategyDescription(saved.description || '');
+      setCurrentStrategyId(saved.id);
+      setShowLoadDialog(false);
+      setResults(null);
+      setErrors([]);
+      setSelectedNodeId(null);
+    },
+    [setNodes, setEdges]
+  );
 
   const currentSelectedNode = useMemo(() => {
     if (!selectedNodeId) return null;
@@ -432,7 +533,7 @@ export default function StrategyPage() {
         </span>
         <span className="text-gray-300 dark:text-gray-600">/</span>
         <span className="text-sm text-gray-700 dark:text-gray-200 font-medium">
-          {t('untitled')}
+          {strategyName || t('untitled')}
         </span>
 
         <div className="flex-1" />
@@ -460,7 +561,17 @@ export default function StrategyPage() {
         </button>
         <button
           type="button"
+          onClick={() => setShowLoadDialog(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+        >
+          <FolderOpen className="h-3.5 w-3.5" />
+          {t('loadStrategy')}
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saveStrategy.isPending || updateStrategy.isPending}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-50"
         >
           <Save className="h-3.5 w-3.5" />
           {t('saveStrategy')}
@@ -612,6 +723,110 @@ export default function StrategyPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Save dialog */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white dark:bg-[#1e1e1f] rounded-xl shadow-2xl border border-[#e1e3e5] dark:border-[#2e2e30] w-full max-w-md mx-4">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {t('saveDialogTitle')}
+              </h3>
+              <button type="button" onClick={() => setShowSaveDialog(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  {t('strategyName')}
+                </label>
+                <input
+                  type="text"
+                  value={strategyName}
+                  onChange={(e) => setStrategyName(e.target.value)}
+                  placeholder={t('strategyNamePlaceholder')}
+                  className="w-full px-3 py-2 text-sm border border-[#e1e3e5] dark:border-[#2e2e30] rounded-lg bg-white dark:bg-[#0b0b0c] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1313ec]/30 focus:border-[#1313ec]"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  {t('strategyDescription')}
+                </label>
+                <textarea
+                  value={strategyDescription}
+                  onChange={(e) => setStrategyDescription(e.target.value)}
+                  placeholder={t('strategyDescPlaceholder')}
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm border border-[#e1e3e5] dark:border-[#2e2e30] rounded-lg bg-white dark:bg-[#0b0b0c] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1313ec]/30 focus:border-[#1313ec] resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#e1e3e5] dark:border-[#2e2e30]">
+              <button
+                type="button"
+                onClick={() => setShowSaveDialog(false)}
+                className="px-4 py-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveDialogSubmit}
+                disabled={saveStrategy.isPending}
+                className="px-4 py-1.5 text-sm font-medium text-white bg-[#1313ec] rounded-lg hover:bg-[#1010c0] transition-colors disabled:opacity-50"
+              >
+                {saveStrategy.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t('saveStrategy')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Load dialog */}
+      {showLoadDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white dark:bg-[#1e1e1f] rounded-xl shadow-2xl border border-[#e1e3e5] dark:border-[#2e2e30] w-full max-w-lg mx-4">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {t('savedStrategies')}
+              </h3>
+              <button type="button" onClick={() => setShowLoadDialog(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="px-5 py-4 max-h-80 overflow-y-auto">
+              {savedStrategies.isLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                </div>
+              )}
+              {savedStrategies.data && savedStrategies.data.strategies.length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-8">{t('noSavedStrategies')}</p>
+              )}
+              {savedStrategies.data?.strategies.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => handleLoadStrategy(s)}
+                  className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors mb-1 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{s.name}</span>
+                    <span className="text-[10px] text-gray-400">
+                      {new Date(s.updated_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {s.description && (
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{s.description}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
