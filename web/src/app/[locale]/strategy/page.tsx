@@ -21,11 +21,12 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { Loader2, Zap, RotateCcw, Save, TestTube } from 'lucide-react';
+import { Loader2, Zap, RotateCcw, Save, TestTube, Download } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
 import GroupNode from '@/components/strategy/nodes/GroupNode';
 import OutputNode from '@/components/strategy/nodes/OutputNode';
+import LabeledEdge from '@/components/strategy/edges/LabeledEdge';
 import NodePalette from '@/components/strategy/NodePalette';
 import PropertiesPanel from '@/components/strategy/PropertiesPanel';
 import BacktestPanel from '@/components/backtest/BacktestPanel';
@@ -42,6 +43,10 @@ const nodeTypes: NodeTypes = {
   conditionNode: ConditionNode,
   groupNode: GroupNode,
   outputNode: OutputNode,
+};
+
+const edgeTypes = {
+  labeled: LabeledEdge,
 };
 
 const GROUP_PADDING_TOP = 56;
@@ -386,6 +391,18 @@ export default function StrategyPage() {
     setErrors([]);
   }, [setNodes, setEdges]);
 
+  const handleExportJson = useCallback(() => {
+    const typedNodes = nodes as unknown as Node<StrategyNodeData>[];
+    const graph = serializeGraph(typedNodes, edges);
+    const blob = new Blob([JSON.stringify(graph, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'strategy.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [nodes, edges]);
+
   const currentSelectedNode = useMemo(() => {
     if (!selectedNodeId) return null;
     const found = nodes.find((n) => n.id === selectedNodeId);
@@ -474,7 +491,7 @@ export default function StrategyPage() {
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left palette */}
-        <NodePalette />
+        <NodePalette nodeCount={nodeCount} />
 
         {/* Canvas */}
         <div className="flex-1" ref={reactFlowWrapper}>
@@ -490,12 +507,13 @@ export default function StrategyPage() {
             onDragOver={onDragOver}
             onDrop={onDrop}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             fitView
             fitViewOptions={{ maxZoom: 0.75, padding: 0.3 }}
             connectionMode={ConnectionMode.Loose}
             className="!bg-[#f6f6f7] dark:!bg-[#141414]"
             defaultEdgeOptions={{
-              type: 'smoothstep',
+              type: 'labeled',
               animated: true,
               style: { stroke: '#1313ec', strokeWidth: 2, opacity: 0.6 },
             }}
@@ -540,6 +558,14 @@ export default function StrategyPage() {
         <div className="flex items-center gap-4">
           <span>{t('kospiData')}</span>
           <span>{results ? t('lastRunJustNow') : t('lastRunNever')}</span>
+          <button
+            type="button"
+            onClick={handleExportJson}
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <Download className="h-3 w-3" />
+            {t('exportJson')}
+          </button>
         </div>
       </div>
 
