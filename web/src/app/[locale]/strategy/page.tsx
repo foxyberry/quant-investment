@@ -44,7 +44,7 @@ const nodeTypes: NodeTypes = {
   outputNode: OutputNode,
 };
 
-const GROUP_PADDING_TOP = 40;
+const GROUP_PADDING_TOP = 56;
 const GROUP_PADDING_BOTTOM = 20;
 const GROUP_PADDING_X = 16;
 const CHILD_SPACING = 8;
