@@ -195,7 +195,8 @@
     "notGroup": "NOT 그룹",
     "dropConditionHere": "조건을 여기에 드롭하세요",
     "emptyGroup": "조건을 이 그룹에 드래그하세요",
-    "groupInstruction": "조건 노드를 이 그룹 컨테이너에 드래그한 후, 그룹을 출력에 연결하세요.",
+    "cannotDropInGroup": "유니버스와 출력 노드는 그룹 안에 넣을 수 없습니다.",
+    "groupInstruction": "조건 또는 논리 그룹 노드를 이 그룹 컨테이너에 드래그한 후, 그룹을 출력에 연결하세요.",
     "finalOutput": "최종 출력",
 
     "nodeProperties": "노드 속성",

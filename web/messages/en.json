@@ -195,7 +195,8 @@
     "notGroup": "NOT Group",
     "dropConditionHere": "Drop conditions here",
     "emptyGroup": "Drag conditions into this group",
-    "groupInstruction": "Drag condition nodes into this group container, then connect the group to Output.",
+    "cannotDropInGroup": "Universe and Output nodes cannot be placed inside a group.",
+    "groupInstruction": "Drag condition or logic group nodes into this group container, then connect the group to Output.",
     "finalOutput": "Final Output",
 
     "nodeProperties": "Node Properties",

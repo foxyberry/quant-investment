@@ -29,6 +29,7 @@ import OutputNode from '@/components/strategy/nodes/OutputNode';
 import NodePalette from '@/components/strategy/NodePalette';
 import PropertiesPanel from '@/components/strategy/PropertiesPanel';
 import BacktestPanel from '@/components/backtest/BacktestPanel';
+import { Toast, useToast } from '@/components/ui/Toast';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
@@ -89,6 +90,7 @@ export default function StrategyPage() {
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
   const runStrategy = useRunStrategy();
+  const { toast, showToast, hideToast } = useToast();
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -180,18 +182,28 @@ export default function StrategyPage() {
 
       const newNodeId = getNodeId();
 
-      // If dropping a condition, check if it lands inside a group
-      if (nodeType === 'conditionNode') {
-        const targetGroup = findGroupAtPosition(position);
-        if (targetGroup) {
-          // Count existing children in this group
+      // Check if dropping inside a group
+      const targetGroup = findGroupAtPosition(position);
+      if (targetGroup) {
+        // Block invalid drops: universe and output cannot go in groups
+        if (nodeType === 'universeNode' || nodeType === 'outputNode') {
+          showToast(t('cannotDropInGroup'), 'warning');
+          // Still place on canvas as standalone (fall through)
+        } else if (nodeType === 'conditionNode' || nodeType === 'groupNode') {
+          // Valid drop: condition or nested group into a group
           const childrenInGroup = nodes.filter(
             (n) => n.parentId === targetGroup.id
           );
           const childIndex = childrenInGroup.length;
+          const childHeight = nodeType === 'groupNode' ? GROUP_MIN_HEIGHT : CHILD_HEIGHT;
           const relativePosition = {
             x: GROUP_PADDING_X,
-            y: GROUP_PADDING_TOP + childIndex * (CHILD_HEIGHT + CHILD_SPACING),
+            y: GROUP_PADDING_TOP + childrenInGroup.reduce((acc, child) => {
+              const h = child.type === 'groupNode'
+                ? ((child.style?.height as number) || GROUP_MIN_HEIGHT)
+                : CHILD_HEIGHT;
+              return acc + h + CHILD_SPACING;
+            }, 0),
           };
 
           const newNode: Node = {
@@ -201,6 +213,9 @@ export default function StrategyPage() {
             parentId: targetGroup.id,
             extent: 'parent' as const,
             data: data as unknown as Record<string, unknown>,
+            ...(nodeType === 'groupNode'
+              ? { style: { width: GROUP_MIN_WIDTH - GROUP_PADDING_X * 2, height: GROUP_MIN_HEIGHT } }
+              : {}),
           };
 
           setNodes((nds) => [...nds, newNode]);
@@ -208,7 +223,7 @@ export default function StrategyPage() {
         }
       }
 
-      // Normal drop (not inside a group)
+      // Normal drop (not inside a group, or invalid type for group)
       const newNode: Node = {
         id: newNodeId,
         type: nodeType,
@@ -223,25 +238,32 @@ export default function StrategyPage() {
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [reactFlowInstance, setNodes, findGroupAtPosition, nodes]
+    [reactFlowInstance, setNodes, findGroupAtPosition, nodes, showToast, t]
   );
 
-  // Auto-resize group nodes when children change
+  // Auto-resize group nodes when children change (supports nested groups)
   useEffect(() => {
     setNodes((nds) => {
-      const groupNodes = nds.filter((n) => n.type === 'groupNode');
       let changed = false;
       const updatedNodes = nds.map((n) => {
         if (n.type !== 'groupNode') return n;
         const children = nds.filter((c) => c.parentId === n.id);
-        const childCount = children.length;
+        // Calculate total height based on actual child sizes
+        const totalChildrenHeight = children.reduce((acc, child) => {
+          const h = child.type === 'groupNode'
+            ? ((child.style?.height as number) || GROUP_MIN_HEIGHT)
+            : CHILD_HEIGHT;
+          return acc + h + CHILD_SPACING;
+        }, 0);
         const neededHeight = Math.max(
           GROUP_MIN_HEIGHT,
-          GROUP_PADDING_TOP +
-            childCount * (CHILD_HEIGHT + CHILD_SPACING) +
-            GROUP_PADDING_BOTTOM
+          GROUP_PADDING_TOP + totalChildrenHeight + GROUP_PADDING_BOTTOM
         );
-        const neededWidth = GROUP_MIN_WIDTH;
+        // Nested groups are narrower; top-level groups use full width
+        const isNested = !!n.parentId;
+        const neededWidth = isNested
+          ? GROUP_MIN_WIDTH - GROUP_PADDING_X * 2
+          : GROUP_MIN_WIDTH;
         const currentWidth = (n.style?.width as number) || GROUP_MIN_WIDTH;
         const currentHeight = (n.style?.height as number) || GROUP_MIN_HEIGHT;
         if (
@@ -258,7 +280,7 @@ export default function StrategyPage() {
       });
       return changed ? updatedNodes : nds;
     });
-  }, [nodes.length, setNodes]);
+  }, [nodes, setNodes]);
 
   // Handle removing condition from group when dragged outside
   const handleNodesChange = useCallback(
@@ -574,6 +596,15 @@ export default function StrategyPage() {
         isOpen={showBacktest}
         onClose={() => setShowBacktest(false)}
       />
+
+      {/* Toast notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type as 'error' | 'warning' | 'info'}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 }
