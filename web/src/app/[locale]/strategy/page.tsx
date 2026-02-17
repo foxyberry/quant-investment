@@ -146,12 +146,11 @@ export default function StrategyPage() {
       const type = event.dataTransfer.getData('application/reactflow-type');
       const conditionKey = event.dataTransfer.getData('application/reactflow-condition');
 
-      if (!type || !reactFlowInstance || !reactFlowWrapper.current) return;
+      if (!type || !reactFlowInstance) return;
 
-      const bounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
+        x: event.clientX,
+        y: event.clientY,
       });
 
       let data: StrategyNodeData;
