@@ -113,10 +113,10 @@ export function deserializeGraph(
 
     // Set group node dimensions
     if (nodeType === 'groupNode') {
-      const childCount = n.data.child_node_ids?.length || 0;
+      const isNested = !!childToParent[n.id];
       base.style = {
-        width: 280,
-        height: Math.max(200, 40 + childCount * 88 + 20),
+        width: isNested ? 280 - 32 : 280,
+        height: 200,
       };
     }
 

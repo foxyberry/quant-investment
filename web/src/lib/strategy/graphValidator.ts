@@ -57,7 +57,7 @@ export function validateGraph(
   // Group node validation
   for (const node of nodes) {
     if (node.data.node_type === 'logic') {
-      // Count children (nodes with parentId pointing to this group)
+      // Count children (conditions or nested groups with parentId pointing to this group)
       const children = nodes.filter((n) => n.parentId === node.id);
       const hasChildNodeIds = children.length > 0;
       // Also check edge-based children (backward compatibility)
@@ -81,6 +81,36 @@ export function validateGraph(
         );
       }
     }
+  }
+
+  // Check maximum group nesting depth (max 3 levels)
+  const nodeById = new Map(nodes.map((n) => [n.id, n] as const));
+
+  function getGroupDepth(groupId: string): number {
+    let depth = 1;
+    let current = nodeById.get(groupId);
+
+    while (current?.parentId) {
+      const parent = nodeById.get(current.parentId);
+      if (!parent || parent.data.node_type !== 'logic') {
+        break;
+      }
+
+      depth += 1;
+      if (depth > 3) {
+        return depth;
+      }
+      current = parent;
+    }
+
+    return depth;
+  }
+
+  const hasTooDeepNesting = nodes.some(
+    (node) => node.data.node_type === 'logic' && getGroupDepth(node.id) > 3
+  );
+  if (hasTooDeepNesting) {
+    errors.push('Group nesting is too deep (max 3 levels).');
   }
 
   // Check output node has incoming connections
