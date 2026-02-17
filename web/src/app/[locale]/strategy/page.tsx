@@ -61,13 +61,13 @@ const initialNodes: Node[] = [
   {
     id: 'universe_1',
     type: 'universeNode',
-    position: { x: 250, y: 50 },
+    position: { x: 50, y: 200 },
     data: { node_type: 'universe', universe: 'KOSPI' } satisfies StrategyNodeData,
   },
   {
     id: 'output_1',
     type: 'outputNode',
-    position: { x: 250, y: 400 },
+    position: { x: 800, y: 200 },
     data: { node_type: 'output' } satisfies StrategyNodeData,
   },
 ];
