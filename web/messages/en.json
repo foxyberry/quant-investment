@@ -215,7 +215,9 @@
     "notInvertFirst": "NOT (invert first input)",
     "outputInstruction": "Connect condition nodes to this output, then click \"Deploy Strategy\" to execute the screening.",
     "removeNode": "Remove Node",
-    "applyChanges": "Apply Changes"
+    "applyChanges": "Apply Changes",
+    "exportJson": "Export JSON",
+    "nodeLimit": "Node limit: {count}/{max}"
   },
   "analysis": {
     "title": "Charts & Analysis",

@@ -69,7 +69,11 @@ function DraggableItem({
   );
 }
 
-export default function NodePalette() {
+interface NodePaletteProps {
+  nodeCount?: number;
+}
+
+export default function NodePalette({ nodeCount }: NodePaletteProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
@@ -218,6 +222,10 @@ export default function NodePalette() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="px-3 py-2 border-t border-[#e1e3e5] dark:border-[#2e2e30] text-[11px] text-gray-400 dark:text-gray-500">
+        {t('nodeLimit', { count: nodeCount ?? 0, max: 20 })}
       </div>
     </div>
   );

@@ -215,7 +215,9 @@
     "notInvertFirst": "NOT (첫 번째 입력 반전)",
     "outputInstruction": "조건 노드를 이 출력에 연결한 후 \"전략 배포\"를 클릭하여 스크리닝을 실행하세요.",
     "removeNode": "노드 삭제",
-    "applyChanges": "변경 적용"
+    "applyChanges": "변경 적용",
+    "exportJson": "JSON 내보내기",
+    "nodeLimit": "노드 제한: {count}/{max}"
   },
   "analysis": {
     "title": "차트 & 분석",
