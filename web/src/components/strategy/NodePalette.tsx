@@ -20,9 +20,9 @@ import type { ConditionMeta } from '@/lib/strategy/conditionRegistry';
 
 const SPECIAL_NODES = [
   { type: 'universe', labelKey: 'marketSelection', icon: Globe, color: 'text-emerald-600 dark:text-emerald-400' },
-  { type: 'logic_and', labelKey: 'andGate', icon: GitMerge, color: 'text-[#1313ec] dark:text-blue-400' },
-  { type: 'logic_or', labelKey: 'orGate', icon: GitMerge, color: 'text-purple-600 dark:text-purple-400' },
-  { type: 'logic_not', labelKey: 'notGate', icon: GitMerge, color: 'text-red-600 dark:text-red-400' },
+  { type: 'logic_and', labelKey: 'andGroup', icon: GitMerge, color: 'text-[#1313ec] dark:text-blue-400' },
+  { type: 'logic_or', labelKey: 'orGroup', icon: GitMerge, color: 'text-purple-600 dark:text-purple-400' },
+  { type: 'logic_not', labelKey: 'notGroup', icon: GitMerge, color: 'text-red-600 dark:text-red-400' },
   { type: 'output', labelKey: 'finalOutput', icon: Flag, color: 'text-orange-600 dark:text-orange-400' },
 ];
 
@@ -192,23 +192,17 @@ export default function NodePalette() {
             <div className="px-2 py-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
               {t('logicOperators')}
             </div>
-            <div className="flex gap-2 px-2 pt-1">
-              {SPECIAL_NODES.filter((n) => n.type.startsWith('logic_')).map((node) => {
-                const label = node.type.replace('logic_', '').toUpperCase();
-                return (
-                  <div
-                    key={node.type}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg cursor-grab border border-[#e1e3e5] dark:border-[#2e2e30] bg-gray-50 dark:bg-[#1e1e1f] hover:border-[#1313ec] transition-colors text-xs font-bold text-gray-600 dark:text-gray-300"
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData('application/reactflow-type', node.type);
-                      e.dataTransfer.effectAllowed = 'move';
-                    }}
-                  >
-                    {label}
-                  </div>
-                );
-              })}
+            <div className="space-y-1 px-1 pt-1">
+              {SPECIAL_NODES.filter((n) => n.type.startsWith('logic_')).map((node) => (
+                <DraggableItem
+                  key={node.type}
+                  type={node.type}
+                  label={t(node.labelKey)}
+                  description={t('dropConditionHere')}
+                  icon={node.icon}
+                  color={node.color}
+                />
+              ))}
             </div>
             {/* Output node */}
             <div className="mt-2">

@@ -15,6 +15,7 @@
 ### 3단계: 부가 문서 (필요시)
 5. **docs/OPTIONS_TRACKER_README.md** - 옵션 거래량 추적 봇 (옵션 관련 작업시)
 6. **docs/MARKET_CALENDAR_README.md** - 마켓 캘린더 유틸 (시간대 관련 작업시)
+7. **docs/STRATEGY_BUILDER_README.md** - 전략 빌더 QuantCanvas (전략 빌더 작업시)
 
 ---
 

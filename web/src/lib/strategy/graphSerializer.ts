@@ -8,6 +8,7 @@ export interface StrategyNodeData extends Record<string, unknown> {
   universe?: string;
   label?: string;
   resultCount?: number;
+  child_node_ids?: string[];
 }
 
 export interface StrategyNode {
@@ -18,6 +19,7 @@ export interface StrategyNode {
     params?: Record<string, unknown>;
     logic_operator?: string;
     universe?: string;
+    child_node_ids?: string[];
   };
   position?: { x: number; y: number };
 }
@@ -37,6 +39,17 @@ export function serializeGraph(
   nodes: Node<StrategyNodeData>[],
   edges: Edge[]
 ): StrategyGraph {
+  // Collect child_node_ids from React Flow parentId relationships
+  const parentChildMap: Record<string, string[]> = {};
+  for (const n of nodes) {
+    if (n.parentId) {
+      if (!parentChildMap[n.parentId]) {
+        parentChildMap[n.parentId] = [];
+      }
+      parentChildMap[n.parentId].push(n.id);
+    }
+  }
+
   return {
     nodes: nodes.map((n) => ({
       id: n.id,
@@ -46,6 +59,9 @@ export function serializeGraph(
         params: n.data.params || {},
         logic_operator: n.data.logic_operator,
         universe: n.data.universe,
+        ...(parentChildMap[n.id]
+          ? { child_node_ids: parentChildMap[n.id] }
+          : {}),
       },
       position: n.position,
     })),
@@ -60,13 +76,23 @@ export function serializeGraph(
 export function deserializeGraph(
   graph: StrategyGraph
 ): { nodes: Node<StrategyNodeData>[]; edges: Edge[] } {
+  // Build parentId lookup from child_node_ids
+  const childToParent: Record<string, string> = {};
+  for (const n of graph.nodes) {
+    if (n.data.child_node_ids) {
+      for (const childId of n.data.child_node_ids) {
+        childToParent[childId] = n.id;
+      }
+    }
+  }
+
   const nodes: Node<StrategyNodeData>[] = graph.nodes.map((n) => {
     let nodeType = 'conditionNode';
     if (n.data.node_type === 'universe') nodeType = 'universeNode';
-    else if (n.data.node_type === 'logic') nodeType = 'logicNode';
+    else if (n.data.node_type === 'logic') nodeType = 'groupNode';
     else if (n.data.node_type === 'output') nodeType = 'outputNode';
 
-    return {
+    const base: Node<StrategyNodeData> = {
       id: n.id,
       type: nodeType,
       position: n.position || { x: 0, y: 0 },
@@ -78,6 +104,23 @@ export function deserializeGraph(
         universe: n.data.universe,
       },
     };
+
+    // Set parentId for child nodes
+    if (childToParent[n.id]) {
+      base.parentId = childToParent[n.id];
+      base.extent = 'parent';
+    }
+
+    // Set group node dimensions
+    if (nodeType === 'groupNode') {
+      const childCount = n.data.child_node_ids?.length || 0;
+      base.style = {
+        width: 280,
+        height: Math.max(200, 40 + childCount * 88 + 20),
+      };
+    }
+
+    return base;
   });
 
   const edges: Edge[] = graph.edges.map((e) => ({

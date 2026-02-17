@@ -494,9 +494,15 @@ def build_conditions_from_graph(graph: StrategyGraph) -> tuple[List[BaseConditio
 
         if node.data.node_type == "logic":
             operator = (node.data.logic_operator or "and").lower()
-            # Resolve all incoming nodes
+            # New approach: use child_node_ids (group container)
+            child_ids = node.data.child_node_ids or []
+            if child_ids:
+                source_ids = child_ids
+            else:
+                # Backward compatibility: use edge-based incoming
+                source_ids = incoming.get(node_id, [])
             sub_conditions = []
-            for src_id in incoming.get(node_id, []):
+            for src_id in source_ids:
                 cond = _resolve_node(src_id)
                 if cond is not None:
                     sub_conditions.append(cond)

@@ -190,6 +190,12 @@
     "andGate": "AND Gate",
     "orGate": "OR Gate",
     "notGate": "NOT Gate",
+    "andGroup": "AND Group",
+    "orGroup": "OR Group",
+    "notGroup": "NOT Group",
+    "dropConditionHere": "Drop conditions here",
+    "emptyGroup": "Drag conditions into this group",
+    "groupInstruction": "Drag condition nodes into this group container, then connect the group to Output.",
     "finalOutput": "Final Output",
 
     "nodeProperties": "Node Properties",
