@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 
 from .base import BaseCondition, ConditionResult
+from .registry import register_condition
 
 
 def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
@@ -23,6 +24,16 @@ def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
     return rsi
 
 
+@register_condition(
+    key="rsi_oversold",
+    label="RSI Oversold",
+    description="RSI below threshold",
+    category="rsi",
+    params=[
+        {"name": "threshold", "type": "float", "default": 30, "description": "RSI threshold"},
+        {"name": "period", "type": "int", "default": 14, "description": "RSI period"},
+    ],
+)
 class RSIOversoldCondition(BaseCondition):
     """RSI 과매도 조건"""
 
@@ -77,6 +88,16 @@ class RSIOversoldCondition(BaseCondition):
         return f"RSIOversoldCondition(threshold={self.threshold}, period={self.period})"
 
 
+@register_condition(
+    key="rsi_overbought",
+    label="RSI Overbought",
+    description="RSI above threshold",
+    category="rsi",
+    params=[
+        {"name": "threshold", "type": "float", "default": 70, "description": "RSI threshold"},
+        {"name": "period", "type": "int", "default": 14, "description": "RSI period"},
+    ],
+)
 class RSIOverboughtCondition(BaseCondition):
     """RSI 과매수 조건"""
 
@@ -131,6 +152,17 @@ class RSIOverboughtCondition(BaseCondition):
         return f"RSIOverboughtCondition(threshold={self.threshold}, period={self.period})"
 
 
+@register_condition(
+    key="rsi_range",
+    label="RSI Range",
+    description="RSI within range",
+    category="rsi",
+    params=[
+        {"name": "lower", "type": "float", "default": 30, "description": "Lower bound"},
+        {"name": "upper", "type": "float", "default": 70, "description": "Upper bound"},
+        {"name": "period", "type": "int", "default": 14, "description": "RSI period"},
+    ],
+)
 class RSIRangeCondition(BaseCondition):
     """RSI 범위 조건"""
 

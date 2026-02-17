@@ -10,13 +10,11 @@ import {
   ChevronRight,
   GripVertical,
   Search,
+  Loader2,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import {
-  CATEGORIES,
-  getConditionsByCategory,
-} from '@/lib/strategy/conditionRegistry';
-import type { ConditionMeta } from '@/lib/strategy/conditionRegistry';
+import { useConditions } from '@/contexts/ConditionsContext';
+import type { StrategyConditionInfo } from '@/lib/api';
 
 const SPECIAL_NODES = [
   { type: 'universe', labelKey: 'marketSelection', icon: Globe, color: 'text-emerald-600 dark:text-emerald-400' },
@@ -76,11 +74,19 @@ interface NodePaletteProps {
 export default function NodePalette({ nodeCount }: NodePaletteProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
+  const { categories, getConditionsByCategory, isLoading } = useConditions();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(CATEGORIES)
+    new Set(categories)
   );
   const [searchQuery, setSearchQuery] = useState('');
-  const conditionsByCategory = getConditionsByCategory();
+  const conditionsByCategory = useMemo(() => getConditionsByCategory(), [getConditionsByCategory]);
+
+  // Expand all categories when they first load
+  useMemo(() => {
+    if (categories.length > 0) {
+      setExpandedCategories(new Set(categories));
+    }
+  }, [categories]);
 
   const toggleCategory = (cat: string) => {
     setExpandedCategories((prev) => {
@@ -97,10 +103,10 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
   const filteredConditions = useMemo(() => {
     if (!searchQuery.trim()) return conditionsByCategory;
     const q = searchQuery.toLowerCase();
-    const result: Record<string, ConditionMeta[]> = {};
+    const result: Record<string, StrategyConditionInfo[]> = {};
     for (const [cat, conditions] of Object.entries(conditionsByCategory)) {
       const filtered = conditions.filter(
-        (c: ConditionMeta) =>
+        (c) =>
           c.label.toLowerCase().includes(q) ||
           c.description.toLowerCase().includes(q)
       );
@@ -151,43 +157,50 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
               {t('filterNodes')}
             </div>
           )}
-          {CATEGORIES.map((category) => {
-            const conditions = filteredConditions[category] || [];
-            if (conditions.length === 0) return null;
-            const isExpanded = expandedCategories.has(category) || !!searchQuery;
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8 text-gray-400">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <span className="text-xs">Loading conditions...</span>
+            </div>
+          ) : (
+            categories.map((category) => {
+              const conditions = filteredConditions[category] || [];
+              if (conditions.length === 0) return null;
+              const isExpanded = expandedCategories.has(category) || !!searchQuery;
 
-            return (
-              <div key={category} className="mb-1">
-                <button
-                  type="button"
-                  onClick={() => toggleCategory(category)}
-                  className="flex items-center gap-1.5 px-2 py-1.5 w-full text-left text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors rounded"
-                >
-                  {isExpanded ? (
-                    <ChevronDown className="h-3 w-3" />
-                  ) : (
-                    <ChevronRight className="h-3 w-3" />
-                  )}
-                  <span>{tCond('categories.' + category)}</span>
-                  <span className="ml-auto text-[10px] font-normal text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 rounded-full">
-                    {conditions.length}
-                  </span>
-                </button>
-                {isExpanded &&
-                  conditions.map((cond: ConditionMeta) => (
-                    <DraggableItem
-                      key={cond.key}
-                      type="condition"
-                      label={tCond(cond.key + '.label')}
-                      description={tCond(cond.key + '.desc')}
-                      icon={Filter}
-                      color="text-[#1313ec] dark:text-blue-400"
-                      conditionKey={cond.key}
-                    />
-                  ))}
-              </div>
-            );
-          })}
+              return (
+                <div key={category} className="mb-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(category)}
+                    className="flex items-center gap-1.5 px-2 py-1.5 w-full text-left text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors rounded"
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                    <span>{tCond('categories.' + category)}</span>
+                    <span className="ml-auto text-[10px] font-normal text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 rounded-full">
+                      {conditions.length}
+                    </span>
+                  </button>
+                  {isExpanded &&
+                    conditions.map((cond) => (
+                      <DraggableItem
+                        key={cond.key}
+                        type="condition"
+                        label={tCond(cond.key + '.label')}
+                        description={tCond(cond.key + '.desc')}
+                        icon={Filter}
+                        color="text-[#1313ec] dark:text-blue-400"
+                        conditionKey={cond.key}
+                      />
+                    ))}
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* Logic Operators */}

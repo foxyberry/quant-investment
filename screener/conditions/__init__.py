@@ -81,6 +81,9 @@ from .breakout import (
     ResistanceBreakoutCondition,
 )
 
+# Registry accessors (populated by @register_condition decorators above)
+from .registry import get_condition_class_map, get_condition_metadata
+
 __all__ = [
     # Base
     'BaseCondition', 'ConditionResult', 'ConditionError',

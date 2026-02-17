@@ -4,7 +4,7 @@ import type { Node } from '@xyflow/react';
 import { X, Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
-import { getConditionMeta, CONDITION_REGISTRY } from '@/lib/strategy/conditionRegistry';
+import { useConditions } from '@/contexts/ConditionsContext';
 import type { ConditionParam } from '@/lib/strategy/conditionRegistry';
 
 const UNIVERSES = ['KOSPI', 'KOSDAQ', 'SP500', 'NASDAQ100'];
@@ -150,6 +150,7 @@ export default function PropertiesPanel({
 }: PropertiesPanelProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
+  const { conditions, getConditionMeta } = useConditions();
 
   if (!node) return null;
 
@@ -233,7 +234,7 @@ export default function PropertiesPanel({
                 }}
               >
                 <option value="">{t('selectCondition')}</option>
-                {CONDITION_REGISTRY.map((c) => (
+                {conditions.map((c) => (
                   <option key={c.key} value={c.key}>
                     {tCond(c.key + '.label')}
                   </option>
@@ -247,7 +248,7 @@ export default function PropertiesPanel({
               return (
                 <>
                   <div className="space-y-4">
-                    {meta.params.map((param) => (
+                    {(meta.params as ConditionParam[]).map((param) => (
                       <ParamInput
                         key={param.name}
                         param={param}
