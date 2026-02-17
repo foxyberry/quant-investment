@@ -36,7 +36,7 @@ function ConditionNode({ data, selected }: NodeProps) {
 
   return (
     <div
-      className={`rounded-xl bg-white dark:bg-[#1e1e1f] border overflow-hidden min-w-[220px] transition-shadow ${
+      className={`rounded-xl bg-white dark:bg-[#1e1e1f] border min-w-[220px] transition-shadow ${
         selected
           ? 'border-[#1313ec] shadow-[0_0_0_1px_#1313ec] ring-1 ring-[#1313ec]/20'
           : 'border-[#e1e3e5] dark:border-[#2e2e30] shadow-sm hover:shadow-md'
@@ -51,7 +51,7 @@ function ConditionNode({ data, selected }: NodeProps) {
       )}
 
       {/* Header bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 border-b border-blue-100 dark:border-blue-500/20">
+      <div className="flex items-center justify-between px-3 py-1.5 rounded-t-[10px] bg-blue-50 dark:bg-blue-500/10 border-b border-blue-100 dark:border-blue-500/20">
         <div className="flex items-center gap-1.5">
           <Filter className="h-3 w-3 text-[#1313ec] dark:text-blue-400" />
           <span className="text-[10px] font-semibold text-[#1313ec] dark:text-blue-400 uppercase tracking-wider">

@@ -65,7 +65,7 @@ function GroupNode({ id, data, selected }: NodeProps) {
 
   return (
     <div
-      className={`relative rounded-2xl border ${style.border} ${style.bg} overflow-hidden transition-shadow ${
+      className={`relative rounded-2xl border ${style.border} ${style.bg} transition-shadow ${
         selected
           ? 'shadow-[0_0_0_2px_rgba(19,19,236,0.3)] ring-2 ring-[#1313ec]/10'
           : 'shadow-sm hover:shadow-md'
@@ -79,7 +79,7 @@ function GroupNode({ id, data, selected }: NodeProps) {
       />
 
       {/* Header */}
-      <div className={`px-4 py-2.5 ${style.headerBg}`}>
+      <div className={`px-4 py-2.5 rounded-t-[14px] ${style.headerBg}`}>
         <div className="flex items-center gap-2">
           <GitMerge className="h-4 w-4 text-white/80" />
           <span className="text-[11px] font-bold text-white uppercase tracking-wider">
