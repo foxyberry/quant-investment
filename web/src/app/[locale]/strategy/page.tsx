@@ -36,7 +36,7 @@ import { serializeGraph } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
 import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
 import { useRunStrategy, useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
-import type { StrategyResultItem, SavedStrategy } from '@/lib/api';
+import type { StrategyResultItem, SavedStrategy, NodeIntermediateResult } from '@/lib/api';
 
 const nodeTypes: NodeTypes = {
   universeNode: UniverseNode,
@@ -126,6 +126,7 @@ function StrategyPageInner() {
   );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [results, setResults] = useState<StrategyResultItem[] | null>(null);
+  const [nodeResults, setNodeResults] = useState<Record<string, NodeIntermediateResult> | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [showBacktest, setShowBacktest] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -492,6 +493,7 @@ function StrategyPageInner() {
       {
         onSuccess: (data) => {
           setResults(data.results);
+          setNodeResults(data.node_results ?? null);
           setNodes((nds) =>
             nds.map((n) => {
               const nd = getNodeData(n);
@@ -522,6 +524,7 @@ function StrategyPageInner() {
     setEdges([]);
     setSelectedNodeId(null);
     setResults(null);
+    setNodeResults(null);
     setErrors([]);
     setStrategyName('');
     setStrategyDescription('');
@@ -788,6 +791,7 @@ function StrategyPageInner() {
               setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
               setSelectedNodeId(null);
             }}
+            intermediateResult={selectedNodeId && nodeResults ? nodeResults[selectedNodeId] : undefined}
           />
         )}
       </div>

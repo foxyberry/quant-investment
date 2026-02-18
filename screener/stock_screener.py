@@ -366,7 +366,8 @@ class StockScreener:
         self,
         universe: str = "KOSPI",
         tickers: Optional[List[str]] = None,
-        show_progress: bool = True
+        show_progress: bool = True,
+        return_all: bool = False
     ) -> List[ScreeningResult]:
         """
         스크리닝 실행
@@ -375,9 +376,10 @@ class StockScreener:
             universe: 유니버스 ('KOSPI', 'KOSDAQ', 'ALL')
             tickers: 직접 지정한 종목 목록 (universe 대신 사용)
             show_progress: 진행상황 표시
+            return_all: True면 모든 결과 반환, False면 매칭된 결과만 반환
 
         Returns:
-            매칭된 종목의 ScreeningResult 목록
+            매칭된 종목의 ScreeningResult 목록 (return_all=True면 전체)
         """
         if not self.conditions:
             raise ValueError("조건이 설정되지 않았습니다. add_condition()으로 조건을 추가하세요.")
@@ -438,8 +440,8 @@ class StockScreener:
             print(f"매칭: {matched_count}")
             print(f"{'='*60}\n")
 
-        # 매칭된 결과만 반환
-        return [r for r in results if r.matched]
+        # return_all이면 전체, 아니면 매칭된 결과만 반환
+        return results if return_all else [r for r in results if r.matched]
 
     def run_single(self, ticker: str) -> ScreeningResult:
         """단일 종목 스크리닝"""

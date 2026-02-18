@@ -13,6 +13,7 @@ import numpy as np
 from api.schemas.strategy import (
     ConditionInfo,
     ConditionParamInfo,
+    NodeIntermediateResult,
     StrategyGraph,
     StrategyNode,
     StrategyResultItem,
@@ -209,6 +210,161 @@ def build_conditions_from_graph(graph: StrategyGraph) -> tuple[List[BaseConditio
     return conditions, universe
 
 
+def build_flat_conditions_from_graph(
+    graph: StrategyGraph,
+) -> tuple[List[BaseCondition], str, Dict[str, dict]]:
+    """
+    Walk the strategy graph and extract leaf conditions into a flat list.
+
+    Unlike build_conditions_from_graph() which creates nested composite conditions,
+    this function keeps each condition separate so that per-node intermediate results
+    can be computed after screening.
+
+    Returns:
+        Tuple of (leaf_conditions, universe, node_meta)
+        - leaf_conditions: flat list of individual BaseCondition instances
+        - universe: universe name string
+        - node_meta: Dict[node_id, dict] where each entry has:
+            - 'node_type': str
+            - 'label': str
+            - 'leaf_indices': List[int] - indices into leaf_conditions
+            - 'operator': Optional[str] - 'and'/'or'/'not' for logic nodes
+    """
+    nodes_by_id: Dict[str, StrategyNode] = {n.id: n for n in graph.nodes}
+
+    # Build adjacency: target -> list of source node IDs
+    incoming: Dict[str, List[str]] = {n.id: [] for n in graph.nodes}
+    for edge in graph.edges:
+        if edge.target in incoming:
+            incoming[edge.target].append(edge.source)
+
+    # Find the output node
+    output_nodes = [n for n in graph.nodes if n.data.node_type == "output"]
+    if not output_nodes:
+        raise ValueError("Graph must have an Output node")
+    output_node = output_nodes[0]
+
+    # Find universe
+    universe = "KOSPI"
+    universe_nodes = [n for n in graph.nodes if n.data.node_type == "universe"]
+    if universe_nodes:
+        universe = universe_nodes[0].data.universe or "KOSPI"
+
+    leaf_conditions: List[BaseCondition] = []
+    node_meta: Dict[str, dict] = {}
+
+    # Track which nodes are children of group containers
+    child_ids_set: set[str] = set()
+    for n in graph.nodes:
+        if n.data.child_node_ids:
+            child_ids_set.update(n.data.child_node_ids)
+
+    def _resolve_flat(node_id: str) -> List[int]:
+        """Recursively resolve a node and return leaf condition indices."""
+        if node_id in node_meta:
+            return node_meta[node_id]["leaf_indices"]
+
+        node = nodes_by_id.get(node_id)
+        if node is None:
+            return []
+
+        if node.data.node_type == "universe":
+            node_meta[node_id] = {
+                "node_type": "universe",
+                "label": node.data.universe or "Universe",
+                "leaf_indices": [],
+                "operator": None,
+            }
+            return []
+
+        if node.data.node_type == "condition":
+            if not node.data.condition_type:
+                raise ValueError(f"Condition node {node_id} has no condition_type")
+            cond = _build_condition(node.data.condition_type, node.data.params)
+            idx = len(leaf_conditions)
+            leaf_conditions.append(cond)
+            node_meta[node_id] = {
+                "node_type": "condition",
+                "label": node.data.condition_type,
+                "leaf_indices": [idx],
+                "operator": None,
+            }
+            return [idx]
+
+        if node.data.node_type == "logic":
+            operator = (node.data.logic_operator or "and").lower()
+            # Use child_node_ids (group container) if available
+            child_ids = node.data.child_node_ids or []
+            if child_ids:
+                source_ids = child_ids
+            else:
+                source_ids = incoming.get(node_id, [])
+
+            collected_indices: List[int] = []
+            for src_id in source_ids:
+                collected_indices.extend(_resolve_flat(src_id))
+
+            node_meta[node_id] = {
+                "node_type": "logic",
+                "label": operator.upper(),
+                "leaf_indices": collected_indices,
+                "operator": operator,
+            }
+            return collected_indices
+
+        if node.data.node_type == "output":
+            collected_indices = []
+            resolved_ids: set[str] = set()
+            for src_id in incoming.get(node_id, []):
+                resolved_ids.add(src_id)
+                collected_indices.extend(_resolve_flat(src_id))
+
+            # Also resolve top-level nodes not connected via edges
+            for n in graph.nodes:
+                if (
+                    n.data.node_type in ("logic", "condition")
+                    and n.id not in child_ids_set
+                    and n.id not in resolved_ids
+                ):
+                    collected_indices.extend(_resolve_flat(n.id))
+
+            node_meta[node_id] = {
+                "node_type": "output",
+                "label": "Output",
+                "leaf_indices": collected_indices,
+                "operator": "and",
+            }
+            return collected_indices
+
+        return []
+
+    _resolve_flat(output_node.id)
+
+    return leaf_conditions, universe, node_meta
+
+
+def _passes_node(result: Any, meta: dict) -> bool:
+    """Check whether a screening result passes a given node's conditions."""
+    indices = meta["leaf_indices"]
+    if not indices:
+        return True  # universe node or no conditions
+
+    operator = meta.get("operator", "and")
+    relevant = [
+        result.condition_results[i]
+        for i in indices
+        if i < len(result.condition_results)
+    ]
+    if not relevant:
+        return True
+
+    if operator == "or":
+        return any(r.matched for r in relevant)
+    if operator == "not":
+        return not relevant[0].matched
+    return all(r.matched for r in relevant)  # default: 'and'
+
+
 def execute_strategy(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
@@ -221,11 +377,11 @@ def execute_strategy(
         universe_override: Override the universe from graph
 
     Returns:
-        Dict with results, counts, universe, and conditions used
+        Dict with results, counts, universe, conditions used, and node_results
     """
-    conditions, graph_universe = build_conditions_from_graph(graph)
+    leaf_conditions, graph_universe, node_meta = build_flat_conditions_from_graph(graph)
 
-    if not conditions:
+    if not leaf_conditions:
         raise ValueError("No conditions found in graph")
 
     universe = universe_override or graph_universe
@@ -235,43 +391,89 @@ def execute_strategy(
     tickers = screening_service._get_universe_tickers(universe)
     total_count = len(tickers)
 
-    # Create screener and run
+    # Create screener with flat leaf conditions and run with return_all=True
     screener = StockScreener(
-        conditions=conditions,
+        conditions=leaf_conditions,
         max_workers=5,
         use_full_universe=True,
         use_cache=True,
     )
 
-    results = screener.run(tickers=tickers, show_progress=False)
+    all_results = screener.run(tickers=tickers, show_progress=False, return_all=True)
 
-    # Convert to response items (sanitize numpy types)
-    result_items = []
-    for result in results:
-        cond_details = [
-            {
-                "condition_name": cr.condition_name,
-                "matched": bool(cr.matched),
-                "details": _sanitize_value(cr.details),
-            }
-            for cr in result.condition_results
-        ]
-        result_items.append(
-            StrategyResultItem(
-                ticker=result.ticker,
-                name=result.name,
-                current_price=result.current_price,
-                matched=result.matched,
-                conditions=cond_details,
-            )
+    # Find the output node to determine final survivors
+    output_node_id = None
+    for nid, meta in node_meta.items():
+        if meta["node_type"] == "output":
+            output_node_id = nid
+            break
+
+    # Build per-node intermediate results
+    node_results: Dict[str, NodeIntermediateResult] = {}
+    for node_id, meta in node_meta.items():
+        passing_stocks: List[StrategyResultItem] = []
+        for result in all_results:
+            if _passes_node(result, meta):
+                cond_details = [
+                    {
+                        "condition_name": cr.condition_name,
+                        "matched": bool(cr.matched),
+                        "details": _sanitize_value(cr.details),
+                    }
+                    for cr in result.condition_results
+                ]
+                passing_stocks.append(
+                    StrategyResultItem(
+                        ticker=result.ticker,
+                        name=result.name,
+                        current_price=result.current_price,
+                        matched=_passes_node(result, meta),
+                        conditions=cond_details,
+                    )
+                )
+        node_results[node_id] = NodeIntermediateResult(
+            node_id=node_id,
+            node_type=meta["node_type"],
+            label=meta["label"],
+            stock_count=len(passing_stocks),
+            stocks=passing_stocks,
         )
 
-    conditions_used = [type(c).__name__ for c in conditions]
+    # Final results are the stocks that pass the output node
+    final_items: List[StrategyResultItem] = []
+    if output_node_id and output_node_id in node_results:
+        final_items = [
+            item for item in node_results[output_node_id].stocks if item.matched
+        ]
+    else:
+        # Fallback: use all matched results
+        for result in all_results:
+            if result.matched:
+                cond_details = [
+                    {
+                        "condition_name": cr.condition_name,
+                        "matched": bool(cr.matched),
+                        "details": _sanitize_value(cr.details),
+                    }
+                    for cr in result.condition_results
+                ]
+                final_items.append(
+                    StrategyResultItem(
+                        ticker=result.ticker,
+                        name=result.name,
+                        current_price=result.current_price,
+                        matched=result.matched,
+                        conditions=cond_details,
+                    )
+                )
+
+    conditions_used = [type(c).__name__ for c in leaf_conditions]
 
     return {
-        "results": result_items,
+        "results": final_items,
         "total_count": total_count,
-        "matched_count": len(result_items),
+        "matched_count": len(final_items),
         "universe": universe,
         "conditions_used": conditions_used,
+        "node_results": node_results,
     }

@@ -237,12 +237,21 @@ export interface StrategyResultItem {
   conditions: Array<Record<string, unknown>>;
 }
 
+export interface NodeIntermediateResult {
+  node_id: string;
+  node_type: string;
+  label: string;
+  stock_count: number;
+  stocks: StrategyResultItem[];
+}
+
 export interface StrategyExecuteResponse {
   results: StrategyResultItem[];
   total_count: number;
   matched_count: number;
   universe: string;
   conditions_used: string[];
+  node_results: Record<string, NodeIntermediateResult>;
 }
 
 /**

@@ -24,6 +24,7 @@ from api.services.strategy_service import (
     execute_strategy,
     get_available_conditions,
     build_conditions_from_graph,
+    build_flat_conditions_from_graph,
     CONDITION_CLASS_MAP,
 )
 
@@ -51,5 +52,6 @@ __all__ = [
     "execute_strategy",
     "get_available_conditions",
     "build_conditions_from_graph",
+    "build_flat_conditions_from_graph",
     "CONDITION_CLASS_MAP",
 ]
