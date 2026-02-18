@@ -275,6 +275,26 @@ function StrategyPageInner() {
           };
 
           setNodes((nds) => [...nds, newNode]);
+
+          // Auto-create internal "Then" edge from previous child
+          if (childrenInGroup.length > 0) {
+            const prevChild = childrenInGroup[childrenInGroup.length - 1];
+            const isLast = true; // new node is always last
+            setEdges((eds) => [
+              ...eds,
+              {
+                id: `internal_${prevChild.id}_${newNodeId}`,
+                source: prevChild.id,
+                sourceHandle: 'bottom',
+                target: newNodeId,
+                targetHandle: 'top',
+                type: 'labeled',
+                animated: false,
+                data: { label: 'Then' },
+                style: { stroke: '#1313ec', strokeWidth: 1.5, opacity: 0.4, strokeDasharray: '4 4' },
+              },
+            ]);
+          }
           return;
         }
       }
