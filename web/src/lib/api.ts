@@ -11,6 +11,8 @@ import type {
   ReportSummary,
   ReportDetail,
   TickerAnalysis,
+  AIAnalysisResult,
+  AnalysisStatus,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -158,6 +160,35 @@ export async function getTickerAnalysis(ticker: string, period: string = '6mo'):
  */
 export async function searchTickers(query: string): Promise<Array<{ ticker: string; name: string }>> {
   return fetchApi<Array<{ ticker: string; name: string }>>(`/api/search?q=${encodeURIComponent(query)}`);
+}
+
+/**
+ * Run AI analysis on a stock (Claude API, may take 30+ seconds)
+ */
+export async function analyzeStock(ticker: string, includeNews = true): Promise<AIAnalysisResult> {
+  return fetchApi<AIAnalysisResult>('/api/analysis/analyze', {
+    method: 'POST',
+    body: JSON.stringify({ ticker, include_news: includeNews }),
+  });
+}
+
+/**
+ * Check a single stock against screening conditions
+ */
+export async function checkStockConditions(
+  ticker: string,
+  preset = 'accumulation_basic'
+): Promise<ScreeningResult> {
+  return fetchApi<ScreeningResult>(
+    `/api/screening/stock/${encodeURIComponent(ticker)}?preset=${encodeURIComponent(preset)}`
+  );
+}
+
+/**
+ * Get analysis service status (Claude API availability)
+ */
+export async function getAnalysisStatus(): Promise<AnalysisStatus> {
+  return fetchApi<AnalysisStatus>('/api/analysis/status');
 }
 
 // Strategy API functions

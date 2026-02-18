@@ -233,6 +233,7 @@ class TickerFundamental(BaseModel):
     market_cap: Optional[float] = Field(None, description="Market capitalization")
     pe_ratio: Optional[float] = Field(None, description="Price-to-earnings ratio")
     dividend_yield: Optional[float] = Field(None, description="Dividend yield")
+    eps: Optional[float] = Field(None, description="Earnings per share (trailing)")
     sector: Optional[str] = Field(None, description="Industry sector")
 
 

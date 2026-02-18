@@ -162,6 +162,32 @@ export interface TickerAnalysis {
     market_cap: number;
     pe_ratio: number | null;
     dividend_yield: number | null;
+    eps: number | null;
     sector: string;
   };
+}
+
+// AI Analysis result
+export interface AIAnalysisResult {
+  ticker: string;
+  name: string;
+  current_price: number;
+  valuation_score: number;
+  risk_score: number;
+  entry_recommendation: 'BUY' | 'WAIT' | 'AVOID';
+  reasoning: string;
+  key_risks: string[];
+  catalysts: string[];
+}
+
+// Analysis service status
+export interface AnalysisStatus {
+  claude_available: boolean;
+  cache_available: boolean;
+  enrichers: {
+    technical: boolean;
+    fundamental: boolean;
+    news: boolean;
+  };
+  data_dir: string | null;
 }

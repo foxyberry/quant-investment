@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   BarChart3,
@@ -13,33 +14,71 @@ import {
   Percent,
   PieChart,
   RefreshCw,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Brain,
+  ShieldAlert,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Banknote,
 } from 'lucide-react';
 import { Card, Button } from '@/components/ui';
 import { CandleChart, IndicatorPanel } from '@/components/charts';
-import { getTickerAnalysis } from '@/lib/api';
-import type { TickerAnalysis } from '@/lib/types';
+import {
+  getTickerAnalysis,
+  analyzeStock,
+  checkStockConditions,
+  getAnalysisStatus,
+  getPresets,
+} from '@/lib/api';
+import type {
+  TickerAnalysis,
+  AIAnalysisResult,
+  ScreeningResult,
+  ConditionResult,
+  PresetInfo,
+} from '@/lib/types';
 
 type PeriodOption = '1mo' | '3mo' | '6mo' | '1y' | '2y';
 
 const periodOptions: { value: PeriodOption; label: string }[] = [
-  { value: '1mo', label: '1 Month' },
-  { value: '3mo', label: '3 Months' },
-  { value: '6mo', label: '6 Months' },
-  { value: '1y', label: '1 Year' },
-  { value: '2y', label: '2 Years' },
+  { value: '1mo', label: '1M' },
+  { value: '3mo', label: '3M' },
+  { value: '6mo', label: '6M' },
+  { value: '1y', label: '1Y' },
+  { value: '2y', label: '2Y' },
 ];
 
 /**
- * Dynamic ticker analysis page with full chart and indicators
+ * Dynamic ticker analysis page with full chart, indicators,
+ * strategy context, AI insight, and sector distribution.
  */
 export default function TickerAnalysisPage() {
   const params = useParams();
   const ticker = params.ticker as string;
+  const t = useTranslations('stockDetail');
 
+  // Core data
   const [tickerData, setTickerData] = useState<TickerAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodOption>('6mo');
+
+  // Strategy Context
+  const [screeningResult, setScreeningResult] = useState<ScreeningResult | null>(null);
+  const [screeningLoading, setScreeningLoading] = useState(false);
+  const [screeningError, setScreeningError] = useState<string | null>(null);
+  const [presets, setPresets] = useState<PresetInfo[]>([]);
+  const [selectedPreset, setSelectedPreset] = useState('accumulation_basic');
+
+  // AI Insight
+  const [aiResult, setAiResult] = useState<AIAnalysisResult | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiAvailable, setAiAvailable] = useState<boolean | null>(null);
+  const [reasoningExpanded, setReasoningExpanded] = useState(false);
 
   const fetchData = useCallback(async (period: PeriodOption) => {
     setIsLoading(true);
@@ -55,14 +94,56 @@ export default function TickerAnalysisPage() {
     }
   }, [ticker]);
 
+  // Fetch presets on mount
+  useEffect(() => {
+    getPresets()
+      .then(setPresets)
+      .catch(() => {});
+  }, []);
+
+  // Fetch screening conditions
+  const fetchScreening = useCallback(async (preset?: string) => {
+    setScreeningLoading(true);
+    setScreeningError(null);
+    try {
+      const result = await checkStockConditions(ticker.toUpperCase(), preset || selectedPreset);
+      setScreeningResult(result);
+    } catch (err) {
+      setScreeningError(err instanceof Error ? err.message : t('screeningError'));
+    } finally {
+      setScreeningLoading(false);
+    }
+  }, [ticker, selectedPreset, t]);
+
+  // Check AI availability on mount
+  useEffect(() => {
+    getAnalysisStatus()
+      .then((status) => setAiAvailable(status.claude_available))
+      .catch(() => setAiAvailable(false));
+  }, []);
+
   useEffect(() => {
     if (ticker) {
       fetchData(selectedPeriod);
+      fetchScreening();
     }
-  }, [ticker, selectedPeriod, fetchData]);
+  }, [ticker, selectedPeriod, fetchData, fetchScreening]);
 
   const handlePeriodChange = (period: PeriodOption) => {
     setSelectedPeriod(period);
+  };
+
+  const handleAIAnalysis = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const result = await analyzeStock(ticker.toUpperCase());
+      setAiResult(result);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : t('aiAnalysisError'));
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const formatMarketCap = (value: number): string => {
@@ -78,6 +159,55 @@ export default function TickerAnalysisPage() {
     return `$${value.toLocaleString()}`;
   };
 
+  const getConditionIcon = (condition: ConditionResult) => {
+    if (condition.matched) {
+      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+    }
+    return <XCircle className="h-4 w-4 text-red-500" />;
+  };
+
+  const getConditionBadge = (condition: ConditionResult) => {
+    if (condition.matched) {
+      return (
+        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+          {t('pass')}
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+        {t('fail')}
+      </span>
+    );
+  };
+
+  const getRecommendationStyle = (rec: string) => {
+    switch (rec) {
+      case 'BUY':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'WAIT':
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
+      case 'AVOID':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    }
+  };
+
+  const getScoreColor = (score: number, invert = false) => {
+    const effectiveScore = invert ? 11 - score : score;
+    if (effectiveScore >= 7) return 'text-green-600 dark:text-green-400';
+    if (effectiveScore >= 4) return 'text-amber-600 dark:text-amber-400';
+    return 'text-red-600 dark:text-red-400';
+  };
+
+  const getScoreBarColor = (score: number, invert = false) => {
+    const effectiveScore = invert ? 11 - score : score;
+    if (effectiveScore >= 7) return 'bg-green-500';
+    if (effectiveScore >= 4) return 'bg-amber-500';
+    return 'bg-red-500';
+  };
+
   return (
     <div className="space-y-6">
       {/* Back navigation */}
@@ -86,7 +216,7 @@ export default function TickerAnalysisPage() {
         className="inline-flex items-center gap-2 text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Analysis
+        {t('backToAnalysis')}
       </Link>
 
       {/* Header */}
@@ -179,7 +309,7 @@ export default function TickerAnalysisPage() {
           {/* Period Selector */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-[var(--foreground-muted)]">
-              Period:
+              {t('period')}:
             </span>
             <div className="flex rounded-lg border border-[var(--border)] overflow-hidden">
               {periodOptions.map((option) => (
@@ -209,18 +339,18 @@ export default function TickerAnalysisPage() {
           {/* Technical Indicators */}
           <div>
             <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
-              Technical Indicators
+              {t('technicalIndicators')}
             </h2>
             <IndicatorPanel technicalData={tickerData.technical} />
           </div>
 
-          {/* Fundamental Data */}
+          {/* ===== Financial Overview ===== */}
           {tickerData.fundamental && (
             <div>
               <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
-                Fundamental Data
+                {t('financialOverview')}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {/* Market Cap */}
                 <Card padding="md">
                   <div className="flex items-center gap-3">
@@ -229,7 +359,7 @@ export default function TickerAnalysisPage() {
                     </div>
                     <div>
                       <span className="text-xs text-[var(--foreground-muted)]">
-                        Market Cap
+                        {t('marketCap')}
                       </span>
                       <p className="text-lg font-semibold text-[var(--foreground)]">
                         {formatMarketCap(tickerData.fundamental.market_cap)}
@@ -246,7 +376,7 @@ export default function TickerAnalysisPage() {
                     </div>
                     <div>
                       <span className="text-xs text-[var(--foreground-muted)]">
-                        P/E Ratio
+                        {t('peRatio')}
                       </span>
                       <p className="text-lg font-semibold text-[var(--foreground)]">
                         {tickerData.fundamental.pe_ratio !== null
@@ -265,11 +395,30 @@ export default function TickerAnalysisPage() {
                     </div>
                     <div>
                       <span className="text-xs text-[var(--foreground-muted)]">
-                        Dividend Yield
+                        {t('dividendYield')}
                       </span>
                       <p className="text-lg font-semibold text-[var(--foreground)]">
                         {tickerData.fundamental.dividend_yield !== null
                           ? `${(tickerData.fundamental.dividend_yield * 100).toFixed(2)}%`
+                          : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* EPS */}
+                <Card padding="md">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-[var(--background)] p-2">
+                      <Banknote className="h-5 w-5 text-[var(--color-primary)]" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-[var(--foreground-muted)]">
+                        {t('eps')}
+                      </span>
+                      <p className="text-lg font-semibold text-[var(--foreground)]">
+                        {tickerData.fundamental.eps !== null
+                          ? `$${tickerData.fundamental.eps.toFixed(2)}`
                           : 'N/A'}
                       </p>
                     </div>
@@ -284,7 +433,7 @@ export default function TickerAnalysisPage() {
                     </div>
                     <div>
                       <span className="text-xs text-[var(--foreground-muted)]">
-                        Sector
+                        {t('sector')}
                       </span>
                       <p className="text-lg font-semibold text-[var(--foreground)] truncate">
                         {tickerData.fundamental.sector || 'N/A'}
@@ -296,10 +445,284 @@ export default function TickerAnalysisPage() {
             </div>
           )}
 
-          {/* Additional Analysis Section */}
+          {/* ===== Strategy Context ===== */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-[var(--foreground)]">
+                {t('strategyContext')}
+              </h2>
+              {presets.length > 0 && (
+                <select
+                  value={selectedPreset}
+                  onChange={(e) => {
+                    setSelectedPreset(e.target.value);
+                    fetchScreening(e.target.value);
+                  }}
+                  className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] text-[var(--foreground)] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                >
+                  {presets.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ({p.conditions.length})
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <Card padding="md">
+              {screeningLoading && (
+                <div className="flex items-center gap-3 py-4">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--color-primary)] border-t-transparent" />
+                  <span className="text-[var(--foreground-muted)]">Loading conditions...</span>
+                </div>
+              )}
+
+              {screeningError && !screeningLoading && (
+                <div className="flex items-center gap-2 text-red-600 dark:text-red-400 py-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="text-sm">{screeningError}</span>
+                </div>
+              )}
+
+              {screeningResult && !screeningLoading && (
+                <div className="space-y-3">
+                  {/* Summary */}
+                  <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+                    <div className="flex items-center gap-2">
+                      {screeningResult.matched ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <AlertTriangle className="h-5 w-5 text-amber-500" />
+                      )}
+                      <span className="font-medium text-[var(--foreground)]">
+                        {t('conditionsPassed', {
+                          passed: screeningResult.conditions.filter(c => c.matched).length,
+                          total: screeningResult.conditions.length,
+                        })}
+                      </span>
+                    </div>
+                    <span
+                      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
+                        screeningResult.matched
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                      }`}
+                    >
+                      {screeningResult.matched ? t('pass') : t('fail')}
+                    </span>
+                  </div>
+
+                  {/* Individual conditions */}
+                  {screeningResult.conditions.length > 0 ? (
+                    <div className="space-y-2">
+                      {screeningResult.conditions.map((condition, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--background)] hover:bg-[var(--background-secondary)] transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            {getConditionIcon(condition)}
+                            <span className="text-sm text-[var(--foreground)]">
+                              {condition.condition_name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          </div>
+                          {getConditionBadge(condition)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[var(--foreground-muted)] py-2">
+                      {t('noConditions')}
+                    </p>
+                  )}
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* ===== AI Insight ===== */}
+          <div>
+            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
+              {t('aiInsight')}
+            </h2>
+            <Card padding="md">
+              {aiAvailable === false && (
+                <div className="flex items-center gap-3 py-4">
+                  <ShieldAlert className="h-5 w-5 text-[var(--foreground-muted)]" />
+                  <span className="text-sm text-[var(--foreground-muted)]">
+                    {t('apiKeyMissing')}
+                  </span>
+                </div>
+              )}
+
+              {aiAvailable !== false && !aiResult && (
+                <div className="flex flex-col items-center gap-4 py-6">
+                  <Brain className="h-10 w-10 text-[var(--foreground-muted)]" />
+                  <p className="text-sm text-[var(--foreground-muted)] text-center">
+                    AI-powered analysis with valuation score, risk assessment, and entry recommendation.
+                  </p>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={handleAIAnalysis}
+                    isLoading={aiLoading}
+                    disabled={aiLoading}
+                  >
+                    {aiLoading ? (
+                      t('analyzing')
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        {t('analyzeWithAI')}
+                      </>
+                    )}
+                  </Button>
+                  {aiError && (
+                    <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span className="text-sm">{aiError}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {aiResult && (
+                <div className="space-y-5">
+                  {/* Scores row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Valuation Score */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-[var(--foreground-muted)]">
+                          {t('valuationScore')}
+                        </span>
+                        <span className={`text-lg font-bold ${getScoreColor(aiResult.valuation_score)}`}>
+                          {aiResult.valuation_score.toFixed(1)}/10
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-[var(--background)] overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${getScoreBarColor(aiResult.valuation_score)}`}
+                          style={{ width: `${(aiResult.valuation_score / 10) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Risk Score */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-[var(--foreground-muted)]">
+                          {t('riskScore')}
+                        </span>
+                        <span className={`text-lg font-bold ${getScoreColor(aiResult.risk_score, true)}`}>
+                          {aiResult.risk_score.toFixed(1)}/10
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-[var(--background)] overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${getScoreBarColor(aiResult.risk_score, true)}`}
+                          style={{ width: `${(aiResult.risk_score / 10) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Recommendation */}
+                    <div className="flex flex-col items-center justify-center">
+                      <span className="text-sm text-[var(--foreground-muted)] mb-2">
+                        {t('recommendation')}
+                      </span>
+                      <span
+                        className={`inline-flex items-center rounded-full px-4 py-2 text-lg font-bold ${getRecommendationStyle(aiResult.entry_recommendation)}`}
+                      >
+                        {aiResult.entry_recommendation}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Key Risks & Catalysts */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Key Risks */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-[var(--foreground-muted)]">
+                        {t('keyRisks')}
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {aiResult.key_risks.map((risk, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+                          >
+                            {risk}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Catalysts */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-[var(--foreground-muted)]">
+                        {t('catalysts')}
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {aiResult.catalysts.map((catalyst, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
+                          >
+                            {catalyst}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reasoning (collapsible) */}
+                  <div className="border-t border-[var(--border)] pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setReasoningExpanded(!reasoningExpanded)}
+                      className="flex items-center gap-2 text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors w-full"
+                    >
+                      {reasoningExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                      {t('reasoning')}
+                    </button>
+                    {reasoningExpanded && (
+                      <div className="mt-3 p-4 rounded-lg bg-[var(--background)] text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">
+                        {aiResult.reasoning}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* ===== Sector Distribution ===== */}
+          {tickerData.fundamental?.sector && (
+            <div>
+              <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
+                {t('sectorDistribution')}
+              </h2>
+              <Card padding="md">
+                <div className="flex items-center gap-3">
+                  <Building2 className="h-5 w-5 text-[var(--color-primary)]" />
+                  <span
+                    className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
+                  >
+                    {tickerData.fundamental.sector}
+                  </span>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* ===== Price Summary & Trading Range ===== */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Price Summary */}
-            <Card title="Price Summary">
+            <Card title={t('priceSummary')}>
               <div className="space-y-3">
                 {tickerData.ohlcv.length > 0 && (() => {
                   const prices = tickerData.ohlcv.map(d => d.close);
@@ -315,26 +738,26 @@ export default function TickerAnalysisPage() {
                   return (
                     <>
                       <div className="flex justify-between items-center">
-                        <span className="text-[var(--foreground-muted)]">Period High</span>
+                        <span className="text-[var(--foreground-muted)]">{t('periodHigh')}</span>
                         <span className="font-medium text-[var(--foreground)]">
                           ${periodHigh.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[var(--foreground-muted)]">Period Low</span>
+                        <span className="text-[var(--foreground-muted)]">{t('periodLow')}</span>
                         <span className="font-medium text-[var(--foreground)]">
                           ${periodLow.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[var(--foreground-muted)]">Average Price</span>
+                        <span className="text-[var(--foreground-muted)]">{t('averagePrice')}</span>
                         <span className="font-medium text-[var(--foreground)]">
                           ${avgPrice.toFixed(2)}
                         </span>
                       </div>
                       <div className="h-px bg-[var(--border)]" />
                       <div className="flex justify-between items-center">
-                        <span className="text-[var(--foreground-muted)]">Period Return</span>
+                        <span className="text-[var(--foreground-muted)]">{t('periodReturn')}</span>
                         <span
                           className={`font-medium ${
                             periodReturn >= 0
@@ -352,7 +775,7 @@ export default function TickerAnalysisPage() {
             </Card>
 
             {/* Trading Range */}
-            <Card title="Trading Range">
+            <Card title={t('tradingRange')}>
               <div className="space-y-4">
                 {tickerData.ohlcv.length > 0 && (() => {
                   const highs = tickerData.ohlcv.map(d => d.high);
@@ -379,13 +802,13 @@ export default function TickerAnalysisPage() {
                       </div>
                       <div className="text-center">
                         <span className="text-sm text-[var(--foreground-muted)]">
-                          Current price is at{' '}
+                          {t('currentPriceAt')}{' '}
                         </span>
                         <span className="font-medium text-[var(--foreground)]">
                           {positionInRange.toFixed(0)}%
                         </span>
                         <span className="text-sm text-[var(--foreground-muted)]">
-                          {' '}of the {selectedPeriod} range
+                          {' '}{t('ofRange')}
                         </span>
                       </div>
                     </>
