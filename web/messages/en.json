@@ -299,7 +299,8 @@
       "movingAverage": "Moving Average",
       "rsi": "RSI",
       "accumulation": "Accumulation",
-      "breakout": "Breakout"
+      "breakout": "Breakout",
+      "fundamental": "Fundamental"
     },
     "min_price": {
       "label": "Min Price",
@@ -440,6 +441,76 @@
       "label": "Resistance Breakout",
       "desc": "Resistance level breakout",
       "params": { "lookback_days": "Lookback days", "breakout_margin_pct": "Margin above resistance %" }
+    },
+    "pe_ratio": {
+      "label": "P/E Ratio",
+      "desc": "Price-to-Earnings ratio filter",
+      "params": { "min_pe": "Min P/E", "max_pe": "Max P/E" }
+    },
+    "pb_ratio": {
+      "label": "P/B Ratio",
+      "desc": "Price-to-Book ratio filter",
+      "params": { "min_pb": "Min P/B", "max_pb": "Max P/B", "exclude_negative_bv": "Exclude negative book value" }
+    },
+    "ps_ratio": {
+      "label": "P/S Ratio",
+      "desc": "Price-to-Sales ratio filter",
+      "params": { "min_ps": "Min P/S", "max_ps": "Max P/S" }
+    },
+    "pcf_ratio": {
+      "label": "P/CF Ratio",
+      "desc": "Price-to-Cash-Flow ratio filter",
+      "params": { "min_pcf": "Min P/CF", "max_pcf": "Max P/CF" }
+    },
+    "dividend_yield": {
+      "label": "Dividend Yield",
+      "desc": "Dividend yield percentage filter",
+      "params": { "min_yield": "Min yield %", "max_yield": "Max yield %" }
+    },
+    "earnings_yield": {
+      "label": "Earnings Yield",
+      "desc": "Earnings yield (E/P) percentage filter",
+      "params": { "min_yield": "Min yield %", "max_yield": "Max yield %" }
+    },
+    "ebit_ev": {
+      "label": "EBIT/EV",
+      "desc": "EBIT / Enterprise Value yield filter",
+      "params": { "min_ebit_ev": "Min EBIT/EV %", "max_ebit_ev": "Max EBIT/EV %" }
+    },
+    "fcf_yield": {
+      "label": "FCF Yield",
+      "desc": "Free Cash Flow yield filter",
+      "params": { "min_fcf_yield": "Min FCF yield %", "max_fcf_yield": "Max FCF yield %" }
+    },
+    "peg_ratio": {
+      "label": "PEG Ratio",
+      "desc": "Price/Earnings-to-Growth ratio filter",
+      "params": { "min_peg": "Min PEG", "max_peg": "Max PEG" }
+    },
+    "debt_to_equity": {
+      "label": "D/E Ratio",
+      "desc": "Debt-to-Equity ratio filter",
+      "params": { "min_de": "Min D/E %", "max_de": "Max D/E %" }
+    },
+    "current_ratio": {
+      "label": "Current Ratio",
+      "desc": "Current ratio (liquidity) filter",
+      "params": { "min_ratio": "Min ratio", "max_ratio": "Max ratio" }
+    },
+    "roe": {
+      "label": "ROE",
+      "desc": "Return on Equity filter",
+      "params": { "min_roe": "Min ROE %", "max_roe": "Max ROE %" }
+    },
+    "piotroski_fscore": {
+      "label": "Piotroski F-Score",
+      "desc": "Piotroski F-Score (0-9) financial strength",
+      "params": { "min_score": "Min F-Score", "max_score": "Max F-Score" }
+    },
+    "altman_zscore": {
+      "label": "Altman Z-Score",
+      "desc": "Altman Z-Score bankruptcy risk filter",
+      "params": { "min_zscore": "Min Z-Score", "max_zscore": "Max Z-Score" }
     }
   },
   "markets": {
