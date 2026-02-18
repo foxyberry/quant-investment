@@ -365,6 +365,138 @@ def _passes_node(result: Any, meta: dict) -> bool:
     return all(r.matched for r in relevant)  # default: 'and'
 
 
+def _compute_node_survivors(
+    node_id: str,
+    all_results: list,
+    nodes_by_id: Dict[str, StrategyNode],
+    incoming: Dict[str, List[str]],
+    node_meta: Dict[str, dict],
+    child_ids_set: set,
+    cache: Dict[str, set],
+) -> set:
+    """Compute the set of result indices that survive up to this node.
+
+    Unlike _passes_node() which checks each node independently,
+    this function walks the graph backward so that each node's result
+    reflects cumulative filtering from upstream nodes.
+    """
+    if node_id in cache:
+        return cache[node_id]
+
+    node = nodes_by_id.get(node_id)
+    if node is None:
+        cache[node_id] = set()
+        return set()
+
+    all_indices = set(range(len(all_results)))
+
+    if node.data.node_type == "universe":
+        cache[node_id] = all_indices
+        return all_indices
+
+    if node.data.node_type == "condition":
+        meta = node_meta.get(node_id, {})
+        leaf_idx = meta.get("leaf_indices", [])
+        # Stocks passing this condition alone
+        own_passers = set()
+        for i, r in enumerate(all_results):
+            if leaf_idx and leaf_idx[0] < len(r.condition_results):
+                if r.condition_results[leaf_idx[0]].matched:
+                    own_passers.add(i)
+        # Intersect with upstream survivors (pipeline filtering)
+        upstream_ids = incoming.get(node_id, [])
+        if upstream_ids:
+            upstream = set.intersection(*(
+                _compute_node_survivors(
+                    uid, all_results, nodes_by_id, incoming,
+                    node_meta, child_ids_set, cache,
+                )
+                for uid in upstream_ids
+            ))
+            result = own_passers & upstream
+        else:
+            result = own_passers
+        cache[node_id] = result
+        return result
+
+    if node.data.node_type == "logic":
+        operator = (node.data.logic_operator or "and").lower()
+        child_ids = node.data.child_node_ids or []
+        source_ids = child_ids if child_ids else incoming.get(node_id, [])
+
+        child_sets = [
+            _compute_node_survivors(
+                sid, all_results, nodes_by_id, incoming,
+                node_meta, child_ids_set, cache,
+            )
+            for sid in source_ids
+            if nodes_by_id.get(sid) and nodes_by_id[sid].data.node_type != "universe"
+        ]
+
+        if not child_sets:
+            combined = all_indices
+        elif operator == "or":
+            combined = set.union(*child_sets)
+        elif operator == "not":
+            combined = all_indices - child_sets[0]
+        else:
+            combined = set.intersection(*child_sets)
+
+        # If group-based, intersect with upstream edges to the group itself
+        if child_ids:
+            upstream_ids = [
+                uid for uid in incoming.get(node_id, [])
+                if uid not in set(child_ids)
+            ]
+            if upstream_ids:
+                upstream = set.intersection(*(
+                    _compute_node_survivors(
+                        uid, all_results, nodes_by_id, incoming,
+                        node_meta, child_ids_set, cache,
+                    )
+                    for uid in upstream_ids
+                ))
+                combined = combined & upstream
+
+        cache[node_id] = combined
+        return combined
+
+    if node.data.node_type == "output":
+        child_sets = []
+        resolved_ids: set[str] = set()
+        for sid in incoming.get(node_id, []):
+            resolved_ids.add(sid)
+            if nodes_by_id.get(sid) and nodes_by_id[sid].data.node_type != "universe":
+                child_sets.append(
+                    _compute_node_survivors(
+                        sid, all_results, nodes_by_id, incoming,
+                        node_meta, child_ids_set, cache,
+                    )
+                )
+        # Top-level nodes not connected via edges
+        for n in nodes_by_id.values():
+            if (
+                n.data.node_type in ("logic", "condition")
+                and n.id not in child_ids_set
+                and n.id not in resolved_ids
+            ):
+                child_sets.append(
+                    _compute_node_survivors(
+                        n.id, all_results, nodes_by_id, incoming,
+                        node_meta, child_ids_set, cache,
+                    )
+                )
+        if not child_sets:
+            combined = all_indices
+        else:
+            combined = set.intersection(*child_sets)
+        cache[node_id] = combined
+        return combined
+
+    cache[node_id] = all_indices
+    return all_indices
+
+
 def execute_strategy(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
@@ -401,36 +533,50 @@ def execute_strategy(
 
     all_results = screener.run(tickers=tickers, show_progress=False, return_all=True)
 
-    # Find the output node to determine final survivors
-    output_node_id = None
-    for nid, meta in node_meta.items():
-        if meta["node_type"] == "output":
-            output_node_id = nid
-            break
+    # Rebuild graph structures for survivor computation
+    nodes_by_id: Dict[str, StrategyNode] = {n.id: n for n in graph.nodes}
+    incoming: Dict[str, List[str]] = {n.id: [] for n in graph.nodes}
+    for edge in graph.edges:
+        if edge.target in incoming:
+            incoming[edge.target].append(edge.source)
+    child_ids_set: set[str] = set()
+    for n in graph.nodes:
+        if n.data.child_node_ids:
+            child_ids_set.update(n.data.child_node_ids)
 
-    # Build per-node intermediate results
+    # Compute per-node survivors using graph-aware cumulative filtering
+    survivor_cache: Dict[str, set] = {}
     node_results: Dict[str, NodeIntermediateResult] = {}
+    output_node_id = None
+
     for node_id, meta in node_meta.items():
+        if meta["node_type"] == "output":
+            output_node_id = node_id
+
+        survivor_indices = _compute_node_survivors(
+            node_id, all_results, nodes_by_id, incoming,
+            node_meta, child_ids_set, survivor_cache,
+        )
         passing_stocks: List[StrategyResultItem] = []
-        for result in all_results:
-            if _passes_node(result, meta):
-                cond_details = [
-                    {
-                        "condition_name": cr.condition_name,
-                        "matched": bool(cr.matched),
-                        "details": _sanitize_value(cr.details),
-                    }
-                    for cr in result.condition_results
-                ]
-                passing_stocks.append(
-                    StrategyResultItem(
-                        ticker=result.ticker,
-                        name=result.name,
-                        current_price=result.current_price,
-                        matched=_passes_node(result, meta),
-                        conditions=cond_details,
-                    )
+        for i in sorted(survivor_indices):
+            r = all_results[i]
+            cond_details = [
+                {
+                    "condition_name": cr.condition_name,
+                    "matched": bool(cr.matched),
+                    "details": _sanitize_value(cr.details),
+                }
+                for cr in r.condition_results
+            ]
+            passing_stocks.append(
+                StrategyResultItem(
+                    ticker=r.ticker,
+                    name=r.name,
+                    current_price=r.current_price,
+                    matched=True,
+                    conditions=cond_details,
                 )
+            )
         node_results[node_id] = NodeIntermediateResult(
             node_id=node_id,
             node_type=meta["node_type"],
@@ -439,14 +585,11 @@ def execute_strategy(
             stocks=passing_stocks,
         )
 
-    # Final results are the stocks that pass the output node
+    # Final results are the stocks that survive the output node
     final_items: List[StrategyResultItem] = []
     if output_node_id and output_node_id in node_results:
-        final_items = [
-            item for item in node_results[output_node_id].stocks if item.matched
-        ]
+        final_items = node_results[output_node_id].stocks
     else:
-        # Fallback: use all matched results
         for result in all_results:
             if result.matched:
                 cond_details = [
