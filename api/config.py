@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # CORS settings (CORS 설정)
     # Override via env: CORS_ORIGINS='["http://localhost:3002"]'
-    cors_origins: List[str] = ["http://localhost:3000"]
+    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:3001"]
 
     # Application metadata (애플리케이션 메타데이터)
     app_name: str = "Quant Investment API"

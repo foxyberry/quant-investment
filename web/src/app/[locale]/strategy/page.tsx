@@ -37,7 +37,7 @@ import { serializeGraph } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
 import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
 import { useRunStrategy, useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
-import type { StrategyResultItem, SavedStrategy } from '@/lib/api';
+import type { StrategyResultItem, SavedStrategy, NodeIntermediateResult } from '@/lib/api';
 
 const nodeTypes: NodeTypes = {
   universeNode: UniverseNode,
@@ -120,11 +120,16 @@ function StrategyPageInner() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [results, setResults] = useState<StrategyResultItem[] | null>(null);
+  const [nodeResults, setNodeResults] = useState<Record<string, NodeIntermediateResult> | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [showBacktest, setShowBacktest] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const reconnectingEdgeId = useRef<string | null>(null);
+
+  // Prevent ReactFlow SSR hydration mismatch
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   // Save/Load state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -602,6 +607,7 @@ function StrategyPageInner() {
       {
         onSuccess: (data) => {
           setResults(data.results);
+          setNodeResults(data.node_results ?? null);
           setNodes((nds) =>
             nds.map((n) => {
               const nd = getNodeData(n);
@@ -632,6 +638,7 @@ function StrategyPageInner() {
     setEdges([]);
     setSelectedNodeId(null);
     setResults(null);
+    setNodeResults(null);
     setErrors([]);
     setStrategyName('');
     setStrategyDescription('');
@@ -758,6 +765,14 @@ function StrategyPageInner() {
   const conditionCount = nodes.filter(
     (n) => getNodeData(n).node_type === 'condition'
   ).length;
+
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-var(--header-height))]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1313ec]" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-var(--header-height))]">
@@ -908,6 +923,7 @@ function StrategyPageInner() {
               setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
               setSelectedNodeId(null);
             }}
+            intermediateResult={selectedNodeId && nodeResults ? nodeResults[selectedNodeId] : undefined}
           />
         )}
       </div>

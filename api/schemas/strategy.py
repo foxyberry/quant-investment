@@ -74,6 +74,16 @@ class StrategyResultItem(BaseModel):
     conditions: List[Dict[str, Any]] = Field(default_factory=list)
 
 
+class NodeIntermediateResult(BaseModel):
+    """Intermediate results for a specific graph node."""
+
+    node_id: str
+    node_type: str  # 'universe' | 'condition' | 'logic' | 'output'
+    label: str
+    stock_count: int
+    stocks: List[StrategyResultItem] = Field(default_factory=list)
+
+
 class StrategyExecuteResponse(BaseModel):
     """Response from strategy execution."""
 
@@ -82,6 +92,7 @@ class StrategyExecuteResponse(BaseModel):
     matched_count: int
     universe: str
     conditions_used: List[str] = Field(default_factory=list)
+    node_results: Dict[str, NodeIntermediateResult] = Field(default_factory=dict)
 
 
 class ConditionParamInfo(BaseModel):
