@@ -22,10 +22,8 @@
       ]
     },
     "codex": {
-      "command": "npx",
+      "command": "codex",
       "args": [
-        "-y",
-        "@openai/codex",
         "mcp-server"
       ]
     },
