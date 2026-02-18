@@ -115,15 +115,8 @@ function StrategyPageInner() {
   const locale = useLocale();
   const { getDefaultParams } = useConditions();
 
-  // Restore from sessionStorage if available (locale-switch persistence)
-  const restored = useRef(loadCanvasFromSession());
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(
-    restored.current?.nodes ?? initialNodes
-  );
-  const [edges, setEdges, onEdgesChange] = useEdgesState(
-    restored.current?.edges ?? initialEdges
-  );
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [results, setResults] = useState<StrategyResultItem[] | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -134,10 +127,23 @@ function StrategyPageInner() {
   // Save/Load state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
-  const [strategyName, setStrategyName] = useState(restored.current?.strategyName ?? '');
-  const [strategyDescription, setStrategyDescription] = useState(restored.current?.strategyDescription ?? '');
-  const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(restored.current?.currentStrategyId ?? null);
+  const [strategyName, setStrategyName] = useState('');
+  const [strategyDescription, setStrategyDescription] = useState('');
+  const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(null);
   const [isResultPanelVisible, setIsResultPanelVisible] = useState(false);
+
+  // Restore from sessionStorage after mount (locale-switch persistence)
+  useEffect(() => {
+    const restored = loadCanvasFromSession();
+    if (restored) {
+      setNodes(restored.nodes);
+      setEdges(restored.edges);
+      setStrategyName(restored.strategyName);
+      setStrategyDescription(restored.strategyDescription);
+      setCurrentStrategyId(restored.currentStrategyId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persist canvas state to sessionStorage on every change (for locale-switch survival)
   useEffect(() => {
@@ -151,7 +157,7 @@ function StrategyPageInner() {
   const { toast, showToast, hideToast } = useToast();
 
   const isValidConnection = useCallback(
-    (connection: Connection) => {
+    (connection: Edge | Connection) => {
       const { source, target, sourceHandle, targetHandle } = connection;
 
       if (!source || !target) return false;
