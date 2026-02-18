@@ -297,6 +297,12 @@ function StrategyPageInner() {
     [reactFlowInstance, setNodes, findGroupAtPosition, nodes, showToast, t]
   );
 
+  // Stable dependency for auto-resize: count of child nodes
+  const childNodeCount = useMemo(
+    () => nodes.filter((n) => n.parentId).length,
+    [nodes]
+  );
+
   // Auto-expand group nodes when children overflow (only expand, never shrink)
   useEffect(() => {
     setNodes((nds) => {
@@ -304,6 +310,7 @@ function StrategyPageInner() {
       const updatedNodes = nds.map((n) => {
         if (n.type !== 'groupNode') return n;
         const children = nds.filter((c) => c.parentId === n.id);
+        if (children.length === 0) return n;
         const totalChildrenHeight = children.reduce((acc, child) => {
           const h = child.type === 'groupNode'
             ? ((child.style?.height as number) || GROUP_MIN_HEIGHT)
@@ -314,21 +321,25 @@ function StrategyPageInner() {
           GROUP_MIN_HEIGHT,
           GROUP_PADDING_TOP + totalChildrenHeight + GROUP_PADDING_BOTTOM
         );
-        const currentHeight = (n.style?.height as number) || GROUP_MIN_HEIGHT;
-        // Only expand height when children need more space; never shrink
-        // Width is fully controlled by NodeResizer, don't auto-set
-        if (currentHeight < minHeight) {
+        const minWidth = Math.max(GROUP_MIN_WIDTH, 320);
+        const curH = (n.style?.height as number) || GROUP_MIN_HEIGHT;
+        const curW = (n.style?.width as number) || GROUP_MIN_WIDTH;
+        if (curH < minHeight || curW < minWidth) {
           changed = true;
           return {
             ...n,
-            style: { ...n.style, height: minHeight },
+            style: {
+              ...n.style,
+              width: Math.max(curW, minWidth),
+              height: Math.max(curH, minHeight),
+            },
           };
         }
         return n;
       });
       return changed ? updatedNodes : nds;
     });
-  }, [nodes, setNodes]);
+  }, [childNodeCount, setNodes]);
 
   // Handle drag-in / drag-out between groups and canvas
   const handleNodesChange = useCallback(
@@ -458,9 +469,14 @@ function StrategyPageInner() {
               return n;
             })
           );
+          showToast(
+            t('deploySuccess', { count: data.matched_count, total: data.total_count }),
+            'success'
+          );
         },
         onError: (error) => {
           setErrors([error instanceof Error ? error.message : t('executionFailed')]);
+          showToast(t('deployError'), 'error');
         },
       }
     );

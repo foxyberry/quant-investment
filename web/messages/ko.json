@@ -166,6 +166,8 @@
     "lastRunNever": "마지막 실행: 없음",
     "stocksMatched": "{count}개 종목 매치",
     "executionFailed": "실행 실패",
+    "deploySuccess": "{total}개 종목 중 {count}개 매칭",
+    "deployError": "전략 실행 실패",
     "moreErrors": "+{count}개 추가",
     "kospiData": "KOSPI 데이터",
     "ticker": "종목코드",
