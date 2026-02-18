@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   ReactFlow,
   addEdge,
@@ -112,6 +112,7 @@ function loadCanvasFromSession(): CanvasSnapshot | null {
 
 function StrategyPageInner() {
   const t = useTranslations('strategy');
+  const locale = useLocale();
   const { getDefaultParams } = useConditions();
 
   // Restore from sessionStorage if available (locale-switch persistence)
@@ -837,9 +838,20 @@ function StrategyPageInner() {
               {results.map((r) => (
                 <tr
                   key={r.ticker}
-                  className="border-b border-[#e1e3e5] dark:border-[#2e2e30] hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  className="border-b border-[#e1e3e5] dark:border-[#2e2e30] hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  onClick={() => {
+                    const width = 1000;
+                    const height = 700;
+                    const left = (screen.width - width) / 2;
+                    const top = (screen.height - height) / 2;
+                    window.open(
+                      `/${locale}/analysis/${r.ticker}`,
+                      `analysis_${r.ticker}`,
+                      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+                    );
+                  }}
                 >
-                  <td className="px-4 py-1.5 font-mono text-[#1313ec] font-medium">
+                  <td className="px-4 py-1.5 font-mono text-[#1313ec] font-medium underline decoration-[#1313ec]/30 hover:decoration-[#1313ec]">
                     {r.ticker}
                   </td>
                   <td className="px-4 py-1.5 text-gray-700 dark:text-gray-200">

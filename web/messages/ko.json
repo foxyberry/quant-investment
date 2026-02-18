@@ -558,7 +558,7 @@
     },
     "roic": {
       "label": "투하자본수익률(ROIC)",
-      "description": "투하자본수익률 필터",
+      "desc": "투하자본수익률 필터",
       "params": { "min_roic": "최소 ROIC %", "max_roic": "최대 ROIC %" }
     }
   },
