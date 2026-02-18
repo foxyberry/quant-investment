@@ -137,6 +137,7 @@ function StrategyPageInner() {
   const [strategyName, setStrategyName] = useState(restored.current?.strategyName ?? '');
   const [strategyDescription, setStrategyDescription] = useState(restored.current?.strategyDescription ?? '');
   const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(restored.current?.currentStrategyId ?? null);
+  const [isResultPanelVisible, setIsResultPanelVisible] = useState(false);
 
   // Persist canvas state to sessionStorage on every change (for locale-switch survival)
   useEffect(() => {
@@ -148,6 +149,23 @@ function StrategyPageInner() {
   const saveStrategy = useSaveStrategy();
   const updateStrategy = useUpdateStrategy();
   const { toast, showToast, hideToast } = useToast();
+
+  useEffect(() => {
+    const shouldShowPanel = runStrategy.isPending || (!!results && results.length > 0);
+    if (!shouldShowPanel) {
+      setIsResultPanelVisible(false);
+      return;
+    }
+
+    setIsResultPanelVisible(false);
+    const rafId = window.requestAnimationFrame(() => {
+      setIsResultPanelVisible(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+    };
+  }, [runStrategy.isPending, results]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -671,13 +689,18 @@ function StrategyPageInner() {
         <div className="flex-1" />
 
         {/* Error/status display */}
-        {errors.length > 0 && (
+        {runStrategy.isPending && (
+          <div className="text-sm text-[#1313ec] font-medium">
+            {t('runningStatus')}
+          </div>
+        )}
+        {!runStrategy.isPending && errors.length > 0 && (
           <div className="text-sm text-red-500">
             {errors[0]}
             {errors.length > 1 && ` (${t('moreErrors', { count: errors.length - 1 })})`}
           </div>
         )}
-        {results && (
+        {!runStrategy.isPending && results && (
           <div className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
             {t('stocksMatched', { count: results.length })}
           </div>
@@ -818,59 +841,73 @@ function StrategyPageInner() {
       </div>
 
       {/* Results panel */}
-      {results && results.length > 0 && (
-        <div className="border-t border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] max-h-64 overflow-y-auto">
-          <div className="px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              {t('results', { count: results.length })}
-            </span>
-          </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider border-b border-[#e1e3e5] dark:border-[#2e2e30]">
-                <th className="px-4 py-2">{t('ticker')}</th>
-                <th className="px-4 py-2">{t('name')}</th>
-                <th className="px-4 py-2 text-right">{t('price')}</th>
-                <th className="px-4 py-2 text-center">{t('status')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.map((r) => (
-                <tr
-                  key={r.ticker}
-                  className="border-b border-[#e1e3e5] dark:border-[#2e2e30] hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                  onClick={() => {
-                    const width = 1000;
-                    const height = 700;
-                    const left = (screen.width - width) / 2;
-                    const top = (screen.height - height) / 2;
-                    window.open(
-                      `/${locale}/analysis/${r.ticker}`,
-                      `analysis_${r.ticker}`,
-                      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
-                    );
-                  }}
-                >
-                  <td className="px-4 py-1.5 font-mono text-[#1313ec] font-medium underline decoration-[#1313ec]/30 hover:decoration-[#1313ec]">
-                    {r.ticker}
-                  </td>
-                  <td className="px-4 py-1.5 text-gray-700 dark:text-gray-200">
-                    {r.name}
-                  </td>
-                  <td className="px-4 py-1.5 text-right text-gray-700 dark:text-gray-200">
-                    {r.current_price?.toLocaleString() ?? '-'}
-                  </td>
-                  <td className="px-4 py-1.5 text-center">
-                    <span
-                      className={`inline-block w-2 h-2 rounded-full ${
-                        r.matched ? 'bg-emerald-500' : 'bg-red-500'
-                      }`}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {(runStrategy.isPending || (results && results.length > 0)) && (
+        <div
+          className={`border-t border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] transition-all duration-300 ease-out ${
+            isResultPanelVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+          } ${runStrategy.isPending ? 'min-h-44' : 'max-h-64 overflow-y-auto'}`}
+        >
+          {runStrategy.isPending ? (
+            <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-500">
+              <Loader2 className="h-8 w-8 animate-spin mb-3" />
+              <span className="text-sm">{t('runningStrategy')}</span>
+              <span className="text-xs mt-1">{t('runningStrategyNote')}</span>
+            </div>
+          ) : results ? (
+            <>
+              <div className="px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  {t('results', { count: results.length })}
+                </span>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider border-b border-[#e1e3e5] dark:border-[#2e2e30]">
+                    <th className="px-4 py-2">{t('ticker')}</th>
+                    <th className="px-4 py-2">{t('name')}</th>
+                    <th className="px-4 py-2 text-right">{t('price')}</th>
+                    <th className="px-4 py-2 text-center">{t('status')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.map((r) => (
+                    <tr
+                      key={r.ticker}
+                      className="border-b border-[#e1e3e5] dark:border-[#2e2e30] hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                      onClick={() => {
+                        const width = 1000;
+                        const height = 700;
+                        const left = (screen.width - width) / 2;
+                        const top = (screen.height - height) / 2;
+                        window.open(
+                          `/${locale}/analysis/${r.ticker}`,
+                          `analysis_${r.ticker}`,
+                          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+                        );
+                      }}
+                    >
+                      <td className="px-4 py-1.5 font-mono text-[#1313ec] font-medium underline decoration-[#1313ec]/30 hover:decoration-[#1313ec]">
+                        {r.ticker}
+                      </td>
+                      <td className="px-4 py-1.5 text-gray-700 dark:text-gray-200">
+                        {r.name}
+                      </td>
+                      <td className="px-4 py-1.5 text-right text-gray-700 dark:text-gray-200">
+                        {r.current_price?.toLocaleString() ?? '-'}
+                      </td>
+                      <td className="px-4 py-1.5 text-center">
+                        <span
+                          className={`inline-block w-2 h-2 rounded-full ${
+                            r.matched ? 'bg-emerald-500' : 'bg-red-500'
+                          }`}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          ) : null}
         </div>
       )}
 
@@ -990,6 +1027,7 @@ function StrategyPageInner() {
           message={toast.message}
           type={toast.type as ToastType}
           onClose={hideToast}
+          autoCloseMs={null}
         />
       )}
     </div>
