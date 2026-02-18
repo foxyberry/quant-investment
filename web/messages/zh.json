@@ -1,0 +1,572 @@
+{
+  "common": {
+    "appName": "量化投资",
+    "loading": "加载中...",
+    "error": "错误",
+    "retry": "重试",
+    "tryAgain": "再试一次",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "close": "关闭",
+    "confirm": "确认",
+    "yes": "是",
+    "no": "否",
+    "version": "版本 {version}",
+    "copyright": "\u00a9 {year} Quant Investment。保留所有权利。",
+    "collapse": "收起",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "up": "上",
+    "down": "下",
+    "below": "低于",
+    "above": "高于"
+  },
+  "nav": {
+    "dashboard": "仪表盘",
+    "screening": "筛选",
+    "strategy": "策略",
+    "portfolio": "投资组合",
+    "analysis": "分析",
+    "settings": "设置",
+    "openSidebar": "打开侧边栏",
+    "closeSidebar": "关闭侧边栏",
+    "expandSidebar": "展开侧边栏",
+    "collapseSidebar": "收起侧边栏",
+    "openNavMenu": "打开导航菜单",
+    "closeNavMenu": "关闭导航菜单"
+  },
+  "dashboard": {
+    "title": "仪表盘",
+    "subtitle": "欢迎使用您的量化投资仪表盘",
+    "connecting": "连接中...",
+    "apiConnected": "API 已连接",
+    "apiDisconnected": "API 已断开",
+    "gettingStarted": "快速开始",
+    "gettingStartedDesc": "此仪表盘连接到 {url} 的 FastAPI 后端。请确保 API 服务器正在运行，以查看实时数据。",
+    "startServer": "使用以下命令启动 API 服务器：",
+
+    "portfolioOverview": "投资组合概览",
+    "totalMarketValue": "总市值",
+    "totalPnl": "总盈亏",
+    "holdings": "持仓",
+    "activePositions": "活跃仓位",
+    "totalInvestment": "总投入：{amount}",
+    "unableToLoadPortfolio": "无法加载投资组合数据",
+    "noPortfolioData": "暂无投资组合数据",
+
+    "sellSignals": "卖出信号",
+    "allClear": "一切正常",
+    "noSellSignals": "未触发卖出信号",
+    "signalsAttention": "有 {count} 个信号需要关注",
+    "unableToLoadSignals": "无法加载卖出信号",
+    "current": "当前：{price}",
+    "trigger": "触发价：{price}",
+    "stopLoss": "止损",
+    "takeProfit": "止盈",
+    "trailingStop": "跟踪止损",
+    "manual": "手动",
+
+    "recentReports": "最近报告",
+    "viewAllReports": "查看全部报告",
+    "noReports": "暂无报告",
+    "runScreeningForReports": "运行筛选以生成报告",
+    "unableToLoadReports": "无法加载报告",
+    "buy": "买入",
+
+    "quickActions": "快捷操作",
+    "runScreening": "运行筛选",
+    "runScreeningDesc": "查找符合您条件的股票",
+    "viewAnalysis": "查看分析",
+    "viewAnalysisDesc": "浏览分析报告",
+    "portfolioAction": "投资组合",
+    "portfolioActionDesc": "管理您的持仓",
+    "settingsAction": "设置",
+    "settingsActionDesc": "配置偏好"
+  },
+  "screening": {
+    "title": "股票筛选",
+    "subtitle": "基于预设筛选条件过滤股票",
+    "filters": "筛选条件",
+    "preset": "预设",
+    "universe": "股票池",
+    "conditions": "条件",
+    "runScreening": "运行筛选",
+    "screening": "筛选中...",
+    "totalScreened": "已筛选总数：",
+    "matched": "匹配：",
+    "matchRate": "匹配率：",
+    "noResults": "暂无结果",
+    "noResultsDesc": "选择预设和股票池后，运行筛选。",
+    "runningScreening": "正在运行筛选... 这可能需要一些时间。",
+    "selectPresetAndUniverse": "请选择预设和股票池",
+    "failedToRun": "筛选运行失败。请重试。",
+    "loadingPresets": "正在加载预设...",
+    "noPresets": "暂无可用预设",
+    "loadingUniverses": "正在加载股票池...",
+    "noUniverses": "暂无可用股票池",
+    "hideDetails": "隐藏详情",
+    "showDetails": "显示详情",
+    "ticker": "代码",
+    "name": "名称",
+    "price": "价格",
+    "match": "匹配",
+    "details": "详情"
+  },
+  "portfolio": {
+    "title": "投资组合",
+    "subtitle": "管理持仓并跟踪表现",
+    "refresh": "刷新",
+    "addHolding": "添加持仓",
+    "errorLoading": "加载投资组合时出错",
+    "totalInvestment": "总投入",
+    "marketValue": "市值",
+    "totalPnl": "总盈亏",
+    "holdings": "持仓",
+    "noHoldings": "暂无持仓",
+    "addFirstHolding": "添加您的第一笔持仓以开始跟踪投资组合。",
+    "ticker": "代码",
+    "name": "名称",
+    "qty": "数量",
+    "avgPrice": "平均成本",
+    "currentPrice": "现价",
+    "value": "市值",
+    "pnl": "盈亏",
+    "pnlPct": "盈亏 %",
+    "actions": "操作",
+    "quantity": "数量",
+    "currency": "货币",
+    "tickerRequired": "代码为必填项",
+    "invalidTicker": "代码格式无效",
+    "quantityRequired": "数量为必填项",
+    "quantityPositive": "数量必须为正数",
+    "priceRequired": "平均价格为必填项",
+    "pricePositive": "价格必须为正数",
+    "tickerPlaceholder": "例如：AAPL",
+    "quantityPlaceholder": "例如：100",
+    "pricePlaceholder": "例如：150.00"
+  },
+  "strategy": {
+    "title": "QuantCanvas",
+    "myStrategies": "我的策略",
+    "untitled": "未命名策略",
+    "reset": "重置",
+    "saveStrategy": "保存策略",
+    "backtest": "回测",
+    "deployStrategy": "部署策略",
+    "nodes": "节点",
+    "filters": "筛选器",
+    "matched": "匹配",
+    "results": "结果（匹配 {count} 项）",
+    "hide": "隐藏",
+    "show": "显示",
+    "lastRunJustNow": "上次运行：刚刚",
+    "lastRunNever": "上次运行：从未",
+    "stocksMatched": "匹配到 {count} 只股票",
+    "executionFailed": "执行失败",
+    "deploySuccess": "在 {total} 只股票中匹配到 {count} 只",
+    "deployError": "策略执行失败",
+    "moreErrors": "另外 +{count} 个",
+    "kospiData": "KOSPI 数据",
+    "ticker": "代码",
+    "name": "名称",
+    "price": "价格",
+    "status": "状态",
+
+    "inputBadge": "输入",
+    "screeningBadge": "筛选",
+    "outputBadge": "输出",
+    "marketSelection": "市场选择",
+    "composite": "{universe} 综合",
+    "condition": "条件",
+    "finalSelection": "最终选择",
+    "estimatedItems": "预计 {count} 项",
+    "connectAndRun": "连接节点并运行",
+
+    "searchPlaceholder": "搜索组件...",
+    "inputNodes": "输入节点",
+    "filterNodes": "筛选节点",
+    "logicOperators": "逻辑运算符",
+    "andGate": "AND 门",
+    "orGate": "OR 门",
+    "notGate": "NOT 门",
+    "andGroup": "AND",
+    "orGroup": "OR",
+    "notGroup": "NOT",
+    "andGroupTitle": "所有条件都必须满足",
+    "orGroupTitle": "至少满足一个条件",
+    "notGroupTitle": "条件取反",
+    "multiFilterGroup": "多筛选逻辑组",
+    "dropConditionHere": "将条件拖放到此处",
+    "emptyGroup": "将条件拖入此分组",
+    "cannotDropInGroup": "Universe 和 Output 节点不能放在组内。",
+    "groupInstruction": "将条件或逻辑组节点拖入该组容器，然后将该组连接到 Output。",
+    "finalOutput": "最终输出",
+
+    "nodeProperties": "节点属性",
+    "displayName": "显示名称",
+    "stockUniverse": "股票池",
+    "conditionLogic": "条件逻辑",
+    "selectCondition": "选择条件...",
+    "quickInsight": "快速洞察",
+    "logicOperator": "逻辑运算符",
+    "andAllMustMatch": "AND（全部匹配）",
+    "orAnyMustMatch": "OR（任一匹配）",
+    "notInvertFirst": "NOT（对首个输入取反）",
+    "outputInstruction": "将条件节点连接到此输出，然后点击“部署策略”执行筛选。",
+    "removeNode": "移除节点",
+    "range": "范围",
+    "applyChanges": "应用更改",
+    "exportJson": "导出 JSON",
+    "nodeLimit": "节点上限：{count}/{max}",
+
+    "saveDialogTitle": "保存策略",
+    "strategyName": "策略名称",
+    "strategyNamePlaceholder": "例如：RSI 超卖 (RSI Oversold) + 成交量激增",
+    "strategyDescription": "描述（可选）",
+    "strategyDescPlaceholder": "描述此策略的作用...",
+    "strategySaved": "策略保存成功",
+    "strategyUpdated": "策略已更新",
+    "strategyDeleted": "策略已删除",
+    "saveFailed": "保存策略失败",
+    "loadStrategy": "加载策略",
+    "noSavedStrategies": "暂无已保存策略",
+    "savedStrategies": "已保存策略",
+    "loadSelected": "加载",
+    "deleteConfirm": "删除该策略？",
+    "unsavedChanges": "您有未保存的更改",
+    "lastSaved": "上次保存：{time}",
+    "strategyNameRequired": "策略名称为必填项",
+    "deploySuccess": "在 {total} 只股票中匹配到 {count} 只",
+    "deployError": "策略执行失败"
+  },
+  "analysis": {
+    "title": "图表与分析",
+    "subtitle": "使用交互式图表与指标进行技术分析",
+    "searchPlaceholder": "搜索代码或公司名称...",
+    "popular": "热门：AAPL、MSFT、GOOGL、AMZN、NVDA、TSLA",
+    "fullAnalysis": "完整分析",
+    "loadingChart": "正在加载图表数据...",
+    "selectTicker": "选择代码以查看图表",
+    "selectTickerDesc": "在上方搜索股票，或点击热门代码之一",
+    "technicalIndicators": "技术指标",
+    "recentReports": "最近分析报告",
+    "runScreeningForReports": "运行筛选以生成报告"
+  },
+  "stockDetail": {
+    "financialOverview": "财务概览",
+    "strategyContext": "策略上下文",
+    "aiInsight": "AI 洞察",
+    "sectorDistribution": "行业分布",
+    "eps": "每股收益 (EPS)",
+    "analyzeWithAI": "使用 AI 分析",
+    "analyzing": "分析中...",
+    "conditionsPassed": "满足条件：{passed}/{total}",
+    "pass": "通过",
+    "fail": "未通过",
+    "borderline": "临界",
+    "valuationScore": "估值评分",
+    "riskScore": "风险评分",
+    "recommendation": "建议",
+    "keyRisks": "关键风险",
+    "catalysts": "催化因素",
+    "reasoning": "分析详情",
+    "apiKeyMissing": "AI 分析需要 API 配置",
+    "aiAnalysisError": "AI 分析运行失败",
+    "screeningError": "加载筛选数据失败",
+    "noConditions": "暂无可用筛选条件",
+    "backToAnalysis": "返回分析",
+    "period": "周期",
+    "technicalIndicators": "技术指标",
+    "fundamentalData": "财务概览",
+    "marketCap": "市值",
+    "peRatio": "市盈率 (P/E)",
+    "dividendYield": "股息率",
+    "sector": "行业",
+    "priceSummary": "价格摘要",
+    "tradingRange": "交易区间",
+    "periodHigh": "区间最高",
+    "periodLow": "区间最低",
+    "averagePrice": "平均价格",
+    "periodReturn": "区间收益",
+    "currentPriceAt": "当前价格位于",
+    "ofRange": "区间的"
+  },
+  "backtest": {
+    "title": "策略回测",
+    "ticker": "代码",
+    "strategy": "策略",
+    "period": "周期",
+    "initialCash": "初始资金",
+    "loadingStrategies": "正在加载策略...",
+    "period1m": "1 个月",
+    "period3m": "3 个月",
+    "period6m": "6 个月",
+    "period1y": "1 年",
+    "period2y": "2 年",
+    "period5y": "5 年",
+    "tickerPlaceholder": "例如：AAPL 或 005930.KS",
+    "strategyParams": "策略参数",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "runBacktest": "运行回测",
+    "running": "回测运行中...",
+    "runningNote": "这可能需要几秒钟",
+    "results": "结果",
+    "equityCurve": "权益曲线",
+    "trades": "交易",
+    "avgReturn": "平均收益",
+    "maxConsecWins": "最大连胜",
+    "maxConsecLosses": "最大连亏",
+    "individualTrades": "单笔交易",
+    "failed": "回测失败。请检查输入后重试。",
+    "totalReturn": "总收益",
+    "sharpeRatio": "夏普比率 (Sharpe Ratio)",
+    "maxDrawdown": "最大回撤",
+    "winRate": "胜率",
+    "cagr": "复合年增长率 (CAGR)",
+    "profitFactor": "盈利因子 (Profit Factor)",
+    "entry": "开仓",
+    "exit": "平仓",
+    "entryPrice": "开仓价",
+    "exitPrice": "平仓价",
+    "pnl": "盈亏",
+    "return": "收益",
+    "totalTrades": "总计（{count} 笔交易）"
+  },
+  "conditions": {
+    "categories": {
+      "price": "价格",
+      "volume": "成交量",
+      "movingAverage": "移动均线",
+      "rsi": "RSI",
+      "accumulation": "吸筹",
+      "breakout": "突破",
+      "fundamental": "基本面"
+    },
+    "min_price": {
+      "label": "最低价格",
+      "desc": "股价 >= 阈值",
+      "params": { "min_price": "最低价格" }
+    },
+    "max_price": {
+      "label": "最高价格",
+      "desc": "股价 <= 阈值",
+      "params": { "max_price": "最高价格" }
+    },
+    "price_range": {
+      "label": "价格区间",
+      "desc": "股价位于区间内",
+      "params": { "min_price": "最低价", "max_price": "最高价" }
+    },
+    "price_change": {
+      "label": "涨跌幅 %",
+      "desc": "N 天内价格变化",
+      "params": { "min_change_pct": "最小涨跌幅 %", "max_change_pct": "最大涨跌幅 %", "days": "周期（天）" }
+    },
+    "min_volume": {
+      "label": "最小成交量",
+      "desc": "成交量 >= 阈值",
+      "params": { "min_volume": "最小成交量" }
+    },
+    "volume_above_avg": {
+      "label": "成交量高于均值",
+      "desc": "成交量高于移动均量",
+      "params": { "multiplier": "均量倍数", "period": "均值周期" }
+    },
+    "volume_spike": {
+      "label": "成交量激增",
+      "desc": "成交量突然放大",
+      "params": { "multiplier": "放量倍数", "period": "均值周期" }
+    },
+    "ma_touch": {
+      "label": "触及均线",
+      "desc": "价格接近移动均线",
+      "params": { "period": "均线周期", "threshold": "触及阈值（比例）" }
+    },
+    "above_ma": {
+      "label": "高于均线",
+      "desc": "价格高于移动均线",
+      "params": { "period": "均线周期", "min_distance_pct": "最小距离 %" }
+    },
+    "below_ma": {
+      "label": "低于均线",
+      "desc": "价格低于移动均线",
+      "params": { "period": "均线周期", "max_distance_pct": "最大距离 %" }
+    },
+    "ma_cross_up": {
+      "label": "均线上穿",
+      "desc": "黄金交叉",
+      "params": { "short_period": "短期均线周期", "long_period": "长期均线周期", "lookback_days": "回看天数" }
+    },
+    "ma_cross_down": {
+      "label": "均线下穿",
+      "desc": "死亡交叉",
+      "params": { "short_period": "短期均线周期", "long_period": "长期均线周期", "lookback_days": "回看天数" }
+    },
+    "rsi_oversold": {
+      "label": "RSI 超卖 (RSI Oversold)",
+      "desc": "RSI 低于阈值",
+      "params": { "threshold": "RSI 阈值", "period": "RSI 周期" }
+    },
+    "rsi_overbought": {
+      "label": "RSI 超买 (RSI Overbought)",
+      "desc": "RSI 高于阈值",
+      "params": { "threshold": "RSI 阈值", "period": "RSI 周期" }
+    },
+    "rsi_range": {
+      "label": "RSI 区间",
+      "desc": "RSI 位于区间内",
+      "params": { "lower": "下限", "upper": "上限", "period": "RSI 周期" }
+    },
+    "bollinger_width": {
+      "label": "布林带宽度 (Bollinger Width)",
+      "desc": "布林带 (Bollinger Bands, BB) 宽度收缩",
+      "params": { "max_width_pct": "最大 BB 宽度 %", "period": "BB 周期", "std_dev": "标准差" }
+    },
+    "volume_below_avg": {
+      "label": "成交量低于均值",
+      "desc": "低量整理区",
+      "params": { "multiplier": "相对均值最大比率", "period": "均值周期" }
+    },
+    "price_flat": {
+      "label": "价格横盘",
+      "desc": "价格整理",
+      "params": { "max_range_pct": "最大波动区间 %", "period": "周期" }
+    },
+    "obv_trend": {
+      "label": "OBV 趋势",
+      "desc": "能量潮指标 (OBV, On-Balance Volume) 趋势",
+      "params": { "direction": "趋势方向（up/down）", "lookback": "回看周期" }
+    },
+    "stochastic_level": {
+      "label": "随机指标水平 (Stochastic)",
+      "desc": "随机振荡指标水平",
+      "params": { "threshold": "水平阈值", "condition": "below 或 above", "k_period": "%K 周期", "d_period": "%D 周期" }
+    },
+    "vpci_trend": {
+      "label": "VPCI 趋势",
+      "desc": "价格成交量趋势指标 (VPCI) 方向",
+      "params": { "direction": "趋势方向（up/down）", "short_period": "短周期", "long_period": "长周期", "lookback": "回看周期" }
+    },
+    "obv_divergence": {
+      "label": "OBV 背离",
+      "desc": "价格横盘 + OBV 上升",
+      "params": { "price_max_range_pct": "价格区间 %", "obv_min_change_pct": "OBV 变化 %", "period": "周期" }
+    },
+    "stochastic_divergence": {
+      "label": "随机指标背离 (Stochastic Divergence)",
+      "desc": "看涨随机指标背离",
+      "params": { "k_period": "%K 周期", "d_period": "%D 周期", "lookback": "回看周期", "divergence_threshold": "阈值 %" }
+    },
+    "vpci_divergence": {
+      "label": "VPCI 背离",
+      "desc": "价格横盘 + VPCI 上升",
+      "params": { "price_max_range_pct": "价格区间 %", "short_period": "短周期", "long_period": "长周期", "lookback": "回看周期" }
+    },
+    "bottom_breakout": {
+      "label": "底部突破",
+      "desc": "N 日低点突破",
+      "params": { "lookback_days": "回看天数", "breakout_pct": "突破幅度 %" }
+    },
+    "fresh_breakout": {
+      "label": "首次突破",
+      "desc": "首次发生的突破",
+      "params": { "lookback_days": "回看天数", "breakout_pct": "突破幅度 %" }
+    },
+    "breakout_with_volume": {
+      "label": "突破 + 成交量",
+      "desc": "成交量确认的突破",
+      "params": { "lookback_days": "回看天数", "breakout_pct": "突破幅度 %", "volume_ratio": "成交量比率", "volume_avg_days": "成交量均值天数", "fresh_only": "仅首次突破" }
+    },
+    "resistance_breakout": {
+      "label": "阻力位突破",
+      "desc": "突破阻力位",
+      "params": { "lookback_days": "回看天数", "breakout_margin_pct": "高于阻力位的幅度 %" }
+    },
+    "pe_ratio": {
+      "label": "市盈率 (P/E)",
+      "desc": "市盈率筛选",
+      "params": { "min_pe": "最小 P/E", "max_pe": "最大 P/E" }
+    },
+    "pb_ratio": {
+      "label": "市净率 (P/B)",
+      "desc": "市净率筛选",
+      "params": { "min_pb": "最小 P/B", "max_pb": "最大 P/B", "exclude_negative_bv": "排除负账面价值" }
+    },
+    "ps_ratio": {
+      "label": "市销率 (P/S)",
+      "desc": "市销率筛选",
+      "params": { "min_ps": "最小 P/S", "max_ps": "最大 P/S" }
+    },
+    "pcf_ratio": {
+      "label": "市现率 (P/CF)",
+      "desc": "市现率筛选",
+      "params": { "min_pcf": "最小 P/CF", "max_pcf": "最大 P/CF" }
+    },
+    "dividend_yield": {
+      "label": "股息率",
+      "desc": "股息收益率百分比筛选",
+      "params": { "min_yield": "最小收益率 %", "max_yield": "最大收益率 %" }
+    },
+    "earnings_yield": {
+      "label": "盈利收益率 (E/P)",
+      "desc": "盈利收益率 (E/P) 百分比筛选",
+      "params": { "min_yield": "最小收益率 %", "max_yield": "最大收益率 %" }
+    },
+    "ebit_ev": {
+      "label": "EBIT/EV",
+      "desc": "EBIT / 企业价值 (EV) 收益率筛选",
+      "params": { "min_ebit_ev": "最小 EBIT/EV %", "max_ebit_ev": "最大 EBIT/EV %" }
+    },
+    "fcf_yield": {
+      "label": "自由现金流收益率 (FCF Yield)",
+      "desc": "自由现金流收益率筛选",
+      "params": { "min_fcf_yield": "最小 FCF 收益率 %", "max_fcf_yield": "最大 FCF 收益率 %" }
+    },
+    "peg_ratio": {
+      "label": "PEG 比率",
+      "desc": "市盈增长比 (PEG) 筛选",
+      "params": { "min_peg": "最小 PEG", "max_peg": "最大 PEG" }
+    },
+    "debt_to_equity": {
+      "label": "资产负债比 (D/E)",
+      "desc": "资产负债比筛选",
+      "params": { "min_de": "最小 D/E %", "max_de": "最大 D/E %" }
+    },
+    "current_ratio": {
+      "label": "流动比率 (Current Ratio)",
+      "desc": "流动比率（偿债能力）筛选",
+      "params": { "min_ratio": "最小比率", "max_ratio": "最大比率" }
+    },
+    "roe": {
+      "label": "净资产收益率 (ROE)",
+      "desc": "净资产收益率筛选",
+      "params": { "min_roe": "最小 ROE %", "max_roe": "最大 ROE %" }
+    },
+    "piotroski_fscore": {
+      "label": "Piotroski F-Score",
+      "desc": "Piotroski F-Score（0-9）财务稳健度",
+      "params": { "min_score": "最小 F-Score", "max_score": "最大 F-Score" }
+    },
+    "altman_zscore": {
+      "label": "Altman Z-Score",
+      "desc": "Altman Z-Score 破产风险筛选",
+      "params": { "min_zscore": "最小 Z-Score", "max_zscore": "最大 Z-Score" }
+    },
+    "roic": {
+      "label": "投入资本回报率 (ROIC)",
+      "description": "投入资本回报率筛选",
+      "params": { "min_roic": "最小 ROIC %", "max_roic": "最大 ROIC %" }
+    }
+  },
+  "markets": {
+    "us": "美国市场",
+    "kr": "韩国市场",
+    "kospi": "KOSPI",
+    "nasdaq": "NASDAQ",
+    "sp500": "标普 500"
+  }
+}
