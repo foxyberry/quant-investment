@@ -166,6 +166,8 @@
     "lastRunNever": "Last run: Never",
     "stocksMatched": "{count} stocks matched",
     "executionFailed": "Execution failed",
+    "deploySuccess": "{count} stocks matched out of {total}",
+    "deployError": "Strategy execution failed",
     "moreErrors": "+{count} more",
     "kospiData": "KOSPI Data",
     "ticker": "Ticker",

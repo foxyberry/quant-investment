@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
-export type ToastType = 'error' | 'warning' | 'info';
+export type ToastType = 'error' | 'warning' | 'info' | 'success';
 
 interface ToastProps {
   message: string;
@@ -15,6 +15,7 @@ const toastStyles: Record<ToastType, string> = {
   error: 'bg-red-500',
   warning: 'bg-amber-500',
   info: 'bg-[#1313ec]',
+  success: 'bg-emerald-500',
 };
 
 export function Toast({ message, type, onClose }: ToastProps) {
