@@ -1,7 +1,7 @@
 'use client';
 
 import type { Node } from '@xyflow/react';
-import { X, Info } from 'lucide-react';
+import { X, Info, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { useConditions } from '@/contexts/ConditionsContext';
@@ -13,6 +13,7 @@ interface PropertiesPanelProps {
   node: Node<StrategyNodeData> | null;
   onUpdate: (nodeId: string, data: Partial<StrategyNodeData>) => void;
   onClose: () => void;
+  onDeleteNode?: (nodeId: string) => void;
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
@@ -42,6 +43,9 @@ function SelectInput({
     </select>
   );
 }
+
+const numberInputClass =
+  'w-full rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:border-[#1313ec] focus:ring-1 focus:ring-[#1313ec]/20 transition-colors';
 
 function ParamInput({
   param,
@@ -112,7 +116,7 @@ function ParamInput({
           type="text"
           value={String(value ?? '')}
           onChange={(e) => onChange(param.name, e.target.value)}
-          className="w-full rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:border-[#1313ec] focus:ring-1 focus:ring-[#1313ec]/20 transition-colors"
+          className={numberInputClass}
         />
       </div>
     );
@@ -137,9 +141,81 @@ function ParamInput({
             );
           }
         }}
-        className="w-full rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:border-[#1313ec] focus:ring-1 focus:ring-[#1313ec]/20 transition-colors"
+        className={numberInputClass}
       />
     </div>
+  );
+}
+
+/** Inline number input used inside range rows (no label). */
+function InlineNumberInput({
+  param,
+  value,
+  onChange,
+}: {
+  param: ConditionParam;
+  value: unknown;
+  onChange: (name: string, value: unknown) => void;
+}) {
+  return (
+    <input
+      type="number"
+      step={param.type === 'float' ? '0.01' : '1'}
+      value={value !== null && value !== undefined ? String(value) : ''}
+      placeholder={param.name}
+      onChange={(e) => {
+        const raw = e.target.value;
+        if (raw === '') {
+          onChange(param.name, null);
+        } else {
+          onChange(
+            param.name,
+            param.type === 'int' ? parseInt(raw, 10) : parseFloat(raw)
+          );
+        }
+      }}
+      className={numberInputClass}
+    />
+  );
+}
+
+/**
+ * Detect min/max pairs among params.
+ * Returns { paired: [minParam, maxParam][], standalone: ConditionParam[] }.
+ *
+ * Matching heuristic: two params whose names share a common suffix and
+ * one starts with "min_" while the other starts with "max_"
+ * (e.g. min_pe / max_pe, min_yield / max_yield).
+ */
+function groupParams(params: ConditionParam[]) {
+  const paired: [ConditionParam, ConditionParam][] = [];
+  const consumed = new Set<string>();
+
+  for (const p of params) {
+    if (consumed.has(p.name)) continue;
+    const minMatch = p.name.match(/^min_(.+)$/);
+    if (minMatch) {
+      const suffix = minMatch[1];
+      const maxParam = params.find((q) => q.name === `max_${suffix}`);
+      if (maxParam && !consumed.has(maxParam.name)) {
+        paired.push([p, maxParam]);
+        consumed.add(p.name);
+        consumed.add(maxParam.name);
+        continue;
+      }
+    }
+  }
+
+  const standalone = params.filter((p) => !consumed.has(p.name));
+  return { paired, standalone };
+}
+
+function CategoryBadge({ category }: { category: string }) {
+  const tCond = useTranslations('conditions');
+  return (
+    <span className="inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+      {tCond(`categories.${category}`)}
+    </span>
   );
 }
 
@@ -147,6 +223,7 @@ export default function PropertiesPanel({
   node,
   onUpdate,
   onClose,
+  onDeleteNode,
 }: PropertiesPanelProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
@@ -245,10 +322,48 @@ export default function PropertiesPanel({
             {nodeData.condition_type && (() => {
               const meta = getConditionMeta(nodeData.condition_type);
               if (!meta) return null;
+
+              const { paired, standalone } = groupParams(meta.params as ConditionParam[]);
+
               return (
                 <>
+                  {/* Category badge + description */}
+                  {meta.category && (
+                    <div className="flex items-center gap-2">
+                      <CategoryBadge category={meta.category} />
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                    {tCond(meta.key + '.desc')}
+                  </p>
+
                   <div className="space-y-4">
-                    {(meta.params as ConditionParam[]).map((param) => (
+                    {/* Render paired min/max params side by side */}
+                    {paired.map(([minP, maxP]) => {
+                      const suffix = minP.name.replace(/^min_/, '');
+                      return (
+                        <div key={`pair-${suffix}`}>
+                          <FieldLabel>{t('range')}: {tCond(meta.key + '.params.' + minP.name)} / {tCond(meta.key + '.params.' + maxP.name)}</FieldLabel>
+                          <div className="flex items-center gap-2">
+                            <InlineNumberInput
+                              param={minP}
+                              value={nodeData.params?.[minP.name] ?? minP.default}
+                              onChange={handleParamChange}
+                            />
+                            <span className="text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">~</span>
+                            <InlineNumberInput
+                              param={maxP}
+                              value={nodeData.params?.[maxP.name] ?? maxP.default}
+                              onChange={handleParamChange}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Render standalone params normally */}
+                    {standalone.map((param) => (
                       <ParamInput
                         key={param.name}
                         param={param}
@@ -318,12 +433,13 @@ export default function PropertiesPanel({
       </div>
 
       {/* Bottom actions */}
-      <div className="px-4 py-3 border-t border-[#e1e3e5] dark:border-[#2e2e30] flex justify-end gap-2">
+      <div className="px-4 py-3 border-t border-[#e1e3e5] dark:border-[#2e2e30] flex justify-between items-center">
         <button
           type="button"
-          onClick={onClose}
-          className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+          onClick={() => onDeleteNode?.(node.id)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
         >
+          <Trash2 className="h-3.5 w-3.5" />
           {t('removeNode')}
         </button>
         <button

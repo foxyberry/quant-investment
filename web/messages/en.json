@@ -215,6 +215,7 @@
     "notInvertFirst": "NOT (invert first input)",
     "outputInstruction": "Connect condition nodes to this output, then click \"Deploy Strategy\" to execute the screening.",
     "removeNode": "Remove Node",
+    "range": "Range",
     "applyChanges": "Apply Changes",
     "exportJson": "Export JSON",
     "nodeLimit": "Node limit: {count}/{max}",
@@ -235,7 +236,9 @@
     "deleteConfirm": "Delete this strategy?",
     "unsavedChanges": "You have unsaved changes",
     "lastSaved": "Last saved: {time}",
-    "strategyNameRequired": "Strategy name is required"
+    "strategyNameRequired": "Strategy name is required",
+    "deploySuccess": "{count} stocks matched out of {total}",
+    "deployError": "Strategy execution failed"
   },
   "analysis": {
     "title": "Charts & Analysis",
