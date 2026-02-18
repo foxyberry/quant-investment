@@ -20,6 +20,7 @@ export const CATEGORIES = [
   'rsi',
   'accumulation',
   'breakout',
+  'fundamental',
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
@@ -317,6 +318,150 @@ export const CONDITION_REGISTRY: ConditionMeta[] = [
     params: [
       { name: 'lookback_days', type: 'int', default: 20, description: 'Lookback days' },
       { name: 'breakout_margin_pct', type: 'float', default: 0.0, description: 'Margin above resistance %' },
+    ],
+  },
+  // Fundamental (Valuation)
+  {
+    key: 'pe_ratio',
+    label: 'P/E Ratio',
+    description: 'Price-to-Earnings ratio filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_pe', type: 'float', default: null, description: 'Min P/E' },
+      { name: 'max_pe', type: 'float', default: 15.0, description: 'Max P/E' },
+    ],
+  },
+  {
+    key: 'pb_ratio',
+    label: 'P/B Ratio',
+    description: 'Price-to-Book ratio filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_pb', type: 'float', default: null, description: 'Min P/B' },
+      { name: 'max_pb', type: 'float', default: 1.5, description: 'Max P/B' },
+      { name: 'exclude_negative_bv', type: 'bool', default: true, description: 'Exclude negative book value' },
+    ],
+  },
+  {
+    key: 'ps_ratio',
+    label: 'P/S Ratio',
+    description: 'Price-to-Sales ratio filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_ps', type: 'float', default: null, description: 'Min P/S' },
+      { name: 'max_ps', type: 'float', default: 2.0, description: 'Max P/S' },
+    ],
+  },
+  {
+    key: 'pcf_ratio',
+    label: 'P/CF Ratio',
+    description: 'Price-to-Cash-Flow ratio filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_pcf', type: 'float', default: null, description: 'Min P/CF' },
+      { name: 'max_pcf', type: 'float', default: 10.0, description: 'Max P/CF' },
+    ],
+  },
+  {
+    key: 'dividend_yield',
+    label: 'Dividend Yield',
+    description: 'Dividend yield percentage filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_yield', type: 'float', default: 3.0, description: 'Min yield %' },
+      { name: 'max_yield', type: 'float', default: null, description: 'Max yield %' },
+    ],
+  },
+  {
+    key: 'earnings_yield',
+    label: 'Earnings Yield',
+    description: 'Earnings yield (E/P) percentage filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_yield', type: 'float', default: 8.0, description: 'Min yield %' },
+      { name: 'max_yield', type: 'float', default: null, description: 'Max yield %' },
+    ],
+  },
+  {
+    key: 'ebit_ev',
+    label: 'EBIT/EV',
+    description: 'EBIT / Enterprise Value yield filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_ebit_ev', type: 'float', default: 10.0, description: 'Min EBIT/EV %' },
+      { name: 'max_ebit_ev', type: 'float', default: null, description: 'Max EBIT/EV %' },
+    ],
+  },
+  {
+    key: 'fcf_yield',
+    label: 'FCF Yield',
+    description: 'Free Cash Flow yield filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_fcf_yield', type: 'float', default: 5.0, description: 'Min FCF yield %' },
+      { name: 'max_fcf_yield', type: 'float', default: null, description: 'Max FCF yield %' },
+    ],
+  },
+  {
+    key: 'peg_ratio',
+    label: 'PEG Ratio',
+    description: 'Price/Earnings-to-Growth ratio filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_peg', type: 'float', default: null, description: 'Min PEG' },
+      { name: 'max_peg', type: 'float', default: 1.0, description: 'Max PEG' },
+    ],
+  },
+  // Fundamental (Financial Health)
+  {
+    key: 'debt_to_equity',
+    label: 'D/E Ratio',
+    description: 'Debt-to-Equity ratio filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_de', type: 'float', default: null, description: 'Min D/E %' },
+      { name: 'max_de', type: 'float', default: 100.0, description: 'Max D/E %' },
+    ],
+  },
+  {
+    key: 'current_ratio',
+    label: 'Current Ratio',
+    description: 'Current ratio (liquidity) filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_ratio', type: 'float', default: 1.0, description: 'Min ratio' },
+      { name: 'max_ratio', type: 'float', default: 3.0, description: 'Max ratio' },
+    ],
+  },
+  {
+    key: 'roe',
+    label: 'ROE',
+    description: 'Return on Equity filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_roe', type: 'float', default: 15.0, description: 'Min ROE %' },
+      { name: 'max_roe', type: 'float', default: null, description: 'Max ROE %' },
+    ],
+  },
+  // Fundamental (Composite Scores)
+  {
+    key: 'piotroski_fscore',
+    label: 'Piotroski F-Score',
+    description: 'Piotroski F-Score (0-9) filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_score', type: 'int', default: 7, description: 'Min F-Score' },
+      { name: 'max_score', type: 'int', default: null, description: 'Max F-Score' },
+    ],
+  },
+  {
+    key: 'altman_zscore',
+    label: 'Altman Z-Score',
+    description: 'Altman Z-Score bankruptcy risk filter',
+    category: 'fundamental',
+    params: [
+      { name: 'min_zscore', type: 'float', default: 2.5, description: 'Min Z-Score' },
+      { name: 'max_zscore', type: 'float', default: null, description: 'Max Z-Score' },
     ],
   },
 ];

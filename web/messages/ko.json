@@ -299,7 +299,8 @@
       "movingAverage": "이동평균",
       "rsi": "RSI",
       "accumulation": "매집",
-      "breakout": "돌파"
+      "breakout": "돌파",
+      "fundamental": "펀더멘털"
     },
     "min_price": {
       "label": "최소 가격",
@@ -440,6 +441,76 @@
       "label": "저항선 돌파",
       "desc": "저항 수준 돌파",
       "params": { "lookback_days": "확인 기간", "breakout_margin_pct": "저항선 위 마진 %" }
+    },
+    "pe_ratio": {
+      "label": "PER (주가수익비율)",
+      "desc": "주가수익비율 필터",
+      "params": { "min_pe": "최소 PER", "max_pe": "최대 PER" }
+    },
+    "pb_ratio": {
+      "label": "PBR (주가순자산비율)",
+      "desc": "주가순자산비율 필터",
+      "params": { "min_pb": "최소 PBR", "max_pb": "최대 PBR", "exclude_negative_bv": "음수 장부가치 제외" }
+    },
+    "ps_ratio": {
+      "label": "PSR (주가매출비율)",
+      "desc": "주가매출비율 필터",
+      "params": { "min_ps": "최소 PSR", "max_ps": "최대 PSR" }
+    },
+    "pcf_ratio": {
+      "label": "PCR (주가현금흐름비율)",
+      "desc": "주가현금흐름비율 필터",
+      "params": { "min_pcf": "최소 PCR", "max_pcf": "최대 PCR" }
+    },
+    "dividend_yield": {
+      "label": "배당수익률",
+      "desc": "배당수익률 필터",
+      "params": { "min_yield": "최소 수익률 %", "max_yield": "최대 수익률 %" }
+    },
+    "earnings_yield": {
+      "label": "이익수익률 (E/P)",
+      "desc": "이익수익률 필터",
+      "params": { "min_yield": "최소 수익률 %", "max_yield": "최대 수익률 %" }
+    },
+    "ebit_ev": {
+      "label": "EBIT/EV",
+      "desc": "EBIT/기업가치 수익률 필터",
+      "params": { "min_ebit_ev": "최소 EBIT/EV %", "max_ebit_ev": "최대 EBIT/EV %" }
+    },
+    "fcf_yield": {
+      "label": "FCF 수익률",
+      "desc": "잉여현금흐름 수익률 필터",
+      "params": { "min_fcf_yield": "최소 FCF 수익률 %", "max_fcf_yield": "최대 FCF 수익률 %" }
+    },
+    "peg_ratio": {
+      "label": "PEG 비율",
+      "desc": "주가수익성장비율 필터",
+      "params": { "min_peg": "최소 PEG", "max_peg": "최대 PEG" }
+    },
+    "debt_to_equity": {
+      "label": "부채비율 (D/E)",
+      "desc": "부채비율 필터",
+      "params": { "min_de": "최소 D/E %", "max_de": "최대 D/E %" }
+    },
+    "current_ratio": {
+      "label": "유동비율",
+      "desc": "유동비율 (유동성) 필터",
+      "params": { "min_ratio": "최소 비율", "max_ratio": "최대 비율" }
+    },
+    "roe": {
+      "label": "ROE (자기자본이익률)",
+      "desc": "자기자본이익률 필터",
+      "params": { "min_roe": "최소 ROE %", "max_roe": "최대 ROE %" }
+    },
+    "piotroski_fscore": {
+      "label": "피오트로스키 F-스코어",
+      "desc": "피오트로스키 F-스코어 (0-9) 재무 건전성",
+      "params": { "min_score": "최소 F-스코어", "max_score": "최대 F-스코어" }
+    },
+    "altman_zscore": {
+      "label": "알트만 Z-스코어",
+      "desc": "알트만 Z-스코어 부도 위험 필터",
+      "params": { "min_zscore": "최소 Z-스코어", "max_zscore": "최대 Z-스코어" }
     }
   },
   "markets": {

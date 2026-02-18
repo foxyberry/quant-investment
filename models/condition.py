@@ -58,6 +58,26 @@ class ConditionType(Enum):
     # 복합
     CUSTOM = "custom"                   # 사용자 정의
 
+    # Fundamental (Valuation)
+    PE_RATIO = "pe_ratio"                 # P/E Ratio
+    PB_RATIO = "pb_ratio"                 # P/B Ratio
+    PS_RATIO = "ps_ratio"                 # P/S Ratio
+    PCF_RATIO = "pcf_ratio"              # P/CF Ratio
+    DIVIDEND_YIELD = "dividend_yield"     # Dividend Yield
+    EARNINGS_YIELD = "earnings_yield"     # Earnings Yield (E/P)
+    EBIT_EV = "ebit_ev"                  # EBIT/EV
+    FCF_YIELD = "fcf_yield"              # FCF Yield
+    PEG_RATIO = "peg_ratio"              # PEG Ratio
+
+    # Fundamental (Financial Health)
+    DEBT_TO_EQUITY = "debt_to_equity"    # D/E Ratio
+    CURRENT_RATIO = "current_ratio"       # Current Ratio
+    ROE = "roe"                           # Return on Equity
+
+    # Fundamental (Composite Scores)
+    PIOTROSKI_FSCORE = "piotroski_fscore" # Piotroski F-Score
+    ALTMAN_ZSCORE = "altman_zscore"       # Altman Z-Score
+
 
 # 각 조건 타입별 기본 파라미터
 DEFAULT_PARAMS: Dict[ConditionType, Dict[str, Any]] = {
@@ -79,6 +99,23 @@ DEFAULT_PARAMS: Dict[ConditionType, Dict[str, Any]] = {
     ConditionType.NEW_HIGH: {"period": 52},  # 52주 신고가
     ConditionType.NEW_LOW: {"period": 52},   # 52주 신저가
     ConditionType.CUSTOM: {},
+    # Fundamental (Valuation)
+    ConditionType.PE_RATIO: {"min_pe": None, "max_pe": 15.0},
+    ConditionType.PB_RATIO: {"min_pb": None, "max_pb": 1.5, "exclude_negative_bv": True},
+    ConditionType.PS_RATIO: {"min_ps": None, "max_ps": 2.0},
+    ConditionType.PCF_RATIO: {"min_pcf": None, "max_pcf": 10.0},
+    ConditionType.DIVIDEND_YIELD: {"min_yield": 3.0, "max_yield": None},
+    ConditionType.EARNINGS_YIELD: {"min_yield": 8.0, "max_yield": None},
+    ConditionType.EBIT_EV: {"min_ebit_ev": 10.0, "max_ebit_ev": None},
+    ConditionType.FCF_YIELD: {"min_fcf_yield": 5.0, "max_fcf_yield": None},
+    ConditionType.PEG_RATIO: {"min_peg": None, "max_peg": 1.0},
+    # Fundamental (Financial Health)
+    ConditionType.DEBT_TO_EQUITY: {"min_de": None, "max_de": 100.0},
+    ConditionType.CURRENT_RATIO: {"min_ratio": 1.0, "max_ratio": 3.0},
+    ConditionType.ROE: {"min_roe": 15.0, "max_roe": None},
+    # Fundamental (Composite)
+    ConditionType.PIOTROSKI_FSCORE: {"min_score": 7, "max_score": None},
+    ConditionType.ALTMAN_ZSCORE: {"min_zscore": 2.5, "max_zscore": None},
 }
 
 
