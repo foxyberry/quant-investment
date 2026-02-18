@@ -299,7 +299,8 @@
       "movingAverage": "이동평균",
       "rsi": "RSI",
       "accumulation": "매집",
-      "breakout": "돌파"
+      "breakout": "돌파",
+      "fundamental": "펀더멘털"
     },
     "min_price": {
       "label": "최소 가격",

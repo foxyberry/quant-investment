@@ -49,13 +49,13 @@ const edgeTypes = {
   labeled: LabeledEdge,
 };
 
-const GROUP_PADDING_TOP = 56;
-const GROUP_PADDING_BOTTOM = 20;
-const GROUP_PADDING_X = 16;
-const CHILD_SPACING = 8;
+const GROUP_PADDING_TOP = 60;
+const GROUP_PADDING_BOTTOM = 28;
+const GROUP_PADDING_X = 24;
+const CHILD_SPACING = 16;
 const CHILD_HEIGHT = 80;
-const GROUP_MIN_WIDTH = 280;
-const GROUP_MIN_HEIGHT = 200;
+const GROUP_MIN_WIDTH = 380;
+const GROUP_MIN_HEIGHT = 220;
 
 function getNodeId() {
   return `node_${crypto.randomUUID().slice(0, 8)}`;
@@ -82,11 +82,47 @@ function getNodeData(node: Node): StrategyNodeData {
   return node.data as unknown as StrategyNodeData;
 }
 
+// --- sessionStorage helpers for locale-switch persistence (#80) ---
+const STORAGE_KEY = 'strategy-canvas-state';
+
+interface CanvasSnapshot {
+  nodes: Node[];
+  edges: Edge[];
+  strategyName: string;
+  strategyDescription: string;
+  currentStrategyId: string | null;
+}
+
+function saveCanvasToSession(snapshot: CanvasSnapshot) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+  } catch { /* quota exceeded — ignore */ }
+}
+
+function loadCanvasFromSession(): CanvasSnapshot | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(STORAGE_KEY); // one-time restore
+    return JSON.parse(raw) as CanvasSnapshot;
+  } catch {
+    return null;
+  }
+}
+
 function StrategyPageInner() {
   const t = useTranslations('strategy');
   const { getDefaultParams } = useConditions();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Restore from sessionStorage if available (locale-switch persistence)
+  const restored = useRef(loadCanvasFromSession());
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    restored.current?.nodes ?? initialNodes
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    restored.current?.edges ?? initialEdges
+  );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [results, setResults] = useState<StrategyResultItem[] | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -97,9 +133,14 @@ function StrategyPageInner() {
   // Save/Load state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
-  const [strategyName, setStrategyName] = useState('');
-  const [strategyDescription, setStrategyDescription] = useState('');
-  const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(null);
+  const [strategyName, setStrategyName] = useState(restored.current?.strategyName ?? '');
+  const [strategyDescription, setStrategyDescription] = useState(restored.current?.strategyDescription ?? '');
+  const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(restored.current?.currentStrategyId ?? null);
+
+  // Persist canvas state to sessionStorage on every change (for locale-switch survival)
+  useEffect(() => {
+    saveCanvasToSession({ nodes, edges, strategyName, strategyDescription, currentStrategyId });
+  }, [nodes, edges, strategyName, strategyDescription, currentStrategyId]);
 
   const runStrategy = useRunStrategy();
   const savedStrategies = useSavedStrategies();
@@ -289,41 +330,80 @@ function StrategyPageInner() {
     });
   }, [nodes, setNodes]);
 
-  // Handle removing condition from group when dragged outside
+  // Handle drag-in / drag-out between groups and canvas
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
       onNodesChange(changes);
 
-      // Check position changes to detect drag-out from group
       for (const change of changes) {
         if (change.type === 'position' && change.dragging === false && change.id) {
           setNodes((nds) => {
             const node = nds.find((n) => n.id === change.id);
-            if (!node || !node.parentId) return nds;
+            if (!node) return nds;
 
-            const parent = nds.find((n) => n.id === node.parentId);
-            if (!parent) return nds;
+            // --- Drag-out: node already in a group, check if dragged outside ---
+            if (node.parentId) {
+              const parent = nds.find((n) => n.id === node.parentId);
+              if (!parent) return nds;
 
-            // Check if node was dragged outside parent bounds
-            const pw = (parent.style?.width as number) || GROUP_MIN_WIDTH;
-            const ph = (parent.style?.height as number) || GROUP_MIN_HEIGHT;
-            const nx = node.position.x;
-            const ny = node.position.y;
+              const pw = (parent.style?.width as number) || GROUP_MIN_WIDTH;
+              const ph = (parent.style?.height as number) || GROUP_MIN_HEIGHT;
+              const nx = node.position.x;
+              const ny = node.position.y;
 
-            if (nx < -50 || ny < -50 || nx > pw + 50 || ny > ph + 50) {
-              // Remove from group - convert to absolute position
-              return nds.map((n) => {
-                if (n.id !== change.id) return n;
-                return {
-                  ...n,
-                  position: {
-                    x: parent.position.x + nx,
-                    y: parent.position.y + ny,
-                  },
-                  parentId: undefined,
-                  extent: undefined,
-                };
-              });
+              if (nx < -50 || ny < -50 || nx > pw + 50 || ny > ph + 50) {
+                return nds.map((n) => {
+                  if (n.id !== change.id) return n;
+                  return {
+                    ...n,
+                    position: {
+                      x: parent.position.x + nx,
+                      y: parent.position.y + ny,
+                    },
+                    parentId: undefined,
+                    extent: undefined,
+                  };
+                });
+              }
+              return nds;
+            }
+
+            // --- Drag-in: standalone node dropped inside a group ---
+            // Only condition and group nodes can enter a group
+            if (node.type !== 'conditionNode' && node.type !== 'groupNode') return nds;
+
+            const groupNodes = nds.filter((n) => n.type === 'groupNode' && n.id !== change.id);
+            for (const group of groupNodes) {
+              const gx = group.position.x;
+              const gy = group.position.y;
+              const gw = (group.style?.width as number) || GROUP_MIN_WIDTH;
+              const gh = (group.style?.height as number) || GROUP_MIN_HEIGHT;
+
+              if (
+                node.position.x >= gx &&
+                node.position.x <= gx + gw &&
+                node.position.y >= gy &&
+                node.position.y <= gy + gh
+              ) {
+                // Calculate stacked position within group
+                const childrenInGroup = nds.filter((n) => n.parentId === group.id);
+                const relY = GROUP_PADDING_TOP + childrenInGroup.reduce((acc, child) => {
+                  const h = child.type === 'groupNode'
+                    ? ((child.style?.height as number) || GROUP_MIN_HEIGHT)
+                    : CHILD_HEIGHT;
+                  return acc + h + CHILD_SPACING;
+                }, 0);
+
+                return nds.map((n) => {
+                  if (n.id !== change.id) return n;
+                  return {
+                    ...n,
+                    position: { x: GROUP_PADDING_X, y: relY },
+                    parentId: group.id,
+                    extent: 'parent' as const,
+                  };
+                });
+              }
             }
             return nds;
           });
