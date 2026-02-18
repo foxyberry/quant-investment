@@ -511,6 +511,11 @@
       "label": "알트만 Z-스코어",
       "desc": "알트만 Z-스코어 부도 위험 필터",
       "params": { "min_zscore": "최소 Z-스코어", "max_zscore": "최대 Z-스코어" }
+    },
+    "roic": {
+      "label": "투하자본수익률(ROIC)",
+      "description": "투하자본수익률 필터",
+      "params": { "min_roic": "최소 ROIC %", "max_roic": "최대 ROIC %" }
     }
   },
   "markets": {

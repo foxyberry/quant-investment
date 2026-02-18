@@ -13,7 +13,7 @@ Usage:
         DividendYieldCondition, EarningsYieldCondition, EbitEvCondition,
         FcfYieldCondition, PegRatioCondition, DebtToEquityCondition,
         CurrentRatioCondition, RoeCondition, PiotroskiFScoreCondition,
-        AltmanZScoreCondition, clear_info_cache,
+        AltmanZScoreCondition, RoicCondition, clear_info_cache,
     )
 """
 
@@ -1354,3 +1354,94 @@ class AltmanZScoreCondition(BaseCondition):
 
     def __repr__(self) -> str:
         return f"AltmanZScoreCondition(min_zscore={self.min_zscore}, max_zscore={self.max_zscore})"
+
+
+# ===================================================================
+# 15. RoicCondition
+# ===================================================================
+
+@register_condition(
+    key="roic",
+    label="ROIC",
+    description="Return on Invested Capital filter",
+    category="Fundamental",
+    params=[
+        {"name": "min_roic", "type": "float", "default": 15.0, "description": "Min ROIC %"},
+        {"name": "max_roic", "type": "float", "default": None, "description": "Max ROIC %"},
+    ],
+)
+class RoicCondition(BaseCondition):
+    """Return on Invested Capital screening condition.
+
+    ROIC = NOPAT / Invested Capital * 100
+
+    Where:
+        NOPAT = Operating Income * (1 - Tax Rate)
+        Invested Capital = Total Debt + Total Stockholder Equity
+
+    Excludes tickers with non-positive invested capital.
+    """
+
+    def __init__(
+        self,
+        min_roic: Optional[float] = 15.0,
+        max_roic: Optional[float] = None,
+    ):
+        """
+        Args:
+            min_roic: Minimum ROIC in % (inclusive).
+            max_roic: Maximum ROIC in % (inclusive).
+        """
+        self.min_roic = min_roic
+        self.max_roic = max_roic
+
+    @property
+    def name(self) -> str:
+        return f"roic_min{self.min_roic}"
+
+    @property
+    def required_days(self) -> int:
+        return 1
+
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        info = _get_info(ticker)
+
+        operating_income = info.get("operatingIncome") or info.get("ebitda", 0)
+        if not operating_income:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "No operating income data"},
+            )
+
+        tax_rate = info.get("effectiveTaxRate") or 0.21
+        nopat = operating_income * (1 - tax_rate)
+
+        total_debt = info.get("totalDebt", 0)
+        total_equity = info.get("totalStockholderEquity", 0)
+        invested_capital = total_debt + total_equity
+
+        if invested_capital <= 0:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Non-positive invested capital"},
+            )
+
+        roic_pct = (nopat / invested_capital) * 100
+        matched = _in_range(roic_pct, self.min_roic, self.max_roic)
+
+        return ConditionResult(
+            matched=matched,
+            condition_name=self.name,
+            details={
+                "roic_pct": float(roic_pct),
+                "nopat": float(nopat),
+                "invested_capital": float(invested_capital),
+                "min_roic": self.min_roic,
+                "max_roic": self.max_roic,
+            },
+        )
+
+    def __repr__(self) -> str:
+        return f"RoicCondition(min_roic={self.min_roic}%, max_roic={self.max_roic}%)"
