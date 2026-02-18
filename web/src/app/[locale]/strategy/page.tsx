@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import {
   ReactFlow,
   addEdge,
+  reconnectEdge,
   useNodesState,
   useEdgesState,
   Controls,
@@ -115,29 +116,36 @@ function StrategyPageInner() {
   const locale = useLocale();
   const { getDefaultParams } = useConditions();
 
-  // Restore from sessionStorage if available (locale-switch persistence)
-  const restored = useRef(loadCanvasFromSession());
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(
-    restored.current?.nodes ?? initialNodes
-  );
-  const [edges, setEdges, onEdgesChange] = useEdgesState(
-    restored.current?.edges ?? initialEdges
-  );
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [results, setResults] = useState<StrategyResultItem[] | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [showBacktest, setShowBacktest] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const reconnectingEdgeId = useRef<string | null>(null);
 
   // Save/Load state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
-  const [strategyName, setStrategyName] = useState(restored.current?.strategyName ?? '');
-  const [strategyDescription, setStrategyDescription] = useState(restored.current?.strategyDescription ?? '');
-  const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(restored.current?.currentStrategyId ?? null);
+  const [strategyName, setStrategyName] = useState('');
+  const [strategyDescription, setStrategyDescription] = useState('');
+  const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(null);
   const [isResultPanelVisible, setIsResultPanelVisible] = useState(false);
+
+  // Restore from sessionStorage after mount (locale-switch persistence)
+  useEffect(() => {
+    const restored = loadCanvasFromSession();
+    if (restored) {
+      setNodes(restored.nodes);
+      setEdges(restored.edges);
+      setStrategyName(restored.strategyName);
+      setStrategyDescription(restored.strategyDescription);
+      setCurrentStrategyId(restored.currentStrategyId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persist canvas state to sessionStorage on every change (for locale-switch survival)
   useEffect(() => {
@@ -149,6 +157,66 @@ function StrategyPageInner() {
   const saveStrategy = useSaveStrategy();
   const updateStrategy = useUpdateStrategy();
   const { toast, showToast, hideToast } = useToast();
+
+  const isValidConnection = useCallback(
+    (connection: Edge | Connection) => {
+      const { source, target, sourceHandle, targetHandle } = connection;
+
+      if (!source || !target) return false;
+      if (source === target) return false;
+
+      const sourceNode = nodes.find((node) => node.id === source);
+      const targetNode = nodes.find((node) => node.id === target);
+      if (!sourceNode || !targetNode) return false;
+
+      // Guard explicit handle ids used inside groups.
+      if (sourceHandle === 'top' || targetHandle === 'bottom') return false;
+
+      const sourceType = sourceNode.type;
+      const targetType = targetNode.type;
+
+      // Exclude the edge being reconnected from checks
+      const activeEdges = reconnectingEdgeId.current
+        ? edges.filter((e) => e.id !== reconnectingEdgeId.current)
+        : edges;
+
+      // Each handle can only have one connection (both source and target)
+      const sourceAlreadyConnected = activeEdges.some(
+        (e) => e.source === source && (e.sourceHandle ?? null) === (sourceHandle ?? null)
+      );
+      const targetAlreadyConnected = activeEdges.some(
+        (e) => e.target === target && (e.targetHandle ?? null) === (targetHandle ?? null)
+      );
+      if (sourceAlreadyConnected || targetAlreadyConnected) return false;
+
+      if (sourceType === 'universeNode') {
+        return targetType === 'conditionNode';
+      }
+
+      if (sourceType === 'conditionNode') {
+        if (targetType !== 'conditionNode' && targetType !== 'outputNode') return false;
+
+        // Prevent cycles: check if target can already reach source via existing edges
+        const visited = new Set<string>();
+        const queue = [target];
+        while (queue.length > 0) {
+          const current = queue.pop()!;
+          if (current === source) return false; // cycle detected
+          if (visited.has(current)) continue;
+          visited.add(current);
+          for (const edge of activeEdges) {
+            if (edge.source === current) {
+              queue.push(edge.target);
+            }
+          }
+        }
+        return true;
+      }
+
+      return false;
+    },
+    [nodes, edges]
+  );
 
   useEffect(() => {
     const shouldShowPanel = runStrategy.isPending || (!!results && results.length > 0);
@@ -169,7 +237,31 @@ function StrategyPageInner() {
 
   const onConnect = useCallback(
     (connection: Connection) => {
+      if (!isValidConnection(connection)) return;
       setEdges((eds) => addEdge(connection, eds));
+    },
+    [isValidConnection, setEdges]
+  );
+
+  const onReconnectStart = useCallback((_: unknown, edge: Edge) => {
+    reconnectingEdgeId.current = edge.id;
+  }, []);
+
+  const onReconnect = useCallback(
+    (oldEdge: Edge, newConnection: Connection) => {
+      reconnectingEdgeId.current = null;
+      setEdges((eds) => reconnectEdge(oldEdge, newConnection, eds));
+    },
+    [setEdges]
+  );
+
+  const onReconnectEnd = useCallback(
+    (_: unknown, edge: Edge) => {
+      if (reconnectingEdgeId.current) {
+        // Reconnect failed — remove the dangling edge
+        setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+      }
+      reconnectingEdgeId.current = null;
     },
     [setEdges]
   );
@@ -767,11 +859,16 @@ function StrategyPageInner() {
             onNodesChange={handleNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onReconnectStart={onReconnectStart}
+            onReconnect={onReconnect}
+            onReconnectEnd={onReconnectEnd}
+            edgesReconnectable
             onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
             onInit={setReactFlowInstance}
             onDragOver={onDragOver}
             onDrop={onDrop}
+            isValidConnection={isValidConnection}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
