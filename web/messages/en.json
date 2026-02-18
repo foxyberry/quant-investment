@@ -165,6 +165,9 @@
     "lastRunJustNow": "Last run: Just now",
     "lastRunNever": "Last run: Never",
     "stocksMatched": "{count} stocks matched",
+    "runningStatus": "Running...",
+    "runningStrategy": "Running strategy...",
+    "runningStrategyNote": "This may take a few seconds",
     "executionFailed": "Execution failed",
     "deploySuccess": "{count} stocks matched out of {total}",
     "deployError": "Strategy execution failed",
@@ -558,7 +561,7 @@
     },
     "roic": {
       "label": "ROIC",
-      "description": "Return on Invested Capital filter",
+      "desc": "Return on Invested Capital filter",
       "params": { "min_roic": "Min ROIC %", "max_roic": "Max ROIC %" }
     }
   },
