@@ -217,6 +217,7 @@
     "notInvertFirst": "NOT (첫 번째 입력 반전)",
     "outputInstruction": "조건 노드를 이 출력에 연결한 후 \"전략 배포\"를 클릭하여 스크리닝을 실행하세요.",
     "removeNode": "노드 삭제",
+    "range": "범위",
     "applyChanges": "변경 적용",
     "exportJson": "JSON 내보내기",
     "nodeLimit": "노드 제한: {count}/{max}",
@@ -237,7 +238,9 @@
     "deleteConfirm": "이 전략을 삭제할까요?",
     "unsavedChanges": "저장되지 않은 변경 사항이 있습니다",
     "lastSaved": "마지막 저장: {time}",
-    "strategyNameRequired": "전략 이름을 입력하세요"
+    "strategyNameRequired": "전략 이름을 입력하세요",
+    "deploySuccess": "{total}개 종목 중 {count}개 매칭",
+    "deployError": "전략 실행 실패"
   },
   "analysis": {
     "title": "차트 & 분석",
@@ -513,6 +516,11 @@
       "label": "알트만 Z-스코어",
       "desc": "알트만 Z-스코어 부도 위험 필터",
       "params": { "min_zscore": "최소 Z-스코어", "max_zscore": "최대 Z-스코어" }
+    },
+    "roic": {
+      "label": "투하자본수익률(ROIC)",
+      "description": "투하자본수익률 필터",
+      "params": { "min_roic": "최소 ROIC %", "max_roic": "최대 ROIC %" }
     }
   },
   "markets": {

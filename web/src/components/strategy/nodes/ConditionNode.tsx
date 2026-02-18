@@ -10,13 +10,24 @@ import { useConditions } from '@/contexts/ConditionsContext';
 
 function ConditionNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
+  const tCond = useTranslations('conditions');
   const { getConditionMeta } = useConditions();
   const nodeData = data as unknown as StrategyNodeData;
   const meta = nodeData.condition_type
     ? getConditionMeta(nodeData.condition_type)
     : null;
 
-  const label = meta?.label || nodeData.label || t('condition');
+  const condKey = nodeData.condition_type || '';
+  let label: string;
+  if (condKey) {
+    try {
+      label = tCond(`${condKey}.label`);
+    } catch {
+      label = meta?.label || nodeData.label || t('condition');
+    }
+  } else {
+    label = nodeData.label || t('condition');
+  }
 
   const nodeId = useNodeId();
   const { getNode } = useReactFlow();
@@ -48,6 +59,14 @@ function ConditionNode({ data, selected }: NodeProps) {
           type="target"
           position={Position.Left}
           className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-left-[7px] hover:!scale-125 !transition-transform"
+        />
+      )}
+      {isInsideGroup && (
+        <Handle
+          type="target"
+          id="top"
+          position={Position.Top}
+          className="!w-2.5 !h-2.5 !bg-[#1313ec]/60 !border-2 !border-white dark:!border-[#1e1e1f] !-top-[5px] hover:!scale-125 !transition-transform"
         />
       )}
 
@@ -83,6 +102,14 @@ function ConditionNode({ data, selected }: NodeProps) {
           type="source"
           position={Position.Right}
           className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-right-[7px] hover:!scale-125 !transition-transform"
+        />
+      )}
+      {isInsideGroup && (
+        <Handle
+          type="source"
+          id="bottom"
+          position={Position.Bottom}
+          className="!w-2.5 !h-2.5 !bg-[#1313ec]/60 !border-2 !border-white dark:!border-[#1e1e1f] !-bottom-[5px] hover:!scale-125 !transition-transform"
         />
       )}
     </div>

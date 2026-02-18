@@ -30,7 +30,7 @@ import LabeledEdge from '@/components/strategy/edges/LabeledEdge';
 import NodePalette from '@/components/strategy/NodePalette';
 import PropertiesPanel from '@/components/strategy/PropertiesPanel';
 import BacktestPanel from '@/components/backtest/BacktestPanel';
-import { Toast, useToast } from '@/components/ui/Toast';
+import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
@@ -275,6 +275,26 @@ function StrategyPageInner() {
           };
 
           setNodes((nds) => [...nds, newNode]);
+
+          // Auto-create internal "Then" edge from previous child
+          if (childrenInGroup.length > 0) {
+            const prevChild = childrenInGroup[childrenInGroup.length - 1];
+            const isLast = true; // new node is always last
+            setEdges((eds) => [
+              ...eds,
+              {
+                id: `internal_${prevChild.id}_${newNodeId}`,
+                source: prevChild.id,
+                sourceHandle: 'bottom',
+                target: newNodeId,
+                targetHandle: 'top',
+                type: 'labeled',
+                animated: false,
+                data: { label: 'Then' },
+                style: { stroke: '#1313ec', strokeWidth: 1.5, opacity: 0.4, strokeDasharray: '4 4' },
+              },
+            ]);
+          }
           return;
         }
       }
@@ -297,47 +317,50 @@ function StrategyPageInner() {
     [reactFlowInstance, setNodes, findGroupAtPosition, nodes, showToast, t]
   );
 
-  // Stable dependency for auto-resize: count of child nodes
+  // Auto-resize group nodes when children change (only expand, never shrink)
   const childNodeCount = useMemo(
     () => nodes.filter((n) => n.parentId).length,
     [nodes]
   );
 
-  // Auto-expand group nodes when children overflow (only expand, never shrink)
   useEffect(() => {
-    setNodes((nds) => {
+    setNodes((currentNodes) => {
       let changed = false;
-      const updatedNodes = nds.map((n) => {
-        if (n.type !== 'groupNode') return n;
-        const children = nds.filter((c) => c.parentId === n.id);
-        if (children.length === 0) return n;
+      const updated = currentNodes.map((node) => {
+        if (node.type !== 'groupNode') return node;
+
+        const children = currentNodes.filter((n) => n.parentId === node.id);
+        if (children.length === 0) return node;
+
         const totalChildrenHeight = children.reduce((acc, child) => {
           const h = child.type === 'groupNode'
             ? ((child.style?.height as number) || GROUP_MIN_HEIGHT)
             : CHILD_HEIGHT;
           return acc + h + CHILD_SPACING;
         }, 0);
-        const minHeight = Math.max(
+
+        const newHeight = Math.max(
           GROUP_MIN_HEIGHT,
           GROUP_PADDING_TOP + totalChildrenHeight + GROUP_PADDING_BOTTOM
         );
-        const minWidth = Math.max(GROUP_MIN_WIDTH, 320);
-        const curH = (n.style?.height as number) || GROUP_MIN_HEIGHT;
-        const curW = (n.style?.width as number) || GROUP_MIN_WIDTH;
-        if (curH < minHeight || curW < minWidth) {
+        const newWidth = Math.max(GROUP_MIN_WIDTH, GROUP_MIN_WIDTH);
+        const curH = Number(node.style?.height || GROUP_MIN_HEIGHT);
+        const curW = Number(node.style?.width || GROUP_MIN_WIDTH);
+
+        if (curH < newHeight || curW < newWidth) {
           changed = true;
           return {
-            ...n,
+            ...node,
             style: {
-              ...n.style,
-              width: Math.max(curW, minWidth),
-              height: Math.max(curH, minHeight),
+              ...node.style,
+              width: Math.max(curW, newWidth),
+              height: Math.max(curH, newHeight),
             },
           };
         }
-        return n;
+        return node;
       });
-      return changed ? updatedNodes : nds;
+      return changed ? updated : currentNodes;
     });
   }, [childNodeCount, setNodes]);
 
@@ -405,15 +428,26 @@ function StrategyPageInner() {
                   return acc + h + CHILD_SPACING;
                 }, 0);
 
-                return nds.map((n) => {
-                  if (n.id !== change.id) return n;
-                  return {
-                    ...n,
-                    position: { x: GROUP_PADDING_X, y: relY },
-                    parentId: group.id,
-                    extent: 'parent' as const,
-                  };
-                });
+                // Update the node with parent relationship
+                const updatedChild: Node = {
+                  ...node,
+                  position: { x: GROUP_PADDING_X, y: relY },
+                  parentId: group.id,
+                  extent: 'parent' as const,
+                };
+
+                // ReactFlow requires parent nodes to appear before their
+                // children in the nodes array.  Rebuild the array so that
+                // the parent (group) always precedes the newly-adopted child.
+                const rest = nds.filter(
+                  (n) => n.id !== change.id
+                );
+                const parentIdx = rest.findIndex(
+                  (n) => n.id === group.id
+                );
+                // Insert the child right after its parent
+                rest.splice(parentIdx + 1, 0, updatedChild);
+                return rest;
               }
             }
             return nds;
@@ -480,7 +514,7 @@ function StrategyPageInner() {
         },
       }
     );
-  }, [nodes, edges, runStrategy, setNodes, t]);
+  }, [nodes, edges, runStrategy, setNodes, showToast, t]);
 
   const handleClear = useCallback(() => {
     setNodes(initialNodes);
@@ -748,6 +782,11 @@ function StrategyPageInner() {
             node={currentSelectedNode}
             onUpdate={handleUpdateNode}
             onClose={() => setSelectedNodeId(null)}
+            onDeleteNode={(nodeId) => {
+              setNodes((nds) => nds.filter((n) => n.id !== nodeId && n.parentId !== nodeId));
+              setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+              setSelectedNodeId(null);
+            }}
           />
         )}
       </div>
@@ -937,7 +976,7 @@ function StrategyPageInner() {
       {toast && (
         <Toast
           message={toast.message}
-          type={toast.type as 'error' | 'warning' | 'info'}
+          type={toast.type as ToastType}
           onClose={hideToast}
         />
       )}
