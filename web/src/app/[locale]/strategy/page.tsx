@@ -173,11 +173,14 @@ function StrategyPageInner() {
       const sourceType = sourceNode.type;
       const targetType = targetNode.type;
 
-      // Each source handle can only have one outgoing connection
-      const handleAlreadyConnected = edges.some(
+      // Each handle can only have one connection (both source and target)
+      const sourceAlreadyConnected = edges.some(
         (e) => e.source === source && (e.sourceHandle ?? null) === (sourceHandle ?? null)
       );
-      if (handleAlreadyConnected) return false;
+      const targetAlreadyConnected = edges.some(
+        (e) => e.target === target && (e.targetHandle ?? null) === (targetHandle ?? null)
+      );
+      if (sourceAlreadyConnected || targetAlreadyConnected) return false;
 
       if (sourceType === 'universeNode') {
         return targetType === 'conditionNode';
