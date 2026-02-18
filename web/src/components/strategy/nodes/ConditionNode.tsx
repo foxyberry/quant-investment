@@ -50,6 +50,14 @@ function ConditionNode({ data, selected }: NodeProps) {
           className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-left-[7px] hover:!scale-125 !transition-transform"
         />
       )}
+      {isInsideGroup && (
+        <Handle
+          type="target"
+          id="top"
+          position={Position.Top}
+          className="!w-2.5 !h-2.5 !bg-[#1313ec]/60 !border-2 !border-white dark:!border-[#1e1e1f] !-top-[5px] hover:!scale-125 !transition-transform"
+        />
+      )}
 
       {/* Header bar */}
       <div className="flex items-center justify-between px-3 py-1.5 rounded-t-[10px] bg-blue-50 dark:bg-blue-500/10 border-b border-blue-100 dark:border-blue-500/20">
@@ -83,6 +91,14 @@ function ConditionNode({ data, selected }: NodeProps) {
           type="source"
           position={Position.Right}
           className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-right-[7px] hover:!scale-125 !transition-transform"
+        />
+      )}
+      {isInsideGroup && (
+        <Handle
+          type="source"
+          id="bottom"
+          position={Position.Bottom}
+          className="!w-2.5 !h-2.5 !bg-[#1313ec]/60 !border-2 !border-white dark:!border-[#1e1e1f] !-bottom-[5px] hover:!scale-125 !transition-transform"
         />
       )}
     </div>
