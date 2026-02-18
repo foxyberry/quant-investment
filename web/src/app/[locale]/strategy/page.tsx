@@ -428,15 +428,26 @@ function StrategyPageInner() {
                   return acc + h + CHILD_SPACING;
                 }, 0);
 
-                return nds.map((n) => {
-                  if (n.id !== change.id) return n;
-                  return {
-                    ...n,
-                    position: { x: GROUP_PADDING_X, y: relY },
-                    parentId: group.id,
-                    extent: 'parent' as const,
-                  };
-                });
+                // Update the node with parent relationship
+                const updatedChild: Node = {
+                  ...node,
+                  position: { x: GROUP_PADDING_X, y: relY },
+                  parentId: group.id,
+                  extent: 'parent' as const,
+                };
+
+                // ReactFlow requires parent nodes to appear before their
+                // children in the nodes array.  Rebuild the array so that
+                // the parent (group) always precedes the newly-adopted child.
+                const rest = nds.filter(
+                  (n) => n.id !== change.id
+                );
+                const parentIdx = rest.findIndex(
+                  (n) => n.id === group.id
+                );
+                // Insert the child right after its parent
+                rest.splice(parentIdx + 1, 0, updatedChild);
+                return rest;
               }
             }
             return nds;
