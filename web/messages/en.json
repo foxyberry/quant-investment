@@ -296,7 +296,7 @@
     "categories": {
       "price": "Price",
       "volume": "Volume",
-      "movingAverage": "Moving Average",
+      "movingAverage": "Moving Avg",
       "rsi": "RSI",
       "accumulation": "Accumulation",
       "breakout": "Breakout",

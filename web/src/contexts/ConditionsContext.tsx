@@ -16,12 +16,36 @@ interface ConditionsContextValue {
 
 const ConditionsContext = createContext<ConditionsContextValue | null>(null);
 
+// Normalize category key to match i18n message keys (camelCase, lowercase first char).
+// e.g. "Moving Average" -> "movingAverage", "Accumulation" -> "accumulation", "RSI" -> "rsi"
+function normalizeCategoryKey(raw: string): string {
+  // Already camelCase (e.g. "movingAverage") — return as-is if lowercase first char
+  if (/^[a-z]/.test(raw) && !raw.includes(' ')) return raw;
+  // Multi-word with spaces: "Moving Average" -> "movingAverage"
+  if (raw.includes(' ')) {
+    return raw
+      .split(' ')
+      .map((w, i) =>
+        i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+      )
+      .join('');
+  }
+  // Single capitalized word: "Accumulation" -> "accumulation", but keep "RSI" -> "rsi"
+  if (raw === raw.toUpperCase()) return raw.toLowerCase();
+  return raw.charAt(0).toLowerCase() + raw.slice(1);
+}
+
 export function ConditionsProvider({ children }: { children: React.ReactNode }) {
   const { data, isLoading, error } = useStrategyConditions();
 
   const value = useMemo<ConditionsContextValue>(() => {
-    const conditions = data?.conditions ?? [];
-    const categories = data?.categories ?? [];
+    // Normalize category keys on conditions for i18n compatibility
+    const rawConditions = data?.conditions ?? [];
+    const conditions = rawConditions.map((c) => ({
+      ...c,
+      category: normalizeCategoryKey(c.category),
+    }));
+    const categories = (data?.categories ?? []).map(normalizeCategoryKey);
 
     const conditionMap = new Map<string, StrategyConditionInfo>();
     for (const c of conditions) {

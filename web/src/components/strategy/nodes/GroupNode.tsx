@@ -77,13 +77,13 @@ function GroupNode({ id, data, selected }: NodeProps) {
           ? 'shadow-[0_0_0_2px_rgba(19,19,236,0.3)] ring-2 ring-[#1313ec]/10'
           : 'shadow-sm hover:shadow-md'
       }`}
-      style={{ width: '100%', height: '100%', minWidth: 280, minHeight: 200 }}
+      style={{ width: '100%', height: '100%', minWidth: 380, minHeight: 220 }}
       onDragOver={(e) => e.preventDefault()}
     >
       <NodeResizer
         isVisible={selected}
-        minWidth={280}
-        minHeight={200}
+        minWidth={380}
+        minHeight={220}
         color={resizerColor}
         lineStyle={{ borderColor: resizerColor }}
       />
