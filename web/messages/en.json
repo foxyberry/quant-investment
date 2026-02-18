@@ -511,6 +511,11 @@
       "label": "Altman Z-Score",
       "desc": "Altman Z-Score bankruptcy risk filter",
       "params": { "min_zscore": "Min Z-Score", "max_zscore": "Max Z-Score" }
+    },
+    "roic": {
+      "label": "ROIC",
+      "description": "Return on Invested Capital filter",
+      "params": { "min_roic": "Min ROIC %", "max_roic": "Max ROIC %" }
     }
   },
   "markets": {

@@ -77,6 +77,7 @@ class ConditionType(Enum):
     # Fundamental (Composite Scores)
     PIOTROSKI_FSCORE = "piotroski_fscore" # Piotroski F-Score
     ALTMAN_ZSCORE = "altman_zscore"       # Altman Z-Score
+    ROIC = "roic"                         # Return on Invested Capital
 
 
 # 각 조건 타입별 기본 파라미터
@@ -116,6 +117,7 @@ DEFAULT_PARAMS: Dict[ConditionType, Dict[str, Any]] = {
     # Fundamental (Composite)
     ConditionType.PIOTROSKI_FSCORE: {"min_score": 7, "max_score": None},
     ConditionType.ALTMAN_ZSCORE: {"min_zscore": 2.5, "max_zscore": None},
+    ConditionType.ROIC: {"min_roic": 15.0, "max_roic": None},
 }
 
 
