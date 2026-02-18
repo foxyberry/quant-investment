@@ -10,13 +10,24 @@ import { useConditions } from '@/contexts/ConditionsContext';
 
 function ConditionNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
+  const tCond = useTranslations('conditions');
   const { getConditionMeta } = useConditions();
   const nodeData = data as unknown as StrategyNodeData;
   const meta = nodeData.condition_type
     ? getConditionMeta(nodeData.condition_type)
     : null;
 
-  const label = meta?.label || nodeData.label || t('condition');
+  const condKey = nodeData.condition_type || '';
+  let label: string;
+  if (condKey) {
+    try {
+      label = tCond(`${condKey}.label`);
+    } catch {
+      label = meta?.label || nodeData.label || t('condition');
+    }
+  } else {
+    label = nodeData.label || t('condition');
+  }
 
   const nodeId = useNodeId();
   const { getNode } = useReactFlow();
