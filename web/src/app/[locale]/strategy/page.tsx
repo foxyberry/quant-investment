@@ -124,6 +124,7 @@ function StrategyPageInner() {
   const [showBacktest, setShowBacktest] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const reconnectingEdgeId = useRef<string | null>(null);
 
   // Save/Load state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -174,11 +175,16 @@ function StrategyPageInner() {
       const sourceType = sourceNode.type;
       const targetType = targetNode.type;
 
+      // Exclude the edge being reconnected from checks
+      const activeEdges = reconnectingEdgeId.current
+        ? edges.filter((e) => e.id !== reconnectingEdgeId.current)
+        : edges;
+
       // Each handle can only have one connection (both source and target)
-      const sourceAlreadyConnected = edges.some(
+      const sourceAlreadyConnected = activeEdges.some(
         (e) => e.source === source && (e.sourceHandle ?? null) === (sourceHandle ?? null)
       );
-      const targetAlreadyConnected = edges.some(
+      const targetAlreadyConnected = activeEdges.some(
         (e) => e.target === target && (e.targetHandle ?? null) === (targetHandle ?? null)
       );
       if (sourceAlreadyConnected || targetAlreadyConnected) return false;
@@ -198,7 +204,7 @@ function StrategyPageInner() {
           if (current === source) return false; // cycle detected
           if (visited.has(current)) continue;
           visited.add(current);
-          for (const edge of edges) {
+          for (const edge of activeEdges) {
             if (edge.source === current) {
               queue.push(edge.target);
             }
@@ -237,12 +243,27 @@ function StrategyPageInner() {
     [isValidConnection, setEdges]
   );
 
+  const onReconnectStart = useCallback((_: unknown, edge: Edge) => {
+    reconnectingEdgeId.current = edge.id;
+  }, []);
+
   const onReconnect = useCallback(
     (oldEdge: Edge, newConnection: Connection) => {
-      if (!isValidConnection(newConnection)) return;
+      reconnectingEdgeId.current = null;
       setEdges((eds) => reconnectEdge(oldEdge, newConnection, eds));
     },
-    [isValidConnection, setEdges]
+    [setEdges]
+  );
+
+  const onReconnectEnd = useCallback(
+    (_: unknown, edge: Edge) => {
+      if (reconnectingEdgeId.current) {
+        // Reconnect failed — remove the dangling edge
+        setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+      }
+      reconnectingEdgeId.current = null;
+    },
+    [setEdges]
   );
 
   const onNodeClick = useCallback(
@@ -838,7 +859,9 @@ function StrategyPageInner() {
             onNodesChange={handleNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onReconnectStart={onReconnectStart}
             onReconnect={onReconnect}
+            onReconnectEnd={onReconnectEnd}
             edgesReconnectable
             onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
