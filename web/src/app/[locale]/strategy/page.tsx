@@ -148,11 +148,42 @@ function StrategyPageInner() {
   const updateStrategy = useUpdateStrategy();
   const { toast, showToast, hideToast } = useToast();
 
+  const isValidConnection = useCallback(
+    (connection: Connection) => {
+      const { source, target, sourceHandle, targetHandle } = connection;
+
+      if (!source || !target) return false;
+      if (source === target) return false;
+
+      const sourceNode = nodes.find((node) => node.id === source);
+      const targetNode = nodes.find((node) => node.id === target);
+      if (!sourceNode || !targetNode) return false;
+
+      // Guard explicit handle ids used inside groups.
+      if (sourceHandle === 'top' || targetHandle === 'bottom') return false;
+
+      const sourceType = sourceNode.type;
+      const targetType = targetNode.type;
+
+      if (sourceType === 'universeNode') {
+        return targetType === 'conditionNode';
+      }
+
+      if (sourceType === 'conditionNode') {
+        return targetType === 'conditionNode' || targetType === 'outputNode';
+      }
+
+      return false;
+    },
+    [nodes]
+  );
+
   const onConnect = useCallback(
     (connection: Connection) => {
+      if (!isValidConnection(connection)) return;
       setEdges((eds) => addEdge(connection, eds));
     },
-    [setEdges]
+    [isValidConnection, setEdges]
   );
 
   const onNodeClick = useCallback(
@@ -748,6 +779,7 @@ function StrategyPageInner() {
             onInit={setReactFlowInstance}
             onDragOver={onDragOver}
             onDrop={onDrop}
+            isValidConnection={isValidConnection}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             fitView
