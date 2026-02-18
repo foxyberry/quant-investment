@@ -178,12 +178,28 @@ function StrategyPageInner() {
       }
 
       if (sourceType === 'conditionNode') {
-        return targetType === 'conditionNode' || targetType === 'outputNode';
+        if (targetType !== 'conditionNode' && targetType !== 'outputNode') return false;
+
+        // Prevent cycles: check if target can already reach source via existing edges
+        const visited = new Set<string>();
+        const queue = [target];
+        while (queue.length > 0) {
+          const current = queue.pop()!;
+          if (current === source) return false; // cycle detected
+          if (visited.has(current)) continue;
+          visited.add(current);
+          for (const edge of edges) {
+            if (edge.source === current) {
+              queue.push(edge.target);
+            }
+          }
+        }
+        return true;
       }
 
       return false;
     },
-    [nodes]
+    [nodes, edges]
   );
 
   useEffect(() => {
