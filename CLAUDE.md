@@ -336,3 +336,26 @@ python scripts/live/portfolio_sell_checker.py
 - 같은 디렉토리 내 작업은 **순차** 실행
 - `utils/`, `config/` 등 공유 모듈 수정 시 **단일 팀만** 수정, 이후 QA 검수
 - API 계약 변경, 자동매매 로직, 공용 모듈 변경은 반대 의견 전담 역할 리뷰를 **반드시** 거친다
+
+### Agent Team 활성화 설정
+
+Agent Team 기능은 기본 비활성화 상태이며, 아래 설정이 필요합니다.
+
+**`~/.claude/settings.json`에 추가:**
+```json
+{
+  "teammateMode": "auto",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}
+```
+
+| 설정 | 값 | 설명 |
+|------|-----|------|
+| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | `"1"` | Agent Team 기능 활성화 (env 또는 settings.json) |
+| `teammateMode` | `"auto"` | tmux 세션이면 split pane, 아니면 in-process |
+| `teammateMode` | `"in-process"` | 메인 터미널에서 모든 teammate 실행 |
+| `teammateMode` | `"tmux"` | 각 teammate를 별도 pane으로 표시 |
+
+**참고**: [공식 가이드](https://code.claude.com/docs/en/agent-teams)
