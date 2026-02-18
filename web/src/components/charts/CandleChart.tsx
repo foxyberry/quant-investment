@@ -86,9 +86,11 @@ export default function CandleChart({
       },
     };
 
+    const initialWidth = containerRef.current.clientWidth || containerRef.current.offsetWidth || 300;
+
     const chart = createChart(containerRef.current, {
       ...chartOptions,
-      width: containerRef.current.clientWidth,
+      width: initialWidth,
       height: height,
     });
 
@@ -126,19 +128,20 @@ export default function CandleChart({
       volumeSeriesRef.current = volumeSeries;
     }
 
-    // Handle resize
-    const handleResize = () => {
-      if (containerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({
-          width: containerRef.current.clientWidth,
-        });
+    // Handle resize with ResizeObserver (works in popups where initial width may be 0)
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const newWidth = entry.contentRect.width;
+        if (newWidth > 0 && chartRef.current) {
+          chartRef.current.applyOptions({ width: newWidth });
+        }
       }
-    };
+    });
 
-    window.addEventListener('resize', handleResize);
+    resizeObserver.observe(containerRef.current);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;

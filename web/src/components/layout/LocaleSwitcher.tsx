@@ -8,14 +8,18 @@ import type { Locale } from '@/i18n/routing';
 const localeLabels: Record<Locale, string> = {
   en: 'EN',
   ko: 'KO',
+  zh: 'ZH',
 };
+
+const localeOrder: Locale[] = ['en', 'ko', 'zh'];
 
 export default function LocaleSwitcher() {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const pathname = usePathname();
 
-  const nextLocale: Locale = locale === 'en' ? 'ko' : 'en';
+  const currentIndex = localeOrder.indexOf(locale);
+  const nextLocale = localeOrder[(currentIndex + 1) % localeOrder.length];
 
   const handleSwitch = () => {
     router.replace(pathname, { locale: nextLocale });
@@ -26,7 +30,7 @@ export default function LocaleSwitcher() {
       type="button"
       onClick={handleSwitch}
       className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-[var(--foreground-muted)] hover:bg-[var(--border)] hover:text-[var(--foreground)] transition-colors"
-      aria-label={`Switch to ${nextLocale === 'en' ? 'English' : '한국어'}`}
+      aria-label={`Switch to ${nextLocale}`}
     >
       <Globe className="h-4 w-4" />
       <span>{localeLabels[locale]}</span>
