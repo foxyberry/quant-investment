@@ -558,7 +558,7 @@
     },
     "roic": {
       "label": "ROIC",
-      "description": "Return on Invested Capital filter",
+      "desc": "Return on Invested Capital filter",
       "params": { "min_roic": "Min ROIC %", "max_roic": "Max ROIC %" }
     }
   },
