@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import {
   ReactFlow,
   addEdge,
+  reconnectEdge,
   useNodesState,
   useEdgesState,
   Controls,
@@ -232,6 +233,14 @@ function StrategyPageInner() {
     (connection: Connection) => {
       if (!isValidConnection(connection)) return;
       setEdges((eds) => addEdge(connection, eds));
+    },
+    [isValidConnection, setEdges]
+  );
+
+  const onReconnect = useCallback(
+    (oldEdge: Edge, newConnection: Connection) => {
+      if (!isValidConnection(newConnection)) return;
+      setEdges((eds) => reconnectEdge(oldEdge, newConnection, eds));
     },
     [isValidConnection, setEdges]
   );
@@ -829,6 +838,8 @@ function StrategyPageInner() {
             onNodesChange={handleNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onReconnect={onReconnect}
+            edgesReconnectable
             onNodeClick={onNodeClick}
             onPaneClick={onPaneClick}
             onInit={setReactFlowInstance}
