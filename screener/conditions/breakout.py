@@ -16,8 +16,19 @@ import pandas as pd
 from typing import Optional
 
 from .base import BaseCondition, ConditionResult
+from .registry import register_condition
 
 
+@register_condition(
+    key="bottom_breakout",
+    label="Bottom Breakout",
+    description="N-day low breakout",
+    category="breakout",
+    params=[
+        {"name": "lookback_days", "type": "int", "default": 20, "description": "Lookback days"},
+        {"name": "breakout_pct", "type": "float", "default": 5.0, "description": "Breakout %"},
+    ],
+)
 class BottomBreakoutCondition(BaseCondition):
     """
     N일 바닥 대비 X% 돌파 조건
@@ -89,6 +100,16 @@ class BottomBreakoutCondition(BaseCondition):
         return f"BottomBreakoutCondition(lookback={self.lookback_days}d, breakout={self.breakout_pct}%)"
 
 
+@register_condition(
+    key="fresh_breakout",
+    label="Fresh Breakout",
+    description="First-time breakout detection",
+    category="breakout",
+    params=[
+        {"name": "lookback_days", "type": "int", "default": 20, "description": "Lookback days"},
+        {"name": "breakout_pct", "type": "float", "default": 5.0, "description": "Breakout %"},
+    ],
+)
 class FreshBreakoutCondition(BaseCondition):
     """
     신규(첫) 돌파 조건
@@ -176,6 +197,19 @@ class FreshBreakoutCondition(BaseCondition):
         return f"FreshBreakoutCondition(lookback={self.lookback_days}d, breakout={self.breakout_pct}%)"
 
 
+@register_condition(
+    key="breakout_with_volume",
+    label="Breakout + Volume",
+    description="Breakout confirmed by volume spike",
+    category="breakout",
+    params=[
+        {"name": "lookback_days", "type": "int", "default": 20, "description": "Lookback days"},
+        {"name": "breakout_pct", "type": "float", "default": 5.0, "description": "Breakout %"},
+        {"name": "volume_ratio", "type": "float", "default": 1.5, "description": "Volume ratio"},
+        {"name": "volume_avg_days", "type": "int", "default": 10, "description": "Volume avg days"},
+        {"name": "fresh_only", "type": "bool", "default": True, "description": "Fresh breakout only"},
+    ],
+)
 class BreakoutWithVolumeCondition(BaseCondition):
     """
     거래량 확인 돌파 조건
@@ -283,6 +317,16 @@ class BreakoutWithVolumeCondition(BaseCondition):
         return f"BreakoutWithVolumeCondition({fresh_str}lookback={self.lookback_days}d, breakout={self.breakout_pct}%, vol_ratio={self.volume_ratio}x)"
 
 
+@register_condition(
+    key="resistance_breakout",
+    label="Resistance Breakout",
+    description="N-day high resistance breakout",
+    category="breakout",
+    params=[
+        {"name": "lookback_days", "type": "int", "default": 20, "description": "Lookback days"},
+        {"name": "breakout_margin_pct", "type": "float", "default": 0.0, "description": "Margin above resistance %"},
+    ],
+)
 class ResistanceBreakoutCondition(BaseCondition):
     """
     저항선 돌파 조건

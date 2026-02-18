@@ -9,8 +9,16 @@ Usage:
 import pandas as pd
 
 from .base import BaseCondition, ConditionResult
+from .registry import register_condition
 
 
+@register_condition(
+    key="min_volume",
+    label="Min Volume",
+    description="Volume >= threshold",
+    category="volume",
+    params=[{"name": "min_volume", "type": "int", "default": 100000, "description": "Minimum volume"}],
+)
 class MinVolumeCondition(BaseCondition):
     """최소 거래량 조건"""
 
@@ -53,6 +61,16 @@ class MinVolumeCondition(BaseCondition):
         return f"MinVolumeCondition(min_volume={self.min_volume:,})"
 
 
+@register_condition(
+    key="volume_above_avg",
+    label="Volume Above Avg",
+    description="Volume above moving average",
+    category="volume",
+    params=[
+        {"name": "multiplier", "type": "float", "default": 1.5, "description": "Avg multiplier"},
+        {"name": "period", "type": "int", "default": 20, "description": "Average period"},
+    ],
+)
 class VolumeAboveAvgCondition(BaseCondition):
     """평균 거래량 대비 조건"""
 
@@ -110,6 +128,16 @@ class VolumeAboveAvgCondition(BaseCondition):
         return f"VolumeAboveAvgCondition(multiplier={self.multiplier}, period={self.period})"
 
 
+@register_condition(
+    key="volume_spike",
+    label="Volume Spike",
+    description="Sudden volume increase",
+    category="volume",
+    params=[
+        {"name": "multiplier", "type": "float", "default": 2.0, "description": "Spike multiplier"},
+        {"name": "period", "type": "int", "default": 20, "description": "Average period"},
+    ],
+)
 class VolumeSpikeCondition(BaseCondition):
     """거래량 급증 조건"""
 

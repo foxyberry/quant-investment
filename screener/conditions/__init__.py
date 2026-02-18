@@ -1,6 +1,5 @@
 """
 Screening Conditions Module
-스크리닝 조건 모듈
 
 Usage:
     from screener.conditions import (
@@ -106,6 +105,9 @@ from .fundamental import (
     clear_info_cache,
 )
 
+# Registry accessors (populated by @register_condition decorators above)
+from .registry import get_condition_class_map, get_condition_metadata
+
 __all__ = [
     # Base
     'BaseCondition', 'ConditionResult', 'ConditionError',
@@ -142,4 +144,7 @@ __all__ = [
     'DividendYieldCondition', 'EarningsYieldCondition', 'EbitEvCondition', 'FcfYieldCondition',
     'PegRatioCondition', 'DebtToEquityCondition', 'CurrentRatioCondition', 'RoeCondition',
     'PiotroskiFScoreCondition', 'AltmanZScoreCondition', 'clear_info_cache',
+
+    # Registry
+    'get_condition_class_map', 'get_condition_metadata',
 ]

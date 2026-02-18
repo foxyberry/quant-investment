@@ -6,10 +6,11 @@ import type { NodeProps } from '@xyflow/react';
 import { Filter, CheckCircle2, CircleDashed } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
-import { getConditionMeta } from '@/lib/strategy/conditionRegistry';
+import { useConditions } from '@/contexts/ConditionsContext';
 
 function ConditionNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
+  const { getConditionMeta } = useConditions();
   const nodeData = data as unknown as StrategyNodeData;
   const meta = nodeData.condition_type
     ? getConditionMeta(nodeData.condition_type)
