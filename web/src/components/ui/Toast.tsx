@@ -9,6 +9,7 @@ interface ToastProps {
   message: string;
   type: ToastType;
   onClose: () => void;
+  autoCloseMs?: number | null;
 }
 
 const toastStyles: Record<ToastType, string> = {
@@ -18,18 +19,20 @@ const toastStyles: Record<ToastType, string> = {
   success: 'bg-emerald-500',
 };
 
-export function Toast({ message, type, onClose }: ToastProps) {
+export function Toast({ message, type, onClose, autoCloseMs = 3000 }: ToastProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const enterTimer = window.setTimeout(() => setIsVisible(true), 10);
-    const dismissTimer = window.setTimeout(onClose, 3000);
+    const dismissTimer = autoCloseMs !== null ? window.setTimeout(onClose, autoCloseMs) : null;
 
     return () => {
       window.clearTimeout(enterTimer);
-      window.clearTimeout(dismissTimer);
+      if (dismissTimer !== null) {
+        window.clearTimeout(dismissTimer);
+      }
     };
-  }, [onClose]);
+  }, [onClose, autoCloseMs]);
 
   return (
     <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
