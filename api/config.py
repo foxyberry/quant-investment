@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # CORS settings (CORS 설정)
+    # Override via env: CORS_ORIGINS='["http://localhost:3002"]'
     cors_origins: List[str] = ["http://localhost:3000"]
 
     # Application metadata (애플리케이션 메타데이터)
