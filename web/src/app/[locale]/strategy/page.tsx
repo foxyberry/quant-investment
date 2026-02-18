@@ -993,7 +993,7 @@ function StrategyPageInner() {
                         const left = (screen.width - width) / 2;
                         const top = (screen.height - height) / 2;
                         window.open(
-                          `/${locale}/analysis/${r.ticker}`,
+                          `/${locale}/analysis/${r.ticker}?popup=true`,
                           `analysis_${r.ticker}`,
                           `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
                         );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
@@ -57,6 +57,8 @@ const periodOptions: { value: PeriodOption; label: string }[] = [
  */
 export default function TickerAnalysisPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const isPopup = searchParams.get('popup') === 'true';
   const ticker = params.ticker as string;
   const t = useTranslations('stockDetail');
 
@@ -210,14 +212,16 @@ export default function TickerAnalysisPage() {
 
   return (
     <div className="space-y-6">
-      {/* Back navigation */}
-      <Link
-        href="/analysis"
-        className="inline-flex items-center gap-2 text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {t('backToAnalysis')}
-      </Link>
+      {/* Back navigation - hidden in popup mode */}
+      {!isPopup && (
+        <Link
+          href="/analysis"
+          className="inline-flex items-center gap-2 text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t('backToAnalysis')}
+        </Link>
+      )}
 
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
