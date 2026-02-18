@@ -444,6 +444,7 @@ async def get_ticker_analysis(
                 market_cap=info.get("marketCap"),
                 pe_ratio=info.get("trailingPE"),
                 dividend_yield=info.get("dividendYield"),
+                eps=info.get("trailingEps"),
                 sector=info.get("sector"),
             )
     except Exception as e:
