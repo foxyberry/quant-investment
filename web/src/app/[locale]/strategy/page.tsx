@@ -132,6 +132,10 @@ function StrategyPageInner() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
+  // Prevent ReactFlow SSR hydration mismatch
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   // Save/Load state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
@@ -651,6 +655,14 @@ function StrategyPageInner() {
   const conditionCount = nodes.filter(
     (n) => getNodeData(n).node_type === 'condition'
   ).length;
+
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-var(--header-height))]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#1313ec]" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-var(--header-height))]">
