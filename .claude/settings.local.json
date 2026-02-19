@@ -5,5 +5,10 @@
     "shadcn",
     "stitch",
     "codex"
-  ]
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(git rm:*)"
+    ]
+  }
 }
