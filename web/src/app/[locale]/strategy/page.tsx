@@ -31,6 +31,7 @@ import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
 import GroupNode from '@/components/strategy/nodes/GroupNode';
 import OutputNode from '@/components/strategy/nodes/OutputNode';
+import SectorNode from '@/components/strategy/nodes/SectorNode';
 import LabeledEdge from '@/components/strategy/edges/LabeledEdge';
 import NodePalette from '@/components/strategy/NodePalette';
 
@@ -48,6 +49,7 @@ const nodeTypes: NodeTypes = {
   conditionNode: ConditionNode,
   groupNode: GroupNode,
   outputNode: OutputNode,
+  sectorNode: SectorNode,
 };
 
 const edgeTypes = {
@@ -234,7 +236,8 @@ function StrategyPageInner() {
 
       // Allowed target types per source type
       const allowedTargets: Record<string, string[]> = {
-        universeNode: ['conditionNode', 'groupNode'],
+        universeNode: ['conditionNode', 'groupNode', 'sectorNode'],
+        sectorNode: ['conditionNode', 'groupNode'],
         conditionNode: ['conditionNode', 'groupNode', 'outputNode'],
         groupNode: ['conditionNode', 'groupNode', 'outputNode'],
       };
@@ -406,6 +409,9 @@ function StrategyPageInner() {
       if (type === 'universe') {
         nodeType = 'universeNode';
         data = { node_type: 'universe', universe: 'KOSPI' };
+      } else if (type === 'sector') {
+        nodeType = 'sectorNode';
+        data = { node_type: 'sector', sector: '' };
       } else if (type === 'condition') {
         nodeType = 'conditionNode';
         const params = conditionKey ? getDefaultParams(conditionKey) : {};
@@ -430,8 +436,8 @@ function StrategyPageInner() {
       // Check if dropping inside a group
       const targetGroup = findGroupAtPosition(position);
       if (targetGroup) {
-        // Block invalid drops: universe and output cannot go in groups
-        if (nodeType === 'universeNode' || nodeType === 'outputNode') {
+        // Block invalid drops: universe, sector, and output cannot go in groups
+        if (nodeType === 'universeNode' || nodeType === 'sectorNode' || nodeType === 'outputNode') {
           showToast(t('cannotDropInGroup'), 'warning');
           // Still place on canvas as standalone (fall through)
         } else if (nodeType === 'conditionNode' || nodeType === 'groupNode') {
@@ -796,11 +802,13 @@ function StrategyPageInner() {
           type:
             n.data.node_type === 'universe'
               ? 'universeNode'
-              : n.data.node_type === 'condition'
-                ? 'conditionNode'
-                : n.data.node_type === 'logic'
-                  ? 'groupNode'
-                  : 'outputNode',
+              : n.data.node_type === 'sector'
+                ? 'sectorNode'
+                : n.data.node_type === 'condition'
+                  ? 'conditionNode'
+                  : n.data.node_type === 'logic'
+                    ? 'groupNode'
+                    : 'outputNode',
           position: n.position || { x: 0, y: 0 },
           data: n.data as unknown as Record<string, unknown>,
           ...(isGroup ? { style: { width: GROUP_MIN_WIDTH, height: GROUP_MIN_HEIGHT } } : {}),

@@ -31,6 +31,20 @@ export function validateGraph(
     errors.push('Graph must have a Universe node (stock universe selection).');
   }
 
+  // Check sector node (max 1, must not be inside group, must have sector selected)
+  const sectorNodes = nodes.filter((n) => n.data.node_type === 'sector');
+  if (sectorNodes.length > 1) {
+    errors.push('Only one Sector node is allowed per strategy graph.');
+  }
+  for (const sn of sectorNodes) {
+    if (sn.parentId) {
+      errors.push('Sector nodes cannot be placed inside groups.');
+    }
+    if (!sn.data.sector) {
+      errors.push(`Sector node "${sn.id}" has no sector selected.`);
+    }
+  }
+
   // Check that at least one condition or logic node exists
   const conditionNodes = nodes.filter(
     (n) => n.data.node_type === 'condition' || n.data.node_type === 'logic'
