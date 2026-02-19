@@ -66,6 +66,13 @@ export function ConditionsProvider({ children }: { children: React.ReactNode }) 
           }
           grouped[c.category].push(c);
         }
+        for (const cat of Object.keys(grouped)) {
+          grouped[cat].sort((a, b) => {
+            if (a.recommended !== b.recommended) return a.recommended ? -1 : 1;
+            if (a.order !== b.order) return a.order - b.order;
+            return a.key.localeCompare(b.key);
+          });
+        }
         return grouped;
       },
       getDefaultParams: (key: string) => {

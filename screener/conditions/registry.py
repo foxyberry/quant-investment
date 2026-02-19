@@ -29,6 +29,8 @@ def register_condition(
     description: str = "",
     category: str = "",
     params: List[Dict[str, Any]] | None = None,
+    recommended: bool = False,
+    order: int = 0,
 ):
     """Decorator to register a condition class with its metadata."""
 
@@ -39,6 +41,8 @@ def register_condition(
             "description": description,
             "category": category,
             "params": params or [],
+            "recommended": recommended,
+            "order": order,
         }
         return cls
 

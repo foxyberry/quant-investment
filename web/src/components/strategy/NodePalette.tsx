@@ -31,6 +31,7 @@ function DraggableItem({
   icon: Icon,
   color,
   conditionKey,
+  recommendedLabel,
 }: {
   type: string;
   label: string;
@@ -38,6 +39,7 @@ function DraggableItem({
   icon: React.ComponentType<{ className?: string }>;
   color: string;
   conditionKey?: string;
+  recommendedLabel?: string;
 }) {
   const onDragStart = (event: React.DragEvent) => {
     event.dataTransfer.setData('application/reactflow-type', type);
@@ -56,7 +58,14 @@ function DraggableItem({
       <GripVertical className="h-3 w-3 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
       <Icon className={`h-4 w-4 ${color} flex-shrink-0`} />
       <div className="min-w-0">
-        <div className="text-sm text-gray-700 dark:text-gray-200 font-medium truncate">{label}</div>
+        <div className="text-sm text-gray-700 dark:text-gray-200 font-medium truncate">
+          {label}
+          {recommendedLabel && (
+            <span className="ml-1.5 inline-flex items-center px-1 py-0 text-[9px] font-bold rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 align-middle">
+              {recommendedLabel}
+            </span>
+          )}
+        </div>
         {description && (
           <div className="text-[11px] text-gray-400 dark:text-gray-500 truncate">
             {description}
@@ -195,6 +204,7 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
                         icon={Filter}
                         color="text-[#1313ec] dark:text-blue-400"
                         conditionKey={cond.key}
+                        recommendedLabel={cond.recommended ? tCond('recommended') : undefined}
                       />
                     ))}
                 </div>

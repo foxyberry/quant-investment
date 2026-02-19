@@ -46,10 +46,12 @@ from discovery.indicators import (
     description="BB width contraction",
     category="accumulation",
     params=[
-        {"name": "max_width_pct", "type": "float", "default": 10.0, "description": "Max BB width %"},
+        {"name": "max_width_pct", "type": "float", "default": 15.0, "description": "Max BB width %"},
         {"name": "period", "type": "int", "default": 20, "description": "BB period"},
         {"name": "std_dev", "type": "float", "default": 2.0, "description": "Std deviation"},
     ],
+    recommended=True,
+    order=80,
 )
 class BollingerWidthCondition(BaseCondition):
     """
@@ -116,9 +118,11 @@ class BollingerWidthCondition(BaseCondition):
     description="Quiet volume zone",
     category="accumulation",
     params=[
-        {"name": "multiplier", "type": "float", "default": 0.8, "description": "Max ratio to avg"},
+        {"name": "multiplier", "type": "float", "default": 1.0, "description": "Max ratio to avg"},
         {"name": "period", "type": "int", "default": 20, "description": "Average period"},
     ],
+    recommended=True,
+    order=90,
 )
 class VolumeBelowAvgCondition(BaseCondition):
     """
@@ -187,9 +191,11 @@ class VolumeBelowAvgCondition(BaseCondition):
     description="Price consolidation (low volatility)",
     category="accumulation",
     params=[
-        {"name": "max_range_pct", "type": "float", "default": 5.0, "description": "Max range %"},
+        {"name": "max_range_pct", "type": "float", "default": 10.0, "description": "Max range %"},
         {"name": "period", "type": "int", "default": 20, "description": "Period"},
     ],
+    recommended=True,
+    order=100,
 )
 class PriceFlatCondition(BaseCondition):
     """

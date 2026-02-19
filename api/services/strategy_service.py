@@ -57,6 +57,8 @@ def get_available_conditions() -> List[ConditionInfo]:
                 description=meta.get("description", ""),
                 category=meta["category"],
                 params=params,
+                recommended=meta.get("recommended", False),
+                order=meta.get("order", 0),
             )
         )
     return conditions

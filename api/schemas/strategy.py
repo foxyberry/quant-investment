@@ -112,6 +112,8 @@ class ConditionInfo(BaseModel):
     description: str = ""
     category: str
     params: List[ConditionParamInfo] = Field(default_factory=list)
+    recommended: bool = False
+    order: int = 0
 
 
 class ConditionsListResponse(BaseModel):

@@ -37,6 +37,7 @@ router = APIRouter(prefix="/api/strategy", tags=["Strategy"])
 async def list_conditions() -> ConditionsListResponse:
     """Return available condition types for the node palette."""
     conditions = get_available_conditions()
+    conditions.sort(key=lambda c: (not c.recommended, c.order, c.key))
     categories = sorted(set(c.category for c in conditions))
     return ConditionsListResponse(conditions=conditions, categories=categories)
 
