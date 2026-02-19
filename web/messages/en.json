@@ -223,6 +223,8 @@
     "filterMetrics": "Filter Values",
     "runFirst": "Run strategy to see results",
     "exportJson": "Export JSON",
+    "lastRunAt": "Last run: {time}",
+    "exportCsv": "Export CSV",
     "nodeLimit": "Node limit: {count}/{max}",
     "saveDialogTitle": "Save Strategy",
     "strategyName": "Strategy Name",
