@@ -268,7 +268,7 @@ function ConditionNode({ data, selected }: NodeProps) {
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                    {tCond(currentMeta.key + '.desc')}
+                    {tCond(currentMeta.key + '.help')}
                   </p>
                 </div>
               </>
