@@ -191,6 +191,7 @@
     "finalSelection": "Final Selection",
     "estimatedItems": "{count} estimated items",
     "connectAndRun": "Connect nodes and run",
+    "noResultsForNode": "No results for this node yet",
     "searchPlaceholder": "Search components...",
     "inputNodes": "Input Nodes",
     "filterNodes": "Filter Nodes",

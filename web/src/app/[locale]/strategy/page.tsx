@@ -34,6 +34,7 @@ import OutputNode from '@/components/strategy/nodes/OutputNode';
 import SectorNode from '@/components/strategy/nodes/SectorNode';
 import LabeledEdge from '@/components/strategy/edges/LabeledEdge';
 import NodePalette from '@/components/strategy/NodePalette';
+import IntermediateResultsPanel from '@/components/strategy/IntermediateResultsPanel';
 
 import BacktestPanel from '@/components/backtest/BacktestPanel';
 import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
@@ -143,7 +144,6 @@ function StrategyPageInner() {
   const [strategyName, setStrategyName] = useState('');
   const [strategyDescription, setStrategyDescription] = useState('');
   const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(null);
-  const [isResultPanelVisible, setIsResultPanelVisible] = useState(false);
   const [showOverflowMenu, setShowOverflowMenu] = useState(false);
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
   const [deployProgress, setDeployProgress] = useState(0);
@@ -264,22 +264,6 @@ function StrategyPageInner() {
     [nodes, edges]
   );
 
-  useEffect(() => {
-    const shouldShowPanel = runStrategy.isPending || (!!results && results.length > 0);
-    if (!shouldShowPanel) {
-      setIsResultPanelVisible(false);
-      return;
-    }
-
-    setIsResultPanelVisible(false);
-    const rafId = window.requestAnimationFrame(() => {
-      setIsResultPanelVisible(true);
-    });
-
-    return () => {
-      window.cancelAnimationFrame(rafId);
-    };
-  }, [runStrategy.isPending, results]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -1068,90 +1052,15 @@ function StrategyPageInner() {
         </div>
       </div>
 
-      {/* Results panel */}
-      {(runStrategy.isPending || (results && results.length > 0)) && (
-        <div
-          className={`border-t border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] transition-all duration-300 ease-out ${
-            isResultPanelVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-          } ${runStrategy.isPending ? 'min-h-44' : 'max-h-64 overflow-y-auto'}`}
-        >
-          {runStrategy.isPending ? (
-            <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-500">
-              <Loader2 className="h-8 w-8 animate-spin mb-3" />
-              <div className="w-64 mb-3">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="font-medium">{t('deployProgress')}</span>
-                  <span className="font-bold text-[#1313ec]">{Math.min(Math.round(deployProgress), 100)}%</span>
-                </div>
-                <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#1313ec] rounded-full transition-all duration-500 ease-out"
-                    style={{ width: `${Math.min(deployProgress, 100)}%` }}
-                  />
-                </div>
-              </div>
-              <span className="text-sm">{t('runningStrategy')}</span>
-              <span className="text-xs mt-1">
-                {t('processingConditions', { count: conditionCount })}
-              </span>
-            </div>
-          ) : results ? (
-            <>
-              <div className="px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
-                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  {t('results', { count: results.length })}
-                </span>
-              </div>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider border-b border-[#e1e3e5] dark:border-[#2e2e30]">
-                    <th className="px-4 py-2">{t('ticker')}</th>
-                    <th className="px-4 py-2">{t('name')}</th>
-                    <th className="px-4 py-2 text-right">{t('price')}</th>
-                    <th className="px-4 py-2 text-center">{t('status')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map((r) => (
-                    <tr
-                      key={r.ticker}
-                      className="border-b border-[#e1e3e5] dark:border-[#2e2e30] hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                      onClick={() => {
-                        const width = 1000;
-                        const height = 700;
-                        const left = (screen.width - width) / 2;
-                        const top = (screen.height - height) / 2;
-                        window.open(
-                          `/${locale}/analysis/${r.ticker}?popup=true`,
-                          `analysis_${r.ticker}`,
-                          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
-                        );
-                      }}
-                    >
-                      <td className="px-4 py-1.5 font-mono text-[#1313ec] font-medium underline decoration-[#1313ec]/30 hover:decoration-[#1313ec]">
-                        {r.ticker}
-                      </td>
-                      <td className="px-4 py-1.5 text-gray-700 dark:text-gray-200">
-                        {r.name}
-                      </td>
-                      <td className="px-4 py-1.5 text-right text-gray-700 dark:text-gray-200">
-                        {r.current_price?.toLocaleString() ?? '-'}
-                      </td>
-                      <td className="px-4 py-1.5 text-center">
-                        <span
-                          className={`inline-block w-2 h-2 rounded-full ${
-                            r.matched ? 'bg-emerald-500' : 'bg-red-500'
-                          }`}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
-          ) : null}
-        </div>
-      )}
+      {/* Tabbed results panel */}
+      <IntermediateResultsPanel
+        nodeResults={nodeResults}
+        finalResults={results}
+        selectedNodeId={selectedNodeId}
+        isPending={runStrategy.isPending}
+        deployProgress={deployProgress}
+        conditionCount={conditionCount}
+      />
 
       {/* Save dialog */}
       {showSaveDialog && (
