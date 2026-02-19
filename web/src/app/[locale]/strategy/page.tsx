@@ -104,7 +104,6 @@ function loadCanvasFromSession(): CanvasSnapshot | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    sessionStorage.removeItem(STORAGE_KEY); // one-time restore
     return JSON.parse(raw) as CanvasSnapshot;
   } catch {
     return null;
@@ -126,6 +125,7 @@ function StrategyPageInner() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const reconnectingEdgeId = useRef<string | null>(null);
+  const readyToSaveRef = useRef(false);
 
   // Prevent ReactFlow SSR hydration mismatch
   const [mounted, setMounted] = useState(false);
@@ -140,6 +140,8 @@ function StrategyPageInner() {
   const [isResultPanelVisible, setIsResultPanelVisible] = useState(false);
 
   // Restore from sessionStorage after mount (locale-switch persistence)
+  // Uses setTimeout guard so the save effect doesn't overwrite sessionStorage
+  // with initial state before the restored state is applied (StrictMode safe).
   useEffect(() => {
     const restored = loadCanvasFromSession();
     if (restored) {
@@ -149,11 +151,14 @@ function StrategyPageInner() {
       setStrategyDescription(restored.strategyDescription);
       setCurrentStrategyId(restored.currentStrategyId);
     }
+    const timer = setTimeout(() => { readyToSaveRef.current = true; }, 0);
+    return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Persist canvas state to sessionStorage on every change (for locale-switch survival)
   useEffect(() => {
+    if (!readyToSaveRef.current) return;
     saveCanvasToSession({ nodes, edges, strategyName, strategyDescription, currentStrategyId });
   }, [nodes, edges, strategyName, strategyDescription, currentStrategyId]);
 
