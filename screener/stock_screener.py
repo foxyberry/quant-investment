@@ -228,16 +228,10 @@ class StockScreener:
             # 티커에서 종목코드 추출 (005930.KS -> 005930)
             code = ticker.split('.')[0]
 
-            # 최근 거래일 찾기 (오늘 날짜가 미래일 수 있으므로)
-            # 가장 최근 유효한 날짜를 찾기 위해 과거 날짜부터 시도
+            # 최근 거래일 찾기
             from datetime import date
             today = date.today()
-
-            # 시스템 날짜가 미래인 경우 2025년 1월로 설정
-            if today.year > 2025:
-                end_date = date(2025, 1, 24)  # 유효한 거래일
-            else:
-                end_date = today
+            end_date = today
 
             start_date = end_date - timedelta(days=days * 2)
 
