@@ -15,7 +15,7 @@
     "yes": "Yes",
     "no": "No",
     "version": "Version {version}",
-    "copyright": "\u00a9 {year} Quant Investment. All rights reserved.",
+    "copyright": "© {year} Quant Investment. All rights reserved.",
     "collapse": "Collapse",
     "enabled": "Enabled",
     "disabled": "Disabled",
@@ -47,7 +47,6 @@
     "gettingStarted": "Getting Started",
     "gettingStartedDesc": "This dashboard connects to the FastAPI backend at {url}. Make sure the API server is running to see live data.",
     "startServer": "Start the API server with:",
-
     "portfolioOverview": "Portfolio Overview",
     "totalMarketValue": "Total Market Value",
     "totalPnl": "Total P&L",
@@ -56,7 +55,6 @@
     "totalInvestment": "Total Investment: {amount}",
     "unableToLoadPortfolio": "Unable to load portfolio data",
     "noPortfolioData": "No portfolio data available",
-
     "sellSignals": "Sell Signals",
     "allClear": "All Clear",
     "noSellSignals": "No sell signals triggered",
@@ -68,14 +66,12 @@
     "takeProfit": "Take Profit",
     "trailingStop": "Trailing Stop",
     "manual": "Manual",
-
     "recentReports": "Recent Reports",
     "viewAllReports": "View All Reports",
     "noReports": "No reports available",
     "runScreeningForReports": "Run a screening to generate reports",
     "unableToLoadReports": "Unable to load reports",
     "buy": "BUY",
-
     "quickActions": "Quick Actions",
     "runScreening": "Run Screening",
     "runScreeningDesc": "Find stocks matching your criteria",
@@ -177,7 +173,6 @@
     "name": "Name",
     "price": "Price",
     "status": "Status",
-
     "inputBadge": "Input",
     "screeningBadge": "Screening",
     "outputBadge": "Output",
@@ -187,7 +182,6 @@
     "finalSelection": "Final Selection",
     "estimatedItems": "{count} estimated items",
     "connectAndRun": "Connect nodes and run",
-
     "searchPlaceholder": "Search components...",
     "inputNodes": "Input Nodes",
     "filterNodes": "Filter Nodes",
@@ -207,7 +201,6 @@
     "cannotDropInGroup": "Universe and Output nodes cannot be placed inside a group.",
     "groupInstruction": "Drag condition or logic group nodes into this group container, then connect the group to Output.",
     "finalOutput": "Final Output",
-
     "nodeProperties": "Node Properties",
     "displayName": "Display Name",
     "stockUniverse": "Stock Universe",
@@ -231,7 +224,6 @@
     "runFirst": "Run strategy to see results",
     "exportJson": "Export JSON",
     "nodeLimit": "Node limit: {count}/{max}",
-
     "saveDialogTitle": "Save Strategy",
     "strategyName": "Strategy Name",
     "strategyNamePlaceholder": "e.g., RSI Oversold + Volume Spike",
@@ -248,9 +240,7 @@
     "deleteConfirm": "Delete this strategy?",
     "unsavedChanges": "You have unsaved changes",
     "lastSaved": "Last saved: {time}",
-    "strategyNameRequired": "Strategy name is required",
-    "deploySuccess": "{count} stocks matched out of {total}",
-    "deployError": "Strategy execution failed"
+    "strategyNameRequired": "Strategy name is required"
   },
   "analysis": {
     "title": "Charts & Analysis",
@@ -367,217 +357,404 @@
     "min_price": {
       "label": "Min Price",
       "desc": "Stock price >= threshold",
-      "params": { "min_price": "Minimum price" }
+      "params": {
+        "min_price": "Minimum price"
+      },
+      "help": "Excludes penny stocks by setting a minimum price floor."
     },
     "max_price": {
       "label": "Max Price",
       "desc": "Stock price <= threshold",
-      "params": { "max_price": "Maximum price" }
+      "params": {
+        "max_price": "Maximum price"
+      },
+      "help": "Focuses on affordable stocks by setting a maximum price ceiling."
     },
     "price_range": {
       "label": "Price Range",
       "desc": "Stock price within range",
-      "params": { "min_price": "Min price", "max_price": "Max price" }
+      "params": {
+        "min_price": "Min price",
+        "max_price": "Max price"
+      },
+      "help": "Finds stocks trading within a specific price band."
     },
     "price_change": {
       "label": "Price Change %",
       "desc": "Price change over N days",
-      "params": { "min_change_pct": "Min change %", "max_change_pct": "Max change %", "days": "Period (days)" }
+      "params": {
+        "min_change_pct": "Min change %",
+        "max_change_pct": "Max change %",
+        "days": "Period (days)"
+      },
+      "help": "Finds stocks that rose or fell by a certain % over recent days."
     },
     "min_volume": {
       "label": "Min Volume",
       "desc": "Volume >= threshold",
-      "params": { "min_volume": "Minimum volume" }
+      "params": {
+        "min_volume": "Minimum volume"
+      },
+      "help": "Ensures enough daily volume so you can buy and sell easily."
     },
     "volume_above_avg": {
       "label": "Volume Above Avg",
       "desc": "Volume above moving average",
-      "params": { "multiplier": "Avg multiplier", "period": "Average period" }
+      "params": {
+        "multiplier": "Avg multiplier",
+        "period": "Average period"
+      },
+      "help": "Spots stocks with higher-than-usual trading activity — may signal growing interest."
     },
     "volume_spike": {
       "label": "Volume Spike",
       "desc": "Sudden volume increase",
-      "params": { "multiplier": "Spike multiplier", "period": "Average period" }
+      "params": {
+        "multiplier": "Spike multiplier",
+        "period": "Average period"
+      },
+      "help": "Detects sudden surges in volume, often preceding big price moves."
     },
     "ma_touch": {
       "label": "MA Touch",
       "desc": "Price near moving average",
-      "params": { "period": "MA period", "threshold": "Touch threshold (ratio)" }
+      "params": {
+        "period": "MA period",
+        "threshold": "Touch threshold (ratio)"
+      },
+      "help": "Price is touching a key moving average — a potential support or bounce point."
     },
     "above_ma": {
       "label": "Above MA",
       "desc": "Price above moving average",
-      "params": { "period": "MA period", "min_distance_pct": "Min distance %" }
+      "params": {
+        "period": "MA period",
+        "min_distance_pct": "Min distance %"
+      },
+      "help": "Stock is trading above its moving average, suggesting an uptrend."
     },
     "below_ma": {
       "label": "Below MA",
       "desc": "Price below moving average",
-      "params": { "period": "MA period", "max_distance_pct": "Max distance %" }
+      "params": {
+        "period": "MA period",
+        "max_distance_pct": "Max distance %"
+      },
+      "help": "Stock is trading below its moving average, suggesting a downtrend or value zone."
     },
     "ma_cross_up": {
       "label": "MA Cross Up",
       "desc": "Golden cross",
-      "params": { "short_period": "Short MA period", "long_period": "Long MA period", "lookback_days": "Lookback days" }
+      "params": {
+        "short_period": "Short MA period",
+        "long_period": "Long MA period",
+        "lookback_days": "Lookback days"
+      },
+      "help": "Golden Cross: short-term MA crosses above long-term MA — a classic bullish signal."
     },
     "ma_cross_down": {
       "label": "MA Cross Down",
       "desc": "Death cross",
-      "params": { "short_period": "Short MA period", "long_period": "Long MA period", "lookback_days": "Lookback days" }
+      "params": {
+        "short_period": "Short MA period",
+        "long_period": "Long MA period",
+        "lookback_days": "Lookback days"
+      },
+      "help": "Death Cross: short-term MA crosses below long-term MA — a classic bearish signal."
     },
     "rsi_oversold": {
       "label": "RSI Oversold",
       "desc": "RSI below threshold",
-      "params": { "threshold": "RSI threshold", "period": "RSI period" }
+      "params": {
+        "threshold": "RSI threshold",
+        "period": "RSI period"
+      },
+      "help": "RSI is low — the stock may be oversold and due for a bounce."
     },
     "rsi_overbought": {
       "label": "RSI Overbought",
       "desc": "RSI above threshold",
-      "params": { "threshold": "RSI threshold", "period": "RSI period" }
+      "params": {
+        "threshold": "RSI threshold",
+        "period": "RSI period"
+      },
+      "help": "RSI is high — the stock may be overbought and due for a pullback."
     },
     "rsi_range": {
       "label": "RSI Range",
       "desc": "RSI within range",
-      "params": { "lower": "Lower bound", "upper": "Upper bound", "period": "RSI period" }
+      "params": {
+        "lower": "Lower bound",
+        "upper": "Upper bound",
+        "period": "RSI period"
+      },
+      "help": "RSI is within a neutral zone — useful for finding stable momentum."
     },
     "bollinger_width": {
       "label": "Bollinger Width",
       "desc": "BB width contraction",
-      "params": { "max_width_pct": "Max BB width %", "period": "BB period", "std_dev": "Std deviation" }
+      "params": {
+        "max_width_pct": "Max BB width %",
+        "period": "BB period",
+        "std_dev": "Std deviation"
+      },
+      "help": "Bollinger Bands are narrow, signaling low volatility — a big move may follow."
     },
     "volume_below_avg": {
       "label": "Volume Below Avg",
       "desc": "Quiet volume zone",
-      "params": { "multiplier": "Max ratio to avg", "period": "Average period" }
+      "params": {
+        "multiplier": "Max ratio to avg",
+        "period": "Average period"
+      },
+      "help": "Volume is unusually low — the stock is in a quiet accumulation phase."
     },
     "price_flat": {
       "label": "Price Flat",
       "desc": "Price consolidation",
-      "params": { "max_range_pct": "Max range %", "period": "Period" }
+      "params": {
+        "max_range_pct": "Max range %",
+        "period": "Period"
+      },
+      "help": "Price has been moving sideways — consolidation before a potential breakout."
     },
     "obv_trend": {
       "label": "OBV Trend",
       "desc": "On-Balance Volume trend",
-      "params": { "direction": "Trend direction (up/down)", "lookback": "Lookback period" }
+      "params": {
+        "direction": "Trend direction (up/down)",
+        "lookback": "Lookback period"
+      },
+      "help": "On-Balance Volume is trending, showing smart money accumulation or distribution."
     },
     "stochastic_level": {
       "label": "Stochastic Level",
       "desc": "Stochastic oscillator level",
-      "params": { "threshold": "Level threshold", "condition": "below or above", "k_period": "%K period", "d_period": "%D period" }
+      "params": {
+        "threshold": "Level threshold",
+        "condition": "below or above",
+        "k_period": "%K period",
+        "d_period": "%D period"
+      },
+      "help": "Stochastic oscillator at extreme levels, suggesting a potential reversal."
     },
     "vpci_trend": {
       "label": "VPCI Trend",
       "desc": "VPCI trend direction",
-      "params": { "direction": "Trend direction (up/down)", "short_period": "Short period", "long_period": "Long period", "lookback": "Lookback period" }
+      "params": {
+        "direction": "Trend direction (up/down)",
+        "short_period": "Short period",
+        "long_period": "Long period",
+        "lookback": "Lookback period"
+      },
+      "help": "Volume-Price Confirmation trending — shows whether volume supports the price move."
     },
     "obv_divergence": {
       "label": "OBV Divergence",
       "desc": "Price flat + OBV rising",
-      "params": { "price_max_range_pct": "Price range %", "obv_min_change_pct": "OBV change %", "period": "Period" }
+      "params": {
+        "price_max_range_pct": "Price range %",
+        "obv_min_change_pct": "OBV change %",
+        "period": "Period"
+      },
+      "help": "Price is flat but volume is rising — hidden institutional accumulation."
     },
     "stochastic_divergence": {
       "label": "Stochastic Divergence",
       "desc": "Bullish stochastic divergence",
-      "params": { "k_period": "%K period", "d_period": "%D period", "lookback": "Lookback period", "divergence_threshold": "Threshold %" }
+      "params": {
+        "k_period": "%K period",
+        "d_period": "%D period",
+        "lookback": "Lookback period",
+        "divergence_threshold": "Threshold %"
+      },
+      "help": "Price makes new lows but stochastic does not — bullish divergence signal."
     },
     "vpci_divergence": {
       "label": "VPCI Divergence",
       "desc": "Price flat + VPCI rising",
-      "params": { "price_max_range_pct": "Price range %", "short_period": "Short period", "long_period": "Long period", "lookback": "Lookback period" }
+      "params": {
+        "price_max_range_pct": "Price range %",
+        "short_period": "Short period",
+        "long_period": "Long period",
+        "lookback": "Lookback period"
+      },
+      "help": "Price is flat but VPCI is rising — volume confirms hidden buying pressure."
     },
     "bottom_breakout": {
       "label": "Bottom Breakout",
       "desc": "N-day low breakout",
-      "params": { "lookback_days": "Lookback days", "breakout_pct": "Breakout %" }
+      "params": {
+        "lookback_days": "Lookback days",
+        "breakout_pct": "Breakout %"
+      },
+      "help": "Stock breaks above its recent low range — potential trend reversal."
     },
     "fresh_breakout": {
       "label": "Fresh Breakout",
       "desc": "First-time breakout",
-      "params": { "lookback_days": "Lookback days", "breakout_pct": "Breakout %" }
+      "params": {
+        "lookback_days": "Lookback days",
+        "breakout_pct": "Breakout %"
+      },
+      "help": "First-time breakout above recent highs — strong momentum signal."
     },
     "breakout_with_volume": {
       "label": "Breakout + Volume",
       "desc": "Breakout with volume confirmation",
-      "params": { "lookback_days": "Lookback days", "breakout_pct": "Breakout %", "volume_ratio": "Volume ratio", "volume_avg_days": "Volume avg days", "fresh_only": "Fresh breakout only" }
+      "params": {
+        "lookback_days": "Lookback days",
+        "breakout_pct": "Breakout %",
+        "volume_ratio": "Volume ratio",
+        "volume_avg_days": "Volume avg days",
+        "fresh_only": "Fresh breakout only"
+      },
+      "help": "Breakout confirmed by high volume — more reliable than price-only breakout."
     },
     "resistance_breakout": {
       "label": "Resistance Breakout",
       "desc": "Resistance level breakout",
-      "params": { "lookback_days": "Lookback days", "breakout_margin_pct": "Margin above resistance %" }
+      "params": {
+        "lookback_days": "Lookback days",
+        "breakout_margin_pct": "Margin above resistance %"
+      },
+      "help": "Stock pushes above a key resistance level, suggesting further upside."
     },
     "pe_ratio": {
       "label": "P/E Ratio",
       "desc": "Price-to-Earnings ratio filter",
-      "params": { "min_pe": "Min P/E", "max_pe": "Max P/E" }
+      "params": {
+        "min_pe": "Min P/E",
+        "max_pe": "Max P/E"
+      },
+      "help": "Price-to-Earnings ratio — lower values may indicate undervaluation."
     },
     "pb_ratio": {
       "label": "P/B Ratio",
       "desc": "Price-to-Book ratio filter",
-      "params": { "min_pb": "Min P/B", "max_pb": "Max P/B", "exclude_negative_bv": "Exclude negative book value" }
+      "params": {
+        "min_pb": "Min P/B",
+        "max_pb": "Max P/B",
+        "exclude_negative_bv": "Exclude negative book value"
+      },
+      "help": "Price-to-Book ratio — lower values suggest the stock is cheap relative to assets."
     },
     "ps_ratio": {
       "label": "P/S Ratio",
       "desc": "Price-to-Sales ratio filter",
-      "params": { "min_ps": "Min P/S", "max_ps": "Max P/S" }
+      "params": {
+        "min_ps": "Min P/S",
+        "max_ps": "Max P/S"
+      },
+      "help": "Price-to-Sales ratio — useful for valuing high-growth companies without earnings."
     },
     "pcf_ratio": {
       "label": "P/CF Ratio",
       "desc": "Price-to-Cash-Flow ratio filter",
-      "params": { "min_pcf": "Min P/CF", "max_pcf": "Max P/CF" }
+      "params": {
+        "min_pcf": "Min P/CF",
+        "max_pcf": "Max P/CF"
+      },
+      "help": "Price-to-Cash-Flow — measures value based on actual cash generation."
     },
     "dividend_yield": {
       "label": "Dividend Yield",
       "desc": "Dividend yield percentage filter",
-      "params": { "min_yield": "Min yield %", "max_yield": "Max yield %" }
+      "params": {
+        "min_yield": "Min yield %",
+        "max_yield": "Max yield %"
+      },
+      "help": "Annual dividend as % of stock price — higher means more passive income."
     },
     "earnings_yield": {
       "label": "Earnings Yield",
       "desc": "Earnings yield (E/P) percentage filter",
-      "params": { "min_yield": "Min yield %", "max_yield": "Max yield %" }
+      "params": {
+        "min_yield": "Min yield %",
+        "max_yield": "Max yield %"
+      },
+      "help": "Earnings relative to price (inverse of P/E) — higher means cheaper stock."
     },
     "ebit_ev": {
       "label": "EBIT/EV",
       "desc": "EBIT / Enterprise Value yield filter",
-      "params": { "min_ebit_ev": "Min EBIT/EV %", "max_ebit_ev": "Max EBIT/EV %" }
+      "params": {
+        "min_ebit_ev": "Min EBIT/EV %",
+        "max_ebit_ev": "Max EBIT/EV %"
+      },
+      "help": "EBIT / Enterprise Value — measures operating earnings yield for the whole firm."
     },
     "fcf_yield": {
       "label": "FCF Yield",
       "desc": "Free Cash Flow yield filter",
-      "params": { "min_fcf_yield": "Min FCF yield %", "max_fcf_yield": "Max FCF yield %" }
+      "params": {
+        "min_fcf_yield": "Min FCF yield %",
+        "max_fcf_yield": "Max FCF yield %"
+      },
+      "help": "Free cash flow relative to market cap — higher means more cash returned to investors."
     },
     "peg_ratio": {
       "label": "PEG Ratio",
       "desc": "Price/Earnings-to-Growth ratio filter",
-      "params": { "min_peg": "Min PEG", "max_peg": "Max PEG" }
+      "params": {
+        "min_peg": "Min PEG",
+        "max_peg": "Max PEG"
+      },
+      "help": "P/E adjusted for growth — PEG below 1 may indicate undervaluation."
     },
     "debt_to_equity": {
       "label": "D/E Ratio",
       "desc": "Debt-to-Equity ratio filter",
-      "params": { "min_de": "Min D/E %", "max_de": "Max D/E %" }
+      "params": {
+        "min_de": "Min D/E %",
+        "max_de": "Max D/E %"
+      },
+      "help": "Total debt vs equity — lower means less financial risk."
     },
     "current_ratio": {
       "label": "Current Ratio",
       "desc": "Current ratio (liquidity) filter",
-      "params": { "min_ratio": "Min ratio", "max_ratio": "Max ratio" }
+      "params": {
+        "min_ratio": "Min ratio",
+        "max_ratio": "Max ratio"
+      },
+      "help": "Current assets vs liabilities — higher means better short-term liquidity."
     },
     "roe": {
       "label": "ROE",
       "desc": "Return on Equity filter",
-      "params": { "min_roe": "Min ROE %", "max_roe": "Max ROE %" }
+      "params": {
+        "min_roe": "Min ROE %",
+        "max_roe": "Max ROE %"
+      },
+      "help": "Return on Equity — how efficiently the company generates profit from equity."
     },
     "piotroski_fscore": {
       "label": "Piotroski F-Score",
       "desc": "Piotroski F-Score (0-9) financial strength",
-      "params": { "min_score": "Min F-Score", "max_score": "Max F-Score" }
+      "params": {
+        "min_score": "Min F-Score",
+        "max_score": "Max F-Score"
+      },
+      "help": "Financial strength score (0-9) — higher indicates healthier company finances."
     },
     "altman_zscore": {
       "label": "Altman Z-Score",
       "desc": "Altman Z-Score bankruptcy risk filter",
-      "params": { "min_zscore": "Min Z-Score", "max_zscore": "Max Z-Score" }
+      "params": {
+        "min_zscore": "Min Z-Score",
+        "max_zscore": "Max Z-Score"
+      },
+      "help": "Bankruptcy risk score — higher score means lower risk of default."
     },
     "roic": {
       "label": "ROIC",
       "desc": "Return on Invested Capital filter",
-      "params": { "min_roic": "Min ROIC %", "max_roic": "Max ROIC %" }
+      "params": {
+        "min_roic": "Min ROIC %",
+        "max_roic": "Max ROIC %"
+      },
+      "help": "Return on Invested Capital — how well the company uses all its capital."
     }
   },
   "markets": {

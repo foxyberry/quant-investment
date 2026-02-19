@@ -15,7 +15,7 @@
     "yes": "예",
     "no": "아니오",
     "version": "버전 {version}",
-    "copyright": "\u00a9 {year} Quant Investment. All rights reserved.",
+    "copyright": "© {year} Quant Investment. All rights reserved.",
     "collapse": "접기",
     "enabled": "활성",
     "disabled": "비활성",
@@ -47,7 +47,6 @@
     "gettingStarted": "시작하기",
     "gettingStartedDesc": "이 대시보드는 {url}의 FastAPI 백엔드에 연결됩니다. 실시간 데이터를 보려면 API 서버가 실행 중인지 확인하세요.",
     "startServer": "API 서버 시작 명령:",
-
     "portfolioOverview": "포트폴리오 개요",
     "totalMarketValue": "총 시장 가치",
     "totalPnl": "총 손익",
@@ -56,7 +55,6 @@
     "totalInvestment": "총 투자: {amount}",
     "unableToLoadPortfolio": "포트폴리오 데이터를 불러올 수 없습니다",
     "noPortfolioData": "포트폴리오 데이터가 없습니다",
-
     "sellSignals": "매도 신호",
     "allClear": "이상 없음",
     "noSellSignals": "매도 신호가 없습니다",
@@ -68,14 +66,12 @@
     "takeProfit": "익절",
     "trailingStop": "트레일링 스톱",
     "manual": "수동",
-
     "recentReports": "최근 리포트",
     "viewAllReports": "전체 리포트 보기",
     "noReports": "리포트가 없습니다",
     "runScreeningForReports": "스크리닝을 실행하여 리포트를 생성하세요",
     "unableToLoadReports": "리포트를 불러올 수 없습니다",
     "buy": "매수",
-
     "quickActions": "빠른 실행",
     "runScreening": "스크리닝 실행",
     "runScreeningDesc": "조건에 맞는 종목 찾기",
@@ -177,7 +173,6 @@
     "name": "종목명",
     "price": "가격",
     "status": "상태",
-
     "inputBadge": "입력",
     "screeningBadge": "스크리닝",
     "outputBadge": "출력",
@@ -187,7 +182,6 @@
     "finalSelection": "최종 선택",
     "estimatedItems": "예상 {count}개",
     "connectAndRun": "노드를 연결하고 실행하세요",
-
     "searchPlaceholder": "컴포넌트 검색...",
     "inputNodes": "입력 노드",
     "filterNodes": "필터 노드",
@@ -207,7 +201,6 @@
     "cannotDropInGroup": "유니버스와 출력 노드는 그룹 안에 넣을 수 없습니다.",
     "groupInstruction": "조건 또는 논리 그룹 노드를 이 그룹 컨테이너에 드래그한 후, 그룹을 출력에 연결하세요.",
     "finalOutput": "최종 출력",
-
     "nodeProperties": "노드 속성",
     "displayName": "표시 이름",
     "stockUniverse": "종목 유니버스",
@@ -231,7 +224,6 @@
     "runFirst": "전략을 먼저 실행하세요",
     "exportJson": "JSON 내보내기",
     "nodeLimit": "노드 제한: {count}/{max}",
-
     "saveDialogTitle": "전략 저장",
     "strategyName": "전략 이름",
     "strategyNamePlaceholder": "예: RSI 과매도 + 거래량 급증",
@@ -248,9 +240,7 @@
     "deleteConfirm": "이 전략을 삭제할까요?",
     "unsavedChanges": "저장되지 않은 변경 사항이 있습니다",
     "lastSaved": "마지막 저장: {time}",
-    "strategyNameRequired": "전략 이름을 입력하세요",
-    "deploySuccess": "{total}개 종목 중 {count}개 매칭",
-    "deployError": "전략 실행 실패"
+    "strategyNameRequired": "전략 이름을 입력하세요"
   },
   "analysis": {
     "title": "차트 & 분석",
@@ -354,7 +344,7 @@
     "totalTrades": "합계 ({count}건)"
   },
   "conditions": {
-    "recommended": "\ucd94\ucc9c",
+    "recommended": "추천",
     "categories": {
       "price": "가격",
       "volume": "거래량",
@@ -367,217 +357,404 @@
     "min_price": {
       "label": "최소 가격",
       "desc": "주가 >= 기준값",
-      "params": { "min_price": "최소 가격" }
+      "params": {
+        "min_price": "최소 가격"
+      },
+      "help": "너무 싼 주식을 제외하기 위해 최소 가격을 설정합니다."
     },
     "max_price": {
       "label": "최대 가격",
       "desc": "주가 <= 기준값",
-      "params": { "max_price": "최대 가격" }
+      "params": {
+        "max_price": "최대 가격"
+      },
+      "help": "적정 가격대 주식에 집중하기 위해 최대 가격을 설정합니다."
     },
     "price_range": {
       "label": "가격 범위",
       "desc": "주가가 범위 내",
-      "params": { "min_price": "최소 가격", "max_price": "최대 가격" }
+      "params": {
+        "min_price": "최소 가격",
+        "max_price": "최대 가격"
+      },
+      "help": "특정 가격 범위 내의 주식을 찾습니다."
     },
     "price_change": {
       "label": "가격 변동률",
       "desc": "N일간 가격 변동",
-      "params": { "min_change_pct": "최소 변동 %", "max_change_pct": "최대 변동 %", "days": "기간 (일)" }
+      "params": {
+        "min_change_pct": "최소 변동 %",
+        "max_change_pct": "최대 변동 %",
+        "days": "기간 (일)"
+      },
+      "help": "최근 며칠간 일정 비율 이상 오르거나 내린 주식을 찾습니다."
     },
     "min_volume": {
       "label": "최소 거래량",
       "desc": "거래량 >= 기준값",
-      "params": { "min_volume": "최소 거래량" }
+      "params": {
+        "min_volume": "최소 거래량"
+      },
+      "help": "충분한 거래량이 있어 매매가 쉬운 주식만 선별합니다."
     },
     "volume_above_avg": {
       "label": "평균 이상 거래량",
       "desc": "이동평균 대비 거래량 초과",
-      "params": { "multiplier": "평균 배수", "period": "평균 기간" }
+      "params": {
+        "multiplier": "평균 배수",
+        "period": "평균 기간"
+      },
+      "help": "평소보다 거래가 활발한 주식 — 관심 증가의 신호일 수 있습니다."
     },
     "volume_spike": {
       "label": "거래량 급증",
       "desc": "갑작스러운 거래량 증가",
-      "params": { "multiplier": "급증 배수", "period": "평균 기간" }
+      "params": {
+        "multiplier": "급증 배수",
+        "period": "평균 기간"
+      },
+      "help": "갑작스러운 거래량 급등을 감지 — 큰 가격 변동의 전조일 수 있습니다."
     },
     "ma_touch": {
       "label": "MA 터치",
       "desc": "이동평균선 근접",
-      "params": { "period": "MA 기간", "threshold": "터치 임계값 (비율)" }
+      "params": {
+        "period": "MA 기간",
+        "threshold": "터치 임계값 (비율)"
+      },
+      "help": "주가가 이동평균선에 닿음 — 지지선 역할 또는 반등 가능성이 있습니다."
     },
     "above_ma": {
       "label": "MA 위",
       "desc": "이동평균선 상방",
-      "params": { "period": "MA 기간", "min_distance_pct": "최소 이격도 %" }
+      "params": {
+        "period": "MA 기간",
+        "min_distance_pct": "최소 이격도 %"
+      },
+      "help": "주가가 이동평균선 위에 있어 상승 추세를 나타냅니다."
     },
     "below_ma": {
       "label": "MA 아래",
       "desc": "이동평균선 하방",
-      "params": { "period": "MA 기간", "max_distance_pct": "최대 이격도 %" }
+      "params": {
+        "period": "MA 기간",
+        "max_distance_pct": "최대 이격도 %"
+      },
+      "help": "주가가 이동평균선 아래에 있어 하락 추세 또는 저평가 구간입니다."
     },
     "ma_cross_up": {
       "label": "MA 골든크로스",
       "desc": "골든크로스",
-      "params": { "short_period": "단기 MA 기간", "long_period": "장기 MA 기간", "lookback_days": "확인 기간" }
+      "params": {
+        "short_period": "단기 MA 기간",
+        "long_period": "장기 MA 기간",
+        "lookback_days": "확인 기간"
+      },
+      "help": "골든크로스: 단기 이평선이 장기 이평선을 상향 돌파 — 대표적인 매수 신호."
     },
     "ma_cross_down": {
       "label": "MA 데드크로스",
       "desc": "데드크로스",
-      "params": { "short_period": "단기 MA 기간", "long_period": "장기 MA 기간", "lookback_days": "확인 기간" }
+      "params": {
+        "short_period": "단기 MA 기간",
+        "long_period": "장기 MA 기간",
+        "lookback_days": "확인 기간"
+      },
+      "help": "데드크로스: 단기 이평선이 장기 이평선을 하향 돌파 — 대표적인 매도 신호."
     },
     "rsi_oversold": {
       "label": "RSI 과매도",
       "desc": "RSI 기준값 이하",
-      "params": { "threshold": "RSI 기준값", "period": "RSI 기간" }
+      "params": {
+        "threshold": "RSI 기준값",
+        "period": "RSI 기간"
+      },
+      "help": "RSI가 낮아 과매도 상태 — 반등 가능성이 있습니다."
     },
     "rsi_overbought": {
       "label": "RSI 과매수",
       "desc": "RSI 기준값 이상",
-      "params": { "threshold": "RSI 기준값", "period": "RSI 기간" }
+      "params": {
+        "threshold": "RSI 기준값",
+        "period": "RSI 기간"
+      },
+      "help": "RSI가 높아 과매수 상태 — 조정 가능성이 있습니다."
     },
     "rsi_range": {
       "label": "RSI 범위",
       "desc": "RSI가 범위 내",
-      "params": { "lower": "하한값", "upper": "상한값", "period": "RSI 기간" }
+      "params": {
+        "lower": "하한값",
+        "upper": "상한값",
+        "period": "RSI 기간"
+      },
+      "help": "RSI가 중립 구간에 있어 안정적인 모멘텀을 보여줍니다."
     },
     "bollinger_width": {
       "label": "볼린저 밴드 폭",
       "desc": "BB 밴드 수축",
-      "params": { "max_width_pct": "최대 BB 폭 %", "period": "BB 기간", "std_dev": "표준편차" }
+      "params": {
+        "max_width_pct": "최대 BB 폭 %",
+        "period": "BB 기간",
+        "std_dev": "표준편차"
+      },
+      "help": "볼린저 밴드 폭이 좁아 변동성이 낮음 — 큰 움직임이 올 수 있습니다."
     },
     "volume_below_avg": {
       "label": "평균 이하 거래량",
       "desc": "거래량 침체 구간",
-      "params": { "multiplier": "평균 대비 최대 비율", "period": "평균 기간" }
+      "params": {
+        "multiplier": "평균 대비 최대 비율",
+        "period": "평균 기간"
+      },
+      "help": "거래량이 평소보다 적은 조용한 매집 구간입니다."
     },
     "price_flat": {
       "label": "가격 횡보",
       "desc": "가격 횡보 구간",
-      "params": { "max_range_pct": "최대 변동폭 %", "period": "기간" }
+      "params": {
+        "max_range_pct": "최대 변동폭 %",
+        "period": "기간"
+      },
+      "help": "주가가 횡보 중 — 돌파 전 에너지를 모으고 있을 수 있습니다."
     },
     "obv_trend": {
       "label": "OBV 추세",
       "desc": "거래량 가중 추세",
-      "params": { "direction": "추세 방향 (상승/하락)", "lookback": "확인 기간" }
+      "params": {
+        "direction": "추세 방향 (상승/하락)",
+        "lookback": "확인 기간"
+      },
+      "help": "OBV(거래량가중지표) 추세로 세력의 매집 또는 매도를 파악합니다."
     },
     "stochastic_level": {
       "label": "스토캐스틱 레벨",
       "desc": "스토캐스틱 오실레이터 수준",
-      "params": { "threshold": "레벨 기준값", "condition": "이하 또는 이상", "k_period": "%K 기간", "d_period": "%D 기간" }
+      "params": {
+        "threshold": "레벨 기준값",
+        "condition": "이하 또는 이상",
+        "k_period": "%K 기간",
+        "d_period": "%D 기간"
+      },
+      "help": "스토캐스틱이 극단 수준에 있어 반전 가능성을 시사합니다."
     },
     "vpci_trend": {
       "label": "VPCI 추세",
       "desc": "VPCI 추세 방향",
-      "params": { "direction": "추세 방향 (상승/하락)", "short_period": "단기 기간", "long_period": "장기 기간", "lookback": "확인 기간" }
+      "params": {
+        "direction": "추세 방향 (상승/하락)",
+        "short_period": "단기 기간",
+        "long_period": "장기 기간",
+        "lookback": "확인 기간"
+      },
+      "help": "VPCI 추세 — 거래량이 가격 움직임을 뒷받침하는지 확인합니다."
     },
     "obv_divergence": {
       "label": "OBV 다이버전스",
       "desc": "가격 횡보 + OBV 상승",
-      "params": { "price_max_range_pct": "가격 변동폭 %", "obv_min_change_pct": "OBV 변화 %", "period": "기간" }
+      "params": {
+        "price_max_range_pct": "가격 변동폭 %",
+        "obv_min_change_pct": "OBV 변화 %",
+        "period": "기간"
+      },
+      "help": "주가는 횡보하지만 거래량은 증가 — 기관의 은밀한 매집 신호."
     },
     "stochastic_divergence": {
       "label": "스토캐스틱 다이버전스",
       "desc": "강세 스토캐스틱 다이버전스",
-      "params": { "k_period": "%K 기간", "d_period": "%D 기간", "lookback": "확인 기간", "divergence_threshold": "임계값 %" }
+      "params": {
+        "k_period": "%K 기간",
+        "d_period": "%D 기간",
+        "lookback": "확인 기간",
+        "divergence_threshold": "임계값 %"
+      },
+      "help": "주가는 신저가이지만 스토캐스틱은 아님 — 강세 다이버전스."
     },
     "vpci_divergence": {
       "label": "VPCI 다이버전스",
       "desc": "가격 횡보 + VPCI 상승",
-      "params": { "price_max_range_pct": "가격 변동폭 %", "short_period": "단기 기간", "long_period": "장기 기간", "lookback": "확인 기간" }
+      "params": {
+        "price_max_range_pct": "가격 변동폭 %",
+        "short_period": "단기 기간",
+        "long_period": "장기 기간",
+        "lookback": "확인 기간"
+      },
+      "help": "주가는 횡보하지만 VPCI는 상승 — 숨은 매수세를 확인합니다."
     },
     "bottom_breakout": {
       "label": "저점 돌파",
       "desc": "N일 저점 돌파",
-      "params": { "lookback_days": "확인 기간", "breakout_pct": "돌파 %" }
+      "params": {
+        "lookback_days": "확인 기간",
+        "breakout_pct": "돌파 %"
+      },
+      "help": "최근 저점 범위를 상향 돌파 — 추세 반전의 신호입니다."
     },
     "fresh_breakout": {
       "label": "신규 돌파",
       "desc": "최초 돌파",
-      "params": { "lookback_days": "확인 기간", "breakout_pct": "돌파 %" }
+      "params": {
+        "lookback_days": "확인 기간",
+        "breakout_pct": "돌파 %"
+      },
+      "help": "최근 고점을 처음 돌파 — 강한 상승 모멘텀 신호."
     },
     "breakout_with_volume": {
       "label": "돌파 + 거래량",
       "desc": "거래량 동반 돌파",
-      "params": { "lookback_days": "확인 기간", "breakout_pct": "돌파 %", "volume_ratio": "거래량 배수", "volume_avg_days": "거래량 평균 기간", "fresh_only": "신규 돌파만" }
+      "params": {
+        "lookback_days": "확인 기간",
+        "breakout_pct": "돌파 %",
+        "volume_ratio": "거래량 배수",
+        "volume_avg_days": "거래량 평균 기간",
+        "fresh_only": "신규 돌파만"
+      },
+      "help": "거래량을 동반한 돌파 — 단순 가격 돌파보다 신뢰도가 높습니다."
     },
     "resistance_breakout": {
       "label": "저항선 돌파",
       "desc": "저항 수준 돌파",
-      "params": { "lookback_days": "확인 기간", "breakout_margin_pct": "저항선 위 마진 %" }
+      "params": {
+        "lookback_days": "확인 기간",
+        "breakout_margin_pct": "저항선 위 마진 %"
+      },
+      "help": "주요 저항선을 돌파하여 추가 상승 여력을 시사합니다."
     },
     "pe_ratio": {
       "label": "PER (주가수익비율)",
       "desc": "주가수익비율 필터",
-      "params": { "min_pe": "최소 PER", "max_pe": "최대 PER" }
+      "params": {
+        "min_pe": "최소 PER",
+        "max_pe": "최대 PER"
+      },
+      "help": "주가수익비율 — 낮을수록 저평가 가능성이 있습니다."
     },
     "pb_ratio": {
       "label": "PBR (주가순자산비율)",
       "desc": "주가순자산비율 필터",
-      "params": { "min_pb": "최소 PBR", "max_pb": "최대 PBR", "exclude_negative_bv": "음수 장부가치 제외" }
+      "params": {
+        "min_pb": "최소 PBR",
+        "max_pb": "최대 PBR",
+        "exclude_negative_bv": "음수 장부가치 제외"
+      },
+      "help": "주가순자산비율 — 낮을수록 자산 대비 저평가입니다."
     },
     "ps_ratio": {
       "label": "PSR (주가매출비율)",
       "desc": "주가매출비율 필터",
-      "params": { "min_ps": "최소 PSR", "max_ps": "최대 PSR" }
+      "params": {
+        "min_ps": "최소 PSR",
+        "max_ps": "최대 PSR"
+      },
+      "help": "주가매출비율 — 아직 이익이 없는 성장주 평가에 유용합니다."
     },
     "pcf_ratio": {
       "label": "PCR (주가현금흐름비율)",
       "desc": "주가현금흐름비율 필터",
-      "params": { "min_pcf": "최소 PCR", "max_pcf": "최대 PCR" }
+      "params": {
+        "min_pcf": "최소 PCR",
+        "max_pcf": "최대 PCR"
+      },
+      "help": "주가현금흐름비율 — 실제 현금 창출력 기반 가치를 측정합니다."
     },
     "dividend_yield": {
       "label": "배당수익률",
       "desc": "배당수익률 필터",
-      "params": { "min_yield": "최소 수익률 %", "max_yield": "최대 수익률 %" }
+      "params": {
+        "min_yield": "최소 수익률 %",
+        "max_yield": "최대 수익률 %"
+      },
+      "help": "주가 대비 연간 배당금 비율 — 높을수록 배당 수익이 큽니다."
     },
     "earnings_yield": {
       "label": "이익수익률 (E/P)",
       "desc": "이익수익률 필터",
-      "params": { "min_yield": "최소 수익률 %", "max_yield": "최대 수익률 %" }
+      "params": {
+        "min_yield": "최소 수익률 %",
+        "max_yield": "최대 수익률 %"
+      },
+      "help": "주가 대비 이익률(PER의 역수) — 높을수록 저평가입니다."
     },
     "ebit_ev": {
       "label": "EBIT/EV",
       "desc": "EBIT/기업가치 수익률 필터",
-      "params": { "min_ebit_ev": "최소 EBIT/EV %", "max_ebit_ev": "최대 EBIT/EV %" }
+      "params": {
+        "min_ebit_ev": "최소 EBIT/EV %",
+        "max_ebit_ev": "최대 EBIT/EV %"
+      },
+      "help": "EBIT/기업가치 — 기업 전체의 영업이익 수익률을 측정합니다."
     },
     "fcf_yield": {
       "label": "FCF 수익률",
       "desc": "잉여현금흐름 수익률 필터",
-      "params": { "min_fcf_yield": "최소 FCF 수익률 %", "max_fcf_yield": "최대 FCF 수익률 %" }
+      "params": {
+        "min_fcf_yield": "최소 FCF 수익률 %",
+        "max_fcf_yield": "최대 FCF 수익률 %"
+      },
+      "help": "시가총액 대비 잉여현금흐름 — 높을수록 주주 환원 여력이 큽니다."
     },
     "peg_ratio": {
       "label": "PEG 비율",
       "desc": "주가수익성장비율 필터",
-      "params": { "min_peg": "최소 PEG", "max_peg": "최대 PEG" }
+      "params": {
+        "min_peg": "최소 PEG",
+        "max_peg": "최대 PEG"
+      },
+      "help": "성장률을 감안한 PER — 1 미만이면 저평가 가능성이 있습니다."
     },
     "debt_to_equity": {
       "label": "부채비율 (D/E)",
       "desc": "부채비율 필터",
-      "params": { "min_de": "최소 D/E %", "max_de": "최대 D/E %" }
+      "params": {
+        "min_de": "최소 D/E %",
+        "max_de": "최대 D/E %"
+      },
+      "help": "부채 대 자기자본 비율 — 낮을수록 재무 리스크가 적습니다."
     },
     "current_ratio": {
       "label": "유동비율",
       "desc": "유동비율 (유동성) 필터",
-      "params": { "min_ratio": "최소 비율", "max_ratio": "최대 비율" }
+      "params": {
+        "min_ratio": "최소 비율",
+        "max_ratio": "최대 비율"
+      },
+      "help": "유동자산 대 유동부채 — 높을수록 단기 유동성이 좋습니다."
     },
     "roe": {
       "label": "ROE (자기자본이익률)",
       "desc": "자기자본이익률 필터",
-      "params": { "min_roe": "최소 ROE %", "max_roe": "최대 ROE %" }
+      "params": {
+        "min_roe": "최소 ROE %",
+        "max_roe": "최대 ROE %"
+      },
+      "help": "자기자본이익률 — 회사가 자본을 얼마나 효율적으로 활용하는지 보여줍니다."
     },
     "piotroski_fscore": {
       "label": "피오트로스키 F-스코어",
       "desc": "피오트로스키 F-스코어 (0-9) 재무 건전성",
-      "params": { "min_score": "최소 F-스코어", "max_score": "최대 F-스코어" }
+      "params": {
+        "min_score": "최소 F-스코어",
+        "max_score": "최대 F-스코어"
+      },
+      "help": "재무 건전성 점수(0-9) — 높을수록 재무 상태가 건강합니다."
     },
     "altman_zscore": {
       "label": "알트만 Z-스코어",
       "desc": "알트만 Z-스코어 부도 위험 필터",
-      "params": { "min_zscore": "최소 Z-스코어", "max_zscore": "최대 Z-스코어" }
+      "params": {
+        "min_zscore": "최소 Z-스코어",
+        "max_zscore": "최대 Z-스코어"
+      },
+      "help": "부도 위험 점수 — 높을수록 부도 가능성이 낮습니다."
     },
     "roic": {
       "label": "투하자본수익률(ROIC)",
       "desc": "투하자본수익률 필터",
-      "params": { "min_roic": "최소 ROIC %", "max_roic": "최대 ROIC %" }
+      "params": {
+        "min_roic": "최소 ROIC %",
+        "max_roic": "최대 ROIC %"
+      },
+      "help": "투하자본수익률 — 회사가 전체 자본을 얼마나 잘 활용하는지 보여줍니다."
     }
   },
   "markets": {

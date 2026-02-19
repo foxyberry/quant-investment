@@ -28,6 +28,7 @@ function DraggableItem({
   type,
   label,
   description,
+  help,
   icon: Icon,
   color,
   conditionKey,
@@ -36,6 +37,7 @@ function DraggableItem({
   type: string;
   label: string;
   description?: string;
+  help?: string;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
   conditionKey?: string;
@@ -51,11 +53,11 @@ function DraggableItem({
 
   return (
     <div
-      className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-grab border border-transparent hover:border-[#e1e3e5] dark:hover:border-[#2e2e30] hover:bg-gray-50 dark:hover:bg-white/5 transition-all group"
+      className="relative flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-grab border border-transparent hover:border-[#e1e3e5] dark:hover:border-[#2e2e30] hover:bg-gray-50 dark:hover:bg-white/5 transition-all group/item"
       draggable
       onDragStart={onDragStart}
     >
-      <GripVertical className="h-3 w-3 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+      <GripVertical className="h-3 w-3 text-gray-300 dark:text-gray-600 opacity-0 group-hover/item:opacity-100 transition-opacity flex-shrink-0" />
       <Icon className={`h-4 w-4 ${color} flex-shrink-0`} />
       <div className="min-w-0">
         <div className="text-sm text-gray-700 dark:text-gray-200 font-medium truncate">
@@ -72,6 +74,13 @@ function DraggableItem({
           </div>
         )}
       </div>
+      {help && (
+        <div className="absolute left-full top-0 ml-2 w-56 p-2.5 rounded-lg bg-white dark:bg-[#1e1e1f] border border-[#e1e3e5] dark:border-[#2e2e30] shadow-lg z-50 invisible opacity-0 group-hover/item:visible group-hover/item:opacity-100 transition-all duration-150 pointer-events-none">
+          <div className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+            {help}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -201,6 +210,7 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
                         type="condition"
                         label={tCond(cond.key + '.label')}
                         description={tCond(cond.key + '.desc')}
+                        help={tCond.has(cond.key + '.help') ? tCond(cond.key + '.help') : undefined}
                         icon={Filter}
                         color="text-[#1313ec] dark:text-blue-400"
                         conditionKey={cond.key}
