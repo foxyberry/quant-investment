@@ -223,6 +223,8 @@
     "filterMetrics": "필터 값",
     "runFirst": "전략을 먼저 실행하세요",
     "exportJson": "JSON 내보내기",
+    "lastRunAt": "마지막 실행: {time}",
+    "exportCsv": "CSV 내보내기",
     "nodeLimit": "노드 제한: {count}/{max}",
     "saveDialogTitle": "전략 저장",
     "strategyName": "전략 이름",

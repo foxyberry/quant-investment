@@ -23,7 +23,10 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import { Loader2, Zap, RotateCcw, Save, TestTube, Download, FolderOpen, X } from 'lucide-react';
+import {
+  Loader2, Zap, RotateCcw, Save, TestTube, Download, FolderOpen, X,
+  ChevronRight, Home, MoreHorizontal, Calendar, FileSpreadsheet,
+} from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
 import GroupNode from '@/components/strategy/nodes/GroupNode';
@@ -139,6 +142,21 @@ function StrategyPageInner() {
   const [strategyDescription, setStrategyDescription] = useState('');
   const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(null);
   const [isResultPanelVisible, setIsResultPanelVisible] = useState(false);
+  const [showOverflowMenu, setShowOverflowMenu] = useState(false);
+  const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
+  const overflowRef = useRef<HTMLDivElement>(null);
+
+  // Close overflow menu on outside click
+  useEffect(() => {
+    if (!showOverflowMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (overflowRef.current && !overflowRef.current.contains(e.target as globalThis.Node)) {
+        setShowOverflowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showOverflowMenu]);
 
   // Restore from sessionStorage after mount (locale-switch persistence)
   // Uses setTimeout guard so the save effect doesn't overwrite sessionStorage
@@ -633,6 +651,7 @@ function StrategyPageInner() {
       {
         onSuccess: (data) => {
           setResults(data.results);
+          setLastRunTime(new Date());
           const nr = data.node_results ?? null;
           setNodeResults(nr);
           setNodes((nds) =>
@@ -695,6 +714,22 @@ function StrategyPageInner() {
     a.click();
     URL.revokeObjectURL(url);
   }, [nodes, edges]);
+
+  const handleExportCsv = useCallback(() => {
+    if (!results || results.length === 0) return;
+    const headers = ['Ticker', 'Name', 'Current Price'];
+    const rows = results.map((s) =>
+      [s.ticker, `"${(s.name || '').replace(/"/g, '""')}"`, s.current_price ?? ''].join(',')
+    );
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `strategy-results-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [results]);
 
   const handleSave = useCallback(() => {
     if (!strategyName.trim()) {
@@ -810,20 +845,21 @@ function StrategyPageInner() {
     <div className="flex flex-col h-[calc(100vh-var(--header-height))]">
       {/* Toolbar - Stitch-style */}
       <div className="flex items-center gap-3 px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c]">
-        <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4 text-[#1313ec]" />
-          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm">
+          <Home className="h-4 w-4 text-[#1313ec]" />
+          <span className="font-bold text-gray-900 dark:text-white tracking-tight">
             {t('title')}
           </span>
+          <ChevronRight className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+          <span className="text-gray-500 dark:text-gray-400">
+            {t('myStrategies')}
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+          <span className="font-medium text-gray-900 dark:text-gray-100">
+            {strategyName || t('untitled')}
+          </span>
         </div>
-        <span className="text-gray-300 dark:text-gray-600">|</span>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {t('myStrategies')}
-        </span>
-        <span className="text-gray-300 dark:text-gray-600">/</span>
-        <span className="text-sm text-gray-700 dark:text-gray-200 font-medium">
-          {strategyName || t('untitled')}
-        </span>
 
         <div className="flex-1" />
 
@@ -845,27 +881,45 @@ function StrategyPageInner() {
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={handleClear}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          {t('reset')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowLoadDialog(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-        >
-          <FolderOpen className="h-3.5 w-3.5" />
-          {t('loadStrategy')}
-        </button>
+        {/* Overflow menu (Reset, Load) */}
+        <div className="relative" ref={overflowRef}>
+          <button
+            type="button"
+            onClick={() => setShowOverflowMenu(!showOverflowMenu)}
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+          {showOverflowMenu && (
+            <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] shadow-lg z-50 py-1">
+              <button
+                type="button"
+                onClick={() => { handleClear(); setShowOverflowMenu(false); }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                {t('reset')}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowLoadDialog(true); setShowOverflowMenu(false); }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <FolderOpen className="h-3.5 w-3.5" />
+                {t('loadStrategy')}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="h-6 w-px bg-[#e1e3e5] dark:bg-[#2e2e30] mx-1" />
+
+        {/* Primary actions */}
         <button
           type="button"
           onClick={handleSave}
           disabled={saveStrategy.isPending || updateStrategy.isPending}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
         >
           <Save className="h-3.5 w-3.5" />
           {t('saveStrategy')}
@@ -873,7 +927,7 @@ function StrategyPageInner() {
         <button
           type="button"
           onClick={() => setShowBacktest(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <TestTube className="h-3.5 w-3.5" />
           {t('backtest')}
@@ -882,7 +936,7 @@ function StrategyPageInner() {
           type="button"
           onClick={handleRun}
           disabled={runStrategy.isPending}
-          className="flex items-center gap-2 px-5 py-1.5 rounded-full bg-[#1313ec] text-white text-sm font-medium hover:bg-[#1010c0] transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold bg-[#1313ec] text-white rounded hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
         >
           {runStrategy.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -946,25 +1000,46 @@ function StrategyPageInner() {
       </div>
 
       {/* Bottom status bar */}
-      <div className="flex items-center justify-between px-4 py-1.5 border-t border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] text-[11px] text-gray-400 dark:text-gray-500">
+      <div className="flex items-center justify-between px-4 py-1.5 border-t border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] text-[10px] font-medium text-gray-500 dark:text-gray-400">
         <div className="flex items-center gap-4">
-          <span>{t('nodes')}: {nodeCount}</span>
-          <span>{t('filters')}: {conditionCount}</span>
-          {results && (
-            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-              {t('matched')}: {results.length}
+          {/* Node limit with progress bar */}
+          <div className="flex items-center gap-2">
+            <span>{t('nodeLimit')}: {nodeCount}/20</span>
+            <div className="w-16 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#1313ec] rounded-full transition-all"
+                style={{ width: `${Math.min((nodeCount / 20) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            <span>{t('kospiData')}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-3 w-3" />
+            <span>
+              {lastRunTime
+                ? t('lastRunAt', { time: lastRunTime.toLocaleString() })
+                : t('lastRunNever')}
             </span>
-          )}
+          </div>
         </div>
         <div className="flex items-center gap-4">
-          <span>{t('kospiData')}</span>
-          <span>{results ? t('lastRunJustNow') : t('lastRunNever')}</span>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={!results || results.length === 0}
+            className="text-[10px] font-bold uppercase tracking-wider text-[#1313ec] hover:underline disabled:opacity-40 disabled:cursor-default"
+          >
+            {t('exportCsv')}
+          </button>
           <button
             type="button"
             onClick={handleExportJson}
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            disabled={!results || results.length === 0}
+            className="text-[10px] font-bold uppercase tracking-wider text-[#1313ec] hover:underline disabled:opacity-40 disabled:cursor-default"
           >
-            <Download className="h-3 w-3" />
             {t('exportJson')}
           </button>
         </div>

@@ -214,6 +214,8 @@
     "applyChanges": "应用更改",
     "filterMetrics": "过滤值",
     "exportJson": "导出 JSON",
+    "lastRunAt": "上次运行: {time}",
+    "exportCsv": "导出CSV",
     "nodeLimit": "节点上限：{count}/{max}",
     "saveDialogTitle": "保存策略",
     "strategyName": "策略名称",
