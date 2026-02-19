@@ -191,6 +191,7 @@
     "finalSelection": "최종 선택",
     "estimatedItems": "예상 {count}개",
     "connectAndRun": "노드를 연결하고 실행하세요",
+    "noResultsForNode": "이 노드의 결과가 아직 없습니다",
     "searchPlaceholder": "컴포넌트 검색...",
     "inputNodes": "입력 노드",
     "filterNodes": "필터 노드",

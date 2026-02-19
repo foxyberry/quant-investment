@@ -191,6 +191,7 @@
     "finalSelection": "最终选择",
     "estimatedItems": "预计 {count} 项",
     "connectAndRun": "连接节点并运行",
+    "noResultsForNode": "该节点暂无结果",
     "searchPlaceholder": "搜索组件...",
     "inputNodes": "输入节点",
     "filterNodes": "筛选节点",
