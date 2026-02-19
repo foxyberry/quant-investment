@@ -6,6 +6,8 @@ Converts graph representations into screener conditions and executes them.
 """
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Type
 
 import numpy as np
@@ -28,6 +30,192 @@ logger = logging.getLogger(__name__)
 # Auto-populated from @register_condition decorators
 CONDITION_CLASS_MAP: Dict[str, Type[BaseCondition]] = get_condition_class_map()
 CONDITION_METADATA: Dict[str, Dict[str, Any]] = get_condition_metadata()
+
+
+def _to_optional_float(value: Any) -> Optional[float]:
+    """Safely convert a value to float; return None for NaN/inf/non-numeric."""
+    if value is None:
+        return None
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not np.isfinite(numeric):
+        return None
+    return numeric
+
+
+def _is_korean_ticker(ticker: str) -> bool:
+    return ticker.endswith(".KS") or ticker.endswith(".KQ")
+
+
+def _extract_krx_code(ticker: str) -> str:
+    return ticker.split(".")[0]
+
+
+def _normalize_dividend_yield(value: Any) -> Optional[float]:
+    """Normalize dividend yield to percentage points (e.g., 3.2 for 3.2%)."""
+    dividend_yield = _to_optional_float(value)
+    if dividend_yield is None:
+        return None
+    # yfinance generally uses decimal (0.03 = 3%), while pykrx uses percent.
+    if 0 <= dividend_yield <= 1:
+        return dividend_yield * 100.0
+    return dividend_yield
+
+
+def _fetch_kr_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[float]]]:
+    """Fetch KR fundamentals in bulk via pykrx (best effort)."""
+    try:
+        from pykrx import stock as pykrx_stock
+    except ImportError:
+        return {}
+
+    by_market: Dict[str, Dict[str, str]] = {"KOSPI": {}, "KOSDAQ": {}}
+    for ticker in tickers:
+        if ticker.endswith(".KS"):
+            by_market["KOSPI"][_extract_krx_code(ticker)] = ticker
+        elif ticker.endswith(".KQ"):
+            by_market["KOSDAQ"][_extract_krx_code(ticker)] = ticker
+
+    fundamentals: Dict[str, Dict[str, Optional[float]]] = {}
+
+    for market, code_to_ticker in by_market.items():
+        if not code_to_ticker:
+            continue
+
+        df = None
+        # Weekend/holiday-safe lookup: try recent dates.
+        for days_back in range(0, 11):
+            date_str = (datetime.now() - timedelta(days=days_back)).strftime("%Y%m%d")
+            try:
+                candidate = pykrx_stock.get_market_fundamental_by_ticker(
+                    date=date_str,
+                    market=market,
+                )
+                if candidate is not None and not candidate.empty:
+                    df = candidate
+                    break
+            except Exception:
+                continue
+
+        if df is None or df.empty:
+            continue
+
+        for code, full_ticker in code_to_ticker.items():
+            if code not in df.index:
+                continue
+
+            row = df.loc[code]
+            fundamentals[full_ticker] = {
+                "per": _to_optional_float(row.get("PER")),
+                "pbr": _to_optional_float(row.get("PBR")),
+                "dividend_yield": _to_optional_float(row.get("DIV")),  # pykrx DIV is already in %
+            }
+
+    return fundamentals
+
+
+def _fetch_us_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[float]]]:
+    """Fetch US fundamentals via yfinance info (best effort)."""
+    if not tickers:
+        return {}
+
+    try:
+        import yfinance as yf
+    except ImportError:
+        return {}
+
+    fundamentals: Dict[str, Dict[str, Optional[float]]] = {}
+
+    try:
+        tickers_obj = yf.Tickers(" ".join(tickers))
+    except Exception:
+        tickers_obj = None
+
+    def _fetch_one(ticker: str) -> Dict[str, Optional[float]]:
+        try:
+            info: Dict[str, Any] = {}
+            if tickers_obj is not None:
+                ticker_obj = tickers_obj.tickers.get(ticker)
+                if ticker_obj is not None:
+                    info = ticker_obj.info or {}
+            if not info:
+                info = yf.Ticker(ticker).info or {}
+
+            return {
+                "per": _to_optional_float(info.get("trailingPE")),
+                "pbr": _to_optional_float(info.get("priceToBook")),
+                "dividend_yield": _normalize_dividend_yield(info.get("dividendYield")),
+            }
+        except Exception:
+            return {
+                "per": None,
+                "pbr": None,
+                "dividend_yield": None,
+            }
+
+    max_workers = min(8, len(tickers))
+    if max_workers <= 1:
+        ticker = tickers[0]
+        fundamentals[ticker] = _fetch_one(ticker)
+        return fundamentals
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_map = {executor.submit(_fetch_one, ticker): ticker for ticker in tickers}
+        try:
+            for future in as_completed(future_map, timeout=10):
+                ticker = future_map[future]
+                try:
+                    fundamentals[ticker] = future.result(timeout=5)
+                except Exception:
+                    fundamentals[ticker] = {
+                        "per": None,
+                        "pbr": None,
+                        "dividend_yield": None,
+                    }
+        except TimeoutError:
+            logger.warning("US fundamentals fetch timed out; filling remaining with None")
+            for future, ticker in future_map.items():
+                if ticker not in fundamentals:
+                    future.cancel()
+                    fundamentals[ticker] = {
+                        "per": None,
+                        "pbr": None,
+                        "dividend_yield": None,
+                    }
+
+    return fundamentals
+
+
+def _enrich_fundamentals(items: List[StrategyResultItem]) -> None:
+    """Fill PER/PBR/dividend_yield for strategy result items (best effort)."""
+    if not items:
+        return
+
+    unique_tickers = sorted({item.ticker for item in items if item.ticker})
+    if not unique_tickers:
+        return
+
+    kr_tickers = [t for t in unique_tickers if _is_korean_ticker(t)]
+    us_tickers = [t for t in unique_tickers if not _is_korean_ticker(t)]
+
+    fundamentals: Dict[str, Dict[str, Optional[float]]] = {}
+    try:
+        fundamentals.update(_fetch_kr_fundamentals(kr_tickers))
+    except Exception as e:
+        logger.warning("Failed to fetch KR fundamentals: %s", e)
+
+    try:
+        fundamentals.update(_fetch_us_fundamentals(us_tickers))
+    except Exception as e:
+        logger.warning("Failed to fetch US fundamentals: %s", e)
+
+    for item in items:
+        data = fundamentals.get(item.ticker, {})
+        item.per = data.get("per")
+        item.pbr = data.get("pbr")
+        item.dividend_yield = data.get("dividend_yield")
 
 
 def _sanitize_value(v: Any) -> Any:
@@ -611,6 +799,11 @@ def execute_strategy(
                         conditions=cond_details,
                     )
                 )
+
+    # Enrich both intermediate and final stocks with fundamentals.
+    all_items = [stock for node in node_results.values() for stock in node.stocks]
+    all_items.extend(final_items)
+    _enrich_fundamentals(all_items)
 
     conditions_used = [type(c).__name__ for c in leaf_conditions]
 

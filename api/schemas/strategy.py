@@ -70,6 +70,9 @@ class StrategyResultItem(BaseModel):
     ticker: str
     name: str
     current_price: Optional[float] = None
+    per: Optional[float] = None
+    pbr: Optional[float] = None
+    dividend_yield: Optional[float] = None
     matched: bool
     conditions: List[Dict[str, Any]] = Field(default_factory=list)
 
