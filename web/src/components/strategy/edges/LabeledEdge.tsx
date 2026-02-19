@@ -5,7 +5,7 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   getSmoothStepPath,
-  useReactFlow,
+  useNodesData,
   type EdgeProps,
 } from '@xyflow/react';
 import { Eye } from 'lucide-react';
@@ -251,7 +251,6 @@ function LabeledEdge({
   data,
 }: EdgeProps) {
   const t = useTranslations('strategy');
-  const { getNode } = useReactFlow();
   const [showStockList, setShowStockList] = useState(false);
 
   const [edgePath, labelX, labelY] = getSmoothStepPath({
@@ -265,9 +264,9 @@ function LabeledEdge({
 
   const label = (data as Record<string, unknown>)?.label as string | undefined;
 
-  // Get source node's intermediate result for edge count badge
-  const sourceNode = getNode(source);
-  const sourceData = sourceNode?.data as unknown as StrategyNodeData | undefined;
+  // Reactively subscribe to source node data so edge re-renders when results arrive
+  const sourceNodeData = useNodesData(source);
+  const sourceData = sourceNodeData?.data as unknown as StrategyNodeData | undefined;
   const intermediateResult = sourceData?.intermediateResult;
   const stockCount = intermediateResult?.stock_count;
 

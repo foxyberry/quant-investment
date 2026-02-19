@@ -200,31 +200,31 @@ function StrategyPageInner() {
       );
       if (sourceAlreadyConnected || targetAlreadyConnected) return false;
 
-      if (sourceType === 'universeNode') {
-        return targetType === 'conditionNode';
-      }
+      // Allowed target types per source type
+      const allowedTargets: Record<string, string[]> = {
+        universeNode: ['conditionNode', 'groupNode'],
+        conditionNode: ['conditionNode', 'groupNode', 'outputNode'],
+        groupNode: ['conditionNode', 'groupNode', 'outputNode'],
+      };
 
-      if (sourceType === 'conditionNode') {
-        if (targetType !== 'conditionNode' && targetType !== 'outputNode') return false;
+      const allowed = allowedTargets[sourceType!];
+      if (!allowed || !allowed.includes(targetType!)) return false;
 
-        // Prevent cycles: check if target can already reach source via existing edges
-        const visited = new Set<string>();
-        const queue = [target];
-        while (queue.length > 0) {
-          const current = queue.pop()!;
-          if (current === source) return false; // cycle detected
-          if (visited.has(current)) continue;
-          visited.add(current);
-          for (const edge of activeEdges) {
-            if (edge.source === current) {
-              queue.push(edge.target);
-            }
+      // Prevent cycles: check if target can already reach source via existing edges
+      const visited = new Set<string>();
+      const queue = [target];
+      while (queue.length > 0) {
+        const current = queue.pop()!;
+        if (current === source) return false; // cycle detected
+        if (visited.has(current)) continue;
+        visited.add(current);
+        for (const edge of activeEdges) {
+          if (edge.source === current) {
+            queue.push(edge.target);
           }
         }
-        return true;
       }
-
-      return false;
+      return true;
     },
     [nodes, edges]
   );
