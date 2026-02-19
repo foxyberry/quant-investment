@@ -21,9 +21,9 @@ function OutputNode({ data, selected }: NodeProps) {
 
   return (
     <div
-      className={`rounded-lg bg-white dark:bg-[#1e1e1f] border px-4 py-3 min-w-[180px] text-center transition-shadow ${
+      className={`rounded-lg bg-white dark:bg-[#1e1e1f] border min-w-[180px] transition-shadow ${
         selected
-          ? 'border-[#1313ec] shadow-[0_0_0_1px_#1313ec] ring-1 ring-[#1313ec]/20'
+          ? 'border-2 border-[#1313ec] shadow-xl'
           : 'border-[#e1e3e5] dark:border-[#2e2e30] shadow-sm hover:shadow-md'
       }`}
     >
@@ -32,24 +32,28 @@ function OutputNode({ data, selected }: NodeProps) {
         position={Position.Left}
         className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-left-[7px] hover:!scale-125 !transition-transform"
       />
-      <div className="flex items-center justify-center gap-2 mb-1">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-semibold uppercase tracking-wider">
-          <Flag className="h-3 w-3" />
+      {/* Header bar */}
+      <div className="px-3 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] bg-[#1313ec]/5 rounded-t-[7px] flex items-center gap-2">
+        <Flag className="h-3.5 w-3.5 text-[#1313ec] dark:text-blue-400" />
+        <span className="text-[11px] font-bold text-[#1313ec] dark:text-blue-400 uppercase tracking-wider">
           {t('outputBadge')}
         </span>
       </div>
-      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-        {t('finalSelection')}
+      {/* Content */}
+      <div className="p-3">
+        <div className="text-[13px] font-bold text-gray-900 dark:text-gray-100">
+          {t('finalSelection')}
+        </div>
+        {resultCount !== undefined && resultCount !== null ? (
+          <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+            {t('estimatedItems', { count: resultCount })}
+          </div>
+        ) : (
+          <div className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+            {t('connectAndRun')}
+          </div>
+        )}
       </div>
-      {resultCount !== undefined && resultCount !== null ? (
-        <div className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-          {t('estimatedItems', { count: resultCount })}
-        </div>
-      ) : (
-        <div className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-          {t('connectAndRun')}
-        </div>
-      )}
 
       {/* Inline info popup (read-only) */}
       <NodeEditPopup selected={!!selected} onDelete={handleDelete}>
