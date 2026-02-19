@@ -164,6 +164,8 @@
     "runningStatus": "실행 중...",
     "runningStrategy": "전략 실행 중...",
     "runningStrategyNote": "몇 초 정도 걸릴 수 있습니다",
+    "deployProgress": "배포 진행률",
+    "processingConditions": "조건 {count}개 처리 중",
     "executionFailed": "실행 실패",
     "deploySuccess": "{total}개 종목 중 {count}개 매칭",
     "deployError": "전략 실행 실패",

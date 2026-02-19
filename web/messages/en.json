@@ -164,6 +164,8 @@
     "runningStatus": "Running...",
     "runningStrategy": "Running strategy...",
     "runningStrategyNote": "This may take a few seconds",
+    "deployProgress": "Deploy progress",
+    "processingConditions": "Processing {count} conditions",
     "executionFailed": "Execution failed",
     "deploySuccess": "{count} stocks matched out of {total}",
     "deployError": "Strategy execution failed",

@@ -144,6 +144,7 @@ function StrategyPageInner() {
   const [isResultPanelVisible, setIsResultPanelVisible] = useState(false);
   const [showOverflowMenu, setShowOverflowMenu] = useState(false);
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
+  const [deployProgress, setDeployProgress] = useState(0);
   const overflowRef = useRef<HTMLDivElement>(null);
 
   // Close overflow menu on outside click
@@ -186,6 +187,19 @@ function StrategyPageInner() {
   const saveStrategy = useSaveStrategy();
   const updateStrategy = useUpdateStrategy();
   const { toast, showToast, hideToast } = useToast();
+
+  // Simulated deploy progress while running
+  useEffect(() => {
+    if (!runStrategy.isPending) return;
+    setDeployProgress(0);
+    const interval = setInterval(() => {
+      setDeployProgress((prev) => {
+        if (prev >= 90) return prev; // cap at 90% until real completion
+        return prev + Math.random() * 8 + 2; // +2~10% each tick
+      });
+    }, 600);
+    return () => clearInterval(interval);
+  }, [runStrategy.isPending]);
 
   const isValidConnection = useCallback(
     (connection: Edge | Connection) => {
@@ -651,6 +665,7 @@ function StrategyPageInner() {
       {
         onSuccess: (data) => {
           setResults(data.results);
+          setDeployProgress(100);
           setLastRunTime(new Date());
           const nr = data.node_results ?? null;
           setNodeResults(nr);
@@ -1055,8 +1070,22 @@ function StrategyPageInner() {
           {runStrategy.isPending ? (
             <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-500">
               <Loader2 className="h-8 w-8 animate-spin mb-3" />
+              <div className="w-64 mb-3">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-medium">{t('deployProgress')}</span>
+                  <span className="font-bold text-[#1313ec]">{Math.min(Math.round(deployProgress), 100)}%</span>
+                </div>
+                <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#1313ec] rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${Math.min(deployProgress, 100)}%` }}
+                  />
+                </div>
+              </div>
               <span className="text-sm">{t('runningStrategy')}</span>
-              <span className="text-xs mt-1">{t('runningStrategyNote')}</span>
+              <span className="text-xs mt-1">
+                {t('processingConditions', { count: conditionCount })}
+              </span>
             </div>
           ) : results ? (
             <>
