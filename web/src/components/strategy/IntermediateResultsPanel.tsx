@@ -77,6 +77,17 @@ interface Tab {
   nodeType: string;
 }
 
+/** Convert raw backend label (e.g. "pcf_ratio") to readable tab name. */
+function formatTabLabel(label: string, nodeType: string): string {
+  if (nodeType === 'universe' || nodeType === 'sector') return label;
+  // Condition labels: snake_case → Title Case
+  if (METRIC_LABELS[label]) return METRIC_LABELS[label];
+  return label
+    .replace(/_pct$/, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 interface IntermediateResultsPanelProps {
   nodeResults: Record<string, NodeIntermediateResult> | null;
   finalResults: StrategyResultItem[] | null;
@@ -110,13 +121,15 @@ export default function IntermediateResultsPanel({
         condition: 2,
         logic: 3,
       };
-      const sorted = Object.values(nodeResults).sort(
-        (a, b) => (typeOrder[a.node_type] ?? 9) - (typeOrder[b.node_type] ?? 9)
-      );
+      const sorted = Object.values(nodeResults)
+        .filter((nr) => nr.node_type !== 'output') // output is shown as __output__ tab
+        .sort(
+          (a, b) => (typeOrder[a.node_type] ?? 9) - (typeOrder[b.node_type] ?? 9)
+        );
       for (const nr of sorted) {
         result.push({
           id: nr.node_id,
-          label: nr.label,
+          label: formatTabLabel(nr.label, nr.node_type),
           count: nr.stock_count,
           nodeType: nr.node_type,
         });
