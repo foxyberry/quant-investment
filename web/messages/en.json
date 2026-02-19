@@ -301,7 +301,14 @@
     "averagePrice": "Average Price",
     "periodReturn": "Period Return",
     "currentPriceAt": "Current price is at",
-    "ofRange": "of the range"
+    "ofRange": "of the range",
+    "loadingData": "Loading {ticker} data...",
+    "loadFailed": "Failed to Load Data",
+    "retry": "Retry",
+    "loadingConditions": "Loading conditions...",
+    "aiDescription": "AI-powered analysis with valuation score, risk assessment, and entry recommendation.",
+    "low": "Low",
+    "high": "High"
   },
   "backtest": {
     "title": "Backtest Strategy",
