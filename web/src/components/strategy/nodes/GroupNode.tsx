@@ -90,7 +90,7 @@ function GroupNode({ id, data, selected }: NodeProps) {
     <div
       className={`relative rounded-2xl border ${style.border} ${style.bg} transition-shadow ${
         selected
-          ? 'shadow-[0_0_0_2px_rgba(19,19,236,0.3)] ring-2 ring-[#1313ec]/10'
+          ? 'shadow-xl ring-2 ring-[#1313ec]/20'
           : 'shadow-sm hover:shadow-md'
       }`}
       style={{ width: '100%', height: '100%', minWidth: 380, minHeight: 220 }}

@@ -46,14 +46,12 @@ function ConditionNode({ data, selected }: NodeProps) {
   // Check if condition has params configured
   const hasParams = nodeData.params && Object.keys(nodeData.params).length > 0;
 
-  // Build a concise value summary (e.g., "RSI < 30" or "Period: 20")
-  const valueSummary = nodeData.params
+  // Collect param entries for tag-style display
+  const paramEntries = nodeData.params
     ? Object.entries(nodeData.params)
         .filter(([, v]) => v !== null && v !== undefined)
-        .slice(0, 2)
-        .map(([k, v]) => `${String(k).replace(/_/g, ' ')}: ${v}`)
-        .join(' · ')
-    : '';
+        .slice(0, 3)
+    : [];
 
   const handleParamChange = useCallback(
     (name: string, value: unknown) => {
@@ -112,9 +110,9 @@ function ConditionNode({ data, selected }: NodeProps) {
 
   return (
     <div
-      className={`rounded-xl bg-white dark:bg-[#1e1e1f] border min-w-[220px] transition-shadow ${
+      className={`rounded-lg bg-white dark:bg-[#1e1e1f] border min-w-[220px] transition-shadow ${
         selected
-          ? 'border-[#1313ec] shadow-[0_0_0_1px_#1313ec] ring-1 ring-[#1313ec]/20'
+          ? 'border-2 border-[#1313ec] shadow-xl'
           : 'border-[#e1e3e5] dark:border-[#2e2e30] shadow-sm hover:shadow-md'
       }`}
     >
@@ -135,10 +133,10 @@ function ConditionNode({ data, selected }: NodeProps) {
       )}
 
       {/* Header bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 rounded-t-[10px] bg-blue-50 dark:bg-blue-500/10 border-b border-blue-100 dark:border-blue-500/20">
+      <div className="flex items-center justify-between px-3 py-2 rounded-t-[7px] bg-blue-50 dark:bg-blue-500/10 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
         <div className="flex items-center gap-1.5">
-          <Filter className="h-3 w-3 text-[#1313ec] dark:text-blue-400" />
-          <span className="text-[10px] font-semibold text-[#1313ec] dark:text-blue-400 uppercase tracking-wider">
+          <Filter className="h-3.5 w-3.5 text-[#1313ec] dark:text-blue-400" />
+          <span className="text-[11px] font-bold text-[#1313ec] dark:text-blue-400 uppercase tracking-wider">
             {t('screeningBadge')}
           </span>
         </div>
@@ -151,12 +149,21 @@ function ConditionNode({ data, selected }: NodeProps) {
 
       {/* Content */}
       <div className="px-3 py-2.5">
-        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <div className="text-[13px] font-bold text-gray-900 dark:text-gray-100">
           {label}
         </div>
-        {valueSummary && (
-          <div className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400 font-mono bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-md">
-            {valueSummary}
+        {paramEntries.length > 0 && (
+          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+            {paramEntries.map(([k, v]) => (
+              <span key={k} className="inline-flex items-center gap-1">
+                <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] text-slate-500">
+                  {String(k).replace(/_/g, ' ')}
+                </span>
+                <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-[#1313ec] dark:text-blue-400 rounded text-[10px] font-bold">
+                  {String(v)}
+                </span>
+              </span>
+            ))}
           </div>
         )}
       </div>
