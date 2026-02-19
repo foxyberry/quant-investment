@@ -346,6 +346,7 @@
     "totalTrades": "합계 ({count}건)"
   },
   "conditions": {
+    "recommended": "\ucd94\ucc9c",
     "categories": {
       "price": "가격",
       "volume": "거래량",

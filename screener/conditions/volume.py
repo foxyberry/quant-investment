@@ -67,9 +67,11 @@ class MinVolumeCondition(BaseCondition):
     description="Volume above moving average",
     category="volume",
     params=[
-        {"name": "multiplier", "type": "float", "default": 1.5, "description": "Avg multiplier"},
+        {"name": "multiplier", "type": "float", "default": 1.0, "description": "Avg multiplier"},
         {"name": "period", "type": "int", "default": 20, "description": "Average period"},
     ],
+    recommended=True,
+    order=70,
 )
 class VolumeAboveAvgCondition(BaseCondition):
     """평균 거래량 대비 조건"""
@@ -134,9 +136,11 @@ class VolumeAboveAvgCondition(BaseCondition):
     description="Sudden volume increase",
     category="volume",
     params=[
-        {"name": "multiplier", "type": "float", "default": 2.0, "description": "Spike multiplier"},
+        {"name": "multiplier", "type": "float", "default": 1.5, "description": "Spike multiplier"},
         {"name": "period", "type": "int", "default": 20, "description": "Average period"},
     ],
+    recommended=True,
+    order=60,
 )
 class VolumeSpikeCondition(BaseCondition):
     """거래량 급증 조건"""

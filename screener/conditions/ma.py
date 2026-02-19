@@ -18,9 +18,11 @@ from .registry import register_condition
     description="Price near moving average",
     category="movingAverage",
     params=[
-        {"name": "period", "type": "int", "default": 20, "description": "MA period"},
+        {"name": "period", "type": "int", "default": 120, "description": "MA period"},
         {"name": "threshold", "type": "float", "default": 0.02, "description": "Touch threshold (ratio)"},
     ],
+    recommended=True,
+    order=10,
 )
 class MATouchCondition(BaseCondition):
     """이동평균선 터치 조건"""
@@ -91,6 +93,8 @@ class MATouchCondition(BaseCondition):
         {"name": "period", "type": "int", "default": 20, "description": "MA period"},
         {"name": "min_distance_pct", "type": "float", "default": 0, "description": "Min distance %"},
     ],
+    recommended=True,
+    order=30,
 )
 class AboveMACondition(BaseCondition):
     """이동평균선 위 조건"""
@@ -226,10 +230,12 @@ class BelowMACondition(BaseCondition):
     description="Golden cross (short MA crosses above long MA)",
     category="movingAverage",
     params=[
-        {"name": "short_period", "type": "int", "default": 20, "description": "Short MA period"},
-        {"name": "long_period", "type": "int", "default": 60, "description": "Long MA period"},
+        {"name": "short_period", "type": "int", "default": 5, "description": "Short MA period"},
+        {"name": "long_period", "type": "int", "default": 20, "description": "Long MA period"},
         {"name": "lookback_days", "type": "int", "default": 5, "description": "Lookback days"},
     ],
+    recommended=True,
+    order=20,
 )
 class MACrossUpCondition(BaseCondition):
     """골든크로스 조건 (단기 MA가 장기 MA 상향 돌파)"""

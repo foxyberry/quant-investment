@@ -337,6 +337,7 @@
     "totalTrades": "总计（{count} 笔交易）"
   },
   "conditions": {
+    "recommended": "\u63a8\u8350",
     "categories": {
       "price": "价格",
       "volume": "成交量",

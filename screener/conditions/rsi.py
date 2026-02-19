@@ -30,9 +30,11 @@ def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
     description="RSI below threshold",
     category="rsi",
     params=[
-        {"name": "threshold", "type": "float", "default": 30, "description": "RSI threshold"},
+        {"name": "threshold", "type": "float", "default": 35, "description": "RSI threshold"},
         {"name": "period", "type": "int", "default": 14, "description": "RSI period"},
     ],
+    recommended=True,
+    order=40,
 )
 class RSIOversoldCondition(BaseCondition):
     """RSI 과매도 조건"""
@@ -158,10 +160,12 @@ class RSIOverboughtCondition(BaseCondition):
     description="RSI within range",
     category="rsi",
     params=[
-        {"name": "lower", "type": "float", "default": 30, "description": "Lower bound"},
+        {"name": "lower", "type": "float", "default": 50, "description": "Lower bound"},
         {"name": "upper", "type": "float", "default": 70, "description": "Upper bound"},
         {"name": "period", "type": "int", "default": 14, "description": "RSI period"},
     ],
+    recommended=True,
+    order=50,
 )
 class RSIRangeCondition(BaseCondition):
     """RSI 범위 조건"""

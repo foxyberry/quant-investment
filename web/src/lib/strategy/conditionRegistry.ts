@@ -18,4 +18,6 @@ export interface ConditionMeta {
   description: string;
   category: string;
   params: ConditionParam[];
+  recommended: boolean;
+  order: number;
 }

@@ -222,6 +222,8 @@ export interface StrategyConditionInfo {
     default: unknown;
     description: string;
   }>;
+  recommended: boolean;
+  order: number;
 }
 
 export interface StrategyConditionsResponse {

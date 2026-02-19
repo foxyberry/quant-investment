@@ -346,6 +346,7 @@
     "totalTrades": "Total ({count} trades)"
   },
   "conditions": {
+    "recommended": "REC",
     "categories": {
       "price": "Price",
       "volume": "Volume",
