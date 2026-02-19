@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import get_settings
+from api.database import init_db
 from api.routers import analysis_router, health_router, portfolio_router, screening_router
 from api.routers.backtest import router as backtest_router
 from api.routers.market import router as market_router
@@ -35,6 +36,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     settings = get_settings()
     print(f"Starting {settings.app_name} v{settings.app_version}")
     print(f"Debug mode: {settings.debug}")
+    try:
+        init_db()
+    except Exception as e:
+        print(f"WARNING: Database initialization failed: {e}")
+        print("Strategy persistence will be unavailable until DB is reachable.")
 
     yield
 

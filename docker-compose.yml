@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: quant-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: quant
+      POSTGRES_PASSWORD: quant
+      POSTGRES_DB: quant
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quant"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: .
@@ -15,9 +33,13 @@ services:
       - API_HOST=0.0.0.0
       - API_PORT=8000
       - DEBUG=false
+      - DATABASE_URL=postgresql://quant:quant@postgres:5432/quant
     env_file:
       - path: .env
         required: false
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -40,6 +62,9 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  pgdata:
 
 networks:
   default:

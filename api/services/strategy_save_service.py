@@ -1,18 +1,17 @@
 """
 Strategy Save Service.
 
-Business logic for saving/loading strategy graphs as JSON files.
+Business logic for saving/loading strategy graphs backed by PostgreSQL.
 Provides CRUD operations for saved strategies.
 """
 
-import json
 import logging
-import threading
 import uuid
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
+from api.database import SessionLocal
+from api.models.strategy import Strategy
 from api.schemas.strategy import (
     SavedStrategyResponse,
     StrategySaveRequest,
@@ -22,63 +21,23 @@ from api.schemas.strategy import (
 logger = logging.getLogger(__name__)
 
 
+def _row_to_response(row: Strategy) -> SavedStrategyResponse:
+    return SavedStrategyResponse(
+        id=row.id,
+        name=row.name,
+        description=row.description,
+        graph=row.graph,
+        created_at=row.created_at.isoformat() if row.created_at else "",
+        updated_at=row.updated_at.isoformat() if row.updated_at else "",
+    )
+
+
 class StrategySaveService:
     """
     Service for managing saved strategy graphs.
 
-    Uses JSON file persistence and in-memory cache with thread-safe writes.
+    Uses PostgreSQL via SQLAlchemy for persistence.
     """
-
-    DEFAULT_DATA_PATH = Path(__file__).parent.parent.parent / "data" / "strategies.json"
-
-    def __init__(self, data_path: Optional[Path] = None):
-        """
-        Initialize strategy save service.
-
-        Args:
-            data_path: Path to strategies JSON file (default: data/strategies.json)
-        """
-        self.data_path = data_path or self.DEFAULT_DATA_PATH
-        self._lock = threading.Lock()
-        self._strategies: Dict[str, Dict[str, Any]] = {}
-        self._load()
-
-    def _load(self) -> None:
-        """Load saved strategies from JSON file."""
-        if self.data_path.exists():
-            try:
-                with open(self.data_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    strategy_list = data.get("strategies", [])
-                    self._strategies = {s["id"]: s for s in strategy_list}
-                    logger.info(
-                        f"Loaded {len(self._strategies)} strategies from {self.data_path}"
-                    )
-            except Exception as e:
-                logger.warning(f"Failed to load strategy data: {e}")
-                self._strategies = {}
-        else:
-            # Create initial data file
-            self._save()
-
-    def _save(self) -> None:
-        """Save strategies to JSON file."""
-        with self._lock:
-            try:
-                self.data_path.parent.mkdir(parents=True, exist_ok=True)
-
-                data = {
-                    "strategies": list(self._strategies.values()),
-                    "updated_at": datetime.now().isoformat(),
-                }
-
-                with open(self.data_path, "w", encoding="utf-8") as f:
-                    json.dump(data, f, ensure_ascii=False, indent=2)
-
-                logger.debug(f"Saved strategy data to {self.data_path}")
-            except Exception as e:
-                logger.error(f"Failed to save strategy data: {e}")
-                raise
 
     def list_strategies(self) -> List[SavedStrategyResponse]:
         """
@@ -87,7 +46,12 @@ class StrategySaveService:
         Returns:
             List of saved strategies
         """
-        return [SavedStrategyResponse(**s) for s in self._strategies.values()]
+        db = SessionLocal()
+        try:
+            rows = db.query(Strategy).order_by(Strategy.updated_at.desc()).all()
+            return [_row_to_response(r) for r in rows]
+        finally:
+            db.close()
 
     def get_strategy(self, strategy_id: str) -> Optional[SavedStrategyResponse]:
         """
@@ -99,10 +63,14 @@ class StrategySaveService:
         Returns:
             Saved strategy if found, otherwise None
         """
-        strategy = self._strategies.get(strategy_id)
-        if strategy is None:
-            return None
-        return SavedStrategyResponse(**strategy)
+        db = SessionLocal()
+        try:
+            row = db.get(Strategy, strategy_id)
+            if row is None:
+                return None
+            return _row_to_response(row)
+        finally:
+            db.close()
 
     def save_strategy(self, data: StrategySaveRequest) -> SavedStrategyResponse:
         """
@@ -115,22 +83,29 @@ class StrategySaveService:
             Created saved strategy
         """
         strategy_id = uuid.uuid4().hex
-        now = datetime.now().isoformat()
+        now = datetime.utcnow()
 
-        strategy = {
-            "id": strategy_id,
-            "name": data.name,
-            "description": data.description,
-            "graph": data.graph.model_dump(),
-            "created_at": now,
-            "updated_at": now,
-        }
+        row = Strategy(
+            id=strategy_id,
+            name=data.name,
+            description=data.description,
+            graph=data.graph.model_dump(),
+            created_at=now,
+            updated_at=now,
+        )
 
-        self._strategies[strategy_id] = strategy
-        self._save()
-        logger.info(f"Saved strategy: {strategy_id}")
-
-        return SavedStrategyResponse(**strategy)
+        db = SessionLocal()
+        try:
+            db.add(row)
+            db.commit()
+            db.refresh(row)
+            logger.info("Saved strategy: %s", strategy_id)
+            return _row_to_response(row)
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
     def update_strategy(
         self, strategy_id: str, data: StrategyUpdateRequest
@@ -145,22 +120,30 @@ class StrategySaveService:
         Returns:
             Updated strategy if found, otherwise None
         """
-        strategy = self._strategies.get(strategy_id)
-        if strategy is None:
-            return None
+        db = SessionLocal()
+        try:
+            row = db.get(Strategy, strategy_id)
+            if row is None:
+                return None
 
-        if data.name is not None:
-            strategy["name"] = data.name
-        if data.description is not None:
-            strategy["description"] = data.description
-        if data.graph is not None:
-            strategy["graph"] = data.graph.model_dump()
+            if data.name is not None:
+                row.name = data.name
+            if data.description is not None:
+                row.description = data.description
+            if data.graph is not None:
+                row.graph = data.graph.model_dump()
 
-        strategy["updated_at"] = datetime.now().isoformat()
+            row.updated_at = datetime.utcnow()
 
-        self._save()
-        logger.info(f"Updated strategy: {strategy_id}")
-        return SavedStrategyResponse(**strategy)
+            db.commit()
+            db.refresh(row)
+            logger.info("Updated strategy: %s", strategy_id)
+            return _row_to_response(row)
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
     def delete_strategy(self, strategy_id: str) -> bool:
         """
@@ -172,12 +155,20 @@ class StrategySaveService:
         Returns:
             True if deleted, False if not found
         """
-        if strategy_id in self._strategies:
-            del self._strategies[strategy_id]
-            self._save()
-            logger.info(f"Deleted strategy: {strategy_id}")
+        db = SessionLocal()
+        try:
+            row = db.get(Strategy, strategy_id)
+            if row is None:
+                return False
+            db.delete(row)
+            db.commit()
+            logger.info("Deleted strategy: %s", strategy_id)
             return True
-        return False
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
 
 # Singleton instance
