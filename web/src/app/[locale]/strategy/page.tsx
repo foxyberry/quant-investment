@@ -19,6 +19,7 @@ import {
   type NodeTypes,
   type ReactFlowInstance,
   type NodeChange,
+  type EdgeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -29,11 +30,11 @@ import GroupNode from '@/components/strategy/nodes/GroupNode';
 import OutputNode from '@/components/strategy/nodes/OutputNode';
 import LabeledEdge from '@/components/strategy/edges/LabeledEdge';
 import NodePalette from '@/components/strategy/NodePalette';
-import PropertiesPanel from '@/components/strategy/PropertiesPanel';
+
 import BacktestPanel from '@/components/backtest/BacktestPanel';
 import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
-import { serializeGraph } from '@/lib/strategy/graphSerializer';
+import { serializeGraph, getDownstreamNodeIds } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
 import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
 import { useRunStrategy, useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
@@ -274,6 +275,41 @@ function StrategyPageInner() {
       reconnectingEdgeId.current = null;
     },
     [setEdges]
+  );
+
+  // Clear intermediate results for downstream nodes when edges are removed
+  const handleEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      const removedIds = changes
+        .filter((c): c is EdgeChange & { type: 'remove' } => c.type === 'remove')
+        .map((c) => c.id);
+
+      if (removedIds.length > 0) {
+        // Find target nodes of removed edges
+        const targetNodeIds = edges
+          .filter((e) => removedIds.includes(e.id))
+          .map((e) => e.target);
+
+        if (targetNodeIds.length > 0) {
+          const downstream = getDownstreamNodeIds(targetNodeIds, edges);
+          targetNodeIds.forEach((id) => downstream.add(id));
+
+          setNodes((nds) =>
+            nds.map((n) => {
+              if (!downstream.has(n.id)) return n;
+              const nd = n.data as Record<string, unknown>;
+              if (nd.intermediateResult === undefined && nd.resultCount === undefined)
+                return n;
+              const { intermediateResult, resultCount, ...rest } = nd;
+              return { ...n, data: rest as StrategyNodeData };
+            })
+          );
+        }
+      }
+
+      onEdgesChange(changes);
+    },
+    [edges, onEdgesChange, setNodes]
   );
 
   const onNodeClick = useCallback(
@@ -579,21 +615,6 @@ function StrategyPageInner() {
     [onNodesChange, setNodes]
   );
 
-  const handleUpdateNode = useCallback(
-    (id: string, dataUpdate: Partial<StrategyNodeData>) => {
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (n.id !== id) return n;
-          return {
-            ...n,
-            data: { ...n.data, ...dataUpdate },
-          };
-        })
-      );
-    },
-    [setNodes]
-  );
-
   const handleRun = useCallback(() => {
     setErrors([]);
     setResults(null);
@@ -612,17 +633,30 @@ function StrategyPageInner() {
       {
         onSuccess: (data) => {
           setResults(data.results);
-          setNodeResults(data.node_results ?? null);
+          const nr = data.node_results ?? null;
+          setNodeResults(nr);
           setNodes((nds) =>
             nds.map((n) => {
               const nd = getNodeData(n);
+              const updates: Record<string, unknown> = {};
               if (nd.node_type === 'output') {
-                return {
-                  ...n,
-                  data: { ...n.data, resultCount: data.matched_count },
+                updates.resultCount = data.matched_count;
+              }
+              if (nr && nr[n.id]) {
+                updates.intermediateResult = nr[n.id];
+              }
+              // Ensure universe node always shows its total count
+              if (nd.node_type === 'universe' && !updates.intermediateResult) {
+                updates.intermediateResult = {
+                  node_id: n.id,
+                  node_type: 'universe',
+                  label: nd.universe || 'Universe',
+                  stock_count: data.total_count,
+                  stocks: [],
                 };
               }
-              return n;
+              if (Object.keys(updates).length === 0) return n;
+              return { ...n, data: { ...n.data, ...updates } };
             })
           );
           showToast(
@@ -758,13 +792,6 @@ function StrategyPageInner() {
     [setNodes, setEdges]
   );
 
-  const currentSelectedNode = useMemo(() => {
-    if (!selectedNodeId) return null;
-    const found = nodes.find((n) => n.id === selectedNodeId);
-    if (!found) return null;
-    return found as unknown as Node<StrategyNodeData>;
-  }, [nodes, selectedNodeId]);
-
   // Count nodes by type
   const nodeCount = nodes.length;
   const conditionCount = nodes.filter(
@@ -877,7 +904,7 @@ function StrategyPageInner() {
             nodes={nodes}
             edges={edges}
             onNodesChange={handleNodesChange}
-            onEdgesChange={onEdgesChange}
+            onEdgesChange={handleEdgesChange}
             onConnect={onConnect}
             onReconnectStart={onReconnectStart}
             onReconnect={onReconnect}
@@ -916,21 +943,6 @@ function StrategyPageInner() {
             />
           </ReactFlow>
         </div>
-
-        {/* Right properties panel */}
-        {currentSelectedNode && (
-          <PropertiesPanel
-            node={currentSelectedNode}
-            onUpdate={handleUpdateNode}
-            onClose={() => setSelectedNodeId(null)}
-            onDeleteNode={(nodeId) => {
-              setNodes((nds) => nds.filter((n) => n.id !== nodeId && n.parentId !== nodeId));
-              setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
-              setSelectedNodeId(null);
-            }}
-            intermediateResult={selectedNodeId && nodeResults ? nodeResults[selectedNodeId] : undefined}
-          />
-        )}
       </div>
 
       {/* Bottom status bar */}

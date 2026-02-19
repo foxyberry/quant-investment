@@ -227,6 +227,7 @@
     "stockCount": "stocks",
     "universeNote": "All stocks before filtering",
     "andMore": "+{count} more",
+    "filterMetrics": "Filter Values",
     "runFirst": "Run strategy to see results",
     "exportJson": "Export JSON",
     "nodeLimit": "Node limit: {count}/{max}",
