@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import { NodeToolbar, Position, useReactFlow, useNodeId } from '@xyflow/react';
+import { NodeToolbar, Position, useReactFlow, useNodeId, useStore } from '@xyflow/react';
 import { Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ConditionParam } from '@/lib/strategy/conditionRegistry';
@@ -319,6 +319,9 @@ export default function NodeEditPopup({
   const t = useTranslations('strategy');
   const nodeId = useNodeId();
   const { setNodes } = useReactFlow();
+  const zoom = useStore((s) => s.transform[2]);
+  // Scale popup proportionally with canvas zoom; clamp so it never gets too tiny
+  const popupScale = Math.min(1, Math.max(0.5, zoom));
 
   // Escape key deselects node (closes popup)
   const handleKeyDown = useCallback(
@@ -348,7 +351,10 @@ export default function NodeEditPopup({
       offset={12}
       align="center"
     >
-      <div className="nodrag nowheel w-80 rounded-xl border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] shadow-xl">
+      <div
+        className="nodrag nowheel w-80 rounded-xl border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] shadow-xl"
+        style={{ transform: `scale(${popupScale})`, transformOrigin: 'top center' }}
+      >
         <div className="p-4 space-y-4 max-h-[400px] overflow-y-auto">
           {children}
         </div>
