@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Globe,
   Filter,
@@ -24,10 +25,29 @@ const SPECIAL_NODES = [
   { type: 'output', labelKey: 'finalOutput', icon: Flag, color: 'text-orange-600 dark:text-orange-400' },
 ];
 
+function HelpTooltip({ targetRect, help }: { targetRect: DOMRect; help: string }) {
+  const style: React.CSSProperties = {
+    position: 'fixed',
+    top: targetRect.top,
+    left: targetRect.right + 8,
+    zIndex: 9999,
+  };
+
+  return createPortal(
+    <div style={style} className="w-56 p-2.5 rounded-lg bg-white dark:bg-[#1e1e1f] border border-[#e1e3e5] dark:border-[#2e2e30] shadow-lg pointer-events-none animate-in fade-in duration-100">
+      <div className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+        {help}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function DraggableItem({
   type,
   label,
   description,
+  help,
   icon: Icon,
   color,
   conditionKey,
@@ -36,24 +56,40 @@ function DraggableItem({
   type: string;
   label: string;
   description?: string;
+  help?: string;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
   conditionKey?: string;
   recommendedLabel?: string;
 }) {
+  const [hovered, setHovered] = useState(false);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
   const onDragStart = (event: React.DragEvent) => {
     event.dataTransfer.setData('application/reactflow-type', type);
     if (conditionKey) {
       event.dataTransfer.setData('application/reactflow-condition', conditionKey);
     }
     event.dataTransfer.effectAllowed = 'move';
+    setHovered(false);
   };
+
+  const showTooltip = help
+    ? () => {
+        if (ref.current) setRect(ref.current.getBoundingClientRect());
+        setHovered(true);
+      }
+    : undefined;
 
   return (
     <div
+      ref={ref}
       className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-grab border border-transparent hover:border-[#e1e3e5] dark:hover:border-[#2e2e30] hover:bg-gray-50 dark:hover:bg-white/5 transition-all group"
       draggable
       onDragStart={onDragStart}
+      onMouseEnter={showTooltip}
+      onMouseLeave={() => setHovered(false)}
     >
       <GripVertical className="h-3 w-3 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
       <Icon className={`h-4 w-4 ${color} flex-shrink-0`} />
@@ -72,6 +108,7 @@ function DraggableItem({
           </div>
         )}
       </div>
+      {hovered && help && rect && <HelpTooltip targetRect={rect} help={help} />}
     </div>
   );
 }
@@ -201,6 +238,7 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
                         type="condition"
                         label={tCond(cond.key + '.label')}
                         description={tCond(cond.key + '.desc')}
+                        help={tCond(cond.key + '.help')}
                         icon={Filter}
                         color="text-[#1313ec] dark:text-blue-400"
                         conditionKey={cond.key}
