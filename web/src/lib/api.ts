@@ -313,6 +313,26 @@ export async function updateSavedStrategy(
   });
 }
 
+// Sector API types and functions
+
+export interface SectorInfo {
+  name: string;
+  stock_count: number;
+}
+
+export interface SectorListResponse {
+  market: string;
+  sectors: SectorInfo[];
+  total_sectors: number;
+}
+
+/**
+ * Get available sectors for a given market
+ */
+export async function getSectors(market: string = 'KOSPI'): Promise<SectorListResponse> {
+  return fetchApi<SectorListResponse>(`/api/strategy/sectors?market=${encodeURIComponent(market)}`);
+}
+
 /**
  * Delete a saved strategy
  */

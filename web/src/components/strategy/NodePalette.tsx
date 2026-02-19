@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Globe,
+  Building2,
   Filter,
   GitMerge,
   Flag,
@@ -19,6 +20,7 @@ import type { StrategyConditionInfo } from '@/lib/api';
 
 const SPECIAL_NODES = [
   { type: 'universe', labelKey: 'marketSelection', icon: Globe, color: 'text-emerald-600 dark:text-emerald-400' },
+  { type: 'sector', labelKey: 'sectorFilter', icon: Building2, color: 'text-amber-600 dark:text-amber-400' },
   { type: 'logic_and', labelKey: 'andGroup', icon: GitMerge, color: 'text-[#1313ec] dark:text-blue-400' },
   { type: 'logic_or', labelKey: 'orGroup', icon: GitMerge, color: 'text-purple-600 dark:text-purple-400' },
   { type: 'logic_not', labelKey: 'notGroup', icon: GitMerge, color: 'text-red-600 dark:text-red-400' },
@@ -184,7 +186,7 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
             <div className="px-2 py-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
               {t('inputNodes')}
             </div>
-            {SPECIAL_NODES.filter((n) => n.type === 'universe').map((node) => (
+            {SPECIAL_NODES.filter((n) => n.type === 'universe' || n.type === 'sector').map((node) => (
               <DraggableItem
                 key={node.type}
                 type={node.type}

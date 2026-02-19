@@ -1,11 +1,12 @@
 import type { Node, Edge } from '@xyflow/react';
 
 export interface StrategyNodeData extends Record<string, unknown> {
-  node_type: 'universe' | 'condition' | 'logic' | 'output';
+  node_type: 'universe' | 'condition' | 'logic' | 'output' | 'sector';
   condition_type?: string;
   params?: Record<string, unknown>;
   logic_operator?: string;
   universe?: string;
+  sector?: string;
   label?: string;
   resultCount?: number;
   child_node_ids?: string[];
@@ -20,6 +21,7 @@ export interface StrategyNode {
     params?: Record<string, unknown>;
     logic_operator?: string;
     universe?: string;
+    sector?: string;
     child_node_ids?: string[];
   };
   position?: { x: number; y: number };
@@ -81,6 +83,7 @@ export function serializeGraph(
         params: n.data.params || {},
         logic_operator: n.data.logic_operator,
         universe: n.data.universe,
+        sector: n.data.sector,
         ...(parentChildMap[n.id]
           ? { child_node_ids: parentChildMap[n.id] }
           : {}),
@@ -112,6 +115,7 @@ export function deserializeGraph(
   const nodes: Node<StrategyNodeData>[] = graph.nodes.map((n) => {
     let nodeType = 'conditionNode';
     if (n.data.node_type === 'universe') nodeType = 'universeNode';
+    else if (n.data.node_type === 'sector') nodeType = 'sectorNode';
     else if (n.data.node_type === 'logic') nodeType = 'groupNode';
     else if (n.data.node_type === 'output') nodeType = 'outputNode';
 
@@ -125,6 +129,7 @@ export function deserializeGraph(
         params: n.data.params || {},
         logic_operator: n.data.logic_operator,
         universe: n.data.universe,
+        sector: n.data.sector,
       },
     };
 
