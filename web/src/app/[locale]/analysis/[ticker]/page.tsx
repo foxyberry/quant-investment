@@ -276,7 +276,7 @@ export default function TickerAnalysisPage() {
             <div className="flex flex-col items-center gap-3">
               <div className="animate-spin rounded-full h-10 w-10 border-3 border-[var(--color-primary)] border-t-transparent" />
               <span className="text-[var(--foreground-muted)]">
-                Loading {ticker.toUpperCase()} data...
+                {t('loadingData', { ticker: ticker.toUpperCase() })}
               </span>
             </div>
           </div>
@@ -289,7 +289,7 @@ export default function TickerAnalysisPage() {
           <div className="flex flex-col items-center">
             <BarChart3 className="h-12 w-12 text-red-500 mb-4" />
             <h3 className="text-lg font-medium text-[var(--foreground)]">
-              Failed to Load Data
+              {t('loadFailed')}
             </h3>
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">
               {error}
@@ -301,7 +301,7 @@ export default function TickerAnalysisPage() {
               onClick={() => fetchData(selectedPeriod)}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
+              {t('retry')}
             </Button>
           </div>
         </Card>
@@ -476,7 +476,7 @@ export default function TickerAnalysisPage() {
               {screeningLoading && (
                 <div className="flex items-center gap-3 py-4">
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--color-primary)] border-t-transparent" />
-                  <span className="text-[var(--foreground-muted)]">Loading conditions...</span>
+                  <span className="text-[var(--foreground-muted)]">{t('loadingConditions')}</span>
                 </div>
               )}
 
@@ -562,7 +562,7 @@ export default function TickerAnalysisPage() {
                 <div className="flex flex-col items-center gap-4 py-6">
                   <Brain className="h-10 w-10 text-[var(--foreground-muted)]" />
                   <p className="text-sm text-[var(--foreground-muted)] text-center">
-                    AI-powered analysis with valuation score, risk assessment, and entry recommendation.
+                    {t('aiDescription')}
                   </p>
                   <Button
                     variant="primary"
@@ -795,8 +795,8 @@ export default function TickerAnalysisPage() {
                   return (
                     <>
                       <div className="flex justify-between text-sm text-[var(--foreground-muted)]">
-                        <span>Low: ${periodLow.toFixed(2)}</span>
-                        <span>High: ${periodHigh.toFixed(2)}</span>
+                        <span>{t('low')}: ${periodLow.toFixed(2)}</span>
+                        <span>{t('high')}: ${periodHigh.toFixed(2)}</span>
                       </div>
                       <div className="relative h-3 rounded-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400">
                         <div

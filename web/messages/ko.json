@@ -301,7 +301,14 @@
     "averagePrice": "평균 가격",
     "periodReturn": "기간 수익률",
     "currentPriceAt": "현재 가격 위치",
-    "ofRange": "범위 중"
+    "ofRange": "범위 중",
+    "loadingData": "{ticker} 데이터 로딩 중...",
+    "loadFailed": "데이터 로드 실패",
+    "retry": "다시 시도",
+    "loadingConditions": "조건 로딩 중...",
+    "aiDescription": "밸류에이션 점수, 리스크 평가, 진입 추천을 포함한 AI 기반 분석입니다.",
+    "low": "최저",
+    "high": "최고"
   },
   "backtest": {
     "title": "전략 백테스트",

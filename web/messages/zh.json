@@ -292,7 +292,14 @@
     "averagePrice": "平均价格",
     "periodReturn": "区间收益",
     "currentPriceAt": "当前价格位于",
-    "ofRange": "区间的"
+    "ofRange": "区间的",
+    "loadingData": "正在加载 {ticker} 数据...",
+    "loadFailed": "数据加载失败",
+    "retry": "重试",
+    "loadingConditions": "正在加载条件...",
+    "aiDescription": "基于 AI 的分析，包含估值评分、风险评估和入场建议。",
+    "low": "最低",
+    "high": "最高"
   },
   "backtest": {
     "title": "策略回测",
