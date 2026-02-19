@@ -13,7 +13,7 @@ class StrategyNodeData(BaseModel):
 
     node_type: str = Field(
         ...,
-        description="Type of node: 'universe', 'condition', 'logic', 'output'",
+        description="Type of node: 'universe', 'sector', 'condition', 'logic', 'output'",
     )
     condition_type: Optional[str] = Field(
         None, description="Condition class key (e.g., 'rsi_oversold')"
@@ -26,6 +26,9 @@ class StrategyNodeData(BaseModel):
     )
     universe: Optional[str] = Field(
         None, description="Universe name (e.g., 'KOSPI', 'SP500')"
+    )
+    sector: Optional[str] = Field(
+        None, description="Sector name for sector node filtering (e.g., '전기전자')"
     )
     child_node_ids: Optional[List[str]] = Field(
         None, description="Child node IDs for group/logic nodes"
@@ -158,3 +161,18 @@ class SavedStrategiesListResponse(BaseModel):
 
     strategies: List[SavedStrategyResponse]
     total_count: int
+
+
+class SectorInfo(BaseModel):
+    """Information about a market sector."""
+
+    name: str = Field(description="Sector name (e.g., '전기전자')")
+    stock_count: int = Field(description="Number of stocks in this sector")
+
+
+class SectorListResponse(BaseModel):
+    """Response listing available sectors for a market."""
+
+    market: str
+    sectors: List[SectorInfo]
+    total_sectors: int

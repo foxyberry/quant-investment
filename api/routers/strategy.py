@@ -12,6 +12,8 @@ from api.schemas.strategy import (
     ConditionsListResponse,
     SavedStrategiesListResponse,
     SavedStrategyResponse,
+    SectorInfo,
+    SectorListResponse,
     StrategyExecuteRequest,
     StrategyExecuteResponse,
     StrategySaveRequest,
@@ -22,6 +24,7 @@ from api.services.strategy_service import (
     execute_strategy,
     get_available_conditions,
 )
+from screener.sector_fetcher import get_sector_fetcher
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +153,37 @@ async def delete_saved_strategy(strategy_id: str) -> None:
             status_code=500,
             detail=f"Failed to delete strategy: {str(e)}",
         )
+
+
+@router.get(
+    "/sectors",
+    response_model=SectorListResponse,
+    summary="Get available sectors",
+    description="Return all available sectors for a given market with stock counts.",
+)
+async def list_sectors(market: str = "KOSPI") -> SectorListResponse:
+    """Return available sectors for the node palette."""
+    market_upper = market.upper()
+    if market_upper not in ("KOSPI", "KOSDAQ"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Sector listing is only supported for KOSPI and KOSDAQ, got: {market}",
+        )
+    try:
+        fetcher = get_sector_fetcher()
+        sector_counts = fetcher.get_sector_counts(market_upper)
+        sectors = [
+            SectorInfo(name=name, stock_count=count)
+            for name, count in sorted(sector_counts.items())
+        ]
+        return SectorListResponse(
+            market=market_upper,
+            sectors=sectors,
+            total_sectors=len(sectors),
+        )
+    except Exception as e:
+        logger.exception("Failed to fetch sectors for %s", market)
+        raise HTTPException(status_code=500, detail="Failed to fetch sector data")
 
 
 @router.post(

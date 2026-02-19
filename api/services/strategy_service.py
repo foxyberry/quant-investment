@@ -23,6 +23,7 @@ from api.schemas.strategy import (
 from screener.conditions import BaseCondition, AndCondition, OrCondition, NotCondition
 from screener.conditions.registry import get_condition_class_map, get_condition_metadata
 from screener import StockScreener
+from screener.sector_fetcher import get_sector_fetcher
 from api.services.screening_service import ScreeningService
 
 logger = logging.getLogger(__name__)
@@ -324,6 +325,9 @@ def build_conditions_from_graph(graph: StrategyGraph) -> tuple[List[BaseConditio
         if node.data.node_type == "universe":
             return None
 
+        if node.data.node_type == "sector":
+            return None  # Sector filters tickers, not conditions
+
         if node.data.node_type == "condition":
             if not node.data.condition_type:
                 raise ValueError(f"Condition node {node_id} has no condition_type")
@@ -467,6 +471,15 @@ def build_flat_conditions_from_graph(
             }
             return []
 
+        if node.data.node_type == "sector":
+            node_meta[node_id] = {
+                "node_type": "sector",
+                "label": node.data.sector or "Sector",
+                "leaf_indices": [],
+                "operator": None,
+            }
+            return []
+
         if node.data.node_type == "condition":
             if not node.data.condition_type:
                 raise ValueError(f"Condition node {node_id} has no condition_type")
@@ -581,6 +594,12 @@ def _compute_node_survivors(
     all_indices = set(range(len(all_results)))
 
     if node.data.node_type == "universe":
+        cache[node_id] = all_indices
+        return all_indices
+
+    if node.data.node_type == "sector":
+        # Tickers are already pre-filtered by sector in execute_strategy,
+        # so all results pass the sector node.
         cache[node_id] = all_indices
         return all_indices
 
@@ -701,6 +720,32 @@ def execute_strategy(
     Returns:
         Dict with results, counts, universe, conditions used, and node_results
     """
+    # Validate sector nodes early (only 1 allowed, must be connected)
+    sector_nodes = [n for n in graph.nodes if n.data.node_type == "sector"]
+    if len(sector_nodes) > 1:
+        raise ValueError("Only one sector node is allowed per strategy graph")
+    if sector_nodes:
+        sector_name_raw = (sector_nodes[0].data.sector or "").strip()
+        if not sector_name_raw:
+            raise ValueError("Sector node must have a sector name")
+        # Only apply if sector node is reachable from the output node
+        _incoming = {n.id: [] for n in graph.nodes}
+        for edge in graph.edges:
+            if edge.target in _incoming:
+                _incoming[edge.target].append(edge.source)
+        _output = [n for n in graph.nodes if n.data.node_type == "output"]
+        reachable: set[str] = set()
+        if _output:
+            stack = [_output[0].id]
+            while stack:
+                nid = stack.pop()
+                if nid in reachable:
+                    continue
+                reachable.add(nid)
+                stack.extend(_incoming.get(nid, []))
+        if sector_nodes[0].id not in reachable:
+            sector_nodes = []  # Disconnected sector node — ignore
+
     leaf_conditions, graph_universe, node_meta = build_flat_conditions_from_graph(graph)
 
     if not leaf_conditions:
@@ -712,6 +757,17 @@ def execute_strategy(
     screening_service = ScreeningService()
     tickers = screening_service._get_universe_tickers(universe)
     total_count = len(tickers)
+
+    # Apply sector filtering (already validated above)
+    if sector_nodes:
+        sector_name = (sector_nodes[0].data.sector or "").strip()
+        fetcher = get_sector_fetcher()
+        sector_tickers = set(fetcher.get_sector_tickers(universe, sector_name))
+        tickers = [t for t in tickers if t in sector_tickers]
+        logger.info(
+            "Sector filter '%s': %d -> %d tickers",
+            sector_name, total_count, len(tickers),
+        )
 
     # Create screener with flat leaf conditions and run with return_all=True
     screener = StockScreener(
