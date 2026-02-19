@@ -1,17 +1,26 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { Handle, Position, useNodeId, useReactFlow } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import { Filter, CheckCircle2, CircleDashed } from 'lucide-react';
+import { Filter, CheckCircle2, CircleDashed, Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
+import { getDownstreamNodeIds, type StrategyNodeData } from '@/lib/strategy/graphSerializer';
+import type { ConditionParam } from '@/lib/strategy/conditionRegistry';
 import { useConditions } from '@/contexts/ConditionsContext';
+import NodeEditPopup, {
+  FieldLabel,
+  SelectInput,
+  ParamInput,
+  InlineNumberInput,
+  groupParams,
+  CategoryBadge,
+} from './NodeEditPopup';
 
 function ConditionNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
-  const { getConditionMeta } = useConditions();
+  const { conditions, getConditionMeta } = useConditions();
   const nodeData = data as unknown as StrategyNodeData;
   const meta = nodeData.condition_type
     ? getConditionMeta(nodeData.condition_type)
@@ -29,8 +38,8 @@ function ConditionNode({ data, selected }: NodeProps) {
     label = nodeData.label || t('condition');
   }
 
-  const nodeId = useNodeId();
-  const { getNode } = useReactFlow();
+  const nodeId = useNodeId()!;
+  const { getNode, getEdges, setNodes, updateNodeData, deleteElements } = useReactFlow();
   const currentNode = nodeId ? getNode(nodeId) : null;
   const isInsideGroup = !!currentNode?.parentId;
 
@@ -45,6 +54,61 @@ function ConditionNode({ data, selected }: NodeProps) {
         .map(([k, v]) => `${String(k).replace(/_/g, ' ')}: ${v}`)
         .join(' · ')
     : '';
+
+  const handleParamChange = useCallback(
+    (name: string, value: unknown) => {
+      updateNodeData(nodeId, {
+        params: { ...nodeData.params, [name]: value },
+      });
+    },
+    [nodeId, nodeData.params, updateNodeData]
+  );
+
+  const handleConditionTypeChange = useCallback(
+    (key: string) => {
+      const condMeta = getConditionMeta(key);
+      const defaultParams: Record<string, unknown> = {};
+      if (condMeta) {
+        for (const p of condMeta.params) {
+          defaultParams[p.name] = p.default;
+        }
+      }
+
+      // Clear this node's stale result + all downstream nodes
+      const currentEdges = getEdges();
+      const downstream = getDownstreamNodeIds([nodeId], currentEdges);
+
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id === nodeId) {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                condition_type: key,
+                params: defaultParams,
+                label: condMeta?.label,
+                intermediateResult: undefined,
+              },
+            };
+          }
+          if (downstream.has(n.id)) {
+            const nd = n.data as Record<string, unknown>;
+            if (nd.intermediateResult === undefined && nd.resultCount === undefined)
+              return n;
+            const { intermediateResult, resultCount, ...rest } = nd;
+            return { ...n, data: rest };
+          }
+          return n;
+        })
+      );
+    },
+    [nodeId, getConditionMeta, getEdges, setNodes]
+  );
+
+  const handleDelete = useCallback(() => {
+    deleteElements({ nodes: [{ id: nodeId }] });
+  }, [nodeId, deleteElements]);
 
   return (
     <div
@@ -112,6 +176,106 @@ function ConditionNode({ data, selected }: NodeProps) {
           className="!w-2.5 !h-2.5 !bg-[#1313ec]/60 !border-2 !border-white dark:!border-[#1e1e1f] !-bottom-[5px] hover:!scale-125 !transition-transform"
         />
       )}
+
+      {/* Inline edit popup */}
+      <NodeEditPopup selected={!!selected} onDelete={handleDelete}>
+        <div>
+          <FieldLabel>{t('conditionLogic')}</FieldLabel>
+          <SelectInput
+            value={nodeData.condition_type || ''}
+            onChange={handleConditionTypeChange}
+          >
+            <option value="">{t('selectCondition')}</option>
+            {conditions.map((c) => (
+              <option key={c.key} value={c.key}>
+                {tCond(c.key + '.label')}
+              </option>
+            ))}
+          </SelectInput>
+        </div>
+
+        {nodeData.condition_type &&
+          (() => {
+            const currentMeta = getConditionMeta(nodeData.condition_type);
+            if (!currentMeta) return null;
+
+            const { paired, standalone } = groupParams(
+              currentMeta.params as ConditionParam[]
+            );
+
+            return (
+              <>
+                {currentMeta.category && (
+                  <div className="flex items-center gap-2">
+                    <CategoryBadge category={currentMeta.category} />
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  {tCond(currentMeta.key + '.desc')}
+                </p>
+
+                <div className="space-y-3">
+                  {paired.map(([minP, maxP]) => {
+                    const suffix = minP.name.replace(/^min_/, '');
+                    return (
+                      <div key={`pair-${suffix}`}>
+                        <FieldLabel>
+                          {t('range')}:{' '}
+                          {tCond(currentMeta.key + '.params.' + minP.name)} /{' '}
+                          {tCond(currentMeta.key + '.params.' + maxP.name)}
+                        </FieldLabel>
+                        <div className="flex items-center gap-2">
+                          <InlineNumberInput
+                            param={minP}
+                            value={
+                              nodeData.params?.[minP.name] ?? minP.default
+                            }
+                            onChange={handleParamChange}
+                          />
+                          <span className="text-gray-400 dark:text-gray-500 text-sm flex-shrink-0">
+                            ~
+                          </span>
+                          <InlineNumberInput
+                            param={maxP}
+                            value={
+                              nodeData.params?.[maxP.name] ?? maxP.default
+                            }
+                            onChange={handleParamChange}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {standalone.map((param) => (
+                    <ParamInput
+                      key={param.name}
+                      param={param}
+                      value={nodeData.params?.[param.name] ?? param.default}
+                      onChange={handleParamChange}
+                      conditionKey={currentMeta.key}
+                    />
+                  ))}
+                </div>
+
+                {/* Quick Insight */}
+                <div className="rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-3">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Info className="h-3.5 w-3.5 text-[#1313ec] dark:text-blue-400" />
+                    <span className="text-xs font-semibold text-[#1313ec] dark:text-blue-400 uppercase">
+                      {t('quickInsight')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {tCond(currentMeta.key + '.desc')}
+                  </p>
+                </div>
+              </>
+            );
+          })()}
+
+      </NodeEditPopup>
     </div>
   );
 }

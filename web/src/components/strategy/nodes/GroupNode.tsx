@@ -1,11 +1,12 @@
 'use client';
 
-import { memo, useMemo } from 'react';
-import { Handle, NodeResizer, Position, useReactFlow } from '@xyflow/react';
+import { memo, useMemo, useCallback } from 'react';
+import { Handle, NodeResizer, Position, useReactFlow, useNodeId } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { GitMerge } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
+import NodeEditPopup, { FieldLabel, SelectInput } from './NodeEditPopup';
 
 const OPERATOR_STYLES: Record<
   string,
@@ -64,11 +65,26 @@ function GroupNode({ id, data, selected }: NodeProps) {
   const labelKey = OPERATOR_LABELS[op] || 'andGroup';
   const resizerColor = OPERATOR_RESIZER_COLORS[op] || OPERATOR_RESIZER_COLORS.and;
 
-  const { getNodes } = useReactFlow();
+  const nodeId = useNodeId()!;
+  const { getNodes, updateNodeData, deleteElements } = useReactFlow();
 
   const childCount = useMemo(() => {
     return getNodes().filter((n) => n.parentId === id).length;
   }, [getNodes, id]);
+
+  const handleOperatorChange = useCallback(
+    (value: string) => {
+      updateNodeData(nodeId, { logic_operator: value });
+    },
+    [nodeId, updateNodeData]
+  );
+
+  const handleDelete = useCallback(() => {
+    // Delete group and all children
+    const children = getNodes().filter((n) => n.parentId === id);
+    const nodesToDelete = [{ id: nodeId }, ...children.map((c) => ({ id: c.id }))];
+    deleteElements({ nodes: nodesToDelete });
+  }, [nodeId, id, getNodes, deleteElements]);
 
   return (
     <div
@@ -126,6 +142,24 @@ function GroupNode({ id, data, selected }: NodeProps) {
         position={Position.Right}
         className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-right-[7px] hover:!scale-125 !transition-transform"
       />
+
+      {/* Inline edit popup */}
+      <NodeEditPopup selected={!!selected} onDelete={handleDelete}>
+        <div>
+          <FieldLabel>{t('logicOperator')}</FieldLabel>
+          <SelectInput
+            value={nodeData.logic_operator || 'and'}
+            onChange={handleOperatorChange}
+          >
+            <option value="and">{t('andAllMustMatch')}</option>
+            <option value="or">{t('orAnyMustMatch')}</option>
+            <option value="not">{t('notInvertFirst')}</option>
+          </SelectInput>
+        </div>
+        <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+          {t('groupInstruction')}
+        </div>
+      </NodeEditPopup>
     </div>
   );
 }

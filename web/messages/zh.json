@@ -219,6 +219,7 @@
     "removeNode": "移除节点",
     "range": "范围",
     "applyChanges": "应用更改",
+    "filterMetrics": "过滤值",
     "exportJson": "导出 JSON",
     "nodeLimit": "节点上限：{count}/{max}",
 

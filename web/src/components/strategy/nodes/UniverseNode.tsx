@@ -1,15 +1,31 @@
 'use client';
 
-import { memo } from 'react';
-import { Handle, Position } from '@xyflow/react';
+import { memo, useCallback } from 'react';
+import { Handle, Position, useNodeId, useReactFlow } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
+import NodeEditPopup, { FieldLabel, SelectInput } from './NodeEditPopup';
+
+const UNIVERSES = ['KOSPI', 'KOSDAQ', 'SP500', 'NASDAQ100'];
 
 function UniverseNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
   const nodeData = data as unknown as StrategyNodeData;
+  const nodeId = useNodeId()!;
+  const { updateNodeData, deleteElements } = useReactFlow();
+
+  const handleUniverseChange = useCallback(
+    (value: string) => {
+      updateNodeData(nodeId, { universe: value });
+    },
+    [nodeId, updateNodeData]
+  );
+
+  const handleDelete = useCallback(() => {
+    deleteElements({ nodes: [{ id: nodeId }] });
+  }, [nodeId, deleteElements]);
 
   return (
     <div
@@ -36,6 +52,23 @@ function UniverseNode({ data, selected }: NodeProps) {
         position={Position.Right}
         className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-right-[7px] hover:!scale-125 !transition-transform"
       />
+
+      {/* Inline edit popup */}
+      <NodeEditPopup selected={!!selected} onDelete={handleDelete}>
+        <div>
+          <FieldLabel>{t('stockUniverse')}</FieldLabel>
+          <SelectInput
+            value={nodeData.universe || 'KOSPI'}
+            onChange={handleUniverseChange}
+          >
+            {UNIVERSES.map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </SelectInput>
+        </div>
+      </NodeEditPopup>
     </div>
   );
 }

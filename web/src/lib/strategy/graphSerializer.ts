@@ -9,6 +9,7 @@ export interface StrategyNodeData extends Record<string, unknown> {
   label?: string;
   resultCount?: number;
   child_node_ids?: string[];
+  intermediateResult?: import('@/lib/api').NodeIntermediateResult;
 }
 
 export interface StrategyNode {
@@ -33,6 +34,27 @@ export interface StrategyEdge {
 export interface StrategyGraph {
   nodes: StrategyNode[];
   edges: StrategyEdge[];
+}
+
+/**
+ * BFS to find all node IDs reachable downstream from a set of starting nodes.
+ */
+export function getDownstreamNodeIds(
+  startNodeIds: string[],
+  edges: Array<{ source: string; target: string }>
+): Set<string> {
+  const downstream = new Set<string>();
+  const queue = [...startNodeIds];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const edge of edges) {
+      if (edge.source === current && !downstream.has(edge.target)) {
+        downstream.add(edge.target);
+        queue.push(edge.target);
+      }
+    }
+  }
+  return downstream;
 }
 
 export function serializeGraph(
@@ -62,6 +84,7 @@ export function serializeGraph(
         ...(parentChildMap[n.id]
           ? { child_node_ids: parentChildMap[n.id] }
           : {}),
+        // intermediateResult is runtime-only, excluded from serialization
       },
       position: n.position,
     })),
