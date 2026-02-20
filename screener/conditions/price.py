@@ -249,8 +249,8 @@ class DrawdownFromHighCondition(BaseCondition):
     """N일 고점 대비 하락률 조건"""
 
     def __init__(self, lookback_days: int = 120, min_drop_pct: float = 20.0, price_field: str = "high"):
-        self.lookback_days = lookback_days
-        self.min_drop_pct = min_drop_pct
+        self.lookback_days = max(1, lookback_days)
+        self.min_drop_pct = max(0.0, min_drop_pct)
         self.price_field = price_field if price_field in ("high", "close") else "high"
 
     @property
@@ -269,17 +269,24 @@ class DrawdownFromHighCondition(BaseCondition):
                 details={"error": "Insufficient data"},
             )
 
-        col = self.price_field if self.price_field in data.columns else "high"
+        col = self.price_field if self.price_field in data.columns else "close"
         rolling_high = data[col].iloc[-self.lookback_days:].max()
+        current_price = data["close"].iloc[-1]
 
-        if rolling_high == 0:
+        if pd.isna(rolling_high) or pd.isna(current_price):
             return ConditionResult(
                 matched=False,
                 condition_name=self.name,
-                details={"error": "Rolling high is zero"},
+                details={"error": "NaN in price data"},
             )
 
-        current_price = data["close"].iloc[-1]
+        if rolling_high <= 0:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Rolling high is zero or negative"},
+            )
+
         drop_pct = (rolling_high - current_price) / rolling_high * 100
         matched = drop_pct >= self.min_drop_pct
 
@@ -292,7 +299,7 @@ class DrawdownFromHighCondition(BaseCondition):
                 "drop_pct": round(float(drop_pct), 2),
                 "lookback_days": self.lookback_days,
                 "min_drop_pct": self.min_drop_pct,
-                "price_field": self.price_field,
+                "price_field": col,
             },
         )
 
