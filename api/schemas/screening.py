@@ -111,6 +111,7 @@ class PresetInfo(BaseModel):
         name: Preset identifier
         description: Human-readable description
         conditions: List of condition names in the preset
+        source: Origin of the preset ('static' for built-in, 'custom' for saved strategies)
     """
 
     name: str = Field(..., description="Preset identifier")
@@ -119,6 +120,7 @@ class PresetInfo(BaseModel):
         default_factory=list,
         description="List of condition names"
     )
+    source: str = Field(default="static", description="'static' or 'custom'")
 
 
 class UniverseInfo(BaseModel):
