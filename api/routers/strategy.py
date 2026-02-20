@@ -4,9 +4,14 @@ Strategy Router.
 Endpoints for the visual strategy builder.
 """
 
+import json
 import logging
+import queue
+import threading
+import time
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 
 from api.schemas.strategy import (
     ConditionsListResponse,
@@ -16,12 +21,14 @@ from api.schemas.strategy import (
     SectorListResponse,
     StrategyExecuteRequest,
     StrategyExecuteResponse,
+    StrategyProgressEvent,
     StrategySaveRequest,
     StrategyUpdateRequest,
 )
 from api.services.strategy_save_service import get_strategy_save_service
 from api.services.strategy_service import (
     execute_strategy,
+    execute_strategy_with_progress,
     get_available_conditions,
 )
 from screener.sector_fetcher import get_sector_fetcher
@@ -205,3 +212,124 @@ async def run_strategy(request: StrategyExecuteRequest) -> StrategyExecuteRespon
     except Exception as e:
         logger.exception("Strategy execution failed")
         raise HTTPException(status_code=500, detail=f"Execution failed: {str(e)}")
+
+
+@router.post(
+    "/run/stream",
+    summary="Execute visual strategy with SSE progress",
+    description="Execute a visual strategy graph and stream progress events via SSE.",
+)
+async def run_strategy_stream(request: StrategyExecuteRequest):
+    """Execute a visual strategy graph with streaming progress events."""
+    progress_queue: queue.Queue = queue.Queue(maxsize=100)
+    cancel_event = threading.Event()
+
+    def _progress_cb(processed: int, total: int, matched: int) -> None:
+        if cancel_event.is_set():
+            return
+        # Throttle: emit at most ~50 progress events
+        interval = max(1, -(-total // 50))  # ceil division
+        if processed % interval != 0 and processed != total:
+            return
+        try:
+            progress_queue.put_nowait(
+                StrategyProgressEvent(
+                    processed_tickers=processed,
+                    total_tickers=total,
+                    matched_count=matched,
+                    progress_pct=round(processed / total * 100, 1) if total else 0,
+                    status="running",
+                )
+            )
+        except queue.Full:
+            pass
+
+    def _run():
+        try:
+            result = execute_strategy_with_progress(
+                graph=request.graph,
+                universe_override=request.universe_override,
+                progress_callback=_progress_cb,
+            )
+            if cancel_event.is_set():
+                return
+            screened = result.get("screened_count", result["total_count"])
+            try:
+                progress_queue.put(
+                    StrategyProgressEvent(
+                        processed_tickers=screened,
+                        total_tickers=screened,
+                        matched_count=result["matched_count"],
+                        progress_pct=100.0,
+                        status="done",
+                    ),
+                    timeout=5,
+                )
+            except queue.Full:
+                return
+            if cancel_event.is_set():
+                return
+            try:
+                progress_queue.put(result, timeout=5)
+            except queue.Full:
+                pass
+        except Exception as e:
+            logger.exception("Strategy streaming execution failed")
+            if cancel_event.is_set():
+                return
+            try:
+                progress_queue.put(
+                    StrategyProgressEvent(
+                        status="error",
+                        message="Strategy execution failed. Check server logs for details.",
+                    ),
+                    timeout=5,
+                )
+            except queue.Full:
+                pass
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+
+    def event_stream():
+        start = time.monotonic()
+        max_duration = 600  # 10 minutes absolute limit
+        try:
+            while True:
+                if time.monotonic() - start > max_duration:
+                    yield f"event: error\ndata: {json.dumps({'status': 'error', 'message': 'Maximum duration exceeded'})}\n\n"
+                    break
+                try:
+                    item = progress_queue.get(timeout=5)
+                except queue.Empty:
+                    # Heartbeat to keep connection alive
+                    yield ": heartbeat\n\n"
+                    continue
+
+                if isinstance(item, StrategyProgressEvent):
+                    yield f"event: progress\ndata: {item.model_dump_json()}\n\n"
+                    if item.status in ("done", "error"):
+                        if item.status == "done":
+                            # Final result follows
+                            try:
+                                final = progress_queue.get(timeout=10)
+                                resp = StrategyExecuteResponse(**final)
+                                yield f"event: result\ndata: {resp.model_dump_json()}\n\n"
+                            except queue.Empty:
+                                pass
+                        break
+                elif isinstance(item, dict):
+                    resp = StrategyExecuteResponse(**item)
+                    yield f"event: result\ndata: {resp.model_dump_json()}\n\n"
+                    break
+        finally:
+            cancel_event.set()
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )

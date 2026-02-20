@@ -4,7 +4,7 @@ Strategy Builder Schemas.
 Pydantic models for the visual strategy builder graph serialization and execution.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, Field
 
 
@@ -161,6 +161,17 @@ class SavedStrategiesListResponse(BaseModel):
 
     strategies: List[SavedStrategyResponse]
     total_count: int
+
+
+class StrategyProgressEvent(BaseModel):
+    """SSE progress event during strategy execution."""
+
+    processed_tickers: int = 0
+    total_tickers: int = 0
+    matched_count: int = 0
+    progress_pct: float = 0.0
+    status: Literal["running", "done", "error"] = Field(description="Event status")
+    message: Optional[str] = None
 
 
 class SectorInfo(BaseModel):
