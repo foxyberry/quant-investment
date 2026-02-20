@@ -30,6 +30,7 @@
     "strategy": "전략",
     "portfolio": "포트폴리오",
     "analysis": "분석",
+    "reports": "리포트",
     "settings": "설정",
     "openSidebar": "사이드바 열기",
     "closeSidebar": "사이드바 닫기",
@@ -265,7 +266,12 @@
     "selectTickerDesc": "위에서 종목을 검색하거나 인기 종목을 클릭하세요",
     "technicalIndicators": "기술적 지표",
     "recentReports": "최근 분석 리포트",
-    "runScreeningForReports": "스크리닝을 실행하여 리포트를 생성하세요"
+    "runScreeningForReports": "스크리닝을 실행하여 리포트를 생성하세요",
+    "retry": "재시도"
+  },
+  "reports": {
+    "title": "분석 리포트",
+    "subtitle": "과거 분석 리포트와 AI 종목 인사이트 보기"
   },
   "stockDetail": {
     "financialOverview": "재무 개요",
