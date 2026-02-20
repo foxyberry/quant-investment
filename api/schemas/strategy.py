@@ -163,6 +163,17 @@ class SavedStrategiesListResponse(BaseModel):
     total_count: int
 
 
+class StrategyProgressEvent(BaseModel):
+    """SSE progress event during strategy execution."""
+
+    processed_tickers: int = 0
+    total_tickers: int = 0
+    matched_count: int = 0
+    progress_pct: float = 0.0
+    status: str = Field(description="'running', 'done', 'error'")
+    message: Optional[str] = None
+
+
 class SectorInfo(BaseModel):
     """Information about a market sector."""
 

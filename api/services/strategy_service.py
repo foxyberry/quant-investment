@@ -706,9 +706,26 @@ def _compute_node_survivors(
     return all_indices
 
 
+def execute_strategy_with_progress(
+    graph: StrategyGraph,
+    universe_override: Optional[str] = None,
+    progress_callback: Optional[callable] = None,
+) -> Dict[str, Any]:
+    """Execute a visual strategy graph with an optional progress callback.
+
+    Same as execute_strategy but forwards progress_callback to the screener.
+    """
+    return execute_strategy(
+        graph=graph,
+        universe_override=universe_override,
+        progress_callback=progress_callback,
+    )
+
+
 def execute_strategy(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
+    progress_callback: Optional[callable] = None,
 ) -> Dict[str, Any]:
     """
     Execute a visual strategy graph.
@@ -777,7 +794,12 @@ def execute_strategy(
         use_cache=True,
     )
 
-    all_results = screener.run(tickers=tickers, show_progress=False, return_all=True)
+    all_results = screener.run(
+        tickers=tickers,
+        show_progress=False,
+        return_all=True,
+        progress_callback=progress_callback,
+    )
 
     # Rebuild graph structures for survivor computation
     nodes_by_id: Dict[str, StrategyNode] = {n.id: n for n in graph.nodes}

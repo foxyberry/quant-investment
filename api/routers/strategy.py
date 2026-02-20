@@ -4,9 +4,13 @@ Strategy Router.
 Endpoints for the visual strategy builder.
 """
 
+import json
 import logging
+import queue
+import threading
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 
 from api.schemas.strategy import (
     ConditionsListResponse,
@@ -16,12 +20,14 @@ from api.schemas.strategy import (
     SectorListResponse,
     StrategyExecuteRequest,
     StrategyExecuteResponse,
+    StrategyProgressEvent,
     StrategySaveRequest,
     StrategyUpdateRequest,
 )
 from api.services.strategy_save_service import get_strategy_save_service
 from api.services.strategy_service import (
     execute_strategy,
+    execute_strategy_with_progress,
     get_available_conditions,
 )
 from screener.sector_fetcher import get_sector_fetcher
@@ -205,3 +211,84 @@ async def run_strategy(request: StrategyExecuteRequest) -> StrategyExecuteRespon
     except Exception as e:
         logger.exception("Strategy execution failed")
         raise HTTPException(status_code=500, detail=f"Execution failed: {str(e)}")
+
+
+@router.post(
+    "/run/stream",
+    summary="Execute visual strategy with SSE progress",
+    description="Execute a visual strategy graph and stream progress events via SSE.",
+)
+async def run_strategy_stream(request: StrategyExecuteRequest):
+    """Execute a visual strategy graph with streaming progress events."""
+    progress_queue: queue.Queue = queue.Queue()
+
+    def _run():
+        try:
+            result = execute_strategy_with_progress(
+                graph=request.graph,
+                universe_override=request.universe_override,
+                progress_callback=lambda p, t, m: progress_queue.put(
+                    StrategyProgressEvent(
+                        processed_tickers=p,
+                        total_tickers=t,
+                        matched_count=m,
+                        progress_pct=round(p / t * 100, 1) if t else 0,
+                        status="running",
+                    )
+                ),
+            )
+            progress_queue.put(
+                StrategyProgressEvent(
+                    processed_tickers=result["total_count"],
+                    total_tickers=result["total_count"],
+                    matched_count=result["matched_count"],
+                    progress_pct=100.0,
+                    status="done",
+                )
+            )
+            progress_queue.put(result)
+        except Exception as e:
+            logger.exception("Strategy streaming execution failed")
+            progress_queue.put(
+                StrategyProgressEvent(
+                    status="error",
+                    message=str(e),
+                )
+            )
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+
+    def event_stream():
+        while True:
+            try:
+                item = progress_queue.get(timeout=120)
+            except queue.Empty:
+                yield f"event: error\ndata: {json.dumps({'status': 'error', 'message': 'timeout'})}\n\n"
+                break
+
+            if isinstance(item, StrategyProgressEvent):
+                yield f"event: progress\ndata: {item.model_dump_json()}\n\n"
+                if item.status in ("done", "error"):
+                    if item.status == "done":
+                        # Final result follows
+                        try:
+                            final = progress_queue.get(timeout=10)
+                            resp = StrategyExecuteResponse(**final)
+                            yield f"event: result\ndata: {resp.model_dump_json()}\n\n"
+                        except queue.Empty:
+                            pass
+                    break
+            elif isinstance(item, dict):
+                resp = StrategyExecuteResponse(**item)
+                yield f"event: result\ndata: {resp.model_dump_json()}\n\n"
+                break
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
