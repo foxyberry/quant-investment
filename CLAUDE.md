@@ -341,14 +341,89 @@ python scripts/live/portfolio_sell_checker.py
 - `utils/`, `config/` 등 공유 모듈 수정 시 **단일 팀만** 수정, 이후 QA 검수
 - API 계약 변경, 자동매매 로직, 공용 모듈 변경은 반대 의견 전담 역할 리뷰를 **반드시** 거친다
 
-### Agent Team 활성화 설정 (선택)
+### 실행 패턴: Subagent vs Agent Teams
 
-> 현재 팀 구조는 **서브에이전트(Task tool)** 기반으로 동작한다.
-> Agent Team은 별도 Claude 인스턴스 간 메시징/태스크 공유가 필요할 때 사용하는 **실험적 기능**이다.
+두 가지 병렬 실행 패턴을 상황에 따라 선택한다.
 
-Agent Team 기능은 기본 비활성화 상태이며, 아래 설정이 필요합니다.
+#### Subagent (Task tool) — 기본 패턴
 
-**`~/.claude/settings.json`에 추가:**
+리드가 Task tool로 백그라운드 작업을 위임하고, 결과를 받아 통합하는 단방향 구조.
+
+```
+리드 → Task(run_in_background) → 서브에이전트 → 결과 반환 → 리드 통합
+```
+
+**사용 시나리오:**
+- Codex MCP 코드 리뷰 위임
+- 단일 파일/모듈 구현 위임
+- 독립적인 조사/탐색 작업
+- 서로 통신이 필요 없는 병렬 작업
+
+**장점:** 낮은 비용, 단순한 구조, 리드가 모든 컨텍스트 보유
+**단점:** 서브에이전트 간 직접 통신 불가, 리드가 병목
+
+#### Agent Teams — 협업이 필요한 대규모 작업
+
+teammate 간 직접 메시지를 주고받는 양방향 협업 구조.
+
+```
+┌─────────────┐
+│  Team Lead  │ ← 작업 분배, 종합, 승인
+└──┬───┬───┬──┘
+   │   │   │     ← SendMessage로 직접 통신
+   ▼   ▼   ▼
+ [API] [UI] [Test]  ← 각자 독립 context window
+   │   │   │
+   └───┴───┘     ← 공유 TaskList + Mailbox
+```
+
+**사용 시나리오:**
+- 프론트+백엔드 동시 작업 (API 타입 정의 → UI 연동)
+- 다단계 의존성 있는 작업 (DB 스키마 → 서비스 → 라우터 → 프론트)
+- 한 teammate의 산출물이 다른 teammate의 입력이 되는 경우
+
+**장점:** teammate 간 직접 협업, 공유 태스크 보드, 의존성 추적
+**단점:** 3~4배 토큰 비용 (teammate별 독립 context window)
+
+#### 선택 기준
+
+| 조건 | 패턴 |
+|------|------|
+| 단일 디렉토리 작업 | Subagent |
+| 서로 독립적인 병렬 작업 | Subagent |
+| Codex 리뷰 위임 | Subagent |
+| 2+ 디렉토리 간 인터페이스 조율 필요 | Agent Teams |
+| teammate 산출물이 다른 teammate 입력 | Agent Teams |
+| 실시간 진행 상황 공유 필요 | Agent Teams |
+
+#### Agent Teams 아키텍처 4요소
+
+1. **Team Lead**: 메인 세션. 작업 분배, 계획 승인, 결과 종합. Delegate Mode(Shift+Tab) 사용 권장
+2. **Teammates**: 각자 독립 context window. Lead의 대화 이력은 상속 안 됨 — spawn prompt에 필요한 맥락을 충분히 전달해야 함. CLAUDE.md, MCP 서버, skills는 자동 로드
+3. **Shared Task List**: 파일 기반 태스크 보드 (`~/.claude/tasks/{team-name}/`). 의존성 추적 + file-lock 기반 claiming
+4. **Mailbox**: JSON append 방식의 에이전트 간 메시징 (`SendMessage`)
+
+#### Agent Teams 실전 가이드
+
+- **Delegate Mode** (Shift+Tab): Lead가 직접 코드를 작성하지 않고 조율만 하도록 강제. 미사용 시 lead가 혼자 다 하려는 문제 발생
+- **Spawn prompt에 충분한 맥락**: teammate는 lead의 대화 이력을 모르므로 spawn 시 목표/대상파일/제약조건을 명시
+- **Plan Approval**: teammate가 구현 전 계획서를 제출하게 하고 lead가 승인/반려 (`plan_mode_required`)
+- **비용 최적화**: Lead는 Opus, teammate는 Sonnet 혼합 전략 (`model` 파라미터)
+- **제약사항**: 세션 복구 불가(/resume, /rewind 불가), 팀 중첩 불가, teammate 크래시 시 5분 heartbeat timeout
+
+#### Hooks로 품질 관리
+
+| Hook | 시점 | 활용 |
+|------|------|------|
+| `TeammateIdle` | teammate가 idle 시 | exit code 2 → 피드백과 함께 계속 작업 |
+| `TaskCompleted` | 태스크 완료 시 | exit code 2 → 완료 거부, 수정 요구 |
+
+예: "테스트 통과 전엔 태스크 완료 불가" quality gate 자동화
+
+#### 활성화 설정 (현재 활성화됨)
+
+`~/.claude/settings.json`에 이미 설정 완료:
+
 ```json
 {
   "teammateMode": "auto",
@@ -360,7 +435,6 @@ Agent Team 기능은 기본 비활성화 상태이며, 아래 설정이 필요�
 
 | 설정 | 값 | 설명 |
 |------|-----|------|
-| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | `"1"` | Agent Team 기능 활성화 (env 또는 settings.json) |
 | `teammateMode` | `"auto"` | tmux 세션이면 split pane, 아니면 in-process |
 | `teammateMode` | `"in-process"` | 메인 터미널에서 모든 teammate 실행 |
 | `teammateMode` | `"tmux"` | 각 teammate를 별도 pane으로 표시 |
