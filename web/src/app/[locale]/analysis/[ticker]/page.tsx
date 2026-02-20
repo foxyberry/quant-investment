@@ -51,6 +51,57 @@ const periodOptions: { value: PeriodOption; label: string }[] = [
   { value: '2y', label: '2Y' },
 ];
 
+/** Collapsible section wrapper – in popup mode sections start collapsed. */
+function CollapsibleSection({
+  title,
+  expanded,
+  onToggle,
+  isPopup,
+  headerRight,
+  children,
+}: {
+  title: string;
+  expanded: boolean;
+  onToggle: () => void;
+  isPopup: boolean;
+  headerRight?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  // In non-popup mode, always show content (no toggle)
+  if (!isPopup) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-[var(--foreground)]">{title}</h2>
+          {headerRight}
+        </div>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-[var(--border)] rounded-lg overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex items-center justify-between w-full px-4 py-3 text-left bg-[var(--background-secondary)] hover:bg-[var(--background)] transition-colors"
+      >
+        <h2 className="text-sm font-semibold text-[var(--foreground)]">{title}</h2>
+        <div className="flex items-center gap-2">
+          {headerRight}
+          {expanded ? (
+            <ChevronUp className="h-4 w-4 text-[var(--foreground-muted)]" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-[var(--foreground-muted)]" />
+          )}
+        </div>
+      </button>
+      {expanded && <div className="p-4">{children}</div>}
+    </div>
+  );
+}
+
 /**
  * Dynamic ticker analysis page with full chart, indicators,
  * strategy context, AI insight, and sector distribution.
@@ -210,8 +261,63 @@ export default function TickerAnalysisPage() {
     return 'bg-red-500';
   };
 
+  // Collapsible section state for popup mode
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    indicators: !isPopup,
+    financials: !isPopup,
+    strategy: false,
+    ai: false,
+    sector: false,
+    priceSummary: false,
+  });
+
+  const toggleSection = (key: string) => {
+    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   return (
-    <div className="space-y-6">
+    <div className={isPopup ? 'space-y-3' : 'space-y-6'}>
+      {/* Popup header bar */}
+      {isPopup && (
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-1 py-2 bg-[var(--background)] border-b border-[var(--border)]">
+          <div className="flex items-center gap-3 min-w-0">
+            <h1 className="text-lg font-bold text-[var(--foreground)] truncate">
+              {ticker.toUpperCase()}
+            </h1>
+            {tickerData && (
+              <>
+                <span className="text-lg font-semibold text-[var(--foreground)]">
+                  ${tickerData.current_price.toFixed(2)}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    tickerData.change_pct >= 0
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                  }`}
+                >
+                  {tickerData.change_pct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {tickerData.change_pct >= 0 ? '+' : ''}{tickerData.change_pct.toFixed(2)}%
+                </span>
+              </>
+            )}
+            {tickerData && (
+              <span className="text-sm text-[var(--foreground-muted)] truncate">
+                {tickerData.name}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => window.close()}
+            className="shrink-0 p-1.5 rounded-lg hover:bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+            aria-label="Close"
+          >
+            <XCircle className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
       {/* Back navigation - hidden in popup mode */}
       {!isPopup && (
         <Link
@@ -223,51 +329,53 @@ export default function TickerAnalysisPage() {
         </Link>
       )}
 
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="rounded-lg bg-[var(--color-primary)] p-3">
-            <BarChart3 className="h-8 w-8 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-[var(--foreground)]">
-                {ticker.toUpperCase()}
-              </h1>
+      {/* Header - full version for non-popup */}
+      {!isPopup && (
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="rounded-lg bg-[var(--color-primary)] p-3">
+              <BarChart3 className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-[var(--foreground)]">
+                  {ticker.toUpperCase()}
+                </h1>
+                {tickerData && (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
+                      tickerData.change_pct >= 0
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                    }`}
+                  >
+                    {tickerData.change_pct >= 0 ? (
+                      <TrendingUp className="h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4" />
+                    )}
+                    {tickerData.change_pct >= 0 ? '+' : ''}
+                    {tickerData.change_pct.toFixed(2)}%
+                  </span>
+                )}
+              </div>
               {tickerData && (
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
-                    tickerData.change_pct >= 0
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                  }`}
-                >
-                  {tickerData.change_pct >= 0 ? (
-                    <TrendingUp className="h-4 w-4" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4" />
-                  )}
-                  {tickerData.change_pct >= 0 ? '+' : ''}
-                  {tickerData.change_pct.toFixed(2)}%
-                </span>
+                <p className="text-[var(--foreground-muted)] mt-1">
+                  {tickerData.name}
+                </p>
               )}
             </div>
-            {tickerData && (
-              <p className="text-[var(--foreground-muted)] mt-1">
-                {tickerData.name}
-              </p>
-            )}
           </div>
-        </div>
 
-        {tickerData && (
-          <div className="text-right">
-            <span className="text-3xl font-bold text-[var(--foreground)]">
-              ${tickerData.current_price.toFixed(2)}
-            </span>
-          </div>
-        )}
-      </div>
+          {tickerData && (
+            <div className="text-right">
+              <span className="text-3xl font-bold text-[var(--foreground)]">
+                ${tickerData.current_price.toFixed(2)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Loading State */}
       {isLoading && (
@@ -336,24 +444,28 @@ export default function TickerAnalysisPage() {
           {/* Chart */}
           <CandleChart
             data={tickerData.ohlcv}
-            height={500}
+            height={isPopup ? 340 : 500}
             showVolume={true}
           />
 
           {/* Technical Indicators */}
-          <div>
-            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
-              {t('technicalIndicators')}
-            </h2>
+          <CollapsibleSection
+            title={t('technicalIndicators')}
+            expanded={expandedSections.indicators}
+            onToggle={() => toggleSection('indicators')}
+            isPopup={isPopup}
+          >
             <IndicatorPanel technicalData={tickerData.technical} />
-          </div>
+          </CollapsibleSection>
 
           {/* ===== Financial Overview ===== */}
           {tickerData.fundamental && (
-            <div>
-              <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
-                {t('financialOverview')}
-              </h2>
+            <CollapsibleSection
+              title={t('financialOverview')}
+              expanded={expandedSections.financials}
+              onToggle={() => toggleSection('financials')}
+              isPopup={isPopup}
+            >
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {/* Market Cap */}
                 <Card padding="md">
@@ -446,22 +558,24 @@ export default function TickerAnalysisPage() {
                   </div>
                 </Card>
               </div>
-            </div>
+            </CollapsibleSection>
           )}
 
           {/* ===== Strategy Context ===== */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-[var(--foreground)]">
-                {t('strategyContext')}
-              </h2>
-              {presets.length > 0 && (
+          <CollapsibleSection
+            title={t('strategyContext')}
+            expanded={expandedSections.strategy}
+            onToggle={() => toggleSection('strategy')}
+            isPopup={isPopup}
+            headerRight={
+              presets.length > 0 ? (
                 <select
                   value={selectedPreset}
                   onChange={(e) => {
                     setSelectedPreset(e.target.value);
                     fetchScreening(e.target.value);
                   }}
+                  onClick={(e) => e.stopPropagation()}
                   className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] text-[var(--foreground)] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
                   {presets.map((p) => (
@@ -470,8 +584,9 @@ export default function TickerAnalysisPage() {
                     </option>
                   ))}
                 </select>
-              )}
-            </div>
+              ) : undefined
+            }
+          >
             <Card padding="md">
               {screeningLoading && (
                 <div className="flex items-center gap-3 py-4">
@@ -541,13 +656,15 @@ export default function TickerAnalysisPage() {
                 </div>
               )}
             </Card>
-          </div>
+          </CollapsibleSection>
 
           {/* ===== AI Insight ===== */}
-          <div>
-            <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
-              {t('aiInsight')}
-            </h2>
+          <CollapsibleSection
+            title={t('aiInsight')}
+            expanded={expandedSections.ai}
+            onToggle={() => toggleSection('ai')}
+            isPopup={isPopup}
+          >
             <Card padding="md">
               {aiAvailable === false && (
                 <div className="flex items-center gap-3 py-4">
@@ -702,14 +819,16 @@ export default function TickerAnalysisPage() {
                 </div>
               )}
             </Card>
-          </div>
+          </CollapsibleSection>
 
           {/* ===== Sector Distribution ===== */}
           {tickerData.fundamental?.sector && (
-            <div>
-              <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
-                {t('sectorDistribution')}
-              </h2>
+            <CollapsibleSection
+              title={t('sectorDistribution')}
+              expanded={expandedSections.sector}
+              onToggle={() => toggleSection('sector')}
+              isPopup={isPopup}
+            >
               <Card padding="md">
                 <div className="flex items-center gap-3">
                   <Building2 className="h-5 w-5 text-[var(--color-primary)]" />
@@ -720,7 +839,7 @@ export default function TickerAnalysisPage() {
                   </span>
                 </div>
               </Card>
-            </div>
+            </CollapsibleSection>
           )}
 
           {/* ===== Price Summary & Trading Range ===== */}
