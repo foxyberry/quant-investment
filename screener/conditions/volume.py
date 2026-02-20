@@ -215,8 +215,8 @@ class AvgTradingValueCondition(BaseCondition):
     """평균 거래대금 조건 (저유동성 종목 제거)"""
 
     def __init__(self, lookback_days: int = 20, min_value: float = 1_500_000_000):
-        self.lookback_days = lookback_days
-        self.min_value = min_value
+        self.lookback_days = max(1, lookback_days)
+        self.min_value = max(0, min_value)
 
     @property
     def name(self) -> str:
@@ -237,8 +237,15 @@ class AvgTradingValueCondition(BaseCondition):
         window = data.iloc[-self.lookback_days:]
         trading_values = window["close"] * window["volume"]
         avg_trading_value = trading_values.mean()
-        current_trading_value = float(data["close"].iloc[-1] * data["volume"].iloc[-1])
 
+        if pd.isna(avg_trading_value):
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "NaN in trading value data"},
+            )
+
+        current_trading_value = float(data["close"].iloc[-1] * data["volume"].iloc[-1])
         matched = avg_trading_value >= self.min_value
 
         return ConditionResult(
