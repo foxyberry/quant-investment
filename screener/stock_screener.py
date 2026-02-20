@@ -24,7 +24,7 @@ Usage:
     results = screener.run(universe="KOSPI")
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Callable, List, Dict, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import time
@@ -362,7 +362,7 @@ class StockScreener:
         tickers: Optional[List[str]] = None,
         show_progress: bool = True,
         return_all: bool = False,
-        progress_callback: Optional[callable] = None,
+        progress_callback: Optional[Callable[[int, int, int], None]] = None,
     ) -> List[ScreeningResult]:
         """
         스크리닝 실행
@@ -427,7 +427,10 @@ class StockScreener:
                     print(f"  진행: {i}/{len(target_tickers)}")
 
                 if progress_callback is not None:
-                    progress_callback(i, len(target_tickers), matched_count)
+                    try:
+                        progress_callback(i, len(target_tickers), matched_count)
+                    except Exception:
+                        pass
 
         if show_progress:
             print(f"\n{'='*60}")

@@ -8,7 +8,7 @@ Converts graph representations into screener conditions and executes them.
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 
 import numpy as np
 
@@ -709,7 +709,7 @@ def _compute_node_survivors(
 def execute_strategy_with_progress(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
-    progress_callback: Optional[callable] = None,
+    progress_callback: Optional[Callable[[int, int, int], None]] = None,
 ) -> Dict[str, Any]:
     """Execute a visual strategy graph with an optional progress callback.
 
@@ -725,7 +725,7 @@ def execute_strategy_with_progress(
 def execute_strategy(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
-    progress_callback: Optional[callable] = None,
+    progress_callback: Optional[Callable[[int, int, int], None]] = None,
 ) -> Dict[str, Any]:
     """
     Execute a visual strategy graph.
@@ -888,6 +888,7 @@ def execute_strategy(
     return {
         "results": final_items,
         "total_count": total_count,
+        "screened_count": len(tickers),
         "matched_count": len(final_items),
         "universe": universe,
         "conditions_used": conditions_used,
