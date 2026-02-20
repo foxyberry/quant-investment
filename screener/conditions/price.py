@@ -230,3 +230,78 @@ class PriceChangeCondition(BaseCondition):
 
     def __repr__(self) -> str:
         return f"PriceChangeCondition(min={self.min_change_pct}%, max={self.max_change_pct}%, days={self.days})"
+
+
+@register_condition(
+    key="drawdown_from_high",
+    label="Drawdown From N-day High",
+    description="Drop % from N-day rolling high",
+    category="price",
+    params=[
+        {"name": "lookback_days", "type": "int", "default": 120, "description": "Lookback period (days)"},
+        {"name": "min_drop_pct", "type": "float", "default": 20.0, "description": "Minimum drop % from high"},
+        {"name": "price_field", "type": "str", "default": "high", "description": "Price field for high: 'high' or 'close'"},
+    ],
+    recommended=True,
+    order=50,
+)
+class DrawdownFromHighCondition(BaseCondition):
+    """N일 고점 대비 하락률 조건"""
+
+    def __init__(self, lookback_days: int = 120, min_drop_pct: float = 20.0, price_field: str = "high"):
+        self.lookback_days = max(1, lookback_days)
+        self.min_drop_pct = max(0.0, min_drop_pct)
+        self.price_field = price_field if price_field in ("high", "close") else "high"
+
+    @property
+    def name(self) -> str:
+        return f"drawdown_from_high_{self.lookback_days}d_{self.min_drop_pct}pct"
+
+    @property
+    def required_days(self) -> int:
+        return self.lookback_days + 10
+
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        if len(data) < self.lookback_days:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Insufficient data"},
+            )
+
+        col = self.price_field if self.price_field in data.columns else "close"
+        rolling_high = data[col].iloc[-self.lookback_days:].max()
+        current_price = data["close"].iloc[-1]
+
+        if pd.isna(rolling_high) or pd.isna(current_price):
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "NaN in price data"},
+            )
+
+        if rolling_high <= 0:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Rolling high is zero or negative"},
+            )
+
+        drop_pct = (rolling_high - current_price) / rolling_high * 100
+        matched = drop_pct >= self.min_drop_pct
+
+        return ConditionResult(
+            matched=matched,
+            condition_name=self.name,
+            details={
+                "current_price": float(current_price),
+                "rolling_high": float(rolling_high),
+                "drop_pct": round(float(drop_pct), 2),
+                "lookback_days": self.lookback_days,
+                "min_drop_pct": self.min_drop_pct,
+                "price_field": col,
+            },
+        )
+
+    def __repr__(self) -> str:
+        return f"DrawdownFromHighCondition(lookback={self.lookback_days}, min_drop={self.min_drop_pct}%, field={self.price_field})"
