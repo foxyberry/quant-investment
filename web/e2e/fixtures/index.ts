@@ -174,6 +174,7 @@ type MockApiFixture = {
 };
 
 export const test = base.extend<MockApiFixture>({
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   mockApi: async ({ page }, use) => {
     const setup = async () => {
       await installApiMocks(page);
