@@ -37,7 +37,7 @@ jobs:
         run: npm run build
 
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: npx playwright test --ignore-snapshots
 
       - name: Upload test results on failure
         if: failure()

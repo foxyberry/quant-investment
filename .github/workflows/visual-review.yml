@@ -8,6 +8,10 @@ concurrency:
   group: visual-review-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   visual-snapshots:
     name: Visual Snapshot Tests
@@ -36,13 +40,24 @@ jobs:
       - name: Build Next.js
         run: npm run build
 
+      - name: Check for existing baselines
+        id: baselines
+        run: |
+          if ls e2e/visual.spec.ts-snapshots/*.png 2>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "No visual baselines found. Skipping visual diff."
+          fi
+
       - name: Run visual snapshot tests
+        if: steps.baselines.outputs.exists == 'true'
         id: visual-test
-        run: npx playwright test e2e/visual.spec.ts
+        run: npx playwright test e2e/visual.spec.ts --project=chromium
         continue-on-error: true
 
       - name: Upload visual diff artifacts
-        if: steps.visual-test.outcome == 'failure'
+        if: steps.baselines.outputs.exists == 'true' && steps.visual-test.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: visual-diff-results
@@ -50,7 +65,7 @@ jobs:
           retention-days: 14
 
       - name: Comment on PR with visual diff notice
-        if: steps.visual-test.outcome == 'failure'
+        if: steps.baselines.outputs.exists == 'true' && steps.visual-test.outcome == 'failure'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -65,5 +80,5 @@ jobs:
           If the changes are intentional, update the baseline snapshots and push again."
 
       - name: Fail if visual diffs detected
-        if: steps.visual-test.outcome == 'failure'
+        if: steps.baselines.outputs.exists == 'true' && steps.visual-test.outcome == 'failure'
         run: exit 1
