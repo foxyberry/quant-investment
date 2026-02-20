@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     # Override via env: CORS_ORIGINS='["http://localhost:3002"]'
     cors_origins: List[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]
 
+    # Database settings (데이터베이스 설정)
+    database_url: str = "postgresql://quant:quant@localhost:5432/quant"
+
     # Application metadata (애플리케이션 메타데이터)
     app_name: str = "Quant Investment API"
     app_version: str = "0.1.0"
