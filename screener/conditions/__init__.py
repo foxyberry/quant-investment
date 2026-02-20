@@ -44,6 +44,7 @@ from .volume import (
     MinVolumeCondition,
     VolumeAboveAvgCondition,
     VolumeSpikeCondition,
+    AvgTradingValueCondition,
 )
 
 from .ma import (
@@ -118,6 +119,7 @@ __all__ = [
 
     # Volume
     'MinVolumeCondition', 'VolumeAboveAvgCondition', 'VolumeSpikeCondition',
+    'AvgTradingValueCondition',
 
     # MA
     'MATouchCondition', 'AboveMACondition', 'BelowMACondition',

@@ -197,3 +197,60 @@ class VolumeSpikeCondition(BaseCondition):
 
     def __repr__(self) -> str:
         return f"VolumeSpikeCondition(multiplier={self.multiplier}, period={self.period})"
+
+
+@register_condition(
+    key="avg_trading_value",
+    label="Average Trading Value",
+    description="N-day average trading value >= threshold",
+    category="volume",
+    params=[
+        {"name": "lookback_days", "type": "int", "default": 20, "description": "Average period (days)"},
+        {"name": "min_value", "type": "float", "default": 1500000000, "description": "Minimum avg trading value (KRW)"},
+    ],
+    recommended=True,
+    order=65,
+)
+class AvgTradingValueCondition(BaseCondition):
+    """평균 거래대금 조건 (저유동성 종목 제거)"""
+
+    def __init__(self, lookback_days: int = 20, min_value: float = 1_500_000_000):
+        self.lookback_days = lookback_days
+        self.min_value = min_value
+
+    @property
+    def name(self) -> str:
+        return f"avg_trading_value_{self.lookback_days}d"
+
+    @property
+    def required_days(self) -> int:
+        return self.lookback_days + 10
+
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        if len(data) < self.lookback_days:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Insufficient data"},
+            )
+
+        window = data.iloc[-self.lookback_days:]
+        trading_values = window["close"] * window["volume"]
+        avg_trading_value = trading_values.mean()
+        current_trading_value = float(data["close"].iloc[-1] * data["volume"].iloc[-1])
+
+        matched = avg_trading_value >= self.min_value
+
+        return ConditionResult(
+            matched=matched,
+            condition_name=self.name,
+            details={
+                "avg_trading_value": round(float(avg_trading_value)),
+                "current_trading_value": round(current_trading_value),
+                "lookback_days": self.lookback_days,
+                "min_value": self.min_value,
+            },
+        )
+
+    def __repr__(self) -> str:
+        return f"AvgTradingValueCondition(lookback={self.lookback_days}, min_value={self.min_value:,.0f})"
