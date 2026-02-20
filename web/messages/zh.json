@@ -30,6 +30,7 @@
     "strategy": "策略",
     "portfolio": "投资组合",
     "analysis": "分析",
+    "reports": "报告",
     "settings": "设置",
     "openSidebar": "打开侧边栏",
     "closeSidebar": "关闭侧边栏",
@@ -259,7 +260,12 @@
     "selectTickerDesc": "在上方搜索股票，或点击热门代码之一",
     "technicalIndicators": "技术指标",
     "recentReports": "最近分析报告",
-    "runScreeningForReports": "运行筛选以生成报告"
+    "runScreeningForReports": "运行筛选以生成报告",
+    "retry": "重试"
+  },
+  "reports": {
+    "title": "分析报告",
+    "subtitle": "查看历史分析报告和AI股票洞察"
   },
   "stockDetail": {
     "financialOverview": "财务概览",

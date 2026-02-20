@@ -8,6 +8,7 @@ import {
   Search,
   PieChart,
   BarChart3,
+  FileText,
   Workflow,
   Settings,
   ChevronLeft,
@@ -16,7 +17,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 interface NavItem {
-  href: '/' | '/screening' | '/strategy' | '/portfolio' | '/analysis' | '/settings';
+  href: '/' | '/screening' | '/strategy' | '/portfolio' | '/analysis' | '/reports' | '/settings';
   labelKey: string;
   icon: LucideIcon;
 }
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
   { href: '/strategy', labelKey: 'strategy', icon: Workflow },
   { href: '/portfolio', labelKey: 'portfolio', icon: PieChart },
   { href: '/analysis', labelKey: 'analysis', icon: BarChart3 },
+  { href: '/reports', labelKey: 'reports', icon: FileText },
   { href: '/settings', labelKey: 'settings', icon: Settings },
 ];
 

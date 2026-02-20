@@ -30,6 +30,7 @@
     "strategy": "Strategy",
     "portfolio": "Portfolio",
     "analysis": "Analysis",
+    "reports": "Reports",
     "settings": "Settings",
     "openSidebar": "Open sidebar",
     "closeSidebar": "Close sidebar",
@@ -265,7 +266,12 @@
     "selectTickerDesc": "Search for a stock above or click one of the popular tickers",
     "technicalIndicators": "Technical Indicators",
     "recentReports": "Recent Analysis Reports",
-    "runScreeningForReports": "Run a screening to generate reports"
+    "runScreeningForReports": "Run a screening to generate reports",
+    "retry": "Retry"
+  },
+  "reports": {
+    "title": "Analysis Reports",
+    "subtitle": "View past analysis reports and AI-powered stock insights"
   },
   "stockDetail": {
     "financialOverview": "Financial Overview",

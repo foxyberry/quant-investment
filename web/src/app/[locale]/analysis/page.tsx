@@ -3,16 +3,17 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Search, BarChart3, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card, Button } from '@/components/ui';
 import { CandleChart, IndicatorPanel } from '@/components/charts';
-import { ReportList } from '@/components/analysis';
 import { getTickerAnalysis, searchTickers } from '@/lib/api';
 import type { TickerAnalysis } from '@/lib/types';
 
 /**
- * Main analysis page with ticker search, charts, and reports
+ * Main analysis page with ticker search, charts, and indicators.
  */
 export default function AnalysisPage() {
+  const t = useTranslations('analysis');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<
@@ -81,10 +82,10 @@ export default function AnalysisPage() {
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-[var(--foreground)]">
-          Charts & Analysis
+          {t('title')}
         </h1>
         <p className="mt-1 text-[var(--foreground-muted)]">
-          Technical analysis with interactive charts and indicators
+          {t('subtitle')}
         </p>
       </div>
 
@@ -99,7 +100,7 @@ export default function AnalysisPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchResults.length > 0 && setShowResults(true)}
-                placeholder="Search ticker or company name..."
+                placeholder={t('searchPlaceholder')}
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] py-2.5 pl-10 pr-4 text-[var(--foreground)] placeholder:text-[var(--foreground-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
               />
               {isSearching && (
@@ -152,7 +153,7 @@ export default function AnalysisPage() {
         {/* Quick ticker buttons */}
         <div className="mt-4 flex flex-wrap gap-2">
           <span className="text-sm text-[var(--foreground-muted)] mr-2">
-            Popular:
+            {t('popular')}:
           </span>
           {['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA'].map((ticker) => (
             <button
@@ -206,7 +207,7 @@ export default function AnalysisPage() {
                 href={`/analysis/${selectedTicker}`}
                 className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background)] transition-colors"
               >
-                Full Analysis
+                {t('fullAnalysis')}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             )}
@@ -218,7 +219,7 @@ export default function AnalysisPage() {
               <div className="flex flex-col items-center gap-3">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--color-primary)] border-t-transparent" />
                 <span className="text-[var(--foreground-muted)]">
-                  Loading chart data...
+                  {t('loadingChart')}
                 </span>
               </div>
             </div>
@@ -234,7 +235,7 @@ export default function AnalysisPage() {
                 className="mt-4"
                 onClick={() => selectedTicker && handleSelectTicker(selectedTicker)}
               >
-                Retry
+                {t('retry')}
               </Button>
             </div>
           )}
@@ -251,7 +252,7 @@ export default function AnalysisPage() {
               {/* Indicators */}
               <div>
                 <h3 className="text-lg font-semibold text-[var(--foreground)] mb-3">
-                  Technical Indicators
+                  {t('technicalIndicators')}
                 </h3>
                 <IndicatorPanel technicalData={tickerData.technical} />
               </div>
@@ -265,21 +266,13 @@ export default function AnalysisPage() {
         <Card padding="lg" className="text-center">
           <BarChart3 className="h-12 w-12 text-[var(--foreground-muted)] mx-auto mb-4" />
           <h3 className="text-lg font-medium text-[var(--foreground)]">
-            Select a Ticker to View Chart
+            {t('selectTicker')}
           </h3>
           <p className="mt-1 text-sm text-[var(--foreground-muted)]">
-            Search for a stock above or click one of the popular tickers
+            {t('selectTickerDesc')}
           </p>
         </Card>
       )}
-
-      {/* Reports Section */}
-      <div>
-        <h2 className="text-xl font-semibold text-[var(--foreground)] mb-4">
-          Recent Analysis Reports
-        </h2>
-        <ReportList initialLimit={10} />
-      </div>
     </div>
   );
 }
