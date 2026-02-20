@@ -565,6 +565,39 @@ function StrategyPageInner() {
               const ny = node.position.y;
 
               if (nx < -50 || ny < -50 || nx > pw + 50 || ny > ph + 50) {
+                const parentId = node.parentId!;
+                const remainingSiblings = nds.filter(
+                  (n) => n.parentId === parentId && n.id !== change.id
+                );
+
+                // Rewire edges: group-level edges → direct to the extracted node
+                // if no siblings remain, or keep group edges if siblings stay
+                setEdges((eds) => {
+                  let updated = eds.map((e) => {
+                    // If group has no remaining children, redirect group edges to the extracted node
+                    if (remainingSiblings.length === 0) {
+                      if (e.target === parentId) {
+                        return { ...e, target: change.id, targetHandle: null };
+                      }
+                      if (e.source === parentId) {
+                        return { ...e, source: change.id, sourceHandle: null };
+                      }
+                    }
+                    return e;
+                  });
+
+                  // Deduplicate
+                  const seen = new Set<string>();
+                  updated = updated.filter((e) => {
+                    const key = `${e.source}:${e.sourceHandle ?? ''}→${e.target}:${e.targetHandle ?? ''}`;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                  });
+
+                  return updated;
+                });
+
                 return nds.map((n) => {
                   if (n.id !== change.id) return n;
                   return {
@@ -626,6 +659,49 @@ function StrategyPageInner() {
                 );
                 // Insert the child right after its parent
                 rest.splice(parentIdx + 1, 0, updatedChild);
+
+                // --- Auto-rewire edges (#127) ---
+                // Collect all node ids inside this group (including newly added)
+                const siblingIds = new Set(
+                  rest
+                    .filter((n) => n.parentId === group.id)
+                    .map((n) => n.id)
+                );
+                siblingIds.add(change.id);
+
+                setEdges((eds) => {
+                  let rewired = eds.map((e) => {
+                    const srcInGroup = siblingIds.has(e.source);
+                    const tgtInGroup = siblingIds.has(e.target);
+
+                    // Rule 3: edges between siblings inside the same group → remove
+                    if (srcInGroup && tgtInGroup) return null;
+
+                    // Rule 1: incoming edge to a node entering the group → redirect to group
+                    if (!srcInGroup && tgtInGroup) {
+                      return { ...e, target: group.id, targetHandle: null };
+                    }
+
+                    // Rule 2: outgoing edge from a node entering the group → redirect from group
+                    if (srcInGroup && !tgtInGroup) {
+                      return { ...e, source: group.id, sourceHandle: null };
+                    }
+
+                    return e;
+                  }).filter((e): e is Edge => e !== null);
+
+                  // Rule 4: deduplicate (same source+target after rewiring)
+                  const seen = new Set<string>();
+                  rewired = rewired.filter((e) => {
+                    const key = `${e.source}:${e.sourceHandle ?? ''}→${e.target}:${e.targetHandle ?? ''}`;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                  });
+
+                  return rewired;
+                });
+
                 return rest;
               }
             }
@@ -634,7 +710,7 @@ function StrategyPageInner() {
         }
       }
     },
-    [onNodesChange, setNodes]
+    [onNodesChange, setNodes, setEdges]
   );
 
   const handleRun = useCallback(() => {
