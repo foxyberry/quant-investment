@@ -1,14 +1,22 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(git rm:*)",
+      "Bash(python3:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh:*)",
+      "Bash(git checkout:*)"
+    ]
+  },
   "enabledMcpjsonServers": [
     "context7",
     "playwright",
     "shadcn",
     "stitch",
     "codex"
-  ],
-  "permissions": {
-    "allow": [
-      "Bash(git rm:*)"
-    ]
-  }
+  ]
 }
