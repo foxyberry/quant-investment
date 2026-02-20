@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Globe,
@@ -123,21 +123,13 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
   const { categories, getConditionsByCategory, isLoading } = useConditions();
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(categories)
-  );
+  // Track collapsed categories (all expanded by default)
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const conditionsByCategory = useMemo(() => getConditionsByCategory(), [getConditionsByCategory]);
 
-  // Expand all categories when they first load
-  useMemo(() => {
-    if (categories.length > 0) {
-      setExpandedCategories(new Set(categories));
-    }
-  }, [categories]);
-
   const toggleCategory = (cat: string) => {
-    setExpandedCategories((prev) => {
+    setCollapsedCategories((prev) => {
       const next = new Set(prev);
       if (next.has(cat)) {
         next.delete(cat);
@@ -214,7 +206,7 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
             categories.map((category) => {
               const conditions = filteredConditions[category] || [];
               if (conditions.length === 0) return null;
-              const isExpanded = expandedCategories.has(category) || !!searchQuery;
+              const isExpanded = !collapsedCategories.has(category) || !!searchQuery;
 
               return (
                 <div key={category} className="mb-1">

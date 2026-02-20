@@ -1,0 +1,91 @@
+import { test as base, type Page } from '@playwright/test';
+
+const MOCK_HOLDINGS = [
+  {
+    ticker: 'AAPL',
+    name: 'Apple Inc.',
+    quantity: 50,
+    avg_price: 145.0,
+    current_price: 178.5,
+    market_value: 8925.0,
+    pnl: 1675.0,
+    pnl_pct: 23.1,
+    currency: 'USD',
+  },
+  {
+    ticker: 'GOOGL',
+    name: 'Alphabet Inc.',
+    quantity: 20,
+    avg_price: 120.0,
+    current_price: 142.3,
+    market_value: 2846.0,
+    pnl: 446.0,
+    pnl_pct: 18.58,
+    currency: 'USD',
+  },
+];
+
+const MOCK_PORTFOLIO_SUMMARY = {
+  total_investment: 9650.0,
+  total_market_value: 11771.0,
+  total_pnl: 2121.0,
+  total_pnl_pct: 21.98,
+  holdings_count: 2,
+  currency: 'USD',
+};
+
+async function installApiMocks(page: Page) {
+  await page.route('**/localhost:8000/**', async (route) => {
+    const url = route.request().url();
+
+    if (url.includes('/health')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'ok' }) });
+    }
+    if (url.includes('/api/portfolio/holdings')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_HOLDINGS) });
+    }
+    if (url.includes('/api/portfolio/summary')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_PORTFOLIO_SUMMARY) });
+    }
+    if (url.includes('/api/portfolio/sell-signals')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signals: [], checked_at: new Date().toISOString() }) });
+    }
+    if (url.includes('/api/analysis/reports')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ reports: [], total_count: 0 }) });
+    }
+    if (url.includes('/api/analysis/status')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ is_running: false }) });
+    }
+    if (url.includes('/api/screening/presets')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    if (url.includes('/api/screening/universes')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
+    }
+    if (url.includes('/api/strategy/conditions')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ conditions: [] }) });
+    }
+    if (url.includes('/api/strategy/saved')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ strategies: [] }) });
+    }
+    if (url.includes('/api/strategy/sectors')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ sectors: [] }) });
+    }
+    return route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ detail: 'Mock: endpoint not configured' }) });
+  });
+}
+
+type MockApiFixture = {
+  mockApi: () => Promise<void>;
+};
+
+export const test = base.extend<MockApiFixture>({
+  mockApi: async ({ page }, use) => {
+    const setup = async () => {
+      await installApiMocks(page);
+    };
+    await use(setup); // eslint-disable-line react-hooks/rules-of-hooks -- Playwright fixture API, not a React hook
+  },
+});
+
+export { expect } from '@playwright/test';
