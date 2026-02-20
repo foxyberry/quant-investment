@@ -42,8 +42,9 @@ import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph, getDownstreamNodeIds } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
 import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
-import { useRunStrategy, useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
+import { useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
 import type { StrategyResultItem, SavedStrategy, NodeIntermediateResult } from '@/lib/api';
+import { runStrategyStream } from '@/lib/api';
 
 const nodeTypes: NodeTypes = {
   universeNode: UniverseNode,
@@ -147,6 +148,9 @@ function StrategyPageInner() {
   const [showOverflowMenu, setShowOverflowMenu] = useState(false);
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
   const [deployProgress, setDeployProgress] = useState(0);
+  const [progressDetail, setProgressDetail] = useState<{ processed: number; total: number; matched: number } | null>(null);
+  const [streamStatus, setStreamStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const streamAbortRef = useRef<{ abort: () => void } | null>(null);
   const overflowRef = useRef<HTMLDivElement>(null);
 
   // Close overflow menu on outside click
@@ -184,24 +188,16 @@ function StrategyPageInner() {
     saveCanvasToSession({ nodes, edges, strategyName, strategyDescription, currentStrategyId });
   }, [nodes, edges, strategyName, strategyDescription, currentStrategyId]);
 
-  const runStrategy = useRunStrategy();
   const savedStrategies = useSavedStrategies();
+  const isRunning = streamStatus === 'running';
   const saveStrategy = useSaveStrategy();
   const updateStrategy = useUpdateStrategy();
   const { toast, showToast, hideToast } = useToast();
 
-  // Simulated deploy progress while running
+  // Abort stream on unmount
   useEffect(() => {
-    if (!runStrategy.isPending) return;
-    setDeployProgress(0);
-    const interval = setInterval(() => {
-      setDeployProgress((prev) => {
-        if (prev >= 90) return prev; // cap at 90% until real completion
-        return prev + Math.random() * 8 + 2; // +2~10% each tick
-      });
-    }, 600);
-    return () => clearInterval(interval);
-  }, [runStrategy.isPending]);
+    return () => { streamAbortRef.current?.abort(); };
+  }, []);
 
   const isValidConnection = useCallback(
     (connection: Edge | Connection) => {
@@ -716,61 +712,78 @@ function StrategyPageInner() {
   const handleRun = useCallback(() => {
     setErrors([]);
     setResults(null);
+    setDeployProgress(0);
+    setProgressDetail(null);
+    setStreamStatus('running');
 
     const typedNodes = nodes as unknown as Node<StrategyNodeData>[];
     const validation = validateGraph(typedNodes, edges);
     if (!validation.valid) {
       setErrors(validation.errors);
+      setStreamStatus('idle');
       return;
     }
 
     const graph = serializeGraph(typedNodes, edges);
 
-    runStrategy.mutate(
-      { graph },
-      {
-        onSuccess: (data) => {
-          setResults(data.results);
-          setDeployProgress(100);
-          setLastRunTime(new Date());
-          const nr = data.node_results ?? null;
-          setNodeResults(nr);
-          setNodes((nds) =>
-            nds.map((n) => {
-              const nd = getNodeData(n);
-              const updates: Record<string, unknown> = {};
-              if (nd.node_type === 'output') {
-                updates.resultCount = data.matched_count;
-              }
-              if (nr && nr[n.id]) {
-                updates.intermediateResult = nr[n.id];
-              }
-              // Ensure universe node always shows its total count
-              if (nd.node_type === 'universe' && !updates.intermediateResult) {
-                updates.intermediateResult = {
-                  node_id: n.id,
-                  node_type: 'universe',
-                  label: nd.universe || 'Universe',
-                  stock_count: data.total_count,
-                  stocks: [],
-                };
-              }
-              if (Object.keys(updates).length === 0) return n;
-              return { ...n, data: { ...n.data, ...updates } };
-            })
-          );
-          showToast(
-            t('deploySuccess', { count: data.matched_count, total: data.total_count }),
-            'success'
-          );
-        },
-        onError: (error) => {
-          setErrors([error instanceof Error ? error.message : t('executionFailed')]);
-          showToast(t('deployError'), 'error');
-        },
-      }
-    );
-  }, [nodes, edges, runStrategy, setNodes, showToast, t]);
+    // Abort any previous stream
+    streamAbortRef.current?.abort();
+
+    const handleResult = (data: import('@/lib/api').StrategyExecuteResponse) => {
+      setResults(data.results);
+      setDeployProgress(100);
+      setStreamStatus('done');
+      setLastRunTime(new Date());
+      const nr = data.node_results ?? null;
+      setNodeResults(nr);
+      setNodes((nds) =>
+        nds.map((n) => {
+          const nd = getNodeData(n);
+          const updates: Record<string, unknown> = {};
+          if (nd.node_type === 'output') {
+            updates.resultCount = data.matched_count;
+          }
+          if (nr && nr[n.id]) {
+            updates.intermediateResult = nr[n.id];
+          }
+          if (nd.node_type === 'universe' && !updates.intermediateResult) {
+            updates.intermediateResult = {
+              node_id: n.id,
+              node_type: 'universe',
+              label: nd.universe || 'Universe',
+              stock_count: data.total_count,
+              stocks: [],
+            };
+          }
+          if (Object.keys(updates).length === 0) return n;
+          return { ...n, data: { ...n.data, ...updates } };
+        })
+      );
+      showToast(
+        t('deploySuccess', { count: data.matched_count, total: data.total_count }),
+        'success'
+      );
+    };
+
+    const stream = runStrategyStream(graph, undefined, {
+      onProgress: (event) => {
+        setDeployProgress(event.progress_pct);
+        setProgressDetail({
+          processed: event.processed_tickers,
+          total: event.total_tickers,
+          matched: event.matched_count,
+        });
+      },
+      onResult: handleResult,
+      onError: (errorMsg) => {
+        setStreamStatus('error');
+        setErrors([errorMsg]);
+        showToast(t('deployError'), 'error');
+      },
+    });
+
+    streamAbortRef.current = stream;
+  }, [nodes, edges, setNodes, showToast, t]);
 
   const handleClear = useCallback(() => {
     setNodes(initialNodes);
@@ -947,18 +960,18 @@ function StrategyPageInner() {
         <div className="flex-1" />
 
         {/* Error/status display */}
-        {runStrategy.isPending && (
+        {isRunning && (
           <div className="text-sm text-[#1313ec] font-medium">
             {t('runningStatus')}
           </div>
         )}
-        {!runStrategy.isPending && errors.length > 0 && (
+        {!isRunning && errors.length > 0 && (
           <div className="text-sm text-red-500">
             {errors[0]}
             {errors.length > 1 && ` (${t('moreErrors', { count: errors.length - 1 })})`}
           </div>
         )}
-        {!runStrategy.isPending && results && (
+        {!isRunning && results && (
           <div className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
             {t('stocksMatched', { count: results.length })}
           </div>
@@ -1018,10 +1031,10 @@ function StrategyPageInner() {
         <button
           type="button"
           onClick={handleRun}
-          disabled={runStrategy.isPending}
+          disabled={isRunning}
           className="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold bg-[#1313ec] text-white rounded hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
         >
-          {runStrategy.isPending ? (
+          {isRunning ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Zap className="h-4 w-4" />
@@ -1133,9 +1146,10 @@ function StrategyPageInner() {
         nodeResults={nodeResults}
         finalResults={results}
         selectedNodeId={selectedNodeId}
-        isPending={runStrategy.isPending}
+        isPending={isRunning}
         deployProgress={deployProgress}
         conditionCount={conditionCount}
+        progressDetail={progressDetail}
       />
 
       {/* Save dialog */}

@@ -1,29 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Play, AlertCircle, RefreshCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import { getPresets, getUniverses } from '@/lib/api';
 import type { PresetInfo, UniverseInfo } from '@/lib/types';
 
 interface FilterPanelProps {
-  /** Currently selected preset */
   selectedPreset: string;
-  /** Currently selected universe */
   selectedUniverse: string;
-  /** Whether screening is in progress */
   isLoading: boolean;
-  /** Callback when preset changes */
   onPresetChange: (preset: string) => void;
-  /** Callback when universe changes */
   onUniverseChange: (universe: string) => void;
-  /** Callback when run button is clicked */
   onRun: () => void;
 }
 
-/**
- * Filter panel for selecting screening preset and universe
- */
 export default function FilterPanel({
   selectedPreset,
   selectedUniverse,
@@ -32,6 +24,7 @@ export default function FilterPanel({
   onUniverseChange,
   onRun,
 }: FilterPanelProps) {
+  const t = useTranslations('screening');
   const [presets, setPresets] = useState<PresetInfo[]>([]);
   const [universes, setUniverses] = useState<UniverseInfo[]>([]);
   const [loadingPresets, setLoadingPresets] = useState(true);
@@ -49,7 +42,7 @@ export default function FilterPanel({
         }
       } catch (err) {
         console.error('Failed to load presets:', err);
-        setError('Failed to load presets');
+        setError(t('failedToLoadPresets'));
       } finally {
         setLoadingPresets(false);
       }
@@ -65,7 +58,7 @@ export default function FilterPanel({
         }
       } catch (err) {
         console.error('Failed to load universes:', err);
-        setError('Failed to load universes');
+        setError(t('failedToLoadUniverses'));
       } finally {
         setLoadingUniverses(false);
       }
@@ -73,7 +66,13 @@ export default function FilterPanel({
 
     loadPresets();
     loadUniverses();
-  }, [onPresetChange, onUniverseChange, selectedPreset, selectedUniverse]);
+  }, [onPresetChange, onUniverseChange, selectedPreset, selectedUniverse, t]);
+
+  const { staticPresets, customPresets } = useMemo(() => {
+    const staticGroup = presets.filter((p) => p.source === 'static');
+    const customGroup = presets.filter((p) => p.source === 'custom');
+    return { staticPresets: staticGroup, customPresets: customGroup };
+  }, [presets]);
 
   const selectedPresetInfo = presets.find((p) => p.name === selectedPreset);
   const canRun = selectedPreset && selectedUniverse && !isLoading;
@@ -81,7 +80,7 @@ export default function FilterPanel({
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-6">
       <h2 className="mb-4 text-lg font-semibold text-[var(--foreground)]">
-        Screening Filters
+        {t('filters')}
       </h2>
 
       {error && (
@@ -98,7 +97,7 @@ export default function FilterPanel({
             htmlFor="preset-select"
             className="mb-1.5 block text-sm font-medium text-[var(--foreground)]"
           >
-            Preset
+            {t('preset')}
           </label>
           <select
             id="preset-select"
@@ -108,15 +107,30 @@ export default function FilterPanel({
             className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[var(--foreground)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-opacity-20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loadingPresets ? (
-              <option value="">Loading presets...</option>
+              <option value="">{t('loadingPresets')}</option>
             ) : presets.length === 0 ? (
-              <option value="">No presets available</option>
+              <option value="">{t('noPresets')}</option>
             ) : (
-              presets.map((preset) => (
-                <option key={preset.name} value={preset.name}>
-                  {preset.name}
-                </option>
-              ))
+              <>
+                {staticPresets.length > 0 && (
+                  <optgroup label={t('builtInPresets')}>
+                    {staticPresets.map((preset) => (
+                      <option key={preset.name} value={preset.name}>
+                        {preset.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {customPresets.length > 0 && (
+                  <optgroup label={t('myStrategies')}>
+                    {customPresets.map((preset) => (
+                      <option key={preset.name} value={preset.name}>
+                        {preset.description}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </>
             )}
           </select>
           {selectedPresetInfo && (
@@ -132,7 +146,7 @@ export default function FilterPanel({
             htmlFor="universe-select"
             className="mb-1.5 block text-sm font-medium text-[var(--foreground)]"
           >
-            Universe
+            {t('universe')}
           </label>
           <select
             id="universe-select"
@@ -142,9 +156,9 @@ export default function FilterPanel({
             className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[var(--foreground)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-opacity-20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loadingUniverses ? (
-              <option value="">Loading universes...</option>
+              <option value="">{t('loadingUniverses')}</option>
             ) : universes.length === 0 ? (
-              <option value="">No universes available</option>
+              <option value="">{t('noUniverses')}</option>
             ) : (
               universes.map((universe) => (
                 <option key={universe.name} value={universe.name}>
@@ -159,7 +173,7 @@ export default function FilterPanel({
         {selectedPresetInfo && selectedPresetInfo.conditions.length > 0 && (
           <div>
             <p className="mb-1.5 text-sm font-medium text-[var(--foreground)]">
-              Conditions
+              {t('conditions')}
             </p>
             <ul className="space-y-1 text-sm text-[var(--foreground-muted)]">
               {selectedPresetInfo.conditions.map((condition, index) => (
@@ -183,12 +197,12 @@ export default function FilterPanel({
           {isLoading ? (
             <>
               <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-              Screening...
+              {t('screening')}
             </>
           ) : (
             <>
               <Play className="mr-2 h-5 w-5" />
-              Run Screening
+              {t('runScreening')}
             </>
           )}
         </Button>

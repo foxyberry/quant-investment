@@ -95,6 +95,7 @@ interface IntermediateResultsPanelProps {
   isPending: boolean;
   deployProgress: number;
   conditionCount: number;
+  progressDetail?: { processed: number; total: number; matched: number } | null;
 }
 
 export default function IntermediateResultsPanel({
@@ -104,6 +105,7 @@ export default function IntermediateResultsPanel({
   isPending,
   deployProgress,
   conditionCount,
+  progressDetail,
 }: IntermediateResultsPanelProps) {
   const t = useTranslations('strategy');
   const locale = useLocale();
@@ -251,7 +253,13 @@ export default function IntermediateResultsPanel({
               </div>
               <span className="text-sm">{t('runningStrategy')}</span>
               <span className="text-xs mt-1">
-                {t('processingConditions', { count: conditionCount })}
+                {progressDetail && progressDetail.total > 0
+                  ? t('progressTickers', {
+                      processed: progressDetail.processed,
+                      total: progressDetail.total,
+                      matched: progressDetail.matched,
+                    })
+                  : t('processingConditions', { count: conditionCount })}
               </span>
             </div>
           ) : currentStocks.length > 0 ? (

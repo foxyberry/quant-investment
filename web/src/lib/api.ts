@@ -256,6 +256,15 @@ export interface StrategyExecuteResponse {
   node_results: Record<string, NodeIntermediateResult>;
 }
 
+export interface StrategyProgressEvent {
+  processed_tickers: number;
+  total_tickers: number;
+  matched_count: number;
+  progress_pct: number;
+  status: 'running' | 'done' | 'error';
+  message?: string;
+}
+
 /**
  * Get available strategy conditions
  */
@@ -277,6 +286,85 @@ export async function runStrategy(
       universe_override: universeOverride,
     }),
   });
+}
+
+/**
+ * Execute a visual strategy graph with SSE progress streaming.
+ */
+export function runStrategyStream(
+  graph: StrategyGraph,
+  universeOverride?: string,
+  callbacks?: {
+    onProgress?: (event: StrategyProgressEvent) => void;
+    onResult?: (data: StrategyExecuteResponse) => void;
+    onError?: (error: string) => void;
+  }
+): { abort: () => void } {
+  const controller = new AbortController();
+
+  (async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/strategy/run/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          graph,
+          universe_override: universeOverride,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        callbacks?.onError?.(`API Error: ${response.status}`);
+        return;
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        callbacks?.onError?.('No response body');
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        let currentEvent = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim();
+          } else if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            try {
+              const parsed = JSON.parse(data);
+              if (currentEvent === 'progress') {
+                callbacks?.onProgress?.(parsed as StrategyProgressEvent);
+              } else if (currentEvent === 'result') {
+                callbacks?.onResult?.(parsed as StrategyExecuteResponse);
+              } else if (currentEvent === 'error') {
+                callbacks?.onError?.(parsed.message || 'Unknown error');
+              }
+            } catch {
+              // Ignore parse errors for heartbeats etc.
+            }
+            currentEvent = '';
+          }
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
+      callbacks?.onError?.(err instanceof Error ? err.message : 'Stream failed');
+    }
+  })();
+
+  return { abort: () => controller.abort() };
 }
 
 /**
