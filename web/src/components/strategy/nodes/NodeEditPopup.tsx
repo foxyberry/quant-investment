@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { NodeToolbar, Position, useReactFlow, useNodeId, useStore } from '@xyflow/react';
 import { Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -118,23 +118,62 @@ export function ParamInput({
     );
   }
 
-  // int or float
+  // int or float – use local state so keystrokes aren't blocked by
+  // React Flow re-renders; sync to node data on blur.
+  return (
+    <NumberParamInput
+      param={param}
+      value={value}
+      onChange={onChange}
+      label={paramLabel}
+    />
+  );
+}
+
+/** Locally-stateful number input that syncs to node data on blur. */
+function NumberParamInput({
+  param,
+  value,
+  onChange,
+  label,
+}: {
+  param: ConditionParam;
+  value: unknown;
+  onChange: (name: string, value: unknown) => void;
+  label: string;
+}) {
+  const externalStr = value !== null && value !== undefined ? String(value) : '';
+  const [local, setLocal] = useState(externalStr);
+
+  // Sync from external when the prop genuinely changes (e.g. condition type switch)
+  useEffect(() => {
+    setLocal(externalStr);
+  }, [externalStr]);
+
+  const flush = () => {
+    if (local === '') {
+      onChange(param.name, null);
+    } else {
+      onChange(
+        param.name,
+        param.type === 'int' ? parseInt(local, 10) : parseFloat(local)
+      );
+    }
+  };
+
   return (
     <div>
-      <FieldLabel>{paramLabel}</FieldLabel>
+      <FieldLabel>{label}</FieldLabel>
       <input
         type="number"
         step={param.type === 'float' ? '0.01' : '1'}
-        value={value !== null && value !== undefined ? String(value) : ''}
-        onChange={(e) => {
-          const raw = e.target.value;
-          if (raw === '') {
-            onChange(param.name, null);
-          } else {
-            onChange(
-              param.name,
-              param.type === 'int' ? parseInt(raw, 10) : parseFloat(raw)
-            );
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={flush}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            flush();
+            (e.target as HTMLInputElement).blur();
           }
         }}
         className={numberInputClass}
@@ -153,21 +192,36 @@ export function InlineNumberInput({
   value: unknown;
   onChange: (name: string, value: unknown) => void;
 }) {
+  const externalStr = value !== null && value !== undefined ? String(value) : '';
+  const [local, setLocal] = useState(externalStr);
+
+  useEffect(() => {
+    setLocal(externalStr);
+  }, [externalStr]);
+
+  const flush = () => {
+    if (local === '') {
+      onChange(param.name, null);
+    } else {
+      onChange(
+        param.name,
+        param.type === 'int' ? parseInt(local, 10) : parseFloat(local)
+      );
+    }
+  };
+
   return (
     <input
       type="number"
       step={param.type === 'float' ? '0.01' : '1'}
-      value={value !== null && value !== undefined ? String(value) : ''}
+      value={local}
       placeholder={param.name}
-      onChange={(e) => {
-        const raw = e.target.value;
-        if (raw === '') {
-          onChange(param.name, null);
-        } else {
-          onChange(
-            param.name,
-            param.type === 'int' ? parseInt(raw, 10) : parseFloat(raw)
-          );
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={flush}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          flush();
+          (e.target as HTMLInputElement).blur();
         }
       }}
       className={numberInputClass}
