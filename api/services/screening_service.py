@@ -63,21 +63,21 @@ class ScreeningService:
         """
         Get list of available screening presets.
 
+        Returns static presets and saved QuantCanvas strategies.
+
         Returns:
             List of PresetInfo with preset details
         """
         presets = []
 
+        # Static presets
         for name in list_presets():
             preset_func = PRESET_REGISTRY.get(name)
             description = ""
             conditions = []
 
             if preset_func:
-                # Get docstring as description
                 description = (preset_func.__doc__ or "").strip()
-
-                # Get condition names by calling the preset
                 try:
                     condition_instances = preset_func()
                     conditions = [c.name for c in condition_instances]
@@ -87,8 +87,41 @@ class ScreeningService:
             presets.append(PresetInfo(
                 name=name,
                 description=description,
-                conditions=conditions
+                conditions=conditions,
+                source="static",
             ))
+
+        # Saved QuantCanvas strategies
+        try:
+            from api.services.strategy_save_service import get_strategy_save_service
+            from api.services.strategy_service import build_conditions_from_graph
+            from api.schemas.strategy import StrategyGraph
+
+            saved = get_strategy_save_service().list_strategies()
+            for strategy in saved:
+                try:
+                    graph = strategy.graph
+                    if isinstance(graph, dict):
+                        graph = StrategyGraph(**graph)
+                    cond_list, _ = build_conditions_from_graph(graph)
+                    if not cond_list:
+                        continue
+                    conditions = [type(c).__name__ for c in cond_list]
+                except Exception as e:
+                    logger.warning(
+                        "Skipping unparseable saved strategy %s: %s",
+                        strategy.id, e,
+                    )
+                    continue
+
+                presets.append(PresetInfo(
+                    name=f"custom:{strategy.id}",
+                    description=strategy.name,
+                    conditions=conditions,
+                    source="custom",
+                ))
+        except Exception as e:
+            logger.warning("Failed to load saved strategies for presets: %s", e)
 
         return presets
 
@@ -176,6 +209,31 @@ class ScreeningService:
         else:
             raise ValueError(f"Unknown universe: {universe}")
 
+    def _resolve_conditions(self, preset: str, params: Optional[Dict[str, Any]] = None) -> list:
+        """Resolve conditions from a static preset or custom strategy."""
+        if preset.startswith("custom:"):
+            strategy_id = preset[len("custom:"):]
+            from api.services.strategy_save_service import get_strategy_save_service
+            from api.services.strategy_service import build_conditions_from_graph
+            from api.schemas.strategy import StrategyGraph
+
+            strategy = get_strategy_save_service().get_strategy(strategy_id)
+            if strategy is None:
+                raise ValueError(f"Saved strategy not found: {strategy_id}")
+            graph = strategy.graph
+            if isinstance(graph, dict):
+                graph = StrategyGraph(**graph)
+            cond_list, _ = build_conditions_from_graph(graph)
+            if not cond_list:
+                raise ValueError(f"No conditions in saved strategy: {strategy_id}")
+            return cond_list
+
+        preset_params = params or {}
+        try:
+            return get_preset(preset, **preset_params)
+        except ValueError as e:
+            raise ValueError(f"Invalid preset: {e}")
+
     def run_screening(
         self,
         preset: str,
@@ -186,19 +244,14 @@ class ScreeningService:
         Run stock screening with the given preset and universe.
 
         Args:
-            preset: Preset name
+            preset: Preset name (static name or 'custom:{strategy_id}')
             universe: Universe name
             params: Optional parameters to override preset defaults
 
         Returns:
             Dict with results, total_count, and matched_count
         """
-        # Get conditions from preset
-        preset_params = params or {}
-        try:
-            conditions = get_preset(preset, **preset_params)
-        except ValueError as e:
-            raise ValueError(f"Invalid preset: {e}")
+        conditions = self._resolve_conditions(preset, params)
 
         # Create screener
         screener = StockScreener(
@@ -262,12 +315,7 @@ class ScreeningService:
         Returns:
             ScreeningResultItem with the evaluation result
         """
-        # Get conditions from preset
-        preset_params = params or {}
-        try:
-            conditions = get_preset(preset, **preset_params)
-        except ValueError as e:
-            raise ValueError(f"Invalid preset: {e}")
+        conditions = self._resolve_conditions(preset, params)
 
         # Create screener
         screener = StockScreener(
