@@ -21,7 +21,6 @@ function SectorNode({ data, selected }: NodeProps) {
   // Fetch sectors for the current market (KOSPI/KOSDAQ)
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     getSectors('KOSPI')
       .then((res) => {
         if (!cancelled) setSectors(res.sectors);

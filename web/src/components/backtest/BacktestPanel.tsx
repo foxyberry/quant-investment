@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { X, Loader2, AlertCircle, TrendingUp, BarChart3 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useBacktestStrategies, useRunBacktest } from '@/hooks/useBacktest';
@@ -179,32 +179,18 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
     [strategiesData]
   );
 
+  // Auto-select first strategy when list arrives
+  const resolvedStrategy = selectedStrategy || (strategies.length > 0 ? strategies[0].name : '');
+  if (resolvedStrategy !== selectedStrategy && resolvedStrategy) {
+    setSelectedStrategy(resolvedStrategy);
+  }
+
   const currentStrategy = useMemo(
-    () => strategies.find((s) => s.name === selectedStrategy) ?? null,
-    [strategies, selectedStrategy]
+    () => strategies.find((s) => s.name === resolvedStrategy) ?? null,
+    [strategies, resolvedStrategy]
   );
 
-  // When strategy list arrives and nothing is selected, pick the first
-  useEffect(() => {
-    if (strategies.length > 0 && !selectedStrategy) {
-      setSelectedStrategy(strategies[0].name);
-    }
-  }, [strategies, selectedStrategy]);
-
-  // Reset strategy params when strategy selection changes
-  const prevStrategyRef = useRef(selectedStrategy);
-  useEffect(() => {
-    if (selectedStrategy && selectedStrategy !== prevStrategyRef.current) {
-      prevStrategyRef.current = selectedStrategy;
-      if (currentStrategy) {
-        const defaults: Record<string, unknown> = {};
-        for (const p of currentStrategy.params) {
-          defaults[p.name] = p.default;
-        }
-        setStrategyParams(defaults);
-      }
-    }
-  }, [selectedStrategy, currentStrategy]);
+  // prevStrategyRef removed — params reset is handled in handleStrategyChange
 
   // --- Handlers ---
   const handleRun = useCallback(() => {
@@ -231,8 +217,16 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
     (name: string) => {
       setSelectedStrategy(name);
       setResult(null);
+      const strat = strategies.find((s) => s.name === name);
+      if (strat) {
+        const defaults: Record<string, unknown> = {};
+        for (const p of strat.params) {
+          defaults[p.name] = p.default;
+        }
+        setStrategyParams(defaults);
+      }
     },
-    []
+    [strategies]
   );
 
   const handleParamChange = useCallback(

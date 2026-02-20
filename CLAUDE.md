@@ -341,6 +341,41 @@ python scripts/live/portfolio_sell_checker.py
 - `utils/`, `config/` 등 공유 모듈 수정 시 **단일 팀만** 수정, 이후 QA 검수
 - API 계약 변경, 자동매매 로직, 공용 모듈 변경은 반대 의견 전담 역할 리뷰를 **반드시** 거친다
 
+---
+
+## 11. UI 변경 검증 프로토콜
+
+UI 컴포넌트를 수정한 후 반드시 Playwright MCP로 검증한다.
+
+### 필수 검증 (모든 UI 변경)
+
+1. `browser_navigate` → 해당 페이지 이동 (`http://localhost:3000/en/...`)
+2. `browser_snapshot` → 접근성 트리에서 구조 확인 (예상 요소 존재 여부, 텍스트/라벨 정확성)
+3. `browser_take_screenshot` → 스크린샷을 사용자에게 보여줌
+4. `browser_console_messages(level: "error")` → JS 에러 없음 확인
+5. `browser_network_requests` → API 호출 실패 없음 확인
+
+### 변경 범위별 추가 검증
+
+| 변경 유형 | 추가 검증 |
+|-----------|-----------|
+| 인터랙션 변경 | `browser_click`, `browser_type`으로 동작 테스트 |
+| 레이아웃 변경 | `browser_resize(width: 375, height: 812)`로 모바일 확인 |
+| 다크모드 영향 | `prefers-color-scheme` 전환 후 재확인 |
+| 폼/입력 변경 | `browser_fill_form`으로 입력 → 제출 흐름 테스트 |
+| 모달/팝업 변경 | 열기/닫기/ESC 동작 확인 |
+
+### E2E 테스트 (자동화된 검증)
+
+코드 변경 후 관련 E2E 테스트도 실행한다:
+
+```bash
+cd web && npm run test:e2e                    # 전체 E2E 테스트
+cd web && npx playwright test e2e/visual.spec.ts  # 비주얼 스냅샷 비교
+```
+
+---
+
 ### Agent Team 활성화 설정 (선택)
 
 > 현재 팀 구조는 **서브에이전트(Task tool)** 기반으로 동작한다.
