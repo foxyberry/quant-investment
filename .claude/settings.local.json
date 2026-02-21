@@ -9,7 +9,19 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(gh:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git log:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)",
+      "Bash(tail:*)",
+      "Bash(git fetch:*)",
+      "Bash(git branch | grep -v \"^* main$\" | grep -v \"main\" | xargs git branch -D 2>&1)",
+      "Bash(git remote:*)",
+      "Bash(git branch -r | grep -v \"origin/main$\" | grep -v \"origin/HEAD\" | sed 's|origin/||' | tr -d ' ' | xargs -I {} git push origin --delete {} 2>&1)",
+      "Bash(git status:*)",
+      "Bash(git pull:*)",
+      "Bash(chmod +x:*)",
+      "Bash(curl:*)"
     ]
   },
   "enabledMcpjsonServers": [
@@ -18,5 +30,19 @@
     "shadcn",
     "stitch",
     "codex"
-  ]
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "TaskCreate|TaskUpdate",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/miyoungjang/Repository/quant/quant-investment/.claude/hooks/agent-task-tracker.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
 }

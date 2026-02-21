@@ -475,3 +475,37 @@ teammate 간 직접 메시지를 주고받는 양방향 협업 구조.
 | `teammateMode` | `"tmux"` | 각 teammate를 별도 pane으로 표시 |
 
 **참고**: [공식 가이드](https://code.claude.com/docs/en/agent-teams)
+
+---
+
+## 12. Agent Task Tracking (작업 추적)
+
+모든 세션에서 TaskCreate/TaskUpdate를 사용하여 작업을 추적한다.
+PostToolUse 훅이 자동으로 `http://127.0.0.1:8765/api/agent-tasks`에 전송한다.
+
+### 운영 규칙
+
+1. **작업 시작 시** `TaskCreate` 호출 (subject, description 필수)
+2. **상태 변경/중간 보고 시** `TaskUpdate` 호출
+3. **완료 시** `TaskUpdate(status=completed)` 필수
+4. `task_id`는 세션 내 유일해야 한다
+
+### 권장 필드
+
+| 필드 | 설명 |
+|------|------|
+| `session_id` | 현재 세션 ID |
+| `agent_type` | 서브에이전트 타입 (metadata에 포함) |
+| `team_name` | 팀 이름 (metadata에 포함) |
+| `description` | 작업 상세 설명 |
+| `files_modified` | 수정된 파일 목록 (TaskUpdate 시) |
+
+### status 허용값
+
+`pending` → `in_progress` → `completed` | `deleted`
+
+### 훅 동작 방식
+
+- `.claude/hooks/agent-task-tracker.py`가 PostToolUse 훅으로 실행
+- `subprocess.Popen` + `start_new_session=True`로 비동기 fire-and-forget
+- API 실패 시에도 본 작업은 블로킹되지 않음 (항상 exit 0)
