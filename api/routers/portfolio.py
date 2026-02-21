@@ -4,12 +4,16 @@ Portfolio router.
 Provides endpoints for portfolio management operations.
 """
 
+import io
 import logging
+from pathlib import Path
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Form, HTTPException, Query, UploadFile
+from fastapi.responses import StreamingResponse
 
 from api.schemas.portfolio import (
+    CsvImportResponse,
     HoldingCreate,
     HoldingUpdate,
     HoldingResponse,
@@ -19,6 +23,9 @@ from api.schemas.portfolio import (
     SellSignalsResponse,
 )
 from api.services.portfolio_service import get_portfolio_service
+
+TEMPLATE_DIR = Path(__file__).parent.parent.parent / "data" / "templates"
+MAX_UPLOAD_SIZE = 1_048_576  # 1 MB
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +135,116 @@ async def add_holding(data: HoldingCreate) -> HoldingResponse:
             status_code=500,
             detail=f"Failed to add holding: {str(e)}"
         )
+
+
+@router.post(
+    "/holdings/import",
+    response_model=CsvImportResponse,
+    summary="Import Holdings from CSV",
+    description="Bulk import holdings from a CSV file.",
+)
+async def import_holdings(
+    file: UploadFile,
+    mode: str = Form("merge"),
+) -> CsvImportResponse:
+    """
+    Import holdings from a CSV file.
+
+    Args:
+        file: CSV file with ticker, quantity, avg_price columns
+        mode: "merge" to upsert or "replace" to clear first
+
+    Returns:
+        CsvImportResponse with import counts and errors
+    """
+    if mode not in ("merge", "replace"):
+        raise HTTPException(status_code=422, detail=f"Invalid mode: {mode}. Use 'merge' or 'replace'.")
+
+    raw = await file.read()
+    if len(raw) == 0:
+        raise HTTPException(status_code=400, detail="Empty file")
+    if len(raw) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="File too large (max 1 MB)")
+
+    try:
+        content = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File is not valid UTF-8")
+
+    service = get_portfolio_service()
+
+    try:
+        result = service.import_from_csv(content, mode=mode)
+        return CsvImportResponse(**result)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to import CSV: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
+
+
+@router.get(
+    "/holdings/export",
+    summary="Export Holdings as CSV",
+    description="Download all holdings as a CSV file.",
+)
+async def export_holdings():
+    """
+    Export all holdings as CSV download.
+
+    Returns:
+        StreamingResponse with CSV content
+    """
+    service = get_portfolio_service()
+
+    try:
+        csv_str = service.export_to_csv()
+        # Prepend UTF-8 BOM for Excel Korean support
+        bom = b"\xef\xbb\xbf"
+        output = io.BytesIO(bom + csv_str.encode("utf-8"))
+        return StreamingResponse(
+            output,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": "attachment; filename=portfolio_holdings.csv"
+            },
+        )
+    except Exception as e:
+        logger.error(f"Failed to export CSV: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
+
+@router.get(
+    "/holdings/template",
+    summary="Download CSV Template",
+    description="Download a CSV template for portfolio import.",
+)
+async def get_template(
+    minimal: bool = Query(default=False, description="Return minimal template (required columns only)"),
+):
+    """
+    Download a CSV template file.
+
+    Args:
+        minimal: If True, return template with required columns only
+
+    Returns:
+        StreamingResponse with template CSV
+    """
+    filename = "portfolio_template_minimal.csv" if minimal else "portfolio_template.csv"
+    template_path = TEMPLATE_DIR / filename
+
+    if not template_path.exists():
+        raise HTTPException(status_code=404, detail="Template file not found")
+
+    content = template_path.read_bytes()
+    return StreamingResponse(
+        io.BytesIO(content),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        },
+    )
 
 
 @router.get(

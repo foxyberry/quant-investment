@@ -108,6 +108,38 @@ class PortfolioSummary(BaseModel):
     )
 
 
+class CsvRowError(BaseModel):
+    """
+    Schema for a CSV row validation error.
+
+    Attributes:
+        row: 1-based row number in the CSV
+        ticker: Ticker value from the row (None if missing)
+        reason: Description of the validation error
+    """
+
+    row: int = Field(..., description="1-based row number")
+    ticker: Optional[str] = Field(default=None, description="Ticker from the row")
+    reason: str = Field(..., description="Error description")
+
+
+class CsvImportResponse(BaseModel):
+    """
+    Schema for CSV import result.
+
+    Attributes:
+        imported: Number of newly created holdings
+        updated: Number of existing holdings updated
+        skipped: Number of rows skipped due to errors
+        errors: List of row-level validation errors
+    """
+
+    imported: int = Field(..., description="Newly created holdings count")
+    updated: int = Field(..., description="Updated holdings count")
+    skipped: int = Field(..., description="Skipped rows count")
+    errors: List[CsvRowError] = Field(default_factory=list, description="Row errors")
+
+
 class SellSignal(BaseModel):
     """
     Schema for sell signal information.
