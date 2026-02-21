@@ -30,19 +30,5 @@
     "shadcn",
     "stitch",
     "codex"
-  ],
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "TaskCreate|TaskUpdate",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /Users/miyoungjang/Repository/quant/quant-investment/.claude/hooks/agent-task-tracker.py",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  }
+  ]
 }
