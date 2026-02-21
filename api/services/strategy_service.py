@@ -189,7 +189,7 @@ def _fetch_us_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[f
     return fundamentals
 
 
-def _enrich_fundamentals(items: List[StrategyResultItem]) -> None:
+def enrich_fundamentals(items: List[StrategyResultItem]) -> None:
     """Fill PER/PBR/dividend_yield for strategy result items (best effort)."""
     if not items:
         return
@@ -710,15 +710,18 @@ def execute_strategy_with_progress(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
     progress_callback: Optional[Callable[[int, int, int], None]] = None,
+    skip_enrich: bool = False,
 ) -> Dict[str, Any]:
     """Execute a visual strategy graph with an optional progress callback.
 
     Same as execute_strategy but forwards progress_callback to the screener.
+    Set skip_enrich=True when the caller will enrich separately (e.g. streaming).
     """
     return execute_strategy(
         graph=graph,
         universe_override=universe_override,
         progress_callback=progress_callback,
+        skip_enrich=skip_enrich,
     )
 
 
@@ -726,6 +729,7 @@ def execute_strategy(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
     progress_callback: Optional[Callable[[int, int, int], None]] = None,
+    skip_enrich: bool = False,
 ) -> Dict[str, Any]:
     """
     Execute a visual strategy graph.
@@ -879,7 +883,9 @@ def execute_strategy(
                 )
 
     # Enrich only final results (intermediate nodes don't display PER/PBR).
-    _enrich_fundamentals(final_items)
+    # skip_enrich=True lets streaming callers send progress before enriching.
+    if not skip_enrich:
+        enrich_fundamentals(final_items)
 
     conditions_used = [type(c).__name__ for c in leaf_conditions]
 

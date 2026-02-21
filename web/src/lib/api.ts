@@ -363,7 +363,8 @@ export function runStrategyStream(
         processLines(lines);
       }
 
-      // Process any remaining data in buffer after stream closes
+      // Flush any remaining bytes from the TextDecoder
+      buffer += decoder.decode(new Uint8Array(), { stream: false });
       if (buffer.trim()) {
         processLines(buffer.split('\n'));
       }
