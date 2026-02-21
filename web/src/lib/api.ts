@@ -8,6 +8,7 @@ import type {
   HoldingUpdate,
   PortfolioSummary,
   SellSignal,
+  CsvImportResponse,
   ReportSummary,
   ReportDetail,
   TickerAnalysis,
@@ -128,6 +129,66 @@ export async function getPortfolioSummary(): Promise<PortfolioSummary> {
 export async function getSellSignals(): Promise<SellSignal[]> {
   const response = await fetchApi<{ signals: SellSignal[]; checked_at: string }>('/api/portfolio/sell-signals');
   return response.signals;
+}
+
+/**
+ * Import holdings from a CSV file
+ */
+export async function importHoldingsCsv(
+  file: File,
+  mode: 'merge' | 'replace' = 'merge'
+): Promise<CsvImportResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('mode', mode);
+
+  const response = await fetch(`${API_BASE_URL}/api/portfolio/holdings/import`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: `API Error: ${response.status}` }));
+    throw new Error(error.detail || `API Error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Export holdings as CSV file download
+ */
+export async function exportHoldingsCsv(): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/portfolio/holdings/export`);
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status}`);
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'portfolio_holdings.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Download CSV template for portfolio import
+ */
+export async function downloadHoldingsTemplate(minimal: boolean = false): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/portfolio/holdings/template?minimal=${minimal}`
+  );
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status}`);
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = minimal ? 'portfolio_template_minimal.csv' : 'portfolio_template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // Analysis API functions

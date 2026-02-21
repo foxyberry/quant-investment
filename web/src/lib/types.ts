@@ -93,6 +93,20 @@ export interface SellSignal {
   trigger_price: number | null;
 }
 
+// CSV import types
+export interface CsvRowError {
+  row: number;
+  ticker: string | null;
+  reason: string;
+}
+
+export interface CsvImportResponse {
+  imported: number;
+  updated: number;
+  skipped: number;
+  errors: CsvRowError[];
+}
+
 // Analysis types
 export interface ReportSummary {
   date: string;

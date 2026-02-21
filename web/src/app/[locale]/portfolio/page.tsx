@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart } from 'lucide-react';
+import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import {
   HoldingsTable,
@@ -9,6 +9,7 @@ import {
   EditHoldingModal,
   DeleteConfirmModal,
   SellSignalBanner,
+  CsvImportModal,
 } from '@/components/portfolio';
 import {
   getHoldings,
@@ -17,6 +18,7 @@ import {
   deleteHolding,
   getPortfolioSummary,
   getSellSignals,
+  exportHoldingsCsv,
 } from '@/lib/api';
 import type { Holding, HoldingCreate, HoldingUpdate, PortfolioSummary, SellSignal } from '@/lib/types';
 
@@ -100,6 +102,9 @@ export default function PortfolioPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedHolding, setSelectedHolding] = useState<Holding | null>(null);
+
+  // CSV import modal state
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Sell signal banner state
   const [isBannerDismissed, setIsBannerDismissed] = useState(false);
@@ -207,7 +212,7 @@ export default function PortfolioPage() {
             Manage your holdings and track performance
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3 flex-wrap">
           <Button
             variant="outline"
             onClick={() => fetchData(false)}
@@ -215,6 +220,14 @@ export default function PortfolioPage() {
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
+          </Button>
+          <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Import
+          </Button>
+          <Button variant="outline" onClick={() => exportHoldingsCsv()}>
+            <Download className="h-4 w-4 mr-2" />
+            Export
           </Button>
           <Button variant="primary" onClick={() => setIsAddModalOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -318,6 +331,13 @@ export default function PortfolioPage() {
           setSelectedHolding(null);
         }}
         onConfirm={handleDeleteHolding}
+      />
+
+      {/* CSV Import Modal */}
+      <CsvImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportComplete={() => fetchData(false)}
       />
     </div>
   );
