@@ -91,8 +91,9 @@ function getNodeData(node: Node): StrategyNodeData {
   return node.data as unknown as StrategyNodeData;
 }
 
-// --- sessionStorage helpers for locale-switch persistence (#80) ---
-const STORAGE_KEY = 'strategy-canvas-state';
+// --- sessionStorage helpers for locale-switch persistence (#80, #183) ---
+const CANVAS_KEY = 'strategy-canvas-state';
+const RESULTS_KEY = 'strategy-results-state';
 
 interface CanvasSnapshot {
   nodes: Node[];
@@ -102,17 +103,40 @@ interface CanvasSnapshot {
   currentStrategyId: string | null;
 }
 
+interface ResultsSnapshot {
+  results: StrategyResultItem[] | null;
+  nodeResults: Record<string, NodeIntermediateResult> | null;
+  streamStatus: 'idle' | 'running' | 'done' | 'error';
+  lastRunTime: string | null; // ISO string for serialization
+}
+
 function saveCanvasToSession(snapshot: CanvasSnapshot) {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    sessionStorage.setItem(CANVAS_KEY, JSON.stringify(snapshot));
+  } catch { /* quota exceeded — ignore */ }
+}
+
+function saveResultsToSession(snapshot: ResultsSnapshot) {
+  try {
+    sessionStorage.setItem(RESULTS_KEY, JSON.stringify(snapshot));
   } catch { /* quota exceeded — ignore */ }
 }
 
 function loadCanvasFromSession(): CanvasSnapshot | null {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = sessionStorage.getItem(CANVAS_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as CanvasSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+function loadResultsFromSession(): ResultsSnapshot | null {
+  try {
+    const raw = sessionStorage.getItem(RESULTS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as ResultsSnapshot;
   } catch {
     return null;
   }
@@ -177,6 +201,18 @@ function StrategyPageInner() {
       setStrategyDescription(restored.strategyDescription);
       setCurrentStrategyId(restored.currentStrategyId);
     }
+    // Restore execution results (#183)
+    const restoredResults = loadResultsFromSession();
+    if (restoredResults) {
+      if (restoredResults.results !== undefined) setResults(restoredResults.results);
+      if (restoredResults.nodeResults !== undefined) setNodeResults(restoredResults.nodeResults);
+      if (restoredResults.streamStatus && restoredResults.streamStatus !== 'running') {
+        setStreamStatus(restoredResults.streamStatus);
+      }
+      if (restoredResults.lastRunTime) {
+        setLastRunTime(new Date(restoredResults.lastRunTime));
+      }
+    }
     const timer = setTimeout(() => { readyToSaveRef.current = true; }, 0);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -187,6 +223,15 @@ function StrategyPageInner() {
     if (!readyToSaveRef.current) return;
     saveCanvasToSession({ nodes, edges, strategyName, strategyDescription, currentStrategyId });
   }, [nodes, edges, strategyName, strategyDescription, currentStrategyId]);
+
+  // Persist execution results separately (avoids re-serializing large results on canvas drag)
+  useEffect(() => {
+    if (!readyToSaveRef.current) return;
+    saveResultsToSession({
+      results, nodeResults, streamStatus,
+      lastRunTime: lastRunTime?.toISOString() ?? null,
+    });
+  }, [results, nodeResults, streamStatus, lastRunTime]);
 
   const savedStrategies = useSavedStrategies();
   const isRunning = streamStatus === 'running';
@@ -917,6 +962,11 @@ function StrategyPageInner() {
       setCurrentStrategyId(saved.id);
       setShowLoadDialog(false);
       setResults(null);
+      setNodeResults(null);
+      setStreamStatus('idle');
+      setDeployProgress(0);
+      setProgressDetail(null);
+      setLastRunTime(null);
       setErrors([]);
       setSelectedNodeId(null);
     },
@@ -1150,6 +1200,7 @@ function StrategyPageInner() {
         deployProgress={deployProgress}
         conditionCount={conditionCount}
         progressDetail={progressDetail}
+        edges={edges}
       />
 
       {/* Save dialog */}

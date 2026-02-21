@@ -697,6 +697,16 @@
       },
       "help": "Annual dividend as % of stock price — higher means more passive income."
     },
+    "drawdown_from_high": {
+      "label": "Drawdown From High",
+      "desc": "Drop % from N-day rolling high",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_drop_pct": "Min Drop %",
+        "price_field": "Price Field"
+      },
+      "help": "Identifies stocks that have pulled back a minimum percentage from their recent high, potentially signaling a buying opportunity."
+    },
     "earnings_yield": {
       "label": "Earnings Yield",
       "desc": "Earnings yield (E/P) percentage filter",
@@ -777,6 +787,15 @@
         "max_zscore": "Max Z-Score"
       },
       "help": "Bankruptcy risk score — higher score means lower risk of default."
+    },
+    "avg_trading_value": {
+      "label": "Average Trading Value",
+      "desc": "N-day average trading value >= threshold",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_value": "Minimum Value"
+      },
+      "help": "Filters stocks by minimum average daily trading value to ensure sufficient liquidity."
     },
     "roic": {
       "label": "ROIC",

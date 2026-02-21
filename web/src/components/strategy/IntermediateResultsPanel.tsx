@@ -88,6 +88,37 @@ function formatTabLabel(label: string, nodeType: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/** Compute topological order from edges for pipeline-flow tab sorting. */
+function topoOrder(
+  edges: Array<{ source: string; target: string }>
+): Map<string, number> {
+  const graph = new Map<string, string[]>();
+  const inDegree = new Map<string, number>();
+
+  for (const e of edges) {
+    if (!graph.has(e.source)) graph.set(e.source, []);
+    graph.get(e.source)!.push(e.target);
+    inDegree.set(e.target, (inDegree.get(e.target) || 0) + 1);
+    if (!inDegree.has(e.source)) inDegree.set(e.source, 0);
+  }
+
+  const queue = [...inDegree.entries()]
+    .filter(([, d]) => d === 0)
+    .map(([n]) => n);
+  const order = new Map<string, number>();
+  let idx = 0;
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    order.set(node, idx++);
+    for (const next of graph.get(node) || []) {
+      const d = inDegree.get(next)! - 1;
+      inDegree.set(next, d);
+      if (d === 0) queue.push(next);
+    }
+  }
+  return order;
+}
+
 interface IntermediateResultsPanelProps {
   nodeResults: Record<string, NodeIntermediateResult> | null;
   finalResults: StrategyResultItem[] | null;
@@ -96,6 +127,7 @@ interface IntermediateResultsPanelProps {
   deployProgress: number;
   conditionCount: number;
   progressDetail?: { processed: number; total: number; matched: number } | null;
+  edges?: Array<{ source: string; target: string }>;
 }
 
 export default function IntermediateResultsPanel({
@@ -106,8 +138,10 @@ export default function IntermediateResultsPanel({
   deployProgress,
   conditionCount,
   progressDetail,
+  edges,
 }: IntermediateResultsPanelProps) {
   const t = useTranslations('strategy');
+  const tConditions = useTranslations('conditions');
   const locale = useLocale();
   const [collapsed, setCollapsed] = useState(false);
   const [activeTabId, setActiveTabId] = useState<string>('__output__');
@@ -123,15 +157,34 @@ export default function IntermediateResultsPanel({
         condition: 2,
         logic: 3,
       };
+      // Secondary sort: topological (pipeline) position within the same type
+      const pipelineOrder = edges ? topoOrder(edges) : new Map<string, number>();
       const sorted = Object.values(nodeResults)
         .filter((nr) => nr.node_type !== 'output') // output is shown as __output__ tab
-        .sort(
-          (a, b) => (typeOrder[a.node_type] ?? 9) - (typeOrder[b.node_type] ?? 9)
-        );
+        .sort((a, b) => {
+          const typeDiff =
+            (typeOrder[a.node_type] ?? 9) - (typeOrder[b.node_type] ?? 9);
+          if (typeDiff !== 0) return typeDiff;
+          // Same type: sort by pipeline position
+          return (
+            (pipelineOrder.get(a.node_id) ?? 999) -
+            (pipelineOrder.get(b.node_id) ?? 999)
+          );
+        });
       for (const nr of sorted) {
+        let label: string;
+        if (nr.node_type === 'condition') {
+          // Use i18n key: conditions.{condition_type}.label
+          const i18nKey = `${nr.label}.label`;
+          label = tConditions.has(i18nKey)
+            ? tConditions(i18nKey)
+            : formatTabLabel(nr.label, nr.node_type);
+        } else {
+          label = formatTabLabel(nr.label, nr.node_type);
+        }
         result.push({
           id: nr.node_id,
-          label: formatTabLabel(nr.label, nr.node_type),
+          label,
           count: nr.stock_count,
           nodeType: nr.node_type,
         });
@@ -146,7 +199,7 @@ export default function IntermediateResultsPanel({
       });
     }
     return result;
-  }, [nodeResults, finalResults, t]);
+  }, [nodeResults, finalResults, t, tConditions, edges]);
 
   // Sync active tab when canvas node is clicked
   const effectiveTab = useMemo(() => {

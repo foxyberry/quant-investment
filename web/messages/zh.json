@@ -691,6 +691,16 @@
       },
       "help": "年股息占股价的百分比——越高意味着越多的被动收入。"
     },
+    "drawdown_from_high": {
+      "label": "高点回撤",
+      "desc": "距N日滚动高点的跌幅",
+      "params": {
+        "lookback_days": "回溯天数",
+        "min_drop_pct": "最小跌幅(%)",
+        "price_field": "价格字段"
+      },
+      "help": "识别从近期高点回落一定比例的股票，可能预示买入机会。"
+    },
     "earnings_yield": {
       "label": "盈利收益率 (E/P)",
       "desc": "盈利收益率 (E/P) 百分比筛选",
@@ -772,9 +782,18 @@
       },
       "help": "破产风险评分——分数越高，违约风险越低。"
     },
+    "avg_trading_value": {
+      "label": "平均成交额",
+      "desc": "N日平均成交额 >= 阈值",
+      "params": {
+        "lookback_days": "回溯天数",
+        "min_value": "最低成交额"
+      },
+      "help": "通过设定最低平均日成交额来筛选流动性充足的股票。"
+    },
     "roic": {
       "label": "投入资本回报率 (ROIC)",
-      "description": "投入资本回报率筛选",
+      "desc": "投入资本回报率筛选",
       "params": {
         "min_roic": "最小 ROIC %",
         "max_roic": "最大 ROIC %"

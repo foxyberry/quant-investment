@@ -697,6 +697,16 @@
       },
       "help": "주가 대비 연간 배당금 비율 — 높을수록 배당 수익이 큽니다."
     },
+    "drawdown_from_high": {
+      "label": "고점 대비 하락률",
+      "desc": "N일 고점 대비 하락폭",
+      "params": {
+        "lookback_days": "조회 기간(일)",
+        "min_drop_pct": "최소 하락률(%)",
+        "price_field": "가격 필드"
+      },
+      "help": "최근 고점 대비 일정 비율 이상 하락한 종목을 찾아 매수 기회를 포착합니다."
+    },
     "earnings_yield": {
       "label": "이익수익률 (E/P)",
       "desc": "이익수익률 필터",
@@ -777,6 +787,15 @@
         "max_zscore": "최대 Z-스코어"
       },
       "help": "부도 위험 점수 — 높을수록 부도 가능성이 낮습니다."
+    },
+    "avg_trading_value": {
+      "label": "평균 거래대금",
+      "desc": "N일 평균 거래대금 >= 기준값",
+      "params": {
+        "lookback_days": "조회 기간(일)",
+        "min_value": "최소 거래대금"
+      },
+      "help": "충분한 유동성을 확보하기 위해 일정 기간의 평균 거래대금이 기준 이상인 종목만 필터링합니다."
     },
     "roic": {
       "label": "투하자본수익률(ROIC)",
