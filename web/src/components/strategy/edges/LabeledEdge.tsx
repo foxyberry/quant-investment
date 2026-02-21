@@ -112,8 +112,15 @@ function StockListPopup({
   onClose: () => void;
 }) {
   const t = useTranslations('strategy');
+  const tc = useTranslations('conditions');
   const locale = useLocale();
   const popupRef = useRef<HTMLDivElement>(null);
+
+  // Translate condition labels via i18n, keep others as-is
+  const displayLabel =
+    result.node_type === 'condition' && tc.has(`${result.label}.label`)
+      ? tc(`${result.label}.label`)
+      : result.label;
 
   // Close on click outside
   useEffect(() => {
@@ -144,7 +151,7 @@ function StockListPopup({
       <div className="px-3 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] flex items-center justify-between">
         <div>
           <div className="text-[11px] font-semibold text-[#1313ec] dark:text-blue-400 uppercase tracking-wider">
-            {result.label}
+            {displayLabel}
           </div>
           <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {result.stock_count.toLocaleString()}

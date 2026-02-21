@@ -1141,7 +1141,7 @@ function StrategyPageInner() {
         <div className="flex items-center gap-4">
           {/* Node limit with progress bar */}
           <div className="flex items-center gap-2">
-            <span>{t('nodeLimit')}: {nodeCount}/20</span>
+            <span>{t('nodeLimit', { count: nodeCount, max: 20 })}</span>
             <div className="w-16 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#1313ec] rounded-full transition-all"

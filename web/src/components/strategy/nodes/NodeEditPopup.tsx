@@ -275,6 +275,13 @@ export function IntermediateResultSection({
   result: import('@/lib/api').NodeIntermediateResult;
 }) {
   const t = useTranslations('strategy');
+  const tc = useTranslations('conditions');
+
+  // Translate condition labels via i18n, keep others as-is
+  const displayLabel =
+    result.node_type === 'condition' && tc.has(`${result.label}.label`)
+      ? tc(`${result.label}.label`)
+      : result.label;
 
   return (
     <div className="pt-3 border-t border-[#e1e3e5] dark:border-[#2e2e30]">
@@ -282,7 +289,7 @@ export function IntermediateResultSection({
 
       <div className="rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-3 mb-3">
         <div className="text-[11px] font-semibold text-[#1313ec] dark:text-blue-400 uppercase tracking-wider">
-          {t('intermediateResultsFor', { label: result.label })}
+          {t('intermediateResultsFor', { label: displayLabel })}
         </div>
         <div className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
           {result.stock_count.toLocaleString()}
