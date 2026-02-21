@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { AlertCircle } from 'lucide-react';
 import { FilterPanel, ResultTable } from '@/components/screening';
 import { runScreening } from '@/lib/api';
@@ -10,6 +11,7 @@ import type { ScreeningResult } from '@/lib/types';
  * Screening page for running stock screening presets
  */
 export default function ScreeningPage() {
+  const t = useTranslations('screening');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [selectedUniverse, setSelectedUniverse] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +24,7 @@ export default function ScreeningPage() {
 
   const handleRunScreening = async () => {
     if (!selectedPreset || !selectedUniverse) {
-      setError('Please select a preset and universe');
+      setError(t('selectPresetAndUniverse'));
       return;
     }
 
@@ -43,7 +45,7 @@ export default function ScreeningPage() {
       setError(
         err instanceof Error
           ? err.message
-          : 'Failed to run screening. Please try again.'
+          : t('failedToRun')
       );
     } finally {
       setIsLoading(false);
@@ -55,10 +57,10 @@ export default function ScreeningPage() {
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-[var(--foreground)]">
-          Stock Screening
+          {t('title')}
         </h1>
         <p className="mt-1 text-[var(--foreground-muted)]">
-          Filter stocks based on predefined screening criteria
+          {t('subtitle')}
         </p>
       </div>
 
@@ -91,7 +93,7 @@ export default function ScreeningPage() {
             <div className="flex flex-wrap items-center gap-4 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-[var(--foreground-muted)]">
-                  Total Screened:
+                  {t('totalScreened')}
                 </span>
                 <span className="font-semibold text-[var(--foreground)]">
                   {stats.total.toLocaleString()}
@@ -100,7 +102,7 @@ export default function ScreeningPage() {
               <div className="h-4 w-px bg-[var(--border)]" />
               <div className="flex items-center gap-2">
                 <span className="text-sm text-[var(--foreground-muted)]">
-                  Matched:
+                  {t('matched')}
                 </span>
                 <span className="font-semibold text-green-600 dark:text-green-400">
                   {stats.matched.toLocaleString()}
@@ -109,7 +111,7 @@ export default function ScreeningPage() {
               <div className="h-4 w-px bg-[var(--border)]" />
               <div className="flex items-center gap-2">
                 <span className="text-sm text-[var(--foreground-muted)]">
-                  Match Rate:
+                  {t('matchRate')}
                 </span>
                 <span className="font-semibold text-[var(--foreground)]">
                   {stats.total > 0

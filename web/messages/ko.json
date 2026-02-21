@@ -115,6 +115,9 @@
     "price": "가격",
     "match": "매치",
     "details": "상세",
+    "noConditions": "표시할 조건이 없습니다",
+    "yes": "예",
+    "no": "아니오",
     "presetNames": {
       "deep_value_accumulation": "딥 밸류 매집",
       "deep_value_accumulation_divergence": "딥 밸류 + 다이버전스"

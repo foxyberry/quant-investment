@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { CheckCircle, XCircle } from 'lucide-react';
 import type { ConditionResult } from '@/lib/types';
 
@@ -12,10 +13,12 @@ interface ConditionDetailsProps {
  * Displays detailed condition results with pass/fail indicators
  */
 export default function ConditionDetails({ conditions }: ConditionDetailsProps) {
+  const t = useTranslations('screening');
+
   if (conditions.length === 0) {
     return (
       <p className="text-sm text-[var(--foreground-muted)]">
-        No conditions to display
+        {t('noConditions')}
       </p>
     );
   }
@@ -64,7 +67,7 @@ export default function ConditionDetails({ conditions }: ConditionDetailsProps) 
                           : 'text-red-700 dark:text-red-300'
                       }`}
                     >
-                      {formatValue(value)}
+                      {formatValue(value, t('yes'), t('no'))}
                     </dd>
                   </div>
                 ))}
@@ -80,7 +83,7 @@ export default function ConditionDetails({ conditions }: ConditionDetailsProps) 
 /**
  * Format a value for display
  */
-function formatValue(value: unknown): string {
+function formatValue(value: unknown, yesLabel: string, noLabel: string): string {
   if (value === null || value === undefined) {
     return '-';
   }
@@ -95,7 +98,7 @@ function formatValue(value: unknown): string {
     });
   }
   if (typeof value === 'boolean') {
-    return value ? 'Yes' : 'No';
+    return value ? yesLabel : noLabel;
   }
   return String(value);
 }

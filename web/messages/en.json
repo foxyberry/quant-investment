@@ -115,6 +115,9 @@
     "price": "Price",
     "match": "Match",
     "details": "Details",
+    "noConditions": "No conditions to display",
+    "yes": "Yes",
+    "no": "No",
     "presetNames": {
       "deep_value_accumulation": "Deep Value Accumulation",
       "deep_value_accumulation_divergence": "Deep Value + Divergence"

@@ -166,7 +166,8 @@ export default function TickerAnalysisPage() {
     } finally {
       setScreeningLoading(false);
     }
-  }, [ticker, selectedPreset, t]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedPreset is read as fallback only; preset is always passed explicitly from the dropdown onChange handler
+  }, [ticker, t]);
 
   // Check AI availability on mount
   useEffect(() => {
@@ -175,12 +176,15 @@ export default function TickerAnalysisPage() {
       .catch(() => setAiAvailable(false));
   }, []);
 
+  // Effect 1: Fetch main page data (chart, indicators, financials)
   useEffect(() => {
-    if (ticker) {
-      fetchData(selectedPeriod);
-      fetchScreening();
-    }
-  }, [ticker, selectedPeriod, fetchData, fetchScreening]);
+    if (ticker) fetchData(selectedPeriod);
+  }, [ticker, selectedPeriod, fetchData]);
+
+  // Effect 2: Fetch screening data (strategy context only)
+  useEffect(() => {
+    if (ticker) fetchScreening();
+  }, [ticker, fetchScreening]);
 
   const handlePeriodChange = (period: PeriodOption) => {
     setSelectedPeriod(period);

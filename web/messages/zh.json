@@ -115,6 +115,9 @@
     "price": "价格",
     "match": "匹配",
     "details": "详情",
+    "noConditions": "无条件可显示",
+    "yes": "是",
+    "no": "否",
     "presetNames": {
       "deep_value_accumulation": "深度价值吸筹",
       "deep_value_accumulation_divergence": "深度价值 + 背离"
