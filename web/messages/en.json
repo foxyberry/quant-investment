@@ -114,7 +114,15 @@
     "name": "Name",
     "price": "Price",
     "match": "Match",
-    "details": "Details"
+    "details": "Details",
+    "presetNames": {
+      "deep_value_accumulation": "Deep Value Accumulation",
+      "deep_value_accumulation_divergence": "Deep Value + Divergence"
+    },
+    "presetDescriptions": {
+      "deep_value_accumulation": "Stocks down 50%+ from highs with accumulation signals (BB squeeze, low volume, price consolidation)",
+      "deep_value_accumulation_divergence": "Deep value accumulation with OBV/Stochastic/VPCI divergence confirmation"
+    }
   },
   "portfolio": {
     "title": "Portfolio",

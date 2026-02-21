@@ -21,6 +21,7 @@ from .conditions import (
     BaseCondition,
     # Price
     MinPriceCondition, MaxPriceCondition, PriceRangeCondition, PriceChangeCondition,
+    DrawdownFromHighCondition,
     # Volume
     MinVolumeCondition, VolumeAboveAvgCondition, VolumeSpikeCondition,
     # MA
@@ -249,6 +250,64 @@ def accumulation_full(
     ]
 
 
+# ============================================================
+# Deep Value Accumulation Presets (고점 대비 대폭 하락 + 매집)
+# ============================================================
+
+def deep_value_accumulation(
+    min_price: int = 5000,
+    lookback_days: int = 252,
+    min_drop_pct: float = 50.0,
+    bb_max_width: float = 15.0,
+    volume_multiplier: float = 0.8,
+    price_max_range: float = 10.0,
+) -> List[BaseCondition]:
+    """
+    Deep Value Accumulation - 고점 대비 50%+ 하락 후 매집 구간
+    - 최소 가격 5000원 이상
+    - 252일(1년) 고점 대비 50% 이상 하락
+    - 볼린저 밴드 수축 (폭 15% 이하)
+    - 거래량 평균 80% 이하
+    - 가격 횡보 (변동폭 10% 이하)
+    """
+    return [
+        MinPriceCondition(min_price),
+        DrawdownFromHighCondition(lookback_days=lookback_days, min_drop_pct=min_drop_pct),
+        BollingerWidthCondition(max_width_pct=bb_max_width),
+        VolumeBelowAvgCondition(multiplier=volume_multiplier),
+        PriceFlatCondition(max_range_pct=price_max_range),
+    ]
+
+
+def deep_value_accumulation_divergence(
+    min_price: int = 5000,
+    lookback_days: int = 252,
+    min_drop_pct: float = 50.0,
+    bb_max_width: float = 15.0,
+    volume_multiplier: float = 0.8,
+    price_max_range: float = 10.0,
+) -> List[BaseCondition]:
+    """
+    Deep Value Accumulation + Divergence - 대폭 하락 후 다이버전스 매집
+    - 최소 가격 5000원 이상
+    - 252일(1년) 고점 대비 50% 이상 하락
+    - 볼린저 밴드 수축 + 거래량 감소 + 가격 횡보
+    - OBV/Stochastic/VPCI 다이버전스 중 1개 이상
+    """
+    return [
+        MinPriceCondition(min_price),
+        DrawdownFromHighCondition(lookback_days=lookback_days, min_drop_pct=min_drop_pct),
+        BollingerWidthCondition(max_width_pct=bb_max_width),
+        VolumeBelowAvgCondition(multiplier=volume_multiplier),
+        PriceFlatCondition(max_range_pct=price_max_range),
+        OrCondition([
+            OBVDivergenceCondition(),
+            StochasticDivergenceCondition(),
+            VPCIDivergenceCondition(),
+        ]),
+    ]
+
+
 # 프리셋 목록 (CLI 등에서 사용)
 PRESET_REGISTRY = {
     "ma_touch_160": ma_touch_160,
@@ -266,6 +325,9 @@ PRESET_REGISTRY = {
     "accumulation_basic": accumulation_basic,
     "accumulation_obv": accumulation_obv,
     "accumulation_full": accumulation_full,
+    # Deep Value Accumulation (고점 대비 대폭 하락 + 매집)
+    "deep_value_accumulation": deep_value_accumulation,
+    "deep_value_accumulation_divergence": deep_value_accumulation_divergence,
 }
 
 

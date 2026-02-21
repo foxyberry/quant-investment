@@ -114,7 +114,15 @@
     "name": "名称",
     "price": "价格",
     "match": "匹配",
-    "details": "详情"
+    "details": "详情",
+    "presetNames": {
+      "deep_value_accumulation": "深度价值吸筹",
+      "deep_value_accumulation_divergence": "深度价值 + 背离"
+    },
+    "presetDescriptions": {
+      "deep_value_accumulation": "从高点下跌50%以上并显示吸筹信号（布林带收窄、成交量萎缩、价格横盘）",
+      "deep_value_accumulation_divergence": "深度价值吸筹 + OBV/随机指标/VPCI背离确认"
+    }
   },
   "portfolio": {
     "title": "投资组合",
