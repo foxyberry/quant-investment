@@ -139,8 +139,9 @@ cython_debug/
 
 # Project-specific
 # Data files
-data/
+data/*
 !data/.gitkeep
+!data/templates/
 
 # Log files
 logs/

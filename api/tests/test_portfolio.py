@@ -2,9 +2,10 @@
 Tests for portfolio API endpoints.
 
 Tests the portfolio router endpoints including holdings CRUD,
-portfolio summary, and sell signals.
+portfolio summary, sell signals, and CSV import/export.
 """
 
+import io
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -487,3 +488,166 @@ class TestGetFullPortfolio:
         assert "summary" in data
         assert len(data["holdings"]) == 1
         assert data["summary"]["holdings_count"] == 1
+
+
+def _csv_upload(client, content: str, mode: str = "merge"):
+    """Helper to POST CSV content as file upload."""
+    return client.post(
+        "/api/portfolio/holdings/import",
+        files={"file": ("test.csv", io.BytesIO(content.encode("utf-8")), "text/csv")},
+        data={"mode": mode},
+    )
+
+
+class TestImportCsv:
+    """Tests for POST /api/portfolio/holdings/import endpoint."""
+
+    def test_import_csv_merge_success(self, client, mock_portfolio_service):
+        """Valid CSV merge import returns correct counts."""
+        mock_portfolio_service.import_from_csv.return_value = {
+            "imported": 2, "updated": 1, "skipped": 0, "errors": []
+        }
+        csv = "ticker,quantity,avg_price\nAAPL,10,185\nMSFT,5,420\nGOOG,3,140\n"
+        resp = _csv_upload(client, csv, "merge")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["imported"] == 2
+        assert data["updated"] == 1
+        assert data["skipped"] == 0
+
+    def test_import_csv_replace_success(self, client, mock_portfolio_service):
+        """Replace mode clears existing holdings first."""
+        mock_portfolio_service.import_from_csv.return_value = {
+            "imported": 2, "updated": 0, "skipped": 0, "errors": []
+        }
+        csv = "ticker,quantity,avg_price\nAAPL,10,185\nMSFT,5,420\n"
+        resp = _csv_upload(client, csv, "replace")
+        assert resp.status_code == 200
+        mock_portfolio_service.import_from_csv.assert_called_once()
+        call_args = mock_portfolio_service.import_from_csv.call_args
+        assert call_args[1].get("mode") == "replace" or call_args[0][1] == "replace"
+
+    def test_import_csv_validation_errors(self, client, mock_portfolio_service):
+        """Bad rows result in partial success with errors."""
+        mock_portfolio_service.import_from_csv.return_value = {
+            "imported": 1, "updated": 0, "skipped": 1,
+            "errors": [{"row": 3, "ticker": "BAD", "reason": "Invalid quantity: abc"}]
+        }
+        csv = "ticker,quantity,avg_price\nAAPL,10,185\nBAD,abc,100\n"
+        resp = _csv_upload(client, csv)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["skipped"] == 1
+        assert len(data["errors"]) == 1
+        assert data["errors"][0]["row"] == 3
+
+    def test_import_csv_empty_file(self, client, mock_portfolio_service):
+        """Empty file returns 400."""
+        resp = client.post(
+            "/api/portfolio/holdings/import",
+            files={"file": ("test.csv", io.BytesIO(b""), "text/csv")},
+            data={"mode": "merge"},
+        )
+        assert resp.status_code == 400
+
+    def test_import_csv_missing_columns(self, client, mock_portfolio_service):
+        """Missing required columns returns 400."""
+        mock_portfolio_service.import_from_csv.side_effect = ValueError(
+            "Missing required columns: avg_price"
+        )
+        csv = "ticker,quantity\nAAPL,10\n"
+        resp = _csv_upload(client, csv)
+        assert resp.status_code == 400
+        assert "Missing required columns" in resp.json()["detail"]
+
+    def test_import_csv_invalid_mode(self, client, mock_portfolio_service):
+        """Invalid mode returns 422."""
+        csv = "ticker,quantity,avg_price\nAAPL,10,185\n"
+        resp = _csv_upload(client, csv, "invalid")
+        assert resp.status_code == 422
+
+    def test_import_csv_minimal_columns(self, client, mock_portfolio_service):
+        """Only required columns still works with defaults."""
+        mock_portfolio_service.import_from_csv.return_value = {
+            "imported": 1, "updated": 0, "skipped": 0, "errors": []
+        }
+        csv = "ticker,quantity,avg_price\nAAPL,10,185.50\n"
+        resp = _csv_upload(client, csv)
+        assert resp.status_code == 200
+        assert resp.json()["imported"] == 1
+
+    def test_import_csv_unicode(self, client, mock_portfolio_service):
+        """Korean name/note in CSV works correctly."""
+        mock_portfolio_service.import_from_csv.return_value = {
+            "imported": 1, "updated": 0, "skipped": 0, "errors": []
+        }
+        csv = "ticker,quantity,avg_price,name,note\n005930.KS,50,72000,삼성전자,핵심 보유\n"
+        resp = _csv_upload(client, csv)
+        assert resp.status_code == 200
+
+
+class TestExportCsv:
+    """Tests for GET /api/portfolio/holdings/export endpoint."""
+
+    def test_export_csv_content(self, client, mock_portfolio_service):
+        """Exported CSV matches holdings data."""
+        mock_portfolio_service.export_to_csv.return_value = (
+            "ticker,quantity,avg_price,name,currency,note\r\n"
+            "AAPL,10,185.5,Apple Inc.,USD,\r\n"
+        )
+        resp = client.get("/api/portfolio/holdings/export")
+        assert resp.status_code == 200
+        body = resp.text
+        assert "AAPL" in body
+        assert "185.5" in body
+
+    def test_export_csv_empty(self, client, mock_portfolio_service):
+        """Empty portfolio exports header-only CSV."""
+        mock_portfolio_service.export_to_csv.return_value = (
+            "ticker,quantity,avg_price,name,currency,note\r\n"
+        )
+        resp = client.get("/api/portfolio/holdings/export")
+        assert resp.status_code == 200
+        lines = resp.text.strip().split("\n")
+        # BOM + header only
+        assert len(lines) == 1
+
+    def test_export_csv_headers(self, client, mock_portfolio_service):
+        """Response has correct content-type and content-disposition."""
+        mock_portfolio_service.export_to_csv.return_value = "ticker,quantity,avg_price,name,currency,note\r\n"
+        resp = client.get("/api/portfolio/holdings/export")
+        assert resp.status_code == 200
+        assert "text/csv" in resp.headers["content-type"]
+        assert "portfolio_holdings.csv" in resp.headers["content-disposition"]
+
+
+class TestTemplate:
+    """Tests for GET /api/portfolio/holdings/template endpoint."""
+
+    def test_template_full(self, client, mock_portfolio_service):
+        """Full template returns CSV with all columns."""
+        resp = client.get("/api/portfolio/holdings/template")
+        assert resp.status_code == 200
+        body = resp.text
+        assert "ticker" in body
+        assert "name" in body
+        assert "currency" in body
+        assert "bought_at" in body
+
+    def test_template_minimal(self, client, mock_portfolio_service):
+        """Minimal template returns only required columns."""
+        resp = client.get("/api/portfolio/holdings/template?minimal=true")
+        assert resp.status_code == 200
+        body = resp.text
+        assert "ticker" in body
+        assert "quantity" in body
+        # Minimal should not have name column in header
+        header_line = body.strip().split("\n")[0]
+        assert "name" not in header_line
+
+    def test_template_content_disposition(self, client, mock_portfolio_service):
+        """Template response has download headers."""
+        resp = client.get("/api/portfolio/holdings/template")
+        assert resp.status_code == 200
+        assert "text/csv" in resp.headers["content-type"]
+        assert "attachment" in resp.headers["content-disposition"]

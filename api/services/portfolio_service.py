@@ -5,6 +5,8 @@ Business logic for portfolio management operations.
 Provides CRUD operations for holdings and P&L calculations.
 """
 
+import csv
+import io
 import json
 import logging
 import threading
@@ -48,7 +50,7 @@ class PortfolioService:
             data_path: Path to portfolio JSON file (default: data/portfolio.json)
         """
         self.data_path = data_path or self.DEFAULT_DATA_PATH
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._cache = get_cache()
         self._holdings: Dict[str, Dict[str, Any]] = {}
         self._load()
@@ -353,6 +355,128 @@ class PortfolioService:
             currency=primary_currency,
             last_updated=datetime.now()
         )
+
+    def import_from_csv(self, csv_content: str, mode: str = "merge") -> Dict[str, Any]:
+        """
+        Import holdings from CSV content.
+
+        Args:
+            csv_content: CSV string with headers
+            mode: "merge" (upsert) or "replace" (clear first)
+
+        Returns:
+            Dict with imported, updated, skipped counts and errors list
+        """
+        errors = []
+        imported = 0
+        updated = 0
+
+        reader = csv.DictReader(io.StringIO(csv_content))
+        fieldnames = reader.fieldnames or []
+        lower_fields = [f.strip().lower() for f in fieldnames]
+
+        required = {"ticker", "quantity", "avg_price"}
+        if not required.issubset(set(lower_fields)):
+            missing = required - set(lower_fields)
+            raise ValueError(f"Missing required columns: {', '.join(sorted(missing))}")
+
+        # Build field mapping (handle case-insensitive headers)
+        field_map = {}
+        for original, lower in zip(fieldnames, lower_fields):
+            field_map[lower] = original
+
+        valid_rows = []
+        for row_num, row in enumerate(reader, start=2):  # row 1 is header
+            ticker_val = row.get(field_map["ticker"], "").strip()
+            qty_val = row.get(field_map["quantity"], "").strip()
+            price_val = row.get(field_map["avg_price"], "").strip()
+
+            if not ticker_val:
+                errors.append({"row": row_num, "ticker": None, "reason": "Empty ticker"})
+                continue
+
+            try:
+                quantity = int(qty_val)
+                if quantity <= 0:
+                    raise ValueError("must be > 0")
+            except (ValueError, TypeError):
+                errors.append({"row": row_num, "ticker": ticker_val, "reason": f"Invalid quantity: {qty_val}"})
+                continue
+
+            try:
+                avg_price = float(price_val)
+                if avg_price <= 0:
+                    raise ValueError("must be > 0")
+            except (ValueError, TypeError):
+                errors.append({"row": row_num, "ticker": ticker_val, "reason": f"Invalid avg_price: {price_val}"})
+                continue
+
+            parsed = {
+                "ticker": ticker_val,
+                "quantity": quantity,
+                "avg_price": avg_price,
+                "name": row.get(field_map.get("name", ""), "").strip() or ticker_val,
+                "currency": row.get(field_map.get("currency", ""), "").strip() or "KRW",
+                "note": row.get(field_map.get("note", ""), "").strip() or None,
+                "bought_at": row.get(field_map.get("bought_at", ""), "").strip() or None,
+            }
+            valid_rows.append(parsed)
+
+        with self._lock:
+            backup = {k: dict(v) for k, v in self._holdings.items()}
+
+            try:
+                if mode == "replace":
+                    self._holdings.clear()
+
+                for parsed in valid_rows:
+                    ticker = parsed["ticker"]
+                    if ticker in self._holdings and mode == "merge":
+                        existing_bought_at = self._holdings[ticker].get("bought_at")
+                        self._holdings[ticker].update(parsed)
+                        # Preserve existing bought_at if CSV didn't provide one
+                        if not parsed["bought_at"] and existing_bought_at:
+                            self._holdings[ticker]["bought_at"] = existing_bought_at
+                        updated += 1
+                    else:
+                        if not parsed["bought_at"]:
+                            parsed["bought_at"] = date.today().isoformat()
+                        self._holdings[ticker] = parsed
+                        imported += 1
+
+                self._save()
+            except Exception:
+                self._holdings = backup
+                raise
+
+        logger.info(f"CSV import: imported={imported}, updated={updated}, skipped={len(errors)}")
+
+        return {
+            "imported": imported,
+            "updated": updated,
+            "skipped": len(errors),
+            "errors": errors,
+        }
+
+    def export_to_csv(self) -> str:
+        """
+        Export all holdings as CSV string.
+
+        Returns:
+            CSV string with header and data rows
+        """
+        output = io.StringIO()
+        columns = ["ticker", "quantity", "avg_price", "name", "currency", "note", "bought_at"]
+        writer = csv.DictWriter(output, fieldnames=columns, extrasaction="ignore")
+        writer.writeheader()
+
+        for holding in self._holdings.values():
+            row = {col: holding.get(col, "") for col in columns}
+            if row["note"] is None:
+                row["note"] = ""
+            writer.writerow(row)
+
+        return output.getvalue()
 
     def get_sell_signals(
         self,

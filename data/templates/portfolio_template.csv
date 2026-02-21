@@ -1,0 +1,4 @@
+ticker,quantity,avg_price,name,currency,note,bought_at
+AAPL,10,185.50,Apple Inc.,USD,Long-term hold,2024-06-15
+005930.KS,50,72000,Samsung Electronics,KRW,Core position,2024-03-01
+MSFT,5,420.00,Microsoft Corp.,USD,Cloud growth play,2025-01-10
