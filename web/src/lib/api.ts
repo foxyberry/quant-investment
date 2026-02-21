@@ -328,15 +328,9 @@ export function runStrategyStream(
       const decoder = new TextDecoder();
       let buffer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      let currentEvent = '';
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
-
-        let currentEvent = '';
+      const processLines = (lines: string[]) => {
         for (const line of lines) {
           if (line.startsWith('event: ')) {
             currentEvent = line.slice(7).trim();
@@ -357,6 +351,21 @@ export function runStrategyStream(
             currentEvent = '';
           }
         }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        processLines(lines);
+      }
+
+      // Process any remaining data in buffer after stream closes
+      if (buffer.trim()) {
+        processLines(buffer.split('\n'));
       }
     } catch (err) {
       if ((err as Error).name === 'AbortError') return;
