@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     cors_origins: List[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]
 
     # Database settings (데이터베이스 설정)
-    database_url: str = "postgresql://quant:quant@localhost:5432/quant"
+    database_url: str = "sqlite:///data/quant.db"
 
     # Application metadata (애플리케이션 메타데이터)
     app_name: str = "Quant Investment API"

@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from sqlalchemy import create_engine
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from api.config import get_settings
@@ -19,7 +20,20 @@ class Base(DeclarativeBase):
     pass
 
 
-engine = create_engine(get_settings().database_url)
+def _build_engine():
+    url = get_settings().database_url
+    parsed = make_url(url)
+    kwargs = {}
+    if parsed.drivername.startswith("sqlite"):
+        # SQLite requires this for multi-threaded access (FastAPI)
+        kwargs["connect_args"] = {"check_same_thread": False}
+        # Ensure the data directory exists
+        if parsed.database and parsed.database != ":memory:":
+            Path(parsed.database).parent.mkdir(parents=True, exist_ok=True)
+    return create_engine(url, **kwargs)
+
+
+engine = _build_engine()
 SessionLocal = sessionmaker(bind=engine)
 
 
