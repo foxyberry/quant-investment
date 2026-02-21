@@ -878,10 +878,8 @@ def execute_strategy(
                     )
                 )
 
-    # Enrich both intermediate and final stocks with fundamentals.
-    all_items = [stock for node in node_results.values() for stock in node.stocks]
-    all_items.extend(final_items)
-    _enrich_fundamentals(all_items)
+    # Enrich only final results (intermediate nodes don't display PER/PBR).
+    _enrich_fundamentals(final_items)
 
     conditions_used = [type(c).__name__ for c in leaf_conditions]
 
