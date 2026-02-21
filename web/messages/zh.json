@@ -114,7 +114,8 @@
     "name": "名称",
     "price": "价格",
     "match": "匹配",
-    "details": "详情"
+    "details": "详情",
+    "noConditions": "暂无条件可显示"
   },
   "portfolio": {
     "title": "投资组合",
@@ -231,7 +232,13 @@
     "removeNode": "移除节点",
     "range": "范围",
     "applyChanges": "应用更改",
+    "intermediateResults": "中间结果",
+    "intermediateResultsFor": "{label} 的结果",
+    "stockCount": "只股票",
+    "universeNote": "筛选前的全部股票",
+    "andMore": "另外 +{count} 只",
     "filterMetrics": "过滤值",
+    "runFirst": "请先运行策略查看结果",
     "exportJson": "导出 JSON",
     "lastRunAt": "上次运行: {time}",
     "exportCsv": "导出CSV",
@@ -766,12 +773,30 @@
     },
     "roic": {
       "label": "投入资本回报率 (ROIC)",
-      "description": "投入资本回报率筛选",
+      "desc": "投入资本回报率筛选",
       "params": {
         "min_roic": "最小 ROIC %",
         "max_roic": "最大 ROIC %"
       },
       "help": "投入资本回报率——衡量公司使用全部资本的效率。"
+    },
+    "avg_trading_value": {
+      "label": "平均交易额",
+      "desc": "N日平均交易额",
+      "params": {
+        "min_value": "最小交易额",
+        "days": "周期（天）"
+      },
+      "help": "按平均日交易额筛选——确保充足的流动性。"
+    },
+    "drawdown_from_high": {
+      "label": "高点回撤",
+      "desc": "N日高点回撤幅度",
+      "params": {
+        "max_drawdown_pct": "最大回撤 %",
+        "days": "回看天数"
+      },
+      "help": "衡量股价从近期高点回落的幅度——适合寻找逢低买入机会。"
     }
   },
   "markets": {

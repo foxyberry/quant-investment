@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronUp, CheckCircle, XCircle, Search, ArrowUpDown } from 'lucide-react';
 import type { ScreeningResult } from '@/lib/types';
 import ConditionDetails from './ConditionDetails';
@@ -59,6 +60,7 @@ function formatPrice(price: number | null): string {
  * Table displaying screening results with expandable rows for condition details
  */
 export default function ResultTable({ results, isLoading }: ResultTableProps) {
+  const t = useTranslations('screening');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [sortField, setSortField] = useState<SortField>('ticker');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -108,7 +110,7 @@ export default function ResultTable({ results, isLoading }: ResultTableProps) {
         <div className="flex h-64 flex-col items-center justify-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--border)] border-t-[var(--color-primary)]" />
           <p className="text-[var(--foreground-muted)]">
-            Running screening... This may take a while.
+            {t('runningScreening')}
           </p>
         </div>
       </div>
@@ -122,9 +124,9 @@ export default function ResultTable({ results, isLoading }: ResultTableProps) {
         <div className="flex h-64 flex-col items-center justify-center gap-4">
           <Search className="h-12 w-12 text-[var(--foreground-muted)]" />
           <div className="text-center">
-            <p className="font-medium text-[var(--foreground)]">No results yet</p>
+            <p className="font-medium text-[var(--foreground)]">{t('noResults')}</p>
             <p className="mt-1 text-sm text-[var(--foreground-muted)]">
-              Select a preset and universe, then run the screening.
+              {t('noResultsDesc')}
             </p>
           </div>
         </div>
@@ -141,24 +143,24 @@ export default function ResultTable({ results, isLoading }: ResultTableProps) {
             <tr className="border-b border-[var(--border)] bg-[var(--background)]">
               <th className="px-4 py-3 text-left">
                 <SortButton field="ticker" currentField={sortField} onSort={handleSort}>
-                  Ticker
+                  {t('ticker')}
                 </SortButton>
               </th>
               <th className="px-4 py-3 text-left">
                 <SortButton field="name" currentField={sortField} onSort={handleSort}>
-                  Name
+                  {t('name')}
                 </SortButton>
               </th>
               <th className="px-4 py-3 text-right">
                 <SortButton field="current_price" currentField={sortField} onSort={handleSort}>
-                  Price
+                  {t('price')}
                 </SortButton>
               </th>
               <th className="px-4 py-3 text-center text-sm font-semibold text-[var(--foreground)]">
-                Match
+                {t('match')}
               </th>
               <th className="px-4 py-3 text-center text-sm font-semibold text-[var(--foreground)]">
-                Details
+                {t('details')}
               </th>
             </tr>
           </thead>
@@ -200,6 +202,7 @@ interface RowProps {
  * Desktop table row component
  */
 function TableRow({ result, isExpanded, onToggle }: RowProps) {
+  const t = useTranslations('screening');
   return (
     <>
       <tr
@@ -228,7 +231,7 @@ function TableRow({ result, isExpanded, onToggle }: RowProps) {
             type="button"
             onClick={() => onToggle(result.ticker)}
             className="rounded p-1 text-[var(--foreground-muted)] hover:bg-[var(--border)] hover:text-[var(--foreground)] transition-colors"
-            aria-label={isExpanded ? 'Hide details' : 'Show details'}
+            aria-label={isExpanded ? t('hideDetails') : t('showDetails')}
             aria-expanded={isExpanded}
           >
             {isExpanded ? (
@@ -257,6 +260,7 @@ function TableRow({ result, isExpanded, onToggle }: RowProps) {
  * Mobile card component for responsive display
  */
 function MobileCard({ result, isExpanded, onToggle }: RowProps) {
+  const t = useTranslations('screening');
   return (
     <div className="p-4">
       <div className="flex items-start justify-between">
@@ -289,12 +293,12 @@ function MobileCard({ result, isExpanded, onToggle }: RowProps) {
         {isExpanded ? (
           <>
             <ChevronUp className="h-4 w-4" />
-            Hide Details
+            {t('hideDetails')}
           </>
         ) : (
           <>
             <ChevronDown className="h-4 w-4" />
-            Show Details
+            {t('showDetails')}
           </>
         )}
       </button>

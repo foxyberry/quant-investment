@@ -92,9 +92,10 @@ function getNodeData(node: Node): StrategyNodeData {
 }
 
 // --- sessionStorage helpers for locale-switch persistence (#80) ---
-const STORAGE_KEY = 'strategy-canvas-state';
+const GRAPH_STORAGE_KEY = 'strategy-canvas-graph';
+const RESULTS_STORAGE_KEY = 'strategy-canvas-results';
 
-interface CanvasSnapshot {
+interface GraphSnapshot {
   nodes: Node[];
   edges: Edge[];
   strategyName: string;
@@ -102,17 +103,40 @@ interface CanvasSnapshot {
   currentStrategyId: string | null;
 }
 
-function saveCanvasToSession(snapshot: CanvasSnapshot) {
+interface ResultsSnapshot {
+  results: StrategyResultItem[] | null;
+  nodeResults: Record<string, NodeIntermediateResult> | null;
+  streamStatus: 'idle' | 'done' | 'error';
+  lastRunTime: string | null; // ISO string
+}
+
+function saveGraphToSession(snapshot: GraphSnapshot) {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    sessionStorage.setItem(GRAPH_STORAGE_KEY, JSON.stringify(snapshot));
   } catch { /* quota exceeded — ignore */ }
 }
 
-function loadCanvasFromSession(): CanvasSnapshot | null {
+function saveResultsToSession(snapshot: ResultsSnapshot) {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    sessionStorage.setItem(RESULTS_STORAGE_KEY, JSON.stringify(snapshot));
+  } catch { /* quota exceeded — ignore */ }
+}
+
+function loadGraphFromSession(): GraphSnapshot | null {
+  try {
+    const raw = sessionStorage.getItem(GRAPH_STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as CanvasSnapshot;
+    return JSON.parse(raw) as GraphSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+function loadResultsFromSession(): ResultsSnapshot | null {
+  try {
+    const raw = sessionStorage.getItem(RESULTS_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as ResultsSnapshot;
   } catch {
     return null;
   }
@@ -169,24 +193,41 @@ function StrategyPageInner() {
   // Uses setTimeout guard so the save effect doesn't overwrite sessionStorage
   // with initial state before the restored state is applied (StrictMode safe).
   useEffect(() => {
-    const restored = loadCanvasFromSession();
-    if (restored) {
-      setNodes(restored.nodes);
-      setEdges(restored.edges);
-      setStrategyName(restored.strategyName);
-      setStrategyDescription(restored.strategyDescription);
-      setCurrentStrategyId(restored.currentStrategyId);
+    const graph = loadGraphFromSession();
+    if (graph) {
+      setNodes(graph.nodes);
+      setEdges(graph.edges);
+      setStrategyName(graph.strategyName);
+      setStrategyDescription(graph.strategyDescription);
+      setCurrentStrategyId(graph.currentStrategyId);
+    }
+    const restoredResults = loadResultsFromSession();
+    if (restoredResults) {
+      if (restoredResults.results !== undefined) setResults(restoredResults.results);
+      if (restoredResults.nodeResults !== undefined) setNodeResults(restoredResults.nodeResults);
+      if (restoredResults.streamStatus) setStreamStatus(restoredResults.streamStatus);
+      if (restoredResults.lastRunTime) setLastRunTime(new Date(restoredResults.lastRunTime));
     }
     const timer = setTimeout(() => { readyToSaveRef.current = true; }, 0);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist canvas state to sessionStorage on every change (for locale-switch survival)
+  // Persist canvas graph to sessionStorage (frequent: node drag, edge changes)
   useEffect(() => {
     if (!readyToSaveRef.current) return;
-    saveCanvasToSession({ nodes, edges, strategyName, strategyDescription, currentStrategyId });
+    saveGraphToSession({ nodes, edges, strategyName, strategyDescription, currentStrategyId });
   }, [nodes, edges, strategyName, strategyDescription, currentStrategyId]);
+
+  // Persist execution results separately (infrequent: only after strategy run completes)
+  useEffect(() => {
+    if (!readyToSaveRef.current) return;
+    saveResultsToSession({
+      results, nodeResults,
+      streamStatus: streamStatus === 'running' ? 'idle' : streamStatus,
+      lastRunTime: lastRunTime ? lastRunTime.toISOString() : null,
+    });
+  }, [results, nodeResults, streamStatus, lastRunTime]);
 
   const savedStrategies = useSavedStrategies();
   const isRunning = streamStatus === 'running';
@@ -1150,6 +1191,7 @@ function StrategyPageInner() {
         deployProgress={deployProgress}
         conditionCount={conditionCount}
         progressDetail={progressDetail}
+        edges={edges}
       />
 
       {/* Save dialog */}

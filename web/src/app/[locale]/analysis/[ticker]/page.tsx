@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
@@ -125,6 +125,8 @@ export default function TickerAnalysisPage() {
   const [screeningError, setScreeningError] = useState<string | null>(null);
   const [presets, setPresets] = useState<PresetInfo[]>([]);
   const [selectedPreset, setSelectedPreset] = useState('accumulation_basic');
+  const selectedPresetRef = useRef(selectedPreset);
+  selectedPresetRef.current = selectedPreset;
 
   // AI Insight
   const [aiResult, setAiResult] = useState<AIAnalysisResult | null>(null);
@@ -159,14 +161,14 @@ export default function TickerAnalysisPage() {
     setScreeningLoading(true);
     setScreeningError(null);
     try {
-      const result = await checkStockConditions(ticker.toUpperCase(), preset || selectedPreset);
+      const result = await checkStockConditions(ticker.toUpperCase(), preset || selectedPresetRef.current);
       setScreeningResult(result);
     } catch (err) {
       setScreeningError(err instanceof Error ? err.message : t('screeningError'));
     } finally {
       setScreeningLoading(false);
     }
-  }, [ticker, selectedPreset, t]);
+  }, [ticker, t]);
 
   // Check AI availability on mount
   useEffect(() => {
@@ -175,12 +177,19 @@ export default function TickerAnalysisPage() {
       .catch(() => setAiAvailable(false));
   }, []);
 
+  // Effect 1: Chart/indicator data -- depends on ticker + period
   useEffect(() => {
     if (ticker) {
       fetchData(selectedPeriod);
+    }
+  }, [ticker, selectedPeriod, fetchData]);
+
+  // Effect 2: Screening data -- depends on ticker only (preset changes handled by onChange)
+  useEffect(() => {
+    if (ticker) {
       fetchScreening();
     }
-  }, [ticker, selectedPeriod, fetchData, fetchScreening]);
+  }, [ticker, fetchScreening]);
 
   const handlePeriodChange = (period: PeriodOption) => {
     setSelectedPeriod(period);

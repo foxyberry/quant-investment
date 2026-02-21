@@ -77,15 +77,60 @@ interface Tab {
   nodeType: string;
 }
 
-/** Convert raw backend label (e.g. "pcf_ratio") to readable tab name. */
-function formatTabLabel(label: string, nodeType: string): string {
-  if (nodeType === 'universe' || nodeType === 'sector') return label;
-  // Condition labels: snake_case → Title Case
+/** Fallback for condition labels when no i18n key exists: snake_case → Title Case. */
+function fallbackTabLabel(label: string): string {
   if (METRIC_LABELS[label]) return METRIC_LABELS[label];
   return label
     .replace(/_pct$/, '')
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Compute topological visit order for nodes using Kahn's algorithm (BFS). */
+function getTopologicalOrder(
+  nodeIds: string[],
+  edges: Array<{ source: string; target: string }>
+): Map<string, number> {
+  const order = new Map<string, number>();
+  const adj = new Map<string, string[]>();
+  const inDegree = new Map<string, number>();
+  const nodeSet = new Set(nodeIds);
+
+  for (const id of nodeIds) {
+    adj.set(id, []);
+    inDegree.set(id, 0);
+  }
+
+  for (const edge of edges) {
+    if (nodeSet.has(edge.source) && nodeSet.has(edge.target)) {
+      adj.get(edge.source)!.push(edge.target);
+      inDegree.set(edge.target, (inDegree.get(edge.target) || 0) + 1);
+    }
+  }
+
+  // BFS (Kahn's algorithm)
+  const queue: string[] = [];
+  for (const [id, deg] of inDegree) {
+    if (deg === 0) queue.push(id);
+  }
+
+  let idx = 0;
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    order.set(current, idx++);
+    for (const next of adj.get(current) || []) {
+      const newDeg = (inDegree.get(next) || 1) - 1;
+      inDegree.set(next, newDeg);
+      if (newDeg === 0) queue.push(next);
+    }
+  }
+
+  // Nodes not reachable in topology get max order
+  for (const id of nodeIds) {
+    if (!order.has(id)) order.set(id, idx++);
+  }
+
+  return order;
 }
 
 interface IntermediateResultsPanelProps {
@@ -96,6 +141,7 @@ interface IntermediateResultsPanelProps {
   deployProgress: number;
   conditionCount: number;
   progressDetail?: { processed: number; total: number; matched: number } | null;
+  edges?: Array<{ source: string; target: string }>;
 }
 
 export default function IntermediateResultsPanel({
@@ -106,8 +152,10 @@ export default function IntermediateResultsPanel({
   deployProgress,
   conditionCount,
   progressDetail,
+  edges,
 }: IntermediateResultsPanelProps) {
   const t = useTranslations('strategy');
+  const tc = useTranslations('conditions');
   const locale = useLocale();
   const [collapsed, setCollapsed] = useState(false);
   const [activeTabId, setActiveTabId] = useState<string>('__output__');
@@ -123,15 +171,34 @@ export default function IntermediateResultsPanel({
         condition: 2,
         logic: 3,
       };
+
+      // Compute topological order for sub-sorting within the same node_type
+      const allNodeIds = Object.keys(nodeResults);
+      const topoOrder = edges
+        ? getTopologicalOrder(allNodeIds, edges)
+        : new Map<string, number>();
+
       const sorted = Object.values(nodeResults)
         .filter((nr) => nr.node_type !== 'output') // output is shown as __output__ tab
-        .sort(
-          (a, b) => (typeOrder[a.node_type] ?? 9) - (typeOrder[b.node_type] ?? 9)
-        );
+        .sort((a, b) => {
+          const typeDiff = (typeOrder[a.node_type] ?? 9) - (typeOrder[b.node_type] ?? 9);
+          if (typeDiff !== 0) return typeDiff;
+          return (topoOrder.get(a.node_id) ?? 999) - (topoOrder.get(b.node_id) ?? 999);
+        });
+
       for (const nr of sorted) {
+        let label: string;
+        if (nr.node_type === 'condition') {
+          // Use i18n key from conditions namespace, fallback to title-case conversion
+          const i18nKey = `${nr.label}.label`;
+          label = tc.has(i18nKey) ? tc(i18nKey) : fallbackTabLabel(nr.label);
+        } else {
+          // universe, sector labels are already display-ready
+          label = nr.label;
+        }
         result.push({
           id: nr.node_id,
-          label: formatTabLabel(nr.label, nr.node_type),
+          label,
           count: nr.stock_count,
           nodeType: nr.node_type,
         });
@@ -146,7 +213,7 @@ export default function IntermediateResultsPanel({
       });
     }
     return result;
-  }, [nodeResults, finalResults, t]);
+  }, [nodeResults, finalResults, t, tc, edges]);
 
   // Sync active tab when canvas node is clicked
   const effectiveTab = useMemo(() => {

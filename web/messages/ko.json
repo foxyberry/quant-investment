@@ -114,7 +114,8 @@
     "name": "종목명",
     "price": "가격",
     "match": "매치",
-    "details": "상세"
+    "details": "상세",
+    "noConditions": "표시할 조건이 없습니다"
   },
   "portfolio": {
     "title": "포트폴리오",
@@ -778,6 +779,24 @@
         "max_roic": "최대 ROIC %"
       },
       "help": "투하자본수익률 — 회사가 전체 자본을 얼마나 잘 활용하는지 보여줍니다."
+    },
+    "avg_trading_value": {
+      "label": "평균 거래대금",
+      "desc": "N일 평균 거래대금",
+      "params": {
+        "min_value": "최소 거래대금",
+        "days": "기간 (일)"
+      },
+      "help": "평균 일일 거래대금으로 필터링 — 충분한 유동성을 보장합니다."
+    },
+    "drawdown_from_high": {
+      "label": "고점 대비 하락률",
+      "desc": "N일 고점 대비 하락폭",
+      "params": {
+        "max_drawdown_pct": "최대 하락률 %",
+        "days": "확인 기간"
+      },
+      "help": "최근 고점 대비 하락폭 — 저점 매수 후보를 찾는 데 유용합니다."
     }
   },
   "markets": {

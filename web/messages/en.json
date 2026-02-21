@@ -114,7 +114,8 @@
     "name": "Name",
     "price": "Price",
     "match": "Match",
-    "details": "Details"
+    "details": "Details",
+    "noConditions": "No conditions to display"
   },
   "portfolio": {
     "title": "Portfolio",
@@ -778,6 +779,24 @@
         "max_roic": "Max ROIC %"
       },
       "help": "Return on Invested Capital — how well the company uses all its capital."
+    },
+    "avg_trading_value": {
+      "label": "Avg Trading Value",
+      "desc": "Average trading value over N days",
+      "params": {
+        "min_value": "Min value",
+        "days": "Period (days)"
+      },
+      "help": "Filters stocks by average daily trading value — ensures sufficient liquidity."
+    },
+    "drawdown_from_high": {
+      "label": "Drawdown from High",
+      "desc": "Price drawdown from N-day high",
+      "params": {
+        "max_drawdown_pct": "Max drawdown %",
+        "days": "Lookback days"
+      },
+      "help": "Measures how far the stock has fallen from its recent high — useful for finding dip-buy candidates."
     }
   },
   "markets": {

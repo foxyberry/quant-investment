@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { CheckCircle, XCircle } from 'lucide-react';
 import type { ConditionResult } from '@/lib/types';
 
@@ -12,10 +13,13 @@ interface ConditionDetailsProps {
  * Displays detailed condition results with pass/fail indicators
  */
 export default function ConditionDetails({ conditions }: ConditionDetailsProps) {
+  const t = useTranslations('screening');
+  const tc = useTranslations('conditions');
+
   if (conditions.length === 0) {
     return (
       <p className="text-sm text-[var(--foreground-muted)]">
-        No conditions to display
+        {t('noConditions')}
       </p>
     );
   }
@@ -47,7 +51,11 @@ export default function ConditionDetails({ conditions }: ConditionDetailsProps) 
                   : 'text-red-800 dark:text-red-200'
               }`}
             >
-              {condition.condition_name}
+              {tc.has(`${condition.condition_name}.label`)
+                ? tc(`${condition.condition_name}.label`)
+                : condition.condition_name
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}
             </span>
           </div>
 
