@@ -27,6 +27,7 @@ from api.schemas.strategy import (
 )
 from api.services.strategy_save_service import get_strategy_save_service
 from api.services.strategy_service import (
+    enrich_fundamentals,
     execute_strategy,
     execute_strategy_with_progress,
     get_available_conditions,
@@ -246,10 +247,13 @@ async def run_strategy_stream(request: StrategyExecuteRequest):
 
     def _run():
         try:
+            # Skip enrichment here — do it after sending 'done' so the
+            # client sees progress reach 100% without waiting for API calls.
             result = execute_strategy_with_progress(
                 graph=request.graph,
                 universe_override=request.universe_override,
                 progress_callback=_progress_cb,
+                skip_enrich=True,
             )
             if cancel_event.is_set():
                 return
@@ -267,6 +271,14 @@ async def run_strategy_stream(request: StrategyExecuteRequest):
                 )
             except queue.Full:
                 return
+            if cancel_event.is_set():
+                return
+            # Enrich fundamentals (PER/PBR) after 'done' event is sent.
+            # Failure is non-fatal — return results without PER/PBR.
+            try:
+                enrich_fundamentals(result["results"])
+            except Exception:
+                logger.warning("Enrichment failed; returning results without fundamentals")
             if cancel_event.is_set():
                 return
             try:
@@ -310,13 +322,17 @@ async def run_strategy_stream(request: StrategyExecuteRequest):
                     yield f"event: progress\ndata: {item.model_dump_json()}\n\n"
                     if item.status in ("done", "error"):
                         if item.status == "done":
-                            # Final result follows
-                            try:
-                                final = progress_queue.get(timeout=10)
+                            # Wait for enriched result with heartbeats
+                            final = None
+                            for _ in range(6):  # 6 x 5s = 30s max
+                                try:
+                                    final = progress_queue.get(timeout=5)
+                                    break
+                                except queue.Empty:
+                                    yield ": heartbeat\n\n"
+                            if final is not None:
                                 resp = StrategyExecuteResponse(**final)
                                 yield f"event: result\ndata: {resp.model_dump_json()}\n\n"
-                            except queue.Empty:
-                                pass
                         break
                 elif isinstance(item, dict):
                     resp = StrategyExecuteResponse(**item)
