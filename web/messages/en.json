@@ -181,7 +181,15 @@
     "errorsCount": "{count} error(s)",
     "done": "Done",
     "csvOnly": "Please select a CSV file.",
-    "fileTooLarge": "File too large (max 1 MB)."
+    "fileTooLarge": "File too large (max 1 MB).",
+    "search": "Search holdings...",
+    "filterAll": "All",
+    "filterUS": "US Stocks",
+    "filterKR": "KR Stocks",
+    "filterETF": "ETF",
+    "loadingHoldings": "Loading holdings...",
+    "noHoldingsTitle": "No holdings yet",
+    "noHoldingsInFilter": "No holdings match the current filter."
   },
   "strategy": {
     "title": "QuantCanvas",

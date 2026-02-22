@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
+import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download, Search } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import {
   HoldingsTable,
@@ -42,6 +43,8 @@ function formatPercent(value: number): string {
   return `${sign}${value.toFixed(2)}%`;
 }
 
+type FilterTab = 'all' | 'us' | 'kr' | 'etf';
+
 /**
  * Portfolio summary card component
  */
@@ -51,9 +54,10 @@ interface SummaryCardProps {
   icon: React.ReactNode;
   trend?: 'up' | 'down' | 'neutral';
   subValue?: string;
+  iconBgClass?: string;
 }
 
-function SummaryCard({ title, value, icon, trend, subValue }: SummaryCardProps) {
+function SummaryCard({ title, value, icon, trend, subValue, iconBgClass = 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' }: SummaryCardProps) {
   const trendColorClass =
     trend === 'up'
       ? 'text-green-600 dark:text-green-400'
@@ -62,9 +66,9 @@ function SummaryCard({ title, value, icon, trend, subValue }: SummaryCardProps) 
       : 'text-[var(--foreground)]';
 
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-4">
-      <div className="flex items-center gap-3">
-        <div className="rounded-full bg-[var(--background)] p-2 text-[var(--color-primary)]">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-5 hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-4">
+        <div className={`rounded-xl p-3 ${iconBgClass}`}>
           {icon}
         </div>
         <div className="flex-1 min-w-0">
@@ -87,6 +91,8 @@ function SummaryCard({ title, value, icon, trend, subValue }: SummaryCardProps) 
  * Portfolio page component
  */
 export default function PortfolioPage() {
+  const t = useTranslations('portfolio');
+
   // Data state
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
@@ -108,6 +114,10 @@ export default function PortfolioPage() {
 
   // Sell signal banner state
   const [isBannerDismissed, setIsBannerDismissed] = useState(false);
+
+  // Filter state
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   /**
    * Fetch all portfolio data
@@ -145,13 +155,42 @@ export default function PortfolioPage() {
   }, [fetchData]);
 
   /**
+   * Filter holdings based on active filter tab and search query
+   */
+  const filteredHoldings = useMemo(() => {
+    let filtered = holdings;
+
+    // Apply category filter
+    if (activeFilter === 'us') {
+      filtered = filtered.filter((h) => h.currency === 'USD');
+    } else if (activeFilter === 'kr') {
+      filtered = filtered.filter((h) => h.currency === 'KRW');
+    } else if (activeFilter === 'etf') {
+      filtered = filtered.filter((h) =>
+        h.ticker.includes('.') === false &&
+        (h.name?.toLowerCase().includes('etf') || h.ticker.length >= 3)
+      );
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (h) =>
+          h.ticker.toLowerCase().includes(query) ||
+          (h.name && h.name.toLowerCase().includes(query))
+      );
+    }
+
+    return filtered;
+  }, [holdings, activeFilter, searchQuery]);
+
+  /**
    * Handle adding a new holding
    */
   const handleAddHolding = useCallback(async (data: HoldingCreate) => {
     const newHolding = await addHolding(data);
-    // Optimistically add to list
     setHoldings((prev) => [...prev, newHolding]);
-    // Refresh to get updated summary
     fetchData(false);
   }, [fetchData]);
 
@@ -160,11 +199,9 @@ export default function PortfolioPage() {
    */
   const handleUpdateHolding = useCallback(async (ticker: string, data: HoldingUpdate) => {
     const updatedHolding = await updateHolding(ticker, data);
-    // Optimistically update in list
     setHoldings((prev) =>
       prev.map((h) => (h.ticker === ticker ? updatedHolding : h))
     );
-    // Refresh to get updated summary
     fetchData(false);
   }, [fetchData]);
 
@@ -173,43 +210,41 @@ export default function PortfolioPage() {
    */
   const handleDeleteHolding = useCallback(async (ticker: string) => {
     await deleteHolding(ticker);
-    // Optimistically remove from list
     setHoldings((prev) => prev.filter((h) => h.ticker !== ticker));
-    // Refresh to get updated summary
     fetchData(false);
   }, [fetchData]);
 
-  /**
-   * Open edit modal
-   */
   const handleEditClick = useCallback((holding: Holding) => {
     setSelectedHolding(holding);
     setIsEditModalOpen(true);
   }, []);
 
-  /**
-   * Open delete confirmation modal
-   */
   const handleDeleteClick = useCallback((holding: Holding) => {
     setSelectedHolding(holding);
     setIsDeleteModalOpen(true);
   }, []);
 
-  // Calculate trend based on P&L
   const getPnlTrend = (value: number): 'up' | 'down' | 'neutral' => {
     if (value > 0) return 'up';
     if (value < 0) return 'down';
     return 'neutral';
   };
 
+  const filterTabs: { key: FilterTab; labelKey: string }[] = [
+    { key: 'all', labelKey: 'filterAll' },
+    { key: 'us', labelKey: 'filterUS' },
+    { key: 'kr', labelKey: 'filterKR' },
+    { key: 'etf', labelKey: 'filterETF' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">Portfolio</h1>
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('title')}</h1>
           <p className="mt-1 text-[var(--foreground-muted)]">
-            Manage your holdings and track performance
+            {t('subtitle')}
           </p>
         </div>
         <div className="flex gap-2 sm:gap-3 flex-wrap">
@@ -219,19 +254,19 @@ export default function PortfolioPage() {
             disabled={isRefreshing}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            {t('refresh')}
           </Button>
           <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
-            Import
+            {t('importCsv')}
           </Button>
           <Button variant="outline" onClick={() => exportHoldingsCsv()}>
             <Download className="h-4 w-4 mr-2" />
-            Export
+            {t('exportCsv')}
           </Button>
           <Button variant="primary" onClick={() => setIsAddModalOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Holding
+            {t('addHolding')}
           </Button>
         </div>
       </div>
@@ -246,8 +281,8 @@ export default function PortfolioPage() {
 
       {/* Error State */}
       {error && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-950/50 dark:text-red-300">
-          <p className="font-medium">Error loading portfolio</p>
+        <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-950/50 dark:text-red-300">
+          <p className="font-medium">{t('errorLoading')}</p>
           <p className="text-sm mt-1">{error}</p>
           <Button
             variant="outline"
@@ -255,7 +290,7 @@ export default function PortfolioPage() {
             onClick={() => fetchData()}
             className="mt-3"
           >
-            Try Again
+            {t('refresh')}
           </Button>
         </div>
       )}
@@ -264,17 +299,19 @@ export default function PortfolioPage() {
       {!isLoading && summary && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <SummaryCard
-            title="Total Investment"
+            title={t('totalInvestment')}
             value={formatCurrency(summary.total_investment, summary.currency)}
             icon={<DollarSign className="h-5 w-5" />}
+            iconBgClass="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
           />
           <SummaryCard
-            title="Market Value"
+            title={t('marketValue')}
             value={formatCurrency(summary.total_market_value, summary.currency)}
             icon={<PieChart className="h-5 w-5" />}
+            iconBgClass="bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
           />
           <SummaryCard
-            title="Total P&L"
+            title={t('totalPnl')}
             value={formatCurrency(summary.total_pnl, summary.currency)}
             icon={
               summary.total_pnl >= 0 ? (
@@ -285,19 +322,58 @@ export default function PortfolioPage() {
             }
             trend={getPnlTrend(summary.total_pnl)}
             subValue={formatPercent(summary.total_pnl_pct)}
+            iconBgClass={
+              summary.total_pnl >= 0
+                ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+            }
           />
           <SummaryCard
-            title="Holdings"
+            title={t('holdings')}
             value={summary.holdings_count.toString()}
             icon={<PieChart className="h-5 w-5" />}
+            iconBgClass="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400"
           />
         </div>
       )}
 
+      {/* Search + Filter */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* Filter Tabs */}
+        <div className="flex gap-1 rounded-lg bg-[var(--background)] p-1">
+          {filterTabs.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveFilter(tab.key)}
+              className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                activeFilter === tab.key
+                  ? 'bg-[var(--background-secondary)] text-[var(--foreground)] shadow-sm'
+                  : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+              }`}
+            >
+              {t(tab.labelKey)}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--foreground-muted)]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('search')}
+            className="w-full sm:w-64 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] pl-10 pr-4 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-muted)] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          />
+        </div>
+      </div>
+
       {/* Holdings Table */}
-      <Card title="Holdings" padding="none">
+      <Card title={t('holdings')} padding="none">
         <HoldingsTable
-          holdings={holdings}
+          holdings={filteredHoldings}
           isLoading={isLoading}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}

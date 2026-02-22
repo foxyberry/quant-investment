@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowUpDown, Edit2, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import type { Holding } from '@/lib/types';
 
@@ -104,6 +105,7 @@ export default function HoldingsTable({
   onEdit,
   onDelete,
 }: HoldingsTableProps) {
+  const t = useTranslations('portfolio');
   const [sortField, setSortField] = useState<SortField>('ticker');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -153,28 +155,26 @@ export default function HoldingsTable({
     });
   }, []);
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)]">
         <div className="flex h-64 flex-col items-center justify-center gap-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--border)] border-t-[var(--color-primary)]" />
-          <p className="text-[var(--foreground-muted)]">Loading holdings...</p>
+          <p className="text-[var(--foreground-muted)]">{t('loadingHoldings')}</p>
         </div>
       </div>
     );
   }
 
-  // Empty state
   if (holdings.length === 0) {
     return (
       <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)]">
         <div className="flex h-64 flex-col items-center justify-center gap-4">
           <TrendingUp className="h-12 w-12 text-[var(--foreground-muted)]" />
           <div className="text-center">
-            <p className="font-medium text-[var(--foreground)]">No holdings yet</p>
+            <p className="font-medium text-[var(--foreground)]">{t('noHoldingsTitle')}</p>
             <p className="mt-1 text-sm text-[var(--foreground-muted)]">
-              Add your first holding to start tracking your portfolio.
+              {t('addFirstHolding')}
             </p>
           </div>
         </div>
@@ -184,53 +184,52 @@ export default function HoldingsTable({
 
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] overflow-hidden">
-      {/* Desktop Table View */}
       <div className="hidden lg:block overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[var(--border)] bg-[var(--background)]">
-              <th className="px-4 py-3 text-left">
+            <tr className="border-b border-[var(--border)] bg-[var(--background)]/50">
+              <th className="px-5 py-4 text-left">
                 <SortButton field="ticker" currentField={sortField} direction={sortDirection} onSort={handleSort}>
-                  Ticker
+                  {t('ticker')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-5 py-4 text-left">
                 <SortButton field="name" currentField={sortField} direction={sortDirection} onSort={handleSort}>
-                  Name
+                  {t('name')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-5 py-4 text-right">
                 <SortButton field="quantity" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
-                  Qty
+                  {t('qty')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-5 py-4 text-right">
                 <SortButton field="avg_price" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
-                  Avg Price
+                  {t('avgPrice')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-5 py-4 text-right">
                 <SortButton field="current_price" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
-                  Current
+                  {t('currentPrice')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-5 py-4 text-right">
                 <SortButton field="market_value" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
-                  Value
+                  {t('value')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-5 py-4 text-right">
                 <SortButton field="pnl" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
-                  P&L
+                  {t('pnl')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-5 py-4 text-right">
                 <SortButton field="pnl_pct" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
-                  P&L %
+                  {t('pnlPct')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-center text-sm font-semibold text-[var(--foreground)]">
-                Actions
+              <th className="px-5 py-4 text-center text-sm font-semibold text-[var(--foreground)]">
+                {t('actions')}
               </th>
             </tr>
           </thead>
@@ -238,29 +237,29 @@ export default function HoldingsTable({
             {sortedHoldings.map((holding) => (
               <tr
                 key={holding.ticker}
-                className="border-b border-[var(--border)] hover:bg-[var(--background)] transition-colors"
+                className="border-b border-[var(--border)] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
               >
-                <td className="px-4 py-3">
+                <td className="px-5 py-4">
                   <span className="font-mono font-medium text-[var(--color-primary)]">
                     {holding.ticker}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-[var(--foreground)]">
+                <td className="px-5 py-4 text-[var(--foreground)]">
                   {holding.name || '-'}
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td className="px-5 py-4 text-right font-mono text-[var(--foreground)]">
                   {formatQuantity(holding.quantity)}
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td className="px-5 py-4 text-right font-mono text-[var(--foreground)]">
                   {formatCurrency(holding.avg_price, holding.currency)}
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td className="px-5 py-4 text-right font-mono text-[var(--foreground)]">
                   {formatCurrency(holding.current_price, holding.currency)}
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td className="px-5 py-4 text-right font-mono text-[var(--foreground)]">
                   {formatCurrency(holding.market_value, holding.currency)}
                 </td>
-                <td className={`px-4 py-3 text-right font-mono ${getPnlColorClass(holding.pnl)}`}>
+                <td className={`px-5 py-4 text-right font-mono ${getPnlColorClass(holding.pnl)}`}>
                   <span className="flex items-center justify-end gap-1">
                     {holding.pnl !== null && holding.pnl !== 0 && (
                       holding.pnl > 0 ? (
@@ -272,10 +271,10 @@ export default function HoldingsTable({
                     {formatCurrency(holding.pnl, holding.currency)}
                   </span>
                 </td>
-                <td className={`px-4 py-3 text-right font-mono ${getPnlColorClass(holding.pnl_pct)}`}>
+                <td className={`px-5 py-4 text-right font-mono ${getPnlColorClass(holding.pnl_pct)}`}>
                   {formatPercent(holding.pnl_pct)}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-5 py-4">
                   <div className="flex items-center justify-center gap-2">
                     {onEdit && (
                       <button
@@ -305,7 +304,6 @@ export default function HoldingsTable({
         </table>
       </div>
 
-      {/* Mobile/Tablet Card View */}
       <div className="lg:hidden divide-y divide-[var(--border)]">
         {sortedHoldings.map((holding) => (
           <MobileCard
@@ -330,6 +328,8 @@ interface MobileCardProps {
  * Mobile card component for responsive display
  */
 function MobileCard({ holding, onEdit, onDelete }: MobileCardProps) {
+  const t = useTranslations('portfolio');
+
   return (
     <div className="p-4">
       <div className="flex items-start justify-between">
@@ -374,37 +374,37 @@ function MobileCard({ holding, onEdit, onDelete }: MobileCardProps) {
 
       <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
         <div>
-          <p className="text-[var(--foreground-muted)]">Quantity</p>
+          <p className="text-[var(--foreground-muted)]">{t('quantity')}</p>
           <p className="font-mono font-medium text-[var(--foreground)]">
             {formatQuantity(holding.quantity)}
           </p>
         </div>
         <div>
-          <p className="text-[var(--foreground-muted)]">Avg Price</p>
+          <p className="text-[var(--foreground-muted)]">{t('avgPrice')}</p>
           <p className="font-mono font-medium text-[var(--foreground)]">
             {formatCurrency(holding.avg_price, holding.currency)}
           </p>
         </div>
         <div>
-          <p className="text-[var(--foreground-muted)]">Current Price</p>
+          <p className="text-[var(--foreground-muted)]">{t('currentPrice')}</p>
           <p className="font-mono font-medium text-[var(--foreground)]">
             {formatCurrency(holding.current_price, holding.currency)}
           </p>
         </div>
         <div>
-          <p className="text-[var(--foreground-muted)]">Market Value</p>
+          <p className="text-[var(--foreground-muted)]">{t('value')}</p>
           <p className="font-mono font-medium text-[var(--foreground)]">
             {formatCurrency(holding.market_value, holding.currency)}
           </p>
         </div>
         <div>
-          <p className="text-[var(--foreground-muted)]">P&L</p>
+          <p className="text-[var(--foreground-muted)]">{t('pnl')}</p>
           <p className={`font-mono font-medium ${getPnlColorClass(holding.pnl)}`}>
             {formatCurrency(holding.pnl, holding.currency)}
           </p>
         </div>
         <div>
-          <p className="text-[var(--foreground-muted)]">P&L %</p>
+          <p className="text-[var(--foreground-muted)]">{t('pnlPct')}</p>
           <p className={`font-mono font-medium ${getPnlColorClass(holding.pnl_pct)}`}>
             {formatPercent(holding.pnl_pct)}
           </p>

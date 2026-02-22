@@ -25,7 +25,7 @@
   /* Sidebar */
   --sidebar-width: 256px;
   --sidebar-collapsed-width: 72px;
-  --header-height: 64px;
+  --header-height: 0px;
 }
 
 @theme inline {

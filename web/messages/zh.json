@@ -181,7 +181,15 @@
     "errorsCount": "{count}个错误",
     "done": "完成",
     "csvOnly": "请选择CSV文件。",
-    "fileTooLarge": "文件过大（最大 1 MB）。"
+    "fileTooLarge": "文件过大（最大 1 MB）。",
+    "search": "搜索持仓...",
+    "filterAll": "全部",
+    "filterUS": "美股",
+    "filterKR": "韩股",
+    "filterETF": "ETF",
+    "loadingHoldings": "加载持仓中...",
+    "noHoldingsTitle": "暂无持仓",
+    "noHoldingsInFilter": "没有匹配当前筛选条件的持仓。"
   },
   "strategy": {
     "title": "QuantCanvas",

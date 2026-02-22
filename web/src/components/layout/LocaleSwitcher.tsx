@@ -13,7 +13,11 @@ const localeLabels: Record<Locale, string> = {
 
 const localeOrder: Locale[] = ['en', 'ko', 'zh'];
 
-export default function LocaleSwitcher() {
+interface LocaleSwitcherProps {
+  variant?: 'default' | 'sidebar';
+}
+
+export default function LocaleSwitcher({ variant = 'default' }: LocaleSwitcherProps) {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const pathname = usePathname();
@@ -25,11 +29,16 @@ export default function LocaleSwitcher() {
     router.replace(pathname, { locale: nextLocale });
   };
 
+  const baseClasses = "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors";
+  const variantClasses = variant === 'sidebar'
+    ? 'text-slate-400 hover:bg-white/5 hover:text-white'
+    : 'text-[var(--foreground-muted)] hover:bg-[var(--border)] hover:text-[var(--foreground)]';
+
   return (
     <button
       type="button"
       onClick={handleSwitch}
-      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-[var(--foreground-muted)] hover:bg-[var(--border)] hover:text-[var(--foreground)] transition-colors"
+      className={`${baseClasses} ${variantClasses}`}
       aria-label={`Switch to ${nextLocale}`}
     >
       <Globe className="h-4 w-4" />
