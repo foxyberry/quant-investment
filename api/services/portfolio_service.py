@@ -10,6 +10,8 @@ import io
 import json
 import logging
 import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, date
 from pathlib import Path
 from typing import List, Dict, Any, Optional
@@ -42,6 +44,9 @@ class PortfolioService:
     STOP_LOSS_PCT = -10.0  # -10% triggers stop loss
     TAKE_PROFIT_PCT = 20.0  # +20% triggers take profit
 
+    # Price cache TTL in seconds (deduplicates concurrent requests)
+    PRICE_CACHE_TTL = 10
+
     def __init__(self, data_path: Optional[Path] = None):
         """
         Initialize the portfolio service.
@@ -53,6 +58,8 @@ class PortfolioService:
         self._lock = threading.RLock()
         self._cache = get_cache()
         self._holdings: Dict[str, Dict[str, Any]] = {}
+        self._price_cache: Dict[str, float] = {}
+        self._price_cache_time: float = 0.0
         self._load()
 
     def _load(self) -> None:
@@ -112,18 +119,47 @@ class PortfolioService:
         """
         Get current prices for multiple tickers.
 
+        Uses a short-lived in-memory cache (PRICE_CACHE_TTL seconds)
+        to deduplicate concurrent requests from the same page load.
+        Fetches prices in parallel using ThreadPoolExecutor.
+
         Args:
             tickers: List of ticker symbols
 
         Returns:
             Dict mapping ticker to current price
         """
-        prices = {}
-        for ticker in tickers:
-            price = self._get_current_price(ticker)
-            if price is not None:
-                prices[ticker] = price
-        return prices
+        if not tickers:
+            return {}
+
+        with self._lock:
+            now = time.monotonic()
+
+            # Return cached prices if still fresh and all requested tickers are present
+            if (now - self._price_cache_time < self.PRICE_CACHE_TTL
+                    and all(t in self._price_cache for t in tickers)):
+                return {t: self._price_cache[t] for t in tickers}
+
+            # Parallel fetch with ThreadPoolExecutor
+            prices: Dict[str, float] = {}
+            with ThreadPoolExecutor(max_workers=min(len(tickers), 8)) as executor:
+                futures = {
+                    executor.submit(self._get_current_price, t): t
+                    for t in tickers
+                }
+                for future in as_completed(futures):
+                    ticker = futures[future]
+                    try:
+                        price = future.result()
+                        if price is not None:
+                            prices[ticker] = price
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch price for {ticker}: {e}")
+
+            # Update cache
+            self._price_cache = prices
+            self._price_cache_time = time.monotonic()
+            return prices
 
     def _holding_to_response(
         self,
