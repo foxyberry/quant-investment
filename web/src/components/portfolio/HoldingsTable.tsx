@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { ArrowUpDown, Edit2, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import type { Holding } from '@/lib/types';
+import { formatCurrency as formatCurrencyUtil, formatQuantity as formatQuantityUtil, formatPercent as formatPercentUtil } from '@/lib/format';
 
 type SortField = 'ticker' | 'name' | 'quantity' | 'avg_price' | 'current_price' | 'market_value' | 'pnl' | 'pnl_pct';
 type SortDirection = 'asc' | 'desc';
@@ -51,40 +52,8 @@ function SortButton({ field, currentField, direction, children, onSort, align = 
   );
 }
 
-/**
- * Format a number as currency
- */
-function formatCurrency(value: number | null, currency: string = 'USD'): string {
-  if (value === null) return '-';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-/**
- * Format a number as percentage
- */
-function formatPercent(value: number | null): string {
-  if (value === null) return '-';
-  const sign = value >= 0 ? '+' : '';
-  return `${sign}${value.toFixed(2)}%`;
-}
-
-/**
- * Format quantity with appropriate decimal places
- */
-function formatQuantity(value: number): string {
-  if (Number.isInteger(value)) {
-    return value.toLocaleString();
-  }
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 4,
-  });
-}
+// Local wrappers that capture the locale from the component tree.
+// The actual implementations live in @/lib/format.
 
 /**
  * Get color class based on P&L value
@@ -106,6 +75,10 @@ export default function HoldingsTable({
   onDelete,
 }: HoldingsTableProps) {
   const t = useTranslations('portfolio');
+  const locale = useLocale();
+  const formatCurrency = (value: number | null, currency?: string) => formatCurrencyUtil(value, currency, locale);
+  const formatPercent = (value: number | null) => formatPercentUtil(value);
+  const formatQuantity = (value: number) => formatQuantityUtil(value, locale);
   const [sortField, setSortField] = useState<SortField>('ticker');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -329,6 +302,10 @@ interface MobileCardProps {
  */
 function MobileCard({ holding, onEdit, onDelete }: MobileCardProps) {
   const t = useTranslations('portfolio');
+  const locale = useLocale();
+  const formatCurrency = (value: number | null, currency?: string) => formatCurrencyUtil(value, currency, locale);
+  const formatPercent = (value: number | null) => formatPercentUtil(value);
+  const formatQuantity = (value: number) => formatQuantityUtil(value, locale);
 
   return (
     <div className="p-4">

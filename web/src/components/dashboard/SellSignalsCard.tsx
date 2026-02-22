@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui';
 import { getSellSignals } from '@/lib/api';
 import type { SellSignal } from '@/lib/types';
 import { AlertTriangle, ShieldCheck, TrendingDown, Target, Activity } from 'lucide-react';
+import { formatCurrency } from '@/lib/format';
 
 interface LoadingState {
   loading: boolean;
@@ -14,6 +15,7 @@ interface LoadingState {
 
 export default function SellSignalsCard() {
   const t = useTranslations('dashboard');
+  const locale = useLocale();
   const [signals, setSignals] = useState<SellSignal[]>([]);
   const [state, setState] = useState<LoadingState>({ loading: true, error: null });
 
@@ -59,11 +61,7 @@ export default function SellSignalsCard() {
 
   const formatPrice = (price: number | null) => {
     if (price === null) return '--';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(price);
+    return formatCurrency(price, 'USD', locale);
   };
 
   if (state.loading) {

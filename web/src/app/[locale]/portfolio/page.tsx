@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download, Search } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import {
@@ -22,26 +22,7 @@ import {
   exportHoldingsCsv,
 } from '@/lib/api';
 import type { Holding, HoldingCreate, HoldingUpdate, PortfolioSummary, SellSignal } from '@/lib/types';
-
-/**
- * Format a number as currency
- */
-function formatCurrency(value: number, currency: string = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-/**
- * Format a number as percentage
- */
-function formatPercent(value: number): string {
-  const sign = value >= 0 ? '+' : '';
-  return `${sign}${value.toFixed(2)}%`;
-}
+import { formatCurrency as formatCurrencyUtil, formatPercent as formatPercentUtil } from '@/lib/format';
 
 type FilterTab = 'all' | 'us' | 'kr' | 'etf';
 
@@ -92,6 +73,9 @@ function SummaryCard({ title, value, icon, trend, subValue, iconBgClass = 'bg-bl
  */
 export default function PortfolioPage() {
   const t = useTranslations('portfolio');
+  const locale = useLocale();
+  const formatCurrency = (value: number, currency?: string) => formatCurrencyUtil(value, currency, locale);
+  const formatPercent = (value: number) => formatPercentUtil(value);
 
   // Data state
   const [holdings, setHoldings] = useState<Holding[]>([]);
