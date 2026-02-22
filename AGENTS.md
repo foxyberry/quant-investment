@@ -32,3 +32,28 @@ Execution workflow is documented in:
 ## Collaboration Docs
 - PR and merge rules: `CONTRIBUTING.md`
 - PR template: `.github/pull_request_template.md`
+
+## Project Onboarding (Claude Parity)
+- Read order:
+  1. `README.md`
+  2. `config/base_config.yaml`
+  3. `config/screening_criteria.yaml`
+  4. `config/portfolio.yaml`
+- Optional docs by task:
+  - options: `docs/OPTIONS_TRACKER_README.md`
+  - market calendar/timezone: `docs/MARKET_CALENDAR_README.md`
+  - strategy builder: `docs/STRATEGY_BUILDER_README.md`
+
+## MCP / Tooling Defaults
+- MCP servers are defined in `.mcp.json`.
+- Default enabled set should match Claude setup:
+  - `context7`
+  - `playwright`
+  - `shadcn`
+  - `stitch`
+  - `codex`
+
+## Local Dev Defaults
+- API dev server (Claude setup parity): `source venv/bin/activate && uvicorn api.main:app --host 0.0.0.0 --port 8002 --reload`
+- Web dev server (Claude setup parity): `cd web && PORT=3002 npm run dev`
+- Prefer these ports unless user requests otherwise.
