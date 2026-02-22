@@ -6,7 +6,6 @@ portfolio summary, sell signals, and CSV import/export.
 """
 
 import io
-import json
 import time
 from datetime import datetime
 from unittest.mock import MagicMock, patch
@@ -657,102 +656,123 @@ class TestTemplate:
         assert "attachment" in resp.headers["content-disposition"]
 
 
-def _write_holdings_json(path, holdings):
-    """Helper to write a portfolio JSON file with the given holdings."""
-    data = {
-        "holdings": holdings,
-        "updated_at": "2024-01-01",
-    }
-    path.write_text(json.dumps(data), encoding="utf-8")
+def _setup_test_db(holdings):
+    """Create an in-memory SQLite DB and seed it with holdings dicts.
+
+    Returns a patched SessionLocal bound to the in-memory engine.
+    """
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from api.database import Base
+    from api.models.portfolio import Holding
+
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    Base.metadata.create_all(bind=engine)
+    TestSession = sessionmaker(bind=engine)
+
+    db = TestSession()
+    for h in holdings:
+        db.add(Holding(
+            ticker=h["ticker"],
+            name=h.get("name"),
+            quantity=h["quantity"],
+            avg_price=h["avg_price"],
+            currency=h.get("currency", "KRW"),
+        ))
+    db.commit()
+    db.close()
+
+    return TestSession
 
 
 class TestPriceCache:
     """Tests for PortfolioService price cache and parallel fetch behavior."""
 
-    def test_price_cache_reuse(self, tmp_path):
+    def test_price_cache_reuse(self):
         """Cached prices are reused on the second call within TTL."""
         # Arrange
-        data_file = tmp_path / "portfolio.json"
-        _write_holdings_json(data_file, [
+        test_session = _setup_test_db([
             {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
             {"ticker": "MSFT", "name": "Microsoft", "quantity": 5, "avg_price": 300.0, "currency": "USD"},
         ])
-        service = PortfolioService(data_path=data_file)
 
-        price_map = {"AAPL": 175.0, "MSFT": 320.0}
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+            price_map = {"AAPL": 175.0, "MSFT": 320.0}
 
-        with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
-            # Act
-            service.get_all_holdings(with_prices=True)
-            service.get_all_holdings(with_prices=True)
+            with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
+                # Act
+                service.get_all_holdings(with_prices=True)
+                service.get_all_holdings(with_prices=True)
 
-            # Assert - second call should reuse cache, so only 2 calls total
-            assert mock_price.call_count == 2
+                # Assert - second call should reuse cache, so only 2 calls total
+                assert mock_price.call_count == 2
 
-    def test_price_cache_expiry(self, tmp_path):
+    def test_price_cache_expiry(self):
         """Expired cache triggers a fresh fetch on the next call."""
         # Arrange
-        data_file = tmp_path / "portfolio.json"
-        _write_holdings_json(data_file, [
+        test_session = _setup_test_db([
             {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
             {"ticker": "MSFT", "name": "Microsoft", "quantity": 5, "avg_price": 300.0, "currency": "USD"},
         ])
-        service = PortfolioService(data_path=data_file)
 
-        price_map = {"AAPL": 175.0, "MSFT": 320.0}
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+            price_map = {"AAPL": 175.0, "MSFT": 320.0}
 
-        with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
-            # Act - first call fetches prices
-            service.get_all_holdings(with_prices=True)
+            with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
+                # Act - first call fetches prices
+                service.get_all_holdings(with_prices=True)
 
-            # Expire the cache by backdating the timestamp
-            service._price_cache_time = time.monotonic() - 11
+                # Expire the cache by backdating the timestamp
+                service._price_cache_time = time.monotonic() - 11
 
-            # Second call should re-fetch because cache is expired
-            service.get_all_holdings(with_prices=True)
+                # Second call should re-fetch because cache is expired
+                service.get_all_holdings(with_prices=True)
 
-            # Assert - 2 calls per invocation = 4 total
-            assert mock_price.call_count == 4
+                # Assert - 2 calls per invocation = 4 total
+                assert mock_price.call_count == 4
 
-    def test_parallel_price_fetch(self, tmp_path):
+    def test_parallel_price_fetch(self):
         """_get_current_prices returns correct prices for all tickers."""
         # Arrange
-        data_file = tmp_path / "portfolio.json"
-        _write_holdings_json(data_file, [
+        test_session = _setup_test_db([
             {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
             {"ticker": "MSFT", "name": "Microsoft", "quantity": 5, "avg_price": 300.0, "currency": "USD"},
             {"ticker": "GOOG", "name": "Alphabet", "quantity": 3, "avg_price": 140.0, "currency": "USD"},
         ])
-        service = PortfolioService(data_path=data_file)
 
-        price_map = {"AAPL": 175.0, "MSFT": 320.0, "GOOG": 155.0}
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+            price_map = {"AAPL": 175.0, "MSFT": 320.0, "GOOG": 155.0}
 
-        with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]):
-            # Act
-            result = service._get_current_prices(["AAPL", "MSFT", "GOOG"])
+            with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]):
+                # Act
+                result = service._get_current_prices(["AAPL", "MSFT", "GOOG"])
 
-            # Assert
-            assert result["AAPL"] == 175.0
-            assert result["MSFT"] == 320.0
-            assert result["GOOG"] == 155.0
+                # Assert
+                assert result["AAPL"] == 175.0
+                assert result["MSFT"] == 320.0
+                assert result["GOOG"] == 155.0
 
-    def test_summary_reuses_cached_prices(self, tmp_path):
+    def test_summary_reuses_cached_prices(self):
         """get_summary reuses prices cached by a prior get_all_holdings call."""
         # Arrange
-        data_file = tmp_path / "portfolio.json"
-        _write_holdings_json(data_file, [
+        test_session = _setup_test_db([
             {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
             {"ticker": "MSFT", "name": "Microsoft", "quantity": 5, "avg_price": 300.0, "currency": "USD"},
         ])
-        service = PortfolioService(data_path=data_file)
 
-        price_map = {"AAPL": 175.0, "MSFT": 320.0}
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+            price_map = {"AAPL": 175.0, "MSFT": 320.0}
 
-        with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
-            # Act - first call populates the cache
-            service.get_all_holdings(with_prices=True)
-            # get_summary internally calls get_all_holdings(with_prices=True)
-            service.get_summary()
+            with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
+                # Act - first call populates the cache
+                service.get_all_holdings(with_prices=True)
+                # get_summary internally calls get_all_holdings(with_prices=True)
+                service.get_summary()
 
-            # Assert - prices fetched only once (2 tickers), not twice (4 calls)
-            assert mock_price.call_count == 2
+                # Assert - prices fetched only once (2 tickers), not twice (4 calls)
+                assert mock_price.call_count == 2

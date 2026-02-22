@@ -49,12 +49,14 @@ def get_db():
 def init_db() -> None:
     """Create tables and migrate legacy JSON data if present."""
     import api.models.agent_task  # noqa: F401 — register model with Base
+    import api.models.portfolio  # noqa: F401 — register model with Base
     import api.models.strategy  # noqa: F401 — register model with Base
 
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables ensured")
 
     _migrate_json_data()
+    _migrate_portfolio_json()
 
 
 def _migrate_json_data() -> None:
@@ -123,6 +125,84 @@ def _migrate_json_data() -> None:
     except Exception as e:
         db.rollback()
         logger.error("JSON migration failed: %s", e)
+        return
+    finally:
+        db.close()
+
+    if migrated > 0:
+        migrated_path = json_path.with_suffix(".json.migrated")
+        try:
+            json_path.rename(migrated_path)
+            logger.info("Renamed %s → %s", json_path, migrated_path)
+        except OSError as e:
+            logger.warning("Could not rename migrated file: %s", e)
+
+
+def _migrate_portfolio_json() -> None:
+    """One-time migration: import data/portfolio.json into the DB."""
+    json_path = Path(__file__).parent.parent / "data" / "portfolio.json"
+    if not json_path.exists():
+        return
+
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        logger.warning("Could not read portfolio JSON for migration: %s", e)
+        return
+
+    holdings = data.get("holdings", [])
+    if not holdings:
+        return
+
+    from api.models.portfolio import Holding
+
+    db = SessionLocal()
+    migrated = 0
+    skipped = 0
+    try:
+        existing_tickers = {
+            row[0] for row in db.query(Holding.ticker).all()
+        }
+
+        for h in holdings:
+            ticker = h.get("ticker")
+            if not ticker:
+                logger.warning("Skipping portfolio record with no ticker")
+                skipped += 1
+                continue
+
+            if ticker in existing_tickers:
+                skipped += 1
+                continue
+
+            row = Holding(
+                ticker=ticker,
+                name=h.get("name"),
+                quantity=h.get("quantity", 0),
+                avg_price=h.get("avg_price", 0),
+                currency=h.get("currency", "KRW"),
+                note=h.get("note"),
+            )
+            bought_at = h.get("bought_at")
+            if bought_at:
+                try:
+                    from datetime import date as date_type
+                    row.bought_at = date_type.fromisoformat(bought_at)
+                except (ValueError, TypeError):
+                    pass
+            db.add(row)
+            existing_tickers.add(ticker)
+            migrated += 1
+
+        if migrated > 0:
+            db.commit()
+        logger.info(
+            "Portfolio JSON migration: %d migrated, %d skipped", migrated, skipped
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error("Portfolio JSON migration failed: %s", e)
         return
     finally:
         db.close()

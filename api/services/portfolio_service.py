@@ -7,15 +7,15 @@ Provides CRUD operations for holdings and P&L calculations.
 
 import csv
 import io
-import json
 import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, date
-from pathlib import Path
 from typing import List, Dict, Any, Optional
 
+from api.database import SessionLocal
+from api.models.portfolio import Holding
 from api.schemas.portfolio import (
     HoldingCreate,
     HoldingUpdate,
@@ -38,8 +38,6 @@ class PortfolioService:
     P&L calculations, and sell signal detection.
     """
 
-    DEFAULT_DATA_PATH = Path(__file__).parent.parent.parent / "data" / "portfolio.json"
-
     # Default sell signal thresholds
     STOP_LOSS_PCT = -10.0  # -10% triggers stop loss
     TAKE_PROFIT_PCT = 20.0  # +20% triggers take profit
@@ -47,55 +45,24 @@ class PortfolioService:
     # Price cache TTL in seconds (deduplicates concurrent requests)
     PRICE_CACHE_TTL = 10
 
-    def __init__(self, data_path: Optional[Path] = None):
-        """
-        Initialize the portfolio service.
-
-        Args:
-            data_path: Path to portfolio JSON file (default: data/portfolio.json)
-        """
-        self.data_path = data_path or self.DEFAULT_DATA_PATH
+    def __init__(self):
         self._lock = threading.RLock()
         self._cache = get_cache()
-        self._holdings: Dict[str, Dict[str, Any]] = {}
         self._price_cache: Dict[str, float] = {}
         self._price_cache_time: float = 0.0
-        self._load()
 
-    def _load(self) -> None:
-        """Load portfolio data from JSON file."""
-        if self.data_path.exists():
-            try:
-                with open(self.data_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    holdings_list = data.get("holdings", [])
-                    self._holdings = {h["ticker"]: h for h in holdings_list}
-                    logger.info(f"Loaded {len(self._holdings)} holdings from {self.data_path}")
-            except Exception as e:
-                logger.warning(f"Failed to load portfolio data: {e}")
-                self._holdings = {}
-        else:
-            # Create initial data file
-            self._save()
-
-    def _save(self) -> None:
-        """Save portfolio data to JSON file."""
-        with self._lock:
-            try:
-                self.data_path.parent.mkdir(parents=True, exist_ok=True)
-
-                data = {
-                    "holdings": list(self._holdings.values()),
-                    "updated_at": datetime.now().isoformat()
-                }
-
-                with open(self.data_path, "w", encoding="utf-8") as f:
-                    json.dump(data, f, ensure_ascii=False, indent=2, default=str)
-
-                logger.debug(f"Saved portfolio data to {self.data_path}")
-            except Exception as e:
-                logger.error(f"Failed to save portfolio data: {e}")
-                raise
+    @staticmethod
+    def _row_to_dict(row: Holding) -> Dict[str, Any]:
+        """Convert ORM Holding to dict for _holding_to_response()."""
+        return {
+            "ticker": row.ticker,
+            "name": row.name,
+            "quantity": row.quantity,
+            "avg_price": row.avg_price,
+            "currency": row.currency,
+            "note": row.note,
+            "bought_at": row.bought_at,
+        }
 
     def _get_current_price(self, ticker: str) -> Optional[float]:
         """
@@ -222,18 +189,22 @@ class PortfolioService:
         Returns:
             List of HoldingResponse objects
         """
-        holdings = []
-        prices = {}
+        db = SessionLocal()
+        try:
+            rows = db.query(Holding).all()
+            holdings_dicts = [self._row_to_dict(r) for r in rows]
+        finally:
+            db.close()
 
-        if with_prices:
-            tickers = list(self._holdings.keys())
+        prices = {}
+        if with_prices and holdings_dicts:
+            tickers = [h["ticker"] for h in holdings_dicts]
             prices = self._get_current_prices(tickers)
 
-        for ticker, holding in self._holdings.items():
-            current_price = prices.get(ticker)
-            holdings.append(self._holding_to_response(holding, current_price))
-
-        return holdings
+        return [
+            self._holding_to_response(h, prices.get(h["ticker"]))
+            for h in holdings_dicts
+        ]
 
     def get_holding(self, ticker: str, with_price: bool = True) -> Optional[HoldingResponse]:
         """
@@ -246,9 +217,14 @@ class PortfolioService:
         Returns:
             HoldingResponse or None if not found
         """
-        holding = self._holdings.get(ticker)
-        if not holding:
-            return None
+        db = SessionLocal()
+        try:
+            row = db.get(Holding, ticker)
+            if not row:
+                return None
+            holding = self._row_to_dict(row)
+        finally:
+            db.close()
 
         current_price = None
         if with_price:
@@ -269,44 +245,51 @@ class PortfolioService:
             Created/updated HoldingResponse
         """
         ticker = data.ticker
-        existing = self._holdings.get(ticker)
+        db = SessionLocal()
+        try:
+            existing = db.get(Holding, ticker)
 
-        if existing:
-            # Add to existing position - calculate new average price
-            old_quantity = existing.get("quantity", 0)
-            old_avg_price = existing.get("avg_price", 0)
-            old_cost = old_quantity * old_avg_price
+            if existing:
+                # Add to existing position - calculate new average price
+                old_cost = existing.quantity * existing.avg_price
+                new_cost = data.quantity * data.avg_price
+                total_quantity = existing.quantity + data.quantity
+                new_avg_price = (old_cost + new_cost) / total_quantity if total_quantity > 0 else 0
 
-            new_cost = data.quantity * data.avg_price
-            total_quantity = old_quantity + data.quantity
-            new_avg_price = (old_cost + new_cost) / total_quantity if total_quantity > 0 else 0
+                existing.quantity = total_quantity
+                existing.avg_price = new_avg_price
+                if data.name:
+                    existing.name = data.name
+                if data.note:
+                    existing.note = data.note
+                existing.currency = data.currency
 
-            existing["quantity"] = total_quantity
-            existing["avg_price"] = new_avg_price
-            if data.name:
-                existing["name"] = data.name
-            if data.note:
-                existing["note"] = data.note
-            existing["currency"] = data.currency
+                logger.info(f"Updated holding: {ticker} (qty: {total_quantity}, avg: {new_avg_price:.2f})")
+            else:
+                # Create new holding
+                existing = Holding(
+                    ticker=ticker,
+                    name=data.name or ticker,
+                    quantity=data.quantity,
+                    avg_price=data.avg_price,
+                    currency=data.currency,
+                    note=data.note,
+                    bought_at=date.today(),
+                )
+                db.add(existing)
+                logger.info(f"Added holding: {ticker} (qty: {data.quantity}, avg: {data.avg_price:.2f})")
 
-            logger.info(f"Updated holding: {ticker} (qty: {total_quantity}, avg: {new_avg_price:.2f})")
-        else:
-            # Create new holding
-            self._holdings[ticker] = {
-                "ticker": ticker,
-                "name": data.name or ticker,
-                "quantity": data.quantity,
-                "avg_price": data.avg_price,
-                "currency": data.currency,
-                "note": data.note,
-                "bought_at": date.today().isoformat(),
-            }
-            logger.info(f"Added holding: {ticker} (qty: {data.quantity}, avg: {data.avg_price:.2f})")
-
-        self._save()
+            db.commit()
+            db.refresh(existing)
+            holding = self._row_to_dict(existing)
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
         current_price = self._get_current_price(ticker)
-        return self._holding_to_response(self._holdings[ticker], current_price)
+        return self._holding_to_response(holding, current_price)
 
     def update_holding(self, ticker: str, data: HoldingUpdate) -> Optional[HoldingResponse]:
         """
@@ -319,21 +302,30 @@ class PortfolioService:
         Returns:
             Updated HoldingResponse or None if not found
         """
-        holding = self._holdings.get(ticker)
-        if not holding:
-            return None
+        db = SessionLocal()
+        try:
+            row = db.get(Holding, ticker)
+            if not row:
+                return None
 
-        if data.quantity is not None:
-            holding["quantity"] = data.quantity
-        if data.avg_price is not None:
-            holding["avg_price"] = data.avg_price
-        if data.name is not None:
-            holding["name"] = data.name
-        if data.note is not None:
-            holding["note"] = data.note
+            if data.quantity is not None:
+                row.quantity = data.quantity
+            if data.avg_price is not None:
+                row.avg_price = data.avg_price
+            if data.name is not None:
+                row.name = data.name
+            if data.note is not None:
+                row.note = data.note
 
-        self._save()
-        logger.info(f"Updated holding: {ticker}")
+            db.commit()
+            db.refresh(row)
+            holding = self._row_to_dict(row)
+            logger.info(f"Updated holding: {ticker}")
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
         current_price = self._get_current_price(ticker)
         return self._holding_to_response(holding, current_price)
@@ -348,12 +340,20 @@ class PortfolioService:
         Returns:
             True if removed, False if not found
         """
-        if ticker in self._holdings:
-            del self._holdings[ticker]
-            self._save()
+        db = SessionLocal()
+        try:
+            row = db.get(Holding, ticker)
+            if not row:
+                return False
+            db.delete(row)
+            db.commit()
             logger.info(f"Removed holding: {ticker}")
             return True
-        return False
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
     def get_summary(self) -> PortfolioSummary:
         """
@@ -458,32 +458,59 @@ class PortfolioService:
             }
             valid_rows.append(parsed)
 
-        with self._lock:
-            backup = {k: dict(v) for k, v in self._holdings.items()}
+        db = SessionLocal()
+        try:
+            if mode == "replace":
+                db.query(Holding).delete()
 
-            try:
-                if mode == "replace":
-                    self._holdings.clear()
+            existing_tickers = {
+                row[0] for row in db.query(Holding.ticker).all()
+            }
 
-                for parsed in valid_rows:
-                    ticker = parsed["ticker"]
-                    if ticker in self._holdings and mode == "merge":
-                        existing_bought_at = self._holdings[ticker].get("bought_at")
-                        self._holdings[ticker].update(parsed)
-                        # Preserve existing bought_at if CSV didn't provide one
-                        if not parsed["bought_at"] and existing_bought_at:
-                            self._holdings[ticker]["bought_at"] = existing_bought_at
-                        updated += 1
-                    else:
-                        if not parsed["bought_at"]:
-                            parsed["bought_at"] = date.today().isoformat()
-                        self._holdings[ticker] = parsed
-                        imported += 1
+            for parsed in valid_rows:
+                ticker = parsed["ticker"]
+                bought_at_val = parsed["bought_at"]
+                bought_at_date = None
+                if bought_at_val:
+                    try:
+                        bought_at_date = date.fromisoformat(bought_at_val)
+                    except (ValueError, TypeError):
+                        bought_at_date = None
 
-                self._save()
-            except Exception:
-                self._holdings = backup
-                raise
+                if ticker in existing_tickers and mode == "merge":
+                    row = db.get(Holding, ticker)
+                    existing_bought_at = row.bought_at
+                    row.name = parsed["name"]
+                    row.quantity = parsed["quantity"]
+                    row.avg_price = parsed["avg_price"]
+                    row.currency = parsed["currency"]
+                    row.note = parsed["note"]
+                    # Preserve existing bought_at if CSV didn't provide one
+                    if bought_at_date:
+                        row.bought_at = bought_at_date
+                    elif existing_bought_at:
+                        pass  # keep existing
+                    updated += 1
+                else:
+                    new_row = Holding(
+                        ticker=ticker,
+                        name=parsed["name"],
+                        quantity=parsed["quantity"],
+                        avg_price=parsed["avg_price"],
+                        currency=parsed["currency"],
+                        note=parsed["note"],
+                        bought_at=bought_at_date or date.today(),
+                    )
+                    db.merge(new_row)
+                    existing_tickers.add(ticker)
+                    imported += 1
+
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
         logger.info(f"CSV import: imported={imported}, updated={updated}, skipped={len(errors)}")
 
@@ -501,15 +528,24 @@ class PortfolioService:
         Returns:
             CSV string with header and data rows
         """
+        db = SessionLocal()
+        try:
+            rows = db.query(Holding).all()
+            holdings_dicts = [self._row_to_dict(r) for r in rows]
+        finally:
+            db.close()
+
         output = io.StringIO()
         columns = ["ticker", "quantity", "avg_price", "name", "currency", "note", "bought_at"]
         writer = csv.DictWriter(output, fieldnames=columns, extrasaction="ignore")
         writer.writeheader()
 
-        for holding in self._holdings.values():
+        for holding in holdings_dicts:
             row = {col: holding.get(col, "") for col in columns}
             if row["note"] is None:
                 row["note"] = ""
+            if isinstance(row["bought_at"], date):
+                row["bought_at"] = row["bought_at"].isoformat()
             writer.writerow(row)
 
         return output.getvalue()
