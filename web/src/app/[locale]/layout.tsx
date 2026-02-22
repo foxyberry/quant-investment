@@ -7,6 +7,7 @@ import { routing } from '@/i18n/routing';
 import '../globals.css';
 import MainLayout from '@/components/layout/MainLayout';
 import QueryProvider from '@/providers/QueryProvider';
+import { UserSettingsProvider } from '@/contexts/UserSettingsContext';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,7 +34,7 @@ type Props = {
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale as 'en' | 'ko')) {
+  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) {
     notFound();
   }
 
@@ -46,7 +47,9 @@ export default async function LocaleLayout({ children, params }: Props) {
       >
         <NextIntlClientProvider messages={messages}>
           <QueryProvider>
-            <MainLayout>{children}</MainLayout>
+            <UserSettingsProvider>
+              <MainLayout>{children}</MainLayout>
+            </UserSettingsProvider>
           </QueryProvider>
         </NextIntlClientProvider>
       </body>

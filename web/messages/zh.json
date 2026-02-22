@@ -835,6 +835,17 @@
       "help": "投入资本回报率——衡量公司使用全部资本的效率。"
     }
   },
+  "settings": {
+    "title": "设置",
+    "subtitle": "配置您的偏好",
+    "baseCurrency": "基准货币",
+    "baseCurrencyDesc": "用于投资组合汇总和摘要显示的货币。个别持仓始终以其原始市场货币显示。",
+    "language": "语言",
+    "languageDesc": "界面显示语言。这不会影响每个市场的数字或货币格式。",
+    "saved": "设置已保存",
+    "general": "常规",
+    "display": "显示"
+  },
   "markets": {
     "us": "美国市场",
     "kr": "韩国市场",

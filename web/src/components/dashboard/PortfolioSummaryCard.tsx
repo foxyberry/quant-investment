@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui';
 import { getPortfolioSummary } from '@/lib/api';
 import type { PortfolioSummary } from '@/lib/types';
 import { TrendingUp, TrendingDown, Briefcase, DollarSign } from 'lucide-react';
+import { formatCurrency as formatCurrencyUtil, formatPercent as formatPercentUtil } from '@/lib/format';
 
 interface LoadingState {
   loading: boolean;
@@ -14,6 +15,7 @@ interface LoadingState {
 
 export default function PortfolioSummaryCard() {
   const t = useTranslations('dashboard');
+  const locale = useLocale();
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [state, setState] = useState<LoadingState>({ loading: true, error: null });
 
@@ -34,19 +36,10 @@ export default function PortfolioSummaryCard() {
     fetchSummary();
   }, []);
 
-  const formatCurrency = (value: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  const formatCurrency = (value: number, currency: string = 'USD') =>
+    formatCurrencyUtil(value, currency, locale);
 
-  const formatPercent = (value: number) => {
-    const sign = value >= 0 ? '+' : '';
-    return `${sign}${value.toFixed(2)}%`;
-  };
+  const formatPercent = (value: number) => formatPercentUtil(value);
 
   if (state.loading) {
     return (

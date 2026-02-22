@@ -841,6 +841,17 @@
       "help": "Return on Invested Capital — how well the company uses all its capital."
     }
   },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configure your preferences",
+    "baseCurrency": "Base Currency",
+    "baseCurrencyDesc": "Currency used for portfolio aggregation and summary display. Individual holdings are always shown in their native currency.",
+    "language": "Language",
+    "languageDesc": "UI display language. This does not affect how numbers or currencies are formatted for each market.",
+    "saved": "Settings saved",
+    "general": "General",
+    "display": "Display"
+  },
   "markets": {
     "us": "US Market",
     "kr": "Korea Market",
