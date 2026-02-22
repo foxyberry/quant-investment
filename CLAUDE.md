@@ -495,10 +495,24 @@ PostToolUse 훅이 자동으로 `http://127.0.0.1:8765/api/agent-tasks`에 전�
 | 필드 | 설명 |
 |------|------|
 | `session_id` | 현재 세션 ID |
-| `agent_type` | 서브에이전트 타입 (metadata에 포함) |
-| `team_name` | 팀 이름 (metadata에 포함) |
+| `agent_type` | 서브에이전트 타입 (top-level 또는 metadata 내부) |
+| `team_name` | 팀 이름 (top-level 또는 metadata 내부) |
 | `description` | 작업 상세 설명 |
 | `files_modified` | 수정된 파일 목록 (TaskUpdate 시) |
+
+### task_id 식별 우선순위
+
+훅은 아래 순서로 task_id를 탐색한다:
+1. `task_id` (snake_case)
+2. `taskId` (camelCase)
+3. `id`
+
+### agent_type / team_name 추출
+
+top-level 필드를 우선 사용하고, 없으면 `metadata` 내부에서 fallback:
+```
+tool_input.agent_type → tool_input.metadata.agent_type
+```
 
 ### status 허용값
 
@@ -506,6 +520,22 @@ PostToolUse 훅이 자동으로 `http://127.0.0.1:8765/api/agent-tasks`에 전�
 
 ### 훅 동작 방식
 
-- `.claude/hooks/agent-task-tracker.py`가 PostToolUse 훅으로 실행
+- `~/.claude/hooks/agent-task-tracker.py`가 PostToolUse 훅으로 실행 (절대경로)
 - `subprocess.Popen` + `start_new_session=True`로 비동기 fire-and-forget
 - API 실패 시에도 본 작업은 블로킹되지 않음 (항상 exit 0)
+- 프로젝트 사본: `.claude/hooks/agent-task-tracker.py` (레퍼런스용)
+
+### 디버그 모드
+
+기본은 무소음(silent). 문제 추적 시:
+```bash
+export AGENT_TASK_HOOK_DEBUG=1
+```
+활성화하면 `/tmp/agent-task-hook.log`에 이벤트별 trace 로그가 기록된다.
+디버그 완료 후 `unset AGENT_TASK_HOOK_DEBUG`로 비활성화.
+
+### 실행 전제 조건
+
+- API 서버가 `127.0.0.1:8765`에서 실행 중이어야 함
+- 훅 command는 `~/.claude/settings.json`에 **절대경로**로 등록됨
+- 작업 디렉토리와 무관하게 실행됨
