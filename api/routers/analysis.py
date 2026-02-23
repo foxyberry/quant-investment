@@ -7,7 +7,6 @@ Provides endpoints for stock analysis and data enrichment operations.
 import logging
 from typing import List, Optional
 
-import yfinance as yf
 from fastapi import APIRouter, HTTPException, Query
 
 from api.schemas.analysis import (
@@ -366,8 +365,12 @@ def get_ticker_analysis(
     }
     days = period_days_map.get(period, 180)
 
+    # Reuse one OHLCV fetch for ohlcv/quote/technical to avoid redundant cache reads.
+    shared_days = max(days, 300)
+    shared_data = market_service.cache.get(ticker, days=shared_days)
+
     # Get OHLCV data
-    ohlcv_result = market_service.get_ohlcv(ticker, days=days)
+    ohlcv_result = market_service.get_ohlcv(ticker, days=days, data=shared_data)
     if ohlcv_result is None:
         raise HTTPException(
             status_code=404,
@@ -375,7 +378,7 @@ def get_ticker_analysis(
         )
 
     # Get quote for current price and change
-    quote = market_service.get_quote(ticker)
+    quote = market_service.get_quote(ticker, data=shared_data, include_name=False)
     current_price = quote["current_price"] if quote else 0.0
     change_pct = quote["change_pct"] if quote else 0.0
     name = (quote.get("name") if quote else None) or ticker
@@ -395,7 +398,7 @@ def get_ticker_analysis(
 
     # Get technical indicators
     technical = TickerTechnicalIndicators()
-    tech_result = market_service.get_technical_indicators(ticker)
+    tech_result = market_service.get_technical_indicators(ticker, data=shared_data)
     if tech_result:
         rsi_val = tech_result.get("rsi")
         if rsi_val is not None:
@@ -437,9 +440,11 @@ def get_ticker_analysis(
     # Get fundamental data
     fundamental = None
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        info = market_service.get_ticker_info(ticker)
+        if not isinstance(info, dict):
+            info = {}
         if info:
+            name = info.get("shortName") or info.get("longName") or name
             fundamental = TickerFundamental(
                 market_cap=info.get("marketCap"),
                 pe_ratio=info.get("trailingPE"),
