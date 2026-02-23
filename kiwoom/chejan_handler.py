@@ -9,6 +9,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
 from kiwoom.constants import ChejanGubun, FID
+from kiwoom.safety import KiwoomSafetyManager
 
 
 class OrderStatus(str, Enum):
@@ -45,11 +46,13 @@ class ChejanHandler:
         order_manager: Any | None = None,
         get_chejan_data_fn: Optional[Callable[[int], str]] = None,
         async_notify: bool = True,
+        safety_manager: Optional[KiwoomSafetyManager] = None,
     ) -> None:
         self._ocx = ocx
         self._order_manager = order_manager
         self._get_chejan_data_fn = get_chejan_data_fn
         self._async_notify = async_notify
+        self._safety_manager = safety_manager
 
         self._order_status: Dict[str, OrderStatus] = {}
         self._positions: Dict[str, Dict[str, int]] = {}
@@ -109,6 +112,19 @@ class ChejanHandler:
                     "fill_price": event.fill_price,
                 }
             )
+            if self._safety_manager is not None:
+                self._safety_manager.on_chejan_event(
+                    {
+                        "type": "order",
+                        "order_no": event.order_no,
+                        "code": event.code,
+                        "status": event.status.value,
+                        "raw_status": event.raw_status,
+                        "filled_qty": event.filled_qty,
+                        "unfilled_qty": event.unfilled_qty,
+                        "fill_price": event.fill_price,
+                    }
+                )
         elif sGubun == ChejanGubun.BALANCE.value:
             position = self._parse_balance_event(requested_fids)
             if not position:
@@ -117,6 +133,8 @@ class ChejanHandler:
             with self._state_lock:
                 self._positions[code] = position
             self._notify({"type": "balance", **position})
+            if self._safety_manager is not None:
+                self._safety_manager.on_chejan_event({"type": "balance", **position})
 
     @staticmethod
     def _parse_fid_list(s_fid_list: str) -> Set[int]:
