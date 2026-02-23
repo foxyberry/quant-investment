@@ -75,89 +75,72 @@ def _get_info(ticker: str) -> dict:
     with _info_cache_lock:
         if ticker in _info_cache:
             return _info_cache[ticker]
-
-    lock = _persistent_cache._get_key_lock("yf_info", ticker)
-    with lock:
-        # Double-check after acquiring lock
-        with _info_cache_lock:
-            if ticker in _info_cache:
-                return _info_cache[ticker]
-
-        cached = _persistent_cache.get("yf_info", ticker, INFO_TTL_SECONDS)
-        if cached is not None:
-            with _info_cache_lock:
-                _info_cache[ticker] = cached
-                _evict_cache(_info_cache, _INFO_CACHE_MAXSIZE)
-            return cached
-
-        info = yf.Ticker(ticker).info or {}
-        with _info_cache_lock:
-            _info_cache[ticker] = info
-            _evict_cache(_info_cache, _INFO_CACHE_MAXSIZE)
-        _persistent_cache.set("yf_info", ticker, info)
-        return info
+    payload = _persistent_cache.get_or_set(
+        "yf_info",
+        ticker,
+        INFO_TTL_SECONDS,
+        lambda: yf.Ticker(ticker).info or {},
+    )
+    with _info_cache_lock:
+        _info_cache[ticker] = payload or {}
+        _evict_cache(_info_cache, _INFO_CACHE_MAXSIZE)
+        return _info_cache[ticker]
 
 
 def _get_financial_statements(ticker: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Fetch and cache income/balance/cashflow statements for ticker.
-
-    Uses per-key locking to prevent thundering herd on the same ticker,
-    and a global cache lock to protect dict mutations during eviction.
+    Uses persistent cache dedupe to avoid thundering herd on cold start.
     """
     with _statement_cache_lock:
         if ticker in _statement_cache:
             return _statement_cache[ticker]
 
-    lock = _persistent_cache._get_key_lock("yf_statements", ticker)
-    with lock:
-        # Double-check after acquiring lock
-        with _statement_cache_lock:
-            if ticker in _statement_cache:
-                return _statement_cache[ticker]
-
-        cached = _persistent_cache.get("yf_statements", ticker, STATEMENT_TTL_SECONDS)
-        if cached is not None:
-            income_raw = cached.get("income_stmt")
-            balance_raw = cached.get("balance_sheet")
-            cashflow_raw = cached.get("cashflow")
-            if income_raw and balance_raw and cashflow_raw:
-                try:
-                    bundle = (
-                        _df_from_json_payload(income_raw),
-                        _df_from_json_payload(balance_raw),
-                        _df_from_json_payload(cashflow_raw),
-                    )
-                    with _statement_cache_lock:
-                        _statement_cache[ticker] = bundle
-                        _evict_cache(_statement_cache, _STATEMENT_CACHE_MAXSIZE)
-                    return bundle
-                except Exception:
-                    pass
-
+    def _load_payload() -> Dict[str, str]:
         t = yf.Ticker(ticker)
         income = t.income_stmt
         balance = t.balance_sheet
         cashflow = t.cashflow
 
-        bundle = (income, balance, cashflow)
-        with _statement_cache_lock:
-            _statement_cache[ticker] = bundle
-            _evict_cache(_statement_cache, _STATEMENT_CACHE_MAXSIZE)
-        try:
-            _persistent_cache.set(
-                "yf_statements",
-                ticker,
-                {
-                    "income_stmt": _df_to_json_payload(income),
-                    "balance_sheet": _df_to_json_payload(balance),
-                    "cashflow": _df_to_json_payload(cashflow),
-                },
-            )
-        except Exception:
-            # Non-critical: keep in-memory cache even if persistence fails.
-            pass
+        return {
+            "income_stmt": _df_to_json_payload(income),
+            "balance_sheet": _df_to_json_payload(balance),
+            "cashflow": _df_to_json_payload(cashflow),
+        }
 
-        return bundle
+    payload = _persistent_cache.get_or_set(
+        "yf_statements",
+        ticker,
+        STATEMENT_TTL_SECONDS,
+        _load_payload,
+    )
+    if payload is not None:
+        income_raw = payload.get("income_stmt")
+        balance_raw = payload.get("balance_sheet")
+        cashflow_raw = payload.get("cashflow")
+        if income_raw and balance_raw and cashflow_raw:
+            try:
+                bundle = (
+                    _df_from_json_payload(income_raw),
+                    _df_from_json_payload(balance_raw),
+                    _df_from_json_payload(cashflow_raw),
+                )
+                with _statement_cache_lock:
+                    _statement_cache[ticker] = bundle
+                    _evict_cache(_statement_cache, _STATEMENT_CACHE_MAXSIZE)
+                return bundle
+            except Exception:
+                pass
+
+    with _statement_cache_lock:
+        if ticker in _statement_cache:
+            return _statement_cache[ticker]
+
+    t = yf.Ticker(ticker)
+    bundle = (t.income_stmt, t.balance_sheet, t.cashflow)
+    with _statement_cache_lock:
+        _statement_cache[ticker] = bundle
+        _evict_cache(_statement_cache, _STATEMENT_CACHE_MAXSIZE)
+    return bundle
 
 
 def clear_info_cache(include_persistent: bool = False) -> None:

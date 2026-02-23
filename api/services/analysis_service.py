@@ -131,40 +131,40 @@ class AnalysisService:
         if ma_240 and ma_240 > 0:
             distance_pct = (current_price - ma_240) / ma_240 * 100
 
-        # Enrich technical and fundamental in parallel
-        technical = {}
-        fundamental = {}
-        name = None
-
-        def _enrich_technical():
+        def _load_technical() -> Dict[str, Any]:
             try:
                 return self.technical_enricher.enrich(ticker, data)
             except Exception as e:
                 logger.warning(f"Technical enrichment failed for {ticker}: {e}")
                 return {}
 
-        def _enrich_fundamental():
+        def _load_fundamental() -> Dict[str, Any]:
             try:
                 return self.fundamental_enricher.enrich(ticker)
             except Exception as e:
                 logger.warning(f"Fundamental enrichment failed for {ticker}: {e}")
                 return {}
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            tech_future = executor.submit(_enrich_technical)
-            fund_future = executor.submit(_enrich_fundamental)
-            technical = tech_future.result()
-            fundamental = fund_future.result()
-
-        name = fundamental.get("name") if fundamental else None
-
-        # Enrich with news (depends on name from fundamental)
-        news = None
-        if include_news:
+        def _load_news() -> Optional[Dict[str, Any]]:
+            if not include_news:
+                return None
             try:
-                news = self.news_enricher.enrich(ticker, name=name)
+                return self.news_enricher.enrich(ticker, name=None)
             except Exception as e:
                 logger.warning(f"News enrichment failed for {ticker}: {e}")
+                return None
+
+        max_workers = 3 if include_news else 2
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            technical_future = executor.submit(_load_technical)
+            fundamental_future = executor.submit(_load_fundamental)
+            news_future = executor.submit(_load_news) if include_news else None
+
+            technical = technical_future.result()
+            fundamental = fundamental_future.result()
+            news = news_future.result() if news_future else None
+
+        name = fundamental.get("name") if isinstance(fundamental, dict) else None
 
         return EnrichedStock(
             ticker=ticker,
