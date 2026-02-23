@@ -153,6 +153,7 @@ class SellSignal(BaseModel):
         trigger_price: Price that triggered the signal (optional)
         avg_price: Average purchase price
         pnl_pct: Current profit/loss percentage
+        currency: Holding currency code
     """
 
     ticker: str = Field(..., description="Stock ticker symbol")
@@ -167,6 +168,7 @@ class SellSignal(BaseModel):
     trigger_price: Optional[float] = Field(default=None, description="Trigger price")
     avg_price: float = Field(..., description="Average purchase price")
     pnl_pct: float = Field(..., description="Current profit/loss percentage")
+    currency: str = Field(..., description="Holding currency code")
 
 
 class PortfolioResponse(BaseModel):

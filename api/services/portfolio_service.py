@@ -23,6 +23,7 @@ from api.schemas.portfolio import (
     PortfolioSummary,
     SellSignal,
 )
+from api.services.exchange_rate_service import ExchangeRateService, get_exchange_rate_service
 
 # Import data cache for current price retrieval
 from utils.data_cache import OHLCVCache, get_cache
@@ -48,8 +49,26 @@ class PortfolioService:
     def __init__(self):
         self._lock = threading.RLock()
         self._cache = get_cache()
+        self._fx: ExchangeRateService = get_exchange_rate_service()
         self._price_cache: Dict[str, float] = {}
         self._price_cache_time: float = 0.0
+
+    @staticmethod
+    def _convert_to_base(
+        amount: float,
+        currency: str,
+        base_currency: str,
+        rates: Dict[str, float],
+    ) -> float:
+        """Convert an amount from currency to base_currency using rates(base->currency)."""
+        from_currency = (currency or base_currency).upper()
+        base = base_currency.upper()
+        if from_currency == base:
+            return amount
+        rate = rates.get(from_currency)
+        if rate is None or rate <= 0:
+            raise ValueError(f"Missing exchange rate for currency: {from_currency}")
+        return amount / rate
 
     @staticmethod
     def _row_to_dict(row: Holding) -> Dict[str, Any]:
@@ -355,7 +374,7 @@ class PortfolioService:
         finally:
             db.close()
 
-    def get_summary(self) -> PortfolioSummary:
+    def get_summary(self, base_currency: Optional[str] = None) -> PortfolioSummary:
         """
         Get portfolio summary with total P&L.
 
@@ -367,20 +386,39 @@ class PortfolioService:
         total_investment = 0.0
         total_market_value = 0.0
 
+        # Determine primary currency (most common) for default summary currency
+        currencies = [h.currency for h in holdings]
+        primary_currency = max(set(currencies), key=currencies.count) if currencies else "KRW"
+
+        target_currency = (base_currency or primary_currency).upper()
+        fx_rates: Dict[str, float] = {}
+        if base_currency:
+            fx_payload = self._fx.get_rates(base=target_currency)
+            fx_rates = fx_payload.get("rates", {})
+
         for h in holdings:
-            total_investment += h.cost_basis
-            if h.market_value is not None:
-                total_market_value += h.market_value
-            else:
-                # Use cost basis if market value unavailable
-                total_market_value += h.cost_basis
+            investment = h.cost_basis
+            market_value = h.market_value if h.market_value is not None else h.cost_basis
+
+            if base_currency:
+                investment = self._convert_to_base(
+                    amount=investment,
+                    currency=h.currency,
+                    base_currency=target_currency,
+                    rates=fx_rates,
+                )
+                market_value = self._convert_to_base(
+                    amount=market_value,
+                    currency=h.currency,
+                    base_currency=target_currency,
+                    rates=fx_rates,
+                )
+
+            total_investment += investment
+            total_market_value += market_value
 
         total_pnl = total_market_value - total_investment
         total_pnl_pct = (total_pnl / total_investment * 100) if total_investment > 0 else 0
-
-        # Determine primary currency (most common)
-        currencies = [h.currency for h in holdings]
-        primary_currency = max(set(currencies), key=currencies.count) if currencies else "KRW"
 
         return PortfolioSummary(
             total_investment=total_investment,
@@ -388,7 +426,7 @@ class PortfolioService:
             total_pnl=total_pnl,
             total_pnl_pct=total_pnl_pct,
             holdings_count=len(holdings),
-            currency=primary_currency,
+            currency=target_currency,
             last_updated=datetime.now()
         )
 
@@ -587,7 +625,8 @@ class PortfolioService:
                     current_price=h.current_price,
                     trigger_price=h.avg_price * (1 + stop_loss / 100),
                     avg_price=h.avg_price,
-                    pnl_pct=h.pnl_pct
+                    pnl_pct=h.pnl_pct,
+                    currency=h.currency,
                 )
 
             # Check take profit
@@ -600,7 +639,8 @@ class PortfolioService:
                     current_price=h.current_price,
                     trigger_price=h.avg_price * (1 + take_profit / 100),
                     avg_price=h.avg_price,
-                    pnl_pct=h.pnl_pct
+                    pnl_pct=h.pnl_pct,
+                    currency=h.currency,
                 )
 
             if signal:

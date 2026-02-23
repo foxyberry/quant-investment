@@ -372,7 +372,14 @@ async def remove_holding(ticker: str) -> None:
     summary="Get Portfolio Summary",
     description="Get aggregated portfolio summary with total P&L.",
 )
-async def get_summary() -> PortfolioSummary:
+async def get_summary(
+    base_currency: Optional[str] = Query(
+        default=None,
+        min_length=3,
+        max_length=3,
+        description="Convert summary totals into this base currency (e.g., USD, KRW, SGD)",
+    ),
+) -> PortfolioSummary:
     """
     Get portfolio summary.
 
@@ -385,8 +392,11 @@ async def get_summary() -> PortfolioSummary:
     service = get_portfolio_service()
 
     try:
-        return service.get_summary()
-
+        return service.get_summary(base_currency=base_currency)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to get portfolio summary: {e}", exc_info=True)
         raise HTTPException(
