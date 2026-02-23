@@ -39,6 +39,7 @@ class Order:
 
     order_no: str
     rq_name: str
+    api_rq_name: str
     screen_no: str
     acc_no: str
     order_type: int
@@ -56,6 +57,7 @@ class Order:
 @dataclass
 class _OrderTask:
     rq_name: str
+    api_rq_name: str
     screen_no: str
     acc_no: str
     order_type: int
@@ -88,6 +90,7 @@ class KiwoomOrderManager:
         self._queue: "queue.Queue[_OrderTask]" = queue.Queue()
         self._last_sent_at: float = 0.0
         self._counter = 0
+        self._rq_counter = 0
 
         self._worker = threading.Thread(target=self._worker_loop, daemon=True)
         self._worker.start()
@@ -140,6 +143,7 @@ class KiwoomOrderManager:
         result_holder: Dict[str, Any] = {}
         task = _OrderTask(
             rq_name=rq_name,
+            api_rq_name=self._next_api_rq_name(rq_name),
             screen_no=screen_no,
             acc_no=acc_no,
             order_type=order_type,
@@ -181,6 +185,10 @@ class KiwoomOrderManager:
         self._counter += 1
         return f"mock-{self._counter:08d}"
 
+    def _next_api_rq_name(self, rq_name: str) -> str:
+        self._rq_counter += 1
+        return f"{rq_name}#{self._rq_counter}"
+
     def _worker_loop(self) -> None:
         while True:
             task = self._queue.get()
@@ -192,7 +200,7 @@ class KiwoomOrderManager:
 
                 ret = self._ocx.dynamicCall(
                     "SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
-                    task.rq_name,
+                    task.api_rq_name,
                     task.screen_no,
                     task.acc_no,
                     task.order_type,
@@ -219,6 +227,7 @@ class KiwoomOrderManager:
                 order = Order(
                     order_no=order_no,
                     rq_name=task.rq_name,
+                    api_rq_name=task.api_rq_name,
                     screen_no=task.screen_no,
                     acc_no=task.acc_no,
                     order_type=task.order_type,
@@ -231,7 +240,7 @@ class KiwoomOrderManager:
                     sent_at=time.time(),
                 )
                 self.order_history[order_no] = order
-                self._order_by_rq_name[task.rq_name] = order_no
+                self._order_by_rq_name[task.api_rq_name] = order_no
                 task.result_holder["order_no"] = order_no
                 task.done_event.set()
             except Exception as exc:  # pragma: no cover

@@ -165,7 +165,51 @@ def test_on_receive_msg_updates_status_and_message() -> None:
     )
 
     manager.on_receive_msg("1001", "rq_msg", "SendOrder", "정상처리")
+    assert manager.order_history[order_no].status == "sent"
+
+    api_rq_name = manager.order_history[order_no].api_rq_name
+    manager.on_receive_msg("1001", api_rq_name, "SendOrder", "정상처리")
     assert manager.order_history[order_no].status == "accepted"
 
-    manager.on_receive_msg("1001", "rq_msg", "SendOrder", "주문 실패")
+    manager.on_receive_msg("1001", api_rq_name, "SendOrder", "주문 실패")
     assert manager.order_history[order_no].status == "rejected"
+
+
+def test_duplicate_base_rq_name_is_uniquified_for_api_calls() -> None:
+    ocx = _FakeOcx(return_value=0)
+    manager = KiwoomOrderManager(ocx, throttle_seconds=0.0)
+
+    first_no = manager.send_order(
+        rq_name="dup",
+        screen_no="1001",
+        acc_no="8123456789",
+        order_type=int(OrderType.NEW_BUY),
+        code="005930",
+        qty=1,
+        price=1000,
+        hoga_type=HogaType.LIMIT.value,
+        org_order_no="",
+    )
+    second_no = manager.send_order(
+        rq_name="dup",
+        screen_no="1001",
+        acc_no="8123456789",
+        order_type=int(OrderType.NEW_SELL),
+        code="005930",
+        qty=1,
+        price=1000,
+        hoga_type=HogaType.LIMIT.value,
+        org_order_no="",
+    )
+
+    send_calls = [call for call in ocx.calls if "SendOrder" in call[0]]
+    assert len(send_calls) == 2
+    assert send_calls[0][1][0] != send_calls[1][1][0]
+
+    first_api_rq = manager.order_history[first_no].api_rq_name
+    second_api_rq = manager.order_history[second_no].api_rq_name
+    assert first_api_rq != second_api_rq
+
+    manager.on_receive_msg("1001", second_api_rq, "SendOrder", "정상처리")
+    assert manager.order_history[second_no].status == "accepted"
+    assert manager.order_history[first_no].status == "sent"
