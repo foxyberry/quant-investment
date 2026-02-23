@@ -1,0 +1,23 @@
+team:frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'web/**'
+
+team:backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'api/**'
+
+team:quant:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'engine/**'
+          - 'discovery/**'
+          - 'screener/**'
+          - 'pipeline/**'
+          - 'data_enrichment/**'
+          - 'news/**'
+          - 'models/**'
+          - 'llm/**'
+          - 'kiwoom/**'
+          - 'portfolio/**'
