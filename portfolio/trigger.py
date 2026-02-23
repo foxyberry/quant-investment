@@ -348,3 +348,31 @@ class ConditionChecker:
             condition.last_triggered = None
             condition.trigger_count = 0
             condition.enabled = True
+
+
+class RealtimeTriggerBridge:
+    """실시간 가격 이벤트를 ConditionChecker로 연결하는 어댑터."""
+
+    def __init__(self, checker: ConditionChecker):
+        self._checker = checker
+        self._last_prices: Dict[str, float] = {}
+
+    def on_price_update(self, ticker: str, price: float) -> List[TriggerEvent]:
+        """단일 가격 업데이트 이벤트를 즉시 트리거 평가."""
+        self._last_prices[ticker] = float(price)
+        return self._checker.check({ticker: float(price)})
+
+    def on_realtime_event(self, event: Dict[str, Any]) -> List[TriggerEvent]:
+        """Kiwoom 실시간 이벤트(payload dict) 처리."""
+        code = str(event.get("code", "")).strip()
+        if not code:
+            return []
+        ticker = f"{code}.KS"
+        price = event.get("current_price")
+        if price is None:
+            return []
+        return self.on_price_update(ticker, float(price))
+
+    def bind_price_feed(self, subscribe_fn: Callable[[Callable[[Dict[str, Any]], None]], None]) -> None:
+        """외부 실시간 피드의 subscribe 함수와 연결."""
+        subscribe_fn(self.on_realtime_event)

@@ -330,6 +330,70 @@ class Portfolio:
 
         return "\n".join(lines)
 
+    def sync_from_kiwoom_balance_event(self, event: Dict[str, Any]) -> None:
+        """Chejan 잔고 이벤트( sGubun == '1' )로 보유 종목 동기화."""
+        if event.get("type") != "balance":
+            return
+
+        code = str(event.get("code", "")).strip()
+        if not code:
+            return
+
+        ticker = f"{code}.KS"
+        quantity = int(event.get("holding_qty", 0))
+        avg_price = float(event.get("avg_buy_price", 0))
+
+        if quantity <= 0:
+            if ticker in self._holdings:
+                del self._holdings[ticker]
+                self._save()
+            return
+
+        holding = self._holdings.get(ticker)
+        if holding is None:
+            self._holdings[ticker] = Holding(
+                ticker=ticker,
+                name=ticker,
+                quantity=quantity,
+                avg_price=avg_price,
+                bought_at=date.today(),
+                transactions=[],
+            )
+        else:
+            holding.quantity = quantity
+            holding.avg_price = avg_price
+        self._save()
+
+    def bind_chejan_handler(self, chejan_handler: Any) -> None:
+        """ChejanHandler 옵저버로 등록해 잔고 이벤트를 실시간 반영."""
+        chejan_handler.add_observer(self.sync_from_kiwoom_balance_event)
+
+    def sync_from_opw00018(self, rows: List[Dict[str, Any]]) -> int:
+        """OPW00018 TR 결과로 전체 보유 종목을 수동 동기화."""
+        updated: Dict[str, Holding] = {}
+        for row in rows:
+            code = str(row.get("code", "")).strip()
+            if not code:
+                continue
+            ticker = f"{code}.KS"
+            quantity = int(row.get("holding_qty", 0))
+            if quantity <= 0:
+                continue
+            avg_price = float(row.get("avg_buy_price", 0))
+            name = str(row.get("name") or ticker)
+            updated[ticker] = Holding(
+                ticker=ticker,
+                name=name,
+                quantity=quantity,
+                avg_price=avg_price,
+                bought_at=date.today(),
+                transactions=[],
+            )
+
+        self._holdings = updated
+        self._save()
+        return len(updated)
+
     def __contains__(self, ticker: str) -> bool:
         return ticker in self._holdings
 

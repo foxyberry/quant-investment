@@ -22,6 +22,12 @@ from datetime import datetime
 from enum import Enum
 import uuid
 
+from kiwoom.chejan_handler import ChejanHandler
+from kiwoom.constants import HogaType as KiwoomHogaType
+from kiwoom.constants import OrderType as KiwoomOrderType
+from kiwoom.order import KiwoomOrderManager
+from portfolio.risk import RiskManager, create_default_risk_manager
+
 
 class OrderSide(Enum):
     """주문 방향"""
@@ -300,6 +306,184 @@ class PaperExecutor(BaseExecutor):
         self._results.clear()
         self._positions.clear()
         self._trade_log.clear()
+
+
+class KiwoomExecutor(BaseExecutor):
+    """Kiwoom 기반 실거래/모의거래 주문 실행기."""
+
+    def __init__(
+        self,
+        ocx: Any,
+        acc_no: str,
+        risk_manager: Optional[RiskManager] = None,
+        order_manager: Optional[KiwoomOrderManager] = None,
+        chejan_handler: Optional[ChejanHandler] = None,
+        initial_cash_balance: float = 10000000.0,
+    ) -> None:
+        self.logger = logging.getLogger(__name__)
+        self._ocx = ocx
+        self._acc_no = acc_no
+        self._risk_manager = risk_manager or create_default_risk_manager()
+        self._order_manager = order_manager or KiwoomOrderManager(ocx)
+        self._chejan_handler = chejan_handler or ChejanHandler(
+            ocx,
+            order_manager=self._order_manager,
+        )
+        self._cash_balance = float(initial_cash_balance)
+        self._daily_pnl = 0.0
+        self._daily_trades = 0
+        self._positions_cache: Dict[str, Dict[str, Any]] = {}
+        self._client_to_broker_order: Dict[str, str] = {}
+        self._submitted_orders: Dict[str, Order] = {}
+
+        self._chejan_handler.add_observer(self._on_chejan_event)
+
+    @staticmethod
+    def _to_kiwoom_code(ticker: str) -> str:
+        code = ticker.strip().upper()
+        if "." in code:
+            code = code.split(".")[0]
+        if code.startswith("A") and len(code) > 1:
+            code = code[1:]
+        return code
+
+    def _on_chejan_event(self, event: Dict[str, Any]) -> None:
+        if event.get("type") == "balance":
+            code = str(event.get("code", "")).strip()
+            if not code:
+                return
+            self._positions_cache[code] = {
+                "quantity": int(event.get("holding_qty", 0)),
+                "avg_price": float(event.get("avg_buy_price", 0)),
+            }
+
+    def _risk_check(self, order: Order, code: str, price: float) -> Optional[str]:
+        result = self._risk_manager.validate_order(
+            ticker=code,
+            side=order.side.upper(),
+            quantity=order.quantity,
+            price=price,
+            portfolio_value=self._cash_balance + sum(
+                float(v.get("quantity", 0)) * float(v.get("avg_price", 0))
+                for v in self._positions_cache.values()
+            ),
+            cash_balance=self._cash_balance,
+            positions=self._positions_cache,
+            daily_pnl=self._daily_pnl,
+            daily_trades=self._daily_trades,
+        )
+        if result.allowed:
+            return None
+        return "; ".join(v.message for v in result.violations) or "Risk rule violation"
+
+    def execute(self, order: Order) -> OrderResult:
+        code = self._to_kiwoom_code(order.ticker)
+        is_buy = order.side.upper() == "BUY"
+        kiwoom_order_type = int(KiwoomOrderType.NEW_BUY if is_buy else KiwoomOrderType.NEW_SELL)
+        is_market = order.order_type.upper() == OrderType.MARKET.value
+        hoga = KiwoomHogaType.MARKET.value if is_market else KiwoomHogaType.LIMIT.value
+        price = 0 if is_market else int(order.price or 0)
+
+        risk_error = self._risk_check(order, code, float(price))
+        if risk_error:
+            return OrderResult(
+                order_id=order.order_id or "",
+                success=False,
+                status=OrderStatus.REJECTED.value,
+                message=risk_error,
+                simulated=False,
+            )
+
+        try:
+            broker_order_no = self._order_manager.send_order(
+                rq_name=f"order_{order.order_id}",
+                screen_no="2001",
+                acc_no=self._acc_no,
+                order_type=kiwoom_order_type,
+                code=code,
+                qty=int(order.quantity),
+                price=price,
+                hoga_type=hoga,
+                org_order_no="",
+            )
+        except Exception as exc:
+            return OrderResult(
+                order_id=order.order_id or "",
+                success=False,
+                status=OrderStatus.REJECTED.value,
+                message=str(exc),
+                simulated=False,
+            )
+
+        self._client_to_broker_order[order.order_id or ""] = broker_order_no
+        self._submitted_orders[order.order_id or ""] = order
+        self._daily_trades += 1
+
+        return OrderResult(
+            order_id=order.order_id or "",
+            success=True,
+            status=OrderStatus.PENDING.value,
+            message=f"Sent to Kiwoom (order_no={broker_order_no})",
+            simulated=False,
+        )
+
+    def cancel(self, order_id: str) -> bool:
+        broker_order_no = self._client_to_broker_order.get(order_id)
+        original = self._submitted_orders.get(order_id)
+        if not broker_order_no or not original:
+            return False
+
+        code = self._to_kiwoom_code(original.ticker)
+        is_buy = original.side.upper() == "BUY"
+        cancel_type = int(KiwoomOrderType.CANCEL_BUY if is_buy else KiwoomOrderType.CANCEL_SELL)
+
+        try:
+            _ = self._order_manager.send_order(
+                rq_name=f"cancel_{order_id}",
+                screen_no="2001",
+                acc_no=self._acc_no,
+                order_type=cancel_type,
+                code=code,
+                qty=int(original.quantity),
+                price=0,
+                hoga_type=KiwoomHogaType.LIMIT.value,
+                org_order_no=broker_order_no,
+            )
+            return True
+        except Exception:
+            return False
+
+    def get_order_status(self, order_id: str) -> Optional[OrderResult]:
+        broker_order_no = self._client_to_broker_order.get(order_id)
+        if not broker_order_no:
+            return None
+
+        chejan_status = self._chejan_handler.get_order_status(broker_order_no)
+        if chejan_status is None:
+            return OrderResult(
+                order_id=order_id,
+                success=True,
+                status=OrderStatus.PENDING.value,
+                message="Waiting Chejan confirmation",
+                simulated=False,
+            )
+
+        mapped = {
+            "PLACED": OrderStatus.PENDING.value,
+            "CONFIRMED": OrderStatus.PENDING.value,
+            "PARTIAL": OrderStatus.PARTIAL.value,
+            "FILLED": OrderStatus.FILLED.value,
+            "CANCELLED": OrderStatus.CANCELLED.value,
+            "REJECTED": OrderStatus.REJECTED.value,
+        }.get(chejan_status.value, OrderStatus.PENDING.value)
+
+        return OrderResult(
+            order_id=order_id,
+            success=mapped not in {OrderStatus.REJECTED.value},
+            status=mapped,
+            message=f"Chejan status: {chejan_status.value}",
+            simulated=False,
+        )
 
 
 class OrderExecutor:
