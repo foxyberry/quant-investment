@@ -233,6 +233,89 @@ class PriceChangeCondition(BaseCondition):
 
 
 @register_condition(
+    key="return_turnaround",
+    label="Return Turnaround",
+    description="Previous N-day return <= threshold and recent N-day return >= threshold",
+    category="price",
+    params=[
+        {"name": "period_days", "type": "int", "default": 5, "description": "Return period (days)"},
+        {"name": "prev_max_return_pct", "type": "float", "default": -2.0, "description": "Max previous return %"},
+        {"name": "min_return_pct", "type": "float", "default": 2.0, "description": "Min recent return %"},
+    ],
+)
+class ReturnTurnaroundCondition(BaseCondition):
+    """이전 구간 약세 -> 최근 구간 반등 전환 조건"""
+
+    def __init__(
+        self,
+        period_days: int = 5,
+        prev_max_return_pct: float = -2.0,
+        min_return_pct: float = 2.0,
+    ):
+        self.period_days = max(1, period_days)
+        self.prev_max_return_pct = prev_max_return_pct
+        self.min_return_pct = min_return_pct
+
+    @property
+    def name(self) -> str:
+        return f"return_turnaround_{self.period_days}d"
+
+    @property
+    def required_days(self) -> int:
+        return (self.period_days * 2) + 10
+
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        if len(data) < (self.period_days * 2 + 1):
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Insufficient data"},
+            )
+
+        current_price = data["close"].iloc[-1]
+        boundary_price = data["close"].iloc[-(self.period_days + 1)]
+        prev_price = data["close"].iloc[-(self.period_days * 2 + 1)]
+
+        if boundary_price <= 0 or prev_price <= 0:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Invalid price data for return calculation"},
+            )
+
+        recent_return_pct = (current_price - boundary_price) / boundary_price * 100
+        prev_return_pct = (boundary_price - prev_price) / prev_price * 100
+
+        matched = (
+            prev_return_pct <= self.prev_max_return_pct
+            and recent_return_pct >= self.min_return_pct
+        )
+
+        return ConditionResult(
+            matched=matched,
+            condition_name=self.name,
+            details={
+                "current_price": float(current_price),
+                "boundary_price": float(boundary_price),
+                "prev_price": float(prev_price),
+                "recent_return_pct": round(float(recent_return_pct), 3),
+                "prev_return_pct": round(float(prev_return_pct), 3),
+                "period_days": self.period_days,
+                "prev_max_return_pct": self.prev_max_return_pct,
+                "min_return_pct": self.min_return_pct,
+            },
+        )
+
+    def __repr__(self) -> str:
+        return (
+            "ReturnTurnaroundCondition("
+            f"period_days={self.period_days}, "
+            f"prev_max_return_pct={self.prev_max_return_pct}, "
+            f"min_return_pct={self.min_return_pct})"
+        )
+
+
+@register_condition(
     key="drawdown_from_high",
     label="Drawdown From N-day High",
     description="Drop % from N-day rolling high",

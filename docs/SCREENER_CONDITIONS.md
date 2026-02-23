@@ -7,7 +7,7 @@ This document describes the condition-based stock screening architecture used in
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Available Condition Classes (28)](#available-condition-classes-28)
+2. [Available Condition Classes (29)](#available-condition-classes-29)
 3. [Combining Conditions](#combining-conditions)
 4. [Adding New Conditions](#adding-new-conditions)
 5. [Parameter Configuration Examples](#parameter-configuration-examples)
@@ -28,9 +28,9 @@ The screener module uses a **condition-based architecture** where each screening
 
 ---
 
-## Available Condition Classes (28)
+## Available Condition Classes (29)
 
-### Price Conditions (price.py - 4)
+### Price Conditions (price.py - 5)
 
 | Condition | Description | Key Parameters |
 |-----------|-------------|----------------|
@@ -38,6 +38,7 @@ The screener module uses a **condition-based architecture** where each screening
 | `MaxPriceCondition` | Maximum stock price | `max_price` |
 | `PriceRangeCondition` | Price within range | `min_price`, `max_price` |
 | `PriceChangeCondition` | Price change percentage | `min_change_pct`, `max_change_pct`, `days` |
+| `ReturnTurnaroundCondition` | Return reversal between previous/recent windows | `period_days`, `prev_max_return_pct`, `min_return_pct` |
 
 ### Volume Conditions (volume.py - 3)
 
@@ -225,6 +226,7 @@ MinPriceCondition(min_price=5000)
 MaxPriceCondition(max_price=100000)
 PriceRangeCondition(min_price=5000, max_price=50000)
 PriceChangeCondition(min_change_pct=-5.0, max_change_pct=5.0, days=5)
+ReturnTurnaroundCondition(period_days=5, prev_max_return_pct=-2.0, min_return_pct=2.0)
 ```
 
 ### Volume Conditions
@@ -355,7 +357,7 @@ screener/
 ├── conditions/
 │   ├── __init__.py        # Exports all conditions
 │   ├── base.py            # BaseCondition, ConditionResult, ConditionError
-│   ├── price.py           # Price conditions (4)
+│   ├── price.py           # Price conditions (5)
 │   ├── volume.py          # Volume conditions (3)
 │   ├── ma.py              # Moving average conditions (5)
 │   ├── rsi.py             # RSI conditions (3)

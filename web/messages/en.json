@@ -454,6 +454,16 @@
       },
       "help": "Finds stocks that rose or fell by a certain % over recent days."
     },
+    "return_turnaround": {
+      "label": "Return Turnaround",
+      "desc": "Prev N-day return <= threshold and recent N-day return >= threshold",
+      "params": {
+        "period_days": "Period (days)",
+        "prev_max_return_pct": "Prev max return %",
+        "min_return_pct": "Min recent return %"
+      },
+      "help": "Finds reversal setups where prior returns were weak, then recent returns turned positive."
+    },
     "min_volume": {
       "label": "Min Volume",
       "desc": "Volume >= threshold",

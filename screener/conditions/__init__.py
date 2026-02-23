@@ -38,6 +38,7 @@ from .price import (
     MaxPriceCondition,
     PriceRangeCondition,
     PriceChangeCondition,
+    ReturnTurnaroundCondition,
     DrawdownFromHighCondition,
 )
 
@@ -117,6 +118,7 @@ __all__ = [
 
     # Price
     'MinPriceCondition', 'MaxPriceCondition', 'PriceRangeCondition', 'PriceChangeCondition',
+    'ReturnTurnaroundCondition',
     'DrawdownFromHighCondition',
 
     # Volume

@@ -454,6 +454,16 @@
       },
       "help": "최근 며칠간 일정 비율 이상 오르거나 내린 주식을 찾습니다."
     },
+    "return_turnaround": {
+      "label": "수익률 전환",
+      "desc": "직전 N일 수익률 <= 기준, 최근 N일 수익률 >= 기준",
+      "params": {
+        "period_days": "기간 (일)",
+        "prev_max_return_pct": "직전 최대 수익률 %",
+        "min_return_pct": "최근 최소 수익률 %"
+      },
+      "help": "직전 구간 약세 후 최근 구간에서 반등 전환한 종목을 찾습니다."
+    },
     "min_volume": {
       "label": "최소 거래량",
       "desc": "거래량 >= 기준값",
