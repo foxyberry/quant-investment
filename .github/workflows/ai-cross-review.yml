@@ -1,0 +1,102 @@
+name: AI Cross Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+    branches: [main]
+
+concurrency:
+  group: ai-review-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # impl:codex label → Claude reviews Codex's code
+  claude-reviews-codex:
+    name: Claude reviews Codex code
+    if: contains(github.event.pull_request.labels.*.name, 'impl:codex')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this PR as a senior engineer. This code was written by Codex.
+
+            Focus on:
+            1. Logic errors or edge case omissions
+            2. Regression risks against existing features
+            3. Type safety and error handling
+            4. Performance implications
+            5. Security vulnerabilities
+
+            Be concise and specific. Post inline comments on problematic lines.
+            If no issues found, comment "LGTM".
+          claude_args: "--max-turns 5 --model claude-sonnet-4-6"
+
+  # impl:claude label → Codex reviews Claude's code
+  codex-reviews-claude:
+    name: Codex reviews Claude code
+    if: contains(github.event.pull_request.labels.*.name, 'impl:claude')
+    runs-on: ubuntu-latest
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+
+      - name: Pre-fetch base and head refs
+        run: |
+          git fetch --no-tags origin \
+            ${{ github.event.pull_request.base.ref }} \
+            +refs/pull/${{ github.event.pull_request.number }}/head
+
+      - name: Run Codex Review
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: |
+            This is PR #${{ github.event.pull_request.number }} for ${{ github.repository }}.
+            Review ONLY the changes in this PR. This code was written by Claude.
+
+            Inspect the diff:
+              git log --oneline ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}
+
+            Focus on:
+            1. Logic errors and edge cases
+            2. Bug potential and regression risks
+            3. Type safety
+            4. Performance issues
+            5. Security vulnerabilities
+
+            Be concise and specific in your feedback.
+            If no issues found, say "LGTM".
+
+  post-codex-feedback:
+    name: Post Codex feedback
+    runs-on: ubuntu-latest
+    needs: codex-reviews-claude
+    if: needs.codex-reviews-claude.outputs.final_message != ''
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        env:
+          CODEX_FINAL_MESSAGE: ${{ needs.codex-reviews-claude.outputs.final_message }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## Codex Review\n\n${process.env.CODEX_FINAL_MESSAGE}`,
+            });
