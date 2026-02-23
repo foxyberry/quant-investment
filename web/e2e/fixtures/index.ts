@@ -35,12 +35,13 @@ const MOCK_PORTFOLIO_SUMMARY = {
 };
 
 async function installApiMocks(page: Page) {
+  // Health endpoint is outside /api/ path, so it needs a separate route
+  await page.route('**/health', async (route) => {
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'ok' }) });
+  });
+
   await page.route('**/api/**', async (route) => {
     const url = route.request().url();
-
-    if (url.includes('/health')) {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'ok' }) });
-    }
     if (url.includes('/api/portfolio/holdings')) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_HOLDINGS) });
     }
