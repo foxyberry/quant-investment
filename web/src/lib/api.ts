@@ -276,6 +276,11 @@ function normalizeKiwoomStatus(raw: Record<string, unknown>): KiwoomConnectionSt
   const accountsRaw = raw.accounts;
   const accounts = Array.isArray(accountsRaw)
     ? accountsRaw.filter((v): v is string => typeof v === 'string')
+    : typeof accountsRaw === 'string'
+    ? accountsRaw
+        .split(';')
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0)
     : [];
 
   return {
@@ -310,7 +315,11 @@ export async function getKiwoomConnectionStatus(): Promise<KiwoomConnectionStatu
       };
     }
     const raw = (await response.json()) as Record<string, unknown>;
-    return normalizeKiwoomStatus(raw);
+    const payload =
+      raw.data && typeof raw.data === 'object'
+        ? (raw.data as Record<string, unknown>)
+        : raw;
+    return normalizeKiwoomStatus(payload);
   } catch {
     return {
       status: 'unavailable',
