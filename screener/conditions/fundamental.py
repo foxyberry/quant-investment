@@ -17,6 +17,7 @@ Usage:
     )
 """
 
+import threading
 from io import StringIO
 from typing import Any, Dict, Optional, Tuple
 
@@ -33,6 +34,8 @@ from .registry import register_condition
 
 _info_cache: Dict[str, Dict[str, Any]] = {}
 _statement_cache: Dict[str, Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]] = {}
+_info_cache_lock = threading.Lock()
+_statement_cache_lock = threading.Lock()
 _persistent_cache = FundamentalCache()
 
 INFO_TTL_SECONDS = 24 * 60 * 60
@@ -44,7 +47,10 @@ _EVICTION_BATCH = 100
 
 
 def _evict_cache(cache: dict, maxsize: int, batch: int = _EVICTION_BATCH) -> None:
-    """Remove oldest entries (FIFO) when cache exceeds maxsize."""
+    """Remove oldest entries (FIFO) when cache exceeds maxsize.
+
+    Caller MUST hold the corresponding cache lock before calling this function.
+    """
     if len(cache) > maxsize:
         keys_to_remove = list(cache.keys())[:batch]
         for key in keys_to_remove:
@@ -63,42 +69,50 @@ def _get_info(ticker: str) -> dict:
     """Fetch and cache the yfinance info dict for *ticker*.
 
     Returns an empty dict when the API call yields ``None``.
-    Uses per-key locking to prevent thundering herd on the same ticker.
+    Uses per-key locking to prevent thundering herd on the same ticker,
+    and a global cache lock to protect dict mutations during eviction.
     """
-    if ticker in _info_cache:
-        return _info_cache[ticker]
+    with _info_cache_lock:
+        if ticker in _info_cache:
+            return _info_cache[ticker]
 
     lock = _persistent_cache._get_key_lock("yf_info", ticker)
     with lock:
         # Double-check after acquiring lock
-        if ticker in _info_cache:
-            return _info_cache[ticker]
+        with _info_cache_lock:
+            if ticker in _info_cache:
+                return _info_cache[ticker]
 
         cached = _persistent_cache.get("yf_info", ticker, INFO_TTL_SECONDS)
         if cached is not None:
-            _info_cache[ticker] = cached
-            return _info_cache[ticker]
+            with _info_cache_lock:
+                _info_cache[ticker] = cached
+                return _info_cache[ticker]
 
         info = yf.Ticker(ticker).info or {}
-        _info_cache[ticker] = info
-        _evict_cache(_info_cache, _INFO_CACHE_MAXSIZE)
+        with _info_cache_lock:
+            _info_cache[ticker] = info
+            _evict_cache(_info_cache, _INFO_CACHE_MAXSIZE)
         _persistent_cache.set("yf_info", ticker, info)
-        return _info_cache[ticker]
+        return info
 
 
 def _get_financial_statements(ticker: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Fetch and cache income/balance/cashflow statements for ticker.
 
-    Uses per-key locking to prevent thundering herd on the same ticker.
+    Uses per-key locking to prevent thundering herd on the same ticker,
+    and a global cache lock to protect dict mutations during eviction.
     """
-    if ticker in _statement_cache:
-        return _statement_cache[ticker]
+    with _statement_cache_lock:
+        if ticker in _statement_cache:
+            return _statement_cache[ticker]
 
     lock = _persistent_cache._get_key_lock("yf_statements", ticker)
     with lock:
         # Double-check after acquiring lock
-        if ticker in _statement_cache:
-            return _statement_cache[ticker]
+        with _statement_cache_lock:
+            if ticker in _statement_cache:
+                return _statement_cache[ticker]
 
         cached = _persistent_cache.get("yf_statements", ticker, STATEMENT_TTL_SECONDS)
         if cached is not None:
@@ -112,7 +126,8 @@ def _get_financial_statements(ticker: str) -> Tuple[pd.DataFrame, pd.DataFrame, 
                         _df_from_json_payload(balance_raw),
                         _df_from_json_payload(cashflow_raw),
                     )
-                    _statement_cache[ticker] = bundle
+                    with _statement_cache_lock:
+                        _statement_cache[ticker] = bundle
                     return bundle
                 except Exception:
                     pass
@@ -122,8 +137,10 @@ def _get_financial_statements(ticker: str) -> Tuple[pd.DataFrame, pd.DataFrame, 
         balance = t.balance_sheet
         cashflow = t.cashflow
 
-        _statement_cache[ticker] = (income, balance, cashflow)
-        _evict_cache(_statement_cache, _STATEMENT_CACHE_MAXSIZE)
+        bundle = (income, balance, cashflow)
+        with _statement_cache_lock:
+            _statement_cache[ticker] = bundle
+            _evict_cache(_statement_cache, _STATEMENT_CACHE_MAXSIZE)
         try:
             _persistent_cache.set(
                 "yf_statements",
@@ -138,7 +155,7 @@ def _get_financial_statements(ticker: str) -> Tuple[pd.DataFrame, pd.DataFrame, 
             # Non-critical: keep in-memory cache even if persistence fails.
             pass
 
-        return _statement_cache[ticker]
+        return bundle
 
 
 def clear_info_cache(include_persistent: bool = False) -> None:
@@ -148,8 +165,10 @@ def clear_info_cache(include_persistent: bool = False) -> None:
         include_persistent: When True, also clear on-disk persistent cache
             for yfinance info/statements.
     """
-    _info_cache.clear()
-    _statement_cache.clear()
+    with _info_cache_lock:
+        _info_cache.clear()
+    with _statement_cache_lock:
+        _statement_cache.clear()
     if include_persistent:
         _persistent_cache.clear(namespace="yf_info")
         _persistent_cache.clear(namespace="yf_statements")

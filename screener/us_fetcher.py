@@ -266,11 +266,38 @@ class UsStockFetcher:
                         logger.info(f"NASDAQ 100에서 {len(symbols)}개 종목 수집")
                         return symbols
 
-            return []
+            logger.warning("Wikipedia에서 NASDAQ 100 테이블을 찾지 못함")
+            return self._fetch_nasdaq100_fallback()
 
         except Exception as e:
             logger.warning(f"NASDAQ 100 조회 실패: {e}")
-            return []
+            return self._fetch_nasdaq100_fallback()
+
+    def _fetch_nasdaq100_fallback(self) -> List[Dict]:
+        """NASDAQ 100 대체 방법: 마스터 파일 또는 주요 종목 하드코딩"""
+        master_path = Path(self.MASTER_FILE)
+
+        if master_path.exists():
+            try:
+                df = pd.read_csv(master_path)
+                symbols = []
+
+                for _, row in df.iterrows():
+                    symbols.append({
+                        'symbol': row['symbol'],
+                        'name': row.get('name', row['symbol']),
+                        'sector': row.get('sector', '')
+                    })
+
+                if symbols:
+                    logger.info(f"마스터 파일에서 NASDAQ100 {len(symbols)}개 종목 로드")
+                    return symbols
+
+            except Exception as e:
+                logger.warning(f"NASDAQ100 마스터 파일 로드 실패: {e}")
+
+        logger.info("NASDAQ100 기본 주요 종목 리스트 사용")
+        return self._get_major_stocks()
 
     def _load_nasdaq100_cache(self) -> Optional[List[Dict]]:
         """NASDAQ100 캐시 파일에서 로드"""

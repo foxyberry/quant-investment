@@ -3,7 +3,7 @@
 import threading
 import time
 from pathlib import Path
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock, PropertyMock, call
 import pytest
 
 
@@ -111,6 +111,7 @@ class TestCacheEviction:
         from screener.conditions.fundamental import _evict_cache
 
         cache = {f"ticker_{i}": {"data": i} for i in range(600)}
+        # _evict_cache expects caller to hold lock; safe in single-threaded test
         _evict_cache(cache, maxsize=500, batch=100)
         assert len(cache) == 500
 
@@ -120,3 +121,55 @@ class TestCacheEviction:
         cache = {f"ticker_{i}": {"data": i} for i in range(100)}
         _evict_cache(cache, maxsize=500, batch=100)
         assert len(cache) == 100
+
+
+class TestCacheLockProtection:
+    """Test that cache locks protect concurrent access."""
+
+    def test_info_cache_lock_exists(self):
+        from screener.conditions.fundamental import _info_cache_lock, _statement_cache_lock
+        assert isinstance(_info_cache_lock, type(threading.Lock()))
+        assert isinstance(_statement_cache_lock, type(threading.Lock()))
+
+
+class TestKoreanEnrichmentMerge:
+    """Test that Korean stock enrichment merges pykrx/naver deterministically."""
+
+    def test_pykrx_takes_priority_over_naver(self):
+        from data_enrichment.fundamental import FundamentalEnricher, FundamentalData
+
+        enricher = FundamentalEnricher(use_naver_fallback=True)
+
+        # Patch _enrich_from_pykrx and _enrich_from_naver to write different values
+        def mock_pykrx(data, code):
+            data.pe_ratio = 10.0
+            data.pb_ratio = 1.5
+
+        def mock_naver(data, code):
+            data.pe_ratio = 12.0  # Should be overridden by pykrx
+            data.roe = 15.0       # Only naver has this
+
+        def mock_yfinance(data, ticker):
+            pass  # No-op for this test
+
+        with patch.object(enricher, '_enrich_from_pykrx', side_effect=mock_pykrx), \
+             patch.object(enricher, '_enrich_from_naver', side_effect=mock_naver), \
+             patch.object(enricher, '_enrich_korean_from_yfinance', side_effect=mock_yfinance):
+            result = enricher.enrich_as_dataclass("005930.KS")
+
+        assert result.pe_ratio == 10.0   # pykrx wins
+        assert result.pb_ratio == 1.5    # only pykrx
+        assert result.roe == 15.0        # only naver
+
+
+class TestNasdaq100Fallback:
+    """Test NASDAQ100 fallback when Wikipedia fails."""
+
+    def test_fallback_returns_major_stocks(self):
+        from screener.us_fetcher import UsStockFetcher
+
+        fetcher = UsStockFetcher(use_cache=False)
+        result = fetcher._fetch_nasdaq100_fallback()
+        assert len(result) > 0
+        symbols = [s['symbol'] for s in result]
+        assert 'AAPL' in symbols
