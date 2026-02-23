@@ -30,7 +30,7 @@ router = APIRouter(prefix="/api/screening", tags=["Screening"])
     summary="Get Available Presets",
     description="Get list of available screening presets with their descriptions and conditions.",
 )
-async def get_presets() -> List[PresetInfo]:
+def get_presets() -> List[PresetInfo]:
     """
     Get available screening presets.
 
@@ -50,7 +50,7 @@ async def get_presets() -> List[PresetInfo]:
     summary="Get Available Universes",
     description="Get list of available stock universes (KOSPI, KOSDAQ, SP500, etc.).",
 )
-async def get_universes() -> List[UniverseInfo]:
+def get_universes() -> List[UniverseInfo]:
     """
     Get available stock universes.
 
@@ -71,7 +71,7 @@ async def get_universes() -> List[UniverseInfo]:
     description="Run stock screening with the specified preset and universe. "
                 "This operation may take several minutes depending on the universe size.",
 )
-async def run_screening(request: ScreeningRequest) -> ScreeningResponse:
+def run_screening(request: ScreeningRequest) -> ScreeningResponse:
     """
     Run stock screening.
 
@@ -122,7 +122,7 @@ async def run_screening(request: ScreeningRequest) -> ScreeningResponse:
     summary="Check Single Stock",
     description="Check a single stock against screening conditions.",
 )
-async def check_single_stock(
+def check_single_stock(
     ticker: str,
     preset: str = Query(
         default="accumulation_basic",
@@ -172,7 +172,7 @@ async def check_single_stock(
     summary="Check Single Stock with Params",
     description="Check a single stock against screening conditions with custom parameters.",
 )
-async def check_single_stock_with_params(
+def check_single_stock_with_params(
     ticker: str,
     request: SingleStockRequest,
 ) -> ScreeningResultItem:

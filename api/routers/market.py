@@ -34,7 +34,7 @@ _service = MarketService()
     summary="Get Current Quote",
     description="Retrieve current price quote for a stock ticker.",
 )
-async def get_quote(ticker: str) -> QuoteResponse:
+def get_quote(ticker: str) -> QuoteResponse:
     """
     Get current quote for a ticker.
 
@@ -64,7 +64,7 @@ async def get_quote(ticker: str) -> QuoteResponse:
     summary="Get OHLCV Data",
     description="Retrieve historical OHLCV (Open-High-Low-Close-Volume) data.",
 )
-async def get_ohlcv(
+def get_ohlcv(
     ticker: str,
     days: Annotated[
         int,
@@ -105,7 +105,7 @@ async def get_ohlcv(
     summary="Get Technical Indicators",
     description="Calculate technical indicators for a stock ticker.",
 )
-async def get_technical_indicators(ticker: str) -> TechnicalIndicators:
+def get_technical_indicators(ticker: str) -> TechnicalIndicators:
     """
     Get technical indicators for a ticker.
 
