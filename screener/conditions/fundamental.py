@@ -13,7 +13,7 @@ Usage:
         DividendYieldCondition, EarningsYieldCondition, EbitEvCondition,
         FcfYieldCondition, PegRatioCondition, DebtToEquityCondition,
         CurrentRatioCondition, RoeCondition, PiotroskiFScoreCondition,
-        AltmanZScoreCondition, RoicCondition, clear_info_cache,
+        AltmanZScoreCondition, RoicCondition, DsoTrendFilterCondition, clear_info_cache,
     )
 """
 
@@ -1547,3 +1547,122 @@ class RoicCondition(BaseCondition):
 
     def __repr__(self) -> str:
         return f"RoicCondition(min_roic={self.min_roic}%, max_roic={self.max_roic}%)"
+
+
+# ===================================================================
+# 16. DsoTrendFilterCondition
+# ===================================================================
+
+@register_condition(
+    key="dso_trend_filter",
+    label="DSO Trend Filter",
+    description="Days Sales Outstanding deterioration trend filter",
+    category="Fundamental",
+    params=[
+        {"name": "lookback_years", "type": "int", "default": 1, "description": "Lookback years"},
+        {"name": "min_dso_increase_pct", "type": "float", "default": 5.0, "description": "Min DSO increase %"},
+    ],
+)
+class DsoTrendFilterCondition(BaseCondition):
+    """Filter for deteriorating receivables collection period (DSO trend).
+
+    DSO = (Accounts Receivable / Revenue) * 365
+
+    The condition matches when DSO increased by at least ``min_dso_increase_pct``
+    between the most recent year and ``lookback_years`` years ago.
+    """
+
+    def __init__(
+        self,
+        lookback_years: int = 1,
+        min_dso_increase_pct: float = 5.0,
+    ):
+        if not isinstance(lookback_years, int) or lookback_years < 1:
+            raise ValueError("lookback_years must be a positive int")
+        self.lookback_years = lookback_years
+        self.min_dso_increase_pct = min_dso_increase_pct
+
+    @property
+    def name(self) -> str:
+        return (
+            f"dso_trend_filter_{self.lookback_years}y_"
+            f"min{self.min_dso_increase_pct}"
+        )
+
+    @property
+    def required_days(self) -> int:
+        return 1
+
+    @staticmethod
+    def _safe_get(df: pd.DataFrame, labels: list[str], col_idx: int) -> Optional[float]:
+        for label in labels:
+            if label in df.index:
+                try:
+                    value = df.loc[label].iloc[col_idx]
+                except (IndexError, KeyError):
+                    continue
+                if pd.isna(value):
+                    continue
+                return float(value)
+        return None
+
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        _ = data
+        income, balance, _cashflow = _get_financial_statements(ticker)
+
+        recent_idx = 0
+        past_idx = self.lookback_years
+
+        receivable_labels = ["Accounts Receivable", "Net Receivables", "Receivables"]
+        revenue_labels = ["Total Revenue", "Revenue"]
+
+        receivables_recent = self._safe_get(balance, receivable_labels, recent_idx)
+        receivables_past = self._safe_get(balance, receivable_labels, past_idx)
+        revenue_recent = self._safe_get(income, revenue_labels, recent_idx)
+        revenue_past = self._safe_get(income, revenue_labels, past_idx)
+
+        if (
+            receivables_recent is None
+            or receivables_past is None
+            or revenue_recent is None
+            or revenue_past is None
+            or revenue_recent <= 0
+            or revenue_past <= 0
+        ):
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Insufficient receivables/revenue data for DSO trend"},
+            )
+
+        dso_recent = (receivables_recent / revenue_recent) * 365.0
+        dso_past = (receivables_past / revenue_past) * 365.0
+
+        if dso_past <= 0:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Invalid historical DSO baseline"},
+            )
+
+        dso_change_pct = ((dso_recent - dso_past) / dso_past) * 100.0
+        matched = dso_change_pct >= float(self.min_dso_increase_pct)
+
+        return ConditionResult(
+            matched=matched,
+            condition_name=self.name,
+            details={
+                "dso_recent": float(dso_recent),
+                "dso_past": float(dso_past),
+                "dso_change_pct": float(dso_change_pct),
+                "lookback_years": self.lookback_years,
+                "min_dso_increase_pct": self.min_dso_increase_pct,
+            },
+        )
+
+    def __repr__(self) -> str:
+        return (
+            "DsoTrendFilterCondition("
+            f"lookback_years={self.lookback_years}, "
+            f"min_dso_increase_pct={self.min_dso_increase_pct})"
+        )
