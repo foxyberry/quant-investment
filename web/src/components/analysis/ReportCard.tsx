@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import {
   FileText,
   Calendar,
@@ -24,6 +26,9 @@ interface ReportCardProps {
  * Displays a single analysis report summary with expandable details
  */
 export default function ReportCard({ report, className = '' }: ReportCardProps) {
+  const t = useTranslations('reports');
+  const tMarkets = useTranslations('markets');
+  const locale = useLocale();
   const [isExpanded, setIsExpanded] = useState(false);
   const [detailData, setDetailData] = useState<ReportDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +41,7 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
       const month = dateStr.slice(4, 6);
       const day = dateStr.slice(6, 8);
       const date = new Date(`${year}-${month}-${day}`);
-      return new Intl.DateTimeFormat('en-US', {
+      return new Intl.DateTimeFormat(locale, {
         weekday: 'short',
         month: 'short',
         day: 'numeric',
@@ -48,15 +53,12 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
   };
 
   const getMarketLabel = (market: string) => {
-    const marketLabels: Record<string, string> = {
-      us: 'US Market',
-      kr: 'Korea Market',
-      kospi: 'KOSPI',
-      kosdaq: 'KOSDAQ',
-      nasdaq: 'NASDAQ',
-      sp500: 'S&P 500',
-    };
-    return marketLabels[market.toLowerCase()] || market.toUpperCase();
+    const key = market.toLowerCase().replace(/[^a-z0-9]/g, '');
+    try {
+      return tMarkets(key);
+    } catch {
+      return market.toUpperCase();
+    }
   };
 
   const handleToggle = async () => {
@@ -115,12 +117,12 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
             {report.buy_count > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
                 <TrendingUp className="h-3 w-3" />
-                {report.buy_count} BUY
+                {report.buy_count} {t('buy')}
               </span>
             )}
             {report.total_stocks > 0 && (
               <span className="text-xs text-[var(--foreground-muted)]">
-                ({report.total_stocks} stocks)
+                ({report.total_stocks} {t('stocksUnit')})
               </span>
             )}
           </div>
@@ -161,7 +163,7 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-lg bg-[var(--background)] p-3">
                   <span className="text-xs text-[var(--foreground-muted)]">
-                    Total Stocks
+                    {t('totalStocks')}
                   </span>
                   <p className="text-lg font-semibold text-[var(--foreground)]">
                     {report.total_stocks.toLocaleString()}
@@ -169,7 +171,7 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
                 </div>
                 <div className="rounded-lg bg-[var(--background)] p-3">
                   <span className="text-xs text-[var(--foreground-muted)]">
-                    BUY Signals
+                    {t('buySignals')}
                   </span>
                   <p className="text-lg font-semibold text-green-600 dark:text-green-400">
                     {report.buy_count}
@@ -177,7 +179,7 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
                 </div>
                 <div className="rounded-lg bg-[var(--background)] p-3">
                   <span className="text-xs text-[var(--foreground-muted)]">
-                    Stocks Data
+                    {t('stocksData')}
                   </span>
                   <p className="text-lg font-semibold text-[var(--foreground)]">
                     {detailData.stocks.length}
@@ -188,7 +190,7 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
               {/* Content preview */}
               {detailData.content && (
                 <div className="rounded-lg bg-[var(--background)] p-3">
-                  <span className="text-xs text-[var(--foreground-muted)]">Preview</span>
+                  <span className="text-xs text-[var(--foreground-muted)]">{t('preview')}</span>
                   <p className="mt-1 text-sm text-[var(--foreground)] line-clamp-3">
                     {getContentPreview(detailData.content)}
                   </p>
@@ -201,7 +203,7 @@ export default function ReportCard({ report, className = '' }: ReportCardProps) 
                 className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
               >
                 <ExternalLink className="h-4 w-4" />
-                View Full Report
+                {t('viewFullReport')}
               </Link>
             </div>
           )}

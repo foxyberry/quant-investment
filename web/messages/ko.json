@@ -318,7 +318,27 @@
   },
   "reports": {
     "title": "분석 리포트",
-    "subtitle": "과거 분석 리포트와 AI 종목 인사이트 보기"
+    "subtitle": "과거 분석 리포트와 AI 종목 인사이트 보기",
+    "failedToLoad": "리포트 로드 실패",
+    "retry": "재시도",
+    "noReports": "리포트가 없습니다",
+    "runScreening": "스크리닝을 실행하여 분석 리포트를 생성하세요",
+    "reportCount": "{count}개 리포트",
+    "filterAll": "전체 기간",
+    "filterToday": "오늘",
+    "filterWeek": "최근 7일",
+    "filterMonth": "최근 30일",
+    "noFilterMatch": "선택한 필터에 맞는 리포트가 없습니다",
+    "dateToday": "오늘",
+    "dateYesterday": "어제",
+    "dateDaysAgo": "{days}일 전",
+    "totalStocks": "총 종목 수",
+    "buySignals": "매수 신호",
+    "stocksData": "종목 데이터",
+    "preview": "미리보기",
+    "viewFullReport": "전체 리포트 보기",
+    "buy": "매수",
+    "stocksUnit": "종목"
   },
   "stockDetail": {
     "financialOverview": "재무 개요",
@@ -866,6 +886,7 @@
     "us": "미국 시장",
     "kr": "한국 시장",
     "kospi": "KOSPI",
+    "kosdaq": "KOSDAQ",
     "nasdaq": "NASDAQ",
     "sp500": "S&P 500"
   }

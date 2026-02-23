@@ -318,7 +318,27 @@
   },
   "reports": {
     "title": "Analysis Reports",
-    "subtitle": "View past analysis reports and AI-powered stock insights"
+    "subtitle": "View past analysis reports and AI-powered stock insights",
+    "failedToLoad": "Failed to Load Reports",
+    "retry": "Retry",
+    "noReports": "No Reports Available",
+    "runScreening": "Run a screening to generate analysis reports",
+    "reportCount": "{count, plural, one {# report} other {# reports}}",
+    "filterAll": "All Time",
+    "filterToday": "Today",
+    "filterWeek": "Last 7 Days",
+    "filterMonth": "Last 30 Days",
+    "noFilterMatch": "No reports match the selected filter",
+    "dateToday": "Today",
+    "dateYesterday": "Yesterday",
+    "dateDaysAgo": "{days} days ago",
+    "totalStocks": "Total Stocks",
+    "buySignals": "BUY Signals",
+    "stocksData": "Stocks Data",
+    "preview": "Preview",
+    "viewFullReport": "View Full Report",
+    "buy": "BUY",
+    "stocksUnit": "stocks"
   },
   "stockDetail": {
     "financialOverview": "Financial Overview",
@@ -866,6 +886,7 @@
     "us": "US Market",
     "kr": "Korea Market",
     "kospi": "KOSPI",
+    "kosdaq": "KOSDAQ",
     "nasdaq": "NASDAQ",
     "sp500": "S&P 500"
   }
