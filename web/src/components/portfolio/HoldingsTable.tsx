@@ -118,15 +118,13 @@ export default function HoldingsTable({
   }, [holdings, sortField, sortDirection]);
 
   const handleSort = useCallback((field: SortField) => {
-    setSortField((prevField) => {
-      if (prevField === field) {
-        setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-        return prevField;
-      }
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
       setSortDirection('asc');
-      return field;
-    });
-  }, []);
+    }
+  }, [sortField]);
 
   if (isLoading) {
     return (

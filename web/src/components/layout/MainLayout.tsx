@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Menu, X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
+import LocaleSwitcher from './LocaleSwitcher';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -33,20 +34,25 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
 
-      {/* Floating mobile menu button */}
-      <button
-        type="button"
-        className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-lg bg-[#101622] text-white shadow-lg hover:bg-[#1a2435] transition-colors"
-        onClick={toggleSidebar}
-        aria-label={isSidebarOpen ? t('closeSidebar') : t('openSidebar')}
-        aria-expanded={isSidebarOpen}
-      >
-        {isSidebarOpen ? (
-          <X className="h-5 w-5" />
-        ) : (
-          <Menu className="h-5 w-5" />
-        )}
-      </button>
+      {/* Floating mobile header bar */}
+      <div className="fixed top-4 left-4 right-4 z-50 lg:hidden flex items-center justify-between">
+        <button
+          type="button"
+          className="p-2 rounded-lg bg-[#101622] text-white shadow-lg hover:bg-[#1a2435] transition-colors"
+          onClick={toggleSidebar}
+          aria-label={isSidebarOpen ? t('closeSidebar') : t('openSidebar')}
+          aria-expanded={isSidebarOpen}
+        >
+          {isSidebarOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
+        </button>
+        <div className="rounded-lg bg-[#101622] shadow-lg">
+          <LocaleSwitcher variant="sidebar" />
+        </div>
+      </div>
 
       {/* Main content area */}
       <div className="lg:ml-[var(--sidebar-width)] min-h-screen flex flex-col transition-sidebar">
