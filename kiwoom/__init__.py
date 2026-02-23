@@ -5,6 +5,7 @@ for the Korean stock market via Kiwoom Securities API.
 """
 
 from kiwoom.connection import KiwoomConnection
+from kiwoom.condition_search import ConditionDefinition, ConditionSearchManager
 from kiwoom.realtime import RealtimeSubscriptionManager, ScreenManager
 from kiwoom.tr import KiwoomTrClient, TrRequest
 from kiwoom.constants import (
@@ -20,6 +21,8 @@ from kiwoom.constants import (
 
 __all__ = [
     "KiwoomConnection",
+    "ConditionDefinition",
+    "ConditionSearchManager",
     "KiwoomTrClient",
     "TrRequest",
     "ScreenManager",
