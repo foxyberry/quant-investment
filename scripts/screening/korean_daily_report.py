@@ -126,7 +126,7 @@ def run(
 
         # 2. Golden Cross
         print_section(f"Golden Cross (20d crosses above 60d)")
-        screener = StockScreener(max_workers=10)
+        screener = StockScreener(max_workers=10, stock_names=ticker_info)
         screener.add_condition(MinPriceCondition(min_price))
         screener.add_condition(MinVolumeCondition(min_volume))
         screener.add_condition(MACrossUpCondition(20, 60, lookback_days))
@@ -145,7 +145,7 @@ def run(
 
         # 3. Dead Cross
         print_section(f"Dead Cross (20d crosses below 60d)")
-        screener = StockScreener(max_workers=10)
+        screener = StockScreener(max_workers=10, stock_names=ticker_info)
         screener.add_condition(MinPriceCondition(min_price))
         screener.add_condition(MinVolumeCondition(min_volume))
         screener.add_condition(MACrossDownCondition(20, 60, lookback_days))
@@ -164,7 +164,7 @@ def run(
 
         # 4. Long-term MA Touch
         print_section(f"{ma_period}-day MA Touch (±2%) - Long-term Support Test")
-        screener = StockScreener(max_workers=10)
+        screener = StockScreener(max_workers=10, stock_names=ticker_info)
         screener.add_condition(MinPriceCondition(min_price))
         screener.add_condition(MinVolumeCondition(min_volume))
         screener.add_condition(MATouchCondition(period=ma_period, threshold=0.02))
@@ -183,7 +183,7 @@ def run(
 
         # 5. Long-term MA Below
         print_section(f"{ma_period}-day MA Below - Long-term Decline")
-        screener = StockScreener(max_workers=10)
+        screener = StockScreener(max_workers=10, stock_names=ticker_info)
         screener.add_condition(MinPriceCondition(min_price))
         screener.add_condition(MinVolumeCondition(min_volume))
         screener.add_condition(BelowMACondition(period=ma_period, max_distance_pct=-0.02))
@@ -207,7 +207,7 @@ def run(
 
         # 6. 60d & 120d Both Below
         print_section("60d & 120d MA Both Below - Medium-term Weakness")
-        screener = StockScreener(max_workers=10)
+        screener = StockScreener(max_workers=10, stock_names=ticker_info)
         screener.add_condition(MinPriceCondition(min_price))
         screener.add_condition(MinVolumeCondition(min_volume))
         screener.add_condition(BelowMACondition(period=60))
