@@ -25,6 +25,29 @@ test.describe('Strategy page', () => {
     await expect(saveButton).toBeVisible();
   });
 
+  test('return_turnaround condition appears in Price category', async ({ page }) => {
+    // Wait for conditions to load from mock API
+    const priceCategory = page.getByRole('button', { name: /Price/i });
+    await expect(priceCategory).toBeVisible({ timeout: 10000 });
+
+    // Return Turnaround label should be visible in the palette
+    const conditionLabel = page.getByText('Return Turnaround', { exact: true });
+    await expect(conditionLabel).toBeVisible();
+  });
+
+  test('return_turnaround condition shows description', async ({ page }) => {
+    const description = page.getByText(/Prev N-day return.*threshold/i);
+    await expect(description).toBeVisible({ timeout: 10000 });
+  });
+
+  test('condition categories render from mock data', async ({ page }) => {
+    // Verify both mock categories appear
+    const priceCategory = page.getByRole('button', { name: /Price/i });
+    const rsiCategory = page.getByRole('button', { name: /RSI/i });
+    await expect(priceCategory).toBeVisible({ timeout: 10000 });
+    await expect(rsiCategory).toBeVisible();
+  });
+
   test('no console errors', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', (msg) => {
@@ -37,5 +60,23 @@ test.describe('Strategy page', () => {
     await page.waitForLoadState('networkidle');
 
     expect(errors).toHaveLength(0);
+  });
+});
+
+test.describe('Strategy page i18n', () => {
+  test('return_turnaround renders in Korean', async ({ page, mockApi }) => {
+    await mockApi();
+    await page.goto('/ko/strategy');
+
+    const conditionLabel = page.getByText('수익률 전환', { exact: true });
+    await expect(conditionLabel).toBeVisible({ timeout: 10000 });
+  });
+
+  test('return_turnaround renders in Chinese', async ({ page, mockApi }) => {
+    await mockApi();
+    await page.goto('/zh/strategy');
+
+    const conditionLabel = page.getByText('收益率反转', { exact: true });
+    await expect(conditionLabel).toBeVisible({ timeout: 10000 });
   });
 });
