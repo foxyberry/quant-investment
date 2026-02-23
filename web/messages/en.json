@@ -386,7 +386,11 @@
     "loadingConditions": "Loading conditions...",
     "aiDescription": "AI-powered analysis with valuation score, risk assessment, and entry recommendation.",
     "low": "Low",
-    "high": "High"
+    "high": "High",
+    "notAvailable": "N/A",
+    "recommendationBuy": "Buy",
+    "recommendationWait": "Wait",
+    "recommendationAvoid": "Avoid"
   },
   "backtest": {
     "title": "Backtest Strategy",

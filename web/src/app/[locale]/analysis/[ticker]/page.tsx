@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   BarChart3,
@@ -50,6 +50,14 @@ const periodOptions: { value: PeriodOption; label: string }[] = [
   { value: '1y', label: '1Y' },
   { value: '2y', label: '2Y' },
 ];
+
+const LOCALE_SYNC_KEY = 'quant-investment:locale-sync';
+
+function toTitleCaseFromKey(value: string): string {
+  return value
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 /** Collapsible section wrapper – in popup mode sections start collapsed. */
 function CollapsibleSection({
@@ -109,9 +117,13 @@ function CollapsibleSection({
 export default function TickerAnalysisPage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const locale = useLocale();
   const isPopup = searchParams.get('popup') === 'true';
   const ticker = params.ticker as string;
   const t = useTranslations('stockDetail');
+  const tCommon = useTranslations('common');
+  const tConditions = useTranslations('conditions');
+  const tScreening = useTranslations('screening');
 
   // Core data
   const [tickerData, setTickerData] = useState<TickerAnalysis | null>(null);
@@ -140,12 +152,12 @@ export default function TickerAnalysisPage() {
       const data = await getTickerAnalysis(ticker.toUpperCase(), period);
       setTickerData(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
+      setError(err instanceof Error ? err.message : t('loadFailed'));
       setTickerData(null);
     } finally {
       setIsLoading(false);
     }
-  }, [ticker]);
+  }, [ticker, t]);
 
   // Fetch presets on mount
   useEffect(() => {
@@ -175,6 +187,27 @@ export default function TickerAnalysisPage() {
       .then((status) => setAiAvailable(status.claude_available))
       .catch(() => setAiAvailable(false));
   }, []);
+
+  // Keep popup locale in sync with the main window locale changes.
+  useEffect(() => {
+    if (!isPopup) return;
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== LOCALE_SYNC_KEY || !event.newValue) return;
+
+      try {
+        const payload = JSON.parse(event.newValue) as { locale?: string };
+        const nextLocale = payload.locale;
+        if (!nextLocale || nextLocale === locale) return;
+        window.location.replace(`/${nextLocale}/analysis/${encodeURIComponent(ticker)}?popup=true`);
+      } catch {
+        // Ignore malformed payloads.
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [isPopup, locale, ticker]);
 
   // Effect 1: Fetch main page data (chart, indicators, financials)
   useEffect(() => {
@@ -251,6 +284,19 @@ export default function TickerAnalysisPage() {
     }
   };
 
+  const getRecommendationLabel = (rec: string) => {
+    switch (rec) {
+      case 'BUY':
+        return t('recommendationBuy');
+      case 'WAIT':
+        return t('recommendationWait');
+      case 'AVOID':
+        return t('recommendationAvoid');
+      default:
+        return rec;
+    }
+  };
+
   const getScoreColor = (score: number, invert = false) => {
     const effectiveScore = invert ? 11 - score : score;
     if (effectiveScore >= 7) return 'text-green-600 dark:text-green-400';
@@ -315,7 +361,7 @@ export default function TickerAnalysisPage() {
             type="button"
             onClick={() => window.close()}
             className="shrink-0 p-1.5 rounded-lg hover:bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
-            aria-label="Close"
+            aria-label={tCommon('close')}
           >
             <XCircle className="h-5 w-5" />
           </button>
@@ -501,7 +547,7 @@ export default function TickerAnalysisPage() {
                       <p className="text-lg font-semibold text-[var(--foreground)]">
                         {tickerData.fundamental.pe_ratio !== null
                           ? tickerData.fundamental.pe_ratio.toFixed(2)
-                          : 'N/A'}
+                          : t('notAvailable')}
                       </p>
                     </div>
                   </div>
@@ -520,7 +566,7 @@ export default function TickerAnalysisPage() {
                       <p className="text-lg font-semibold text-[var(--foreground)]">
                         {tickerData.fundamental.dividend_yield !== null
                           ? `${(tickerData.fundamental.dividend_yield * 100).toFixed(2)}%`
-                          : 'N/A'}
+                          : t('notAvailable')}
                       </p>
                     </div>
                   </div>
@@ -539,7 +585,7 @@ export default function TickerAnalysisPage() {
                       <p className="text-lg font-semibold text-[var(--foreground)]">
                         {tickerData.fundamental.eps !== null
                           ? `$${tickerData.fundamental.eps.toFixed(2)}`
-                          : 'N/A'}
+                          : t('notAvailable')}
                       </p>
                     </div>
                   </div>
@@ -556,7 +602,7 @@ export default function TickerAnalysisPage() {
                         {t('sector')}
                       </span>
                       <p className="text-lg font-semibold text-[var(--foreground)] truncate">
-                        {tickerData.fundamental.sector || 'N/A'}
+                        {tickerData.fundamental.sector || t('notAvailable')}
                       </p>
                     </div>
                   </div>
@@ -584,7 +630,13 @@ export default function TickerAnalysisPage() {
                 >
                   {presets.map((p) => (
                     <option key={p.name} value={p.name}>
-                      {p.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ({p.conditions.length})
+                      {(() => {
+                        try {
+                          return `${tScreening(`presetNames.${p.name}` as never)} (${p.conditions.length})`;
+                        } catch {
+                          return `${toTitleCaseFromKey(p.name)} (${p.conditions.length})`;
+                        }
+                      })()}
                     </option>
                   ))}
                 </select>
@@ -645,7 +697,13 @@ export default function TickerAnalysisPage() {
                           <div className="flex items-center gap-3">
                             {getConditionIcon(condition)}
                             <span className="text-sm text-[var(--foreground)]">
-                              {condition.condition_name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              {(() => {
+                                try {
+                                  return tConditions(`${condition.condition_name}.label` as never);
+                                } catch {
+                                  return toTitleCaseFromKey(condition.condition_name);
+                                }
+                              })()}
                             </span>
                           </div>
                           {getConditionBadge(condition)}
@@ -758,7 +816,7 @@ export default function TickerAnalysisPage() {
                       <span
                         className={`inline-flex items-center rounded-full px-4 py-2 text-lg font-bold ${getRecommendationStyle(aiResult.entry_recommendation)}`}
                       >
-                        {aiResult.entry_recommendation}
+                        {getRecommendationLabel(aiResult.entry_recommendation)}
                       </span>
                     </div>
                   </div>

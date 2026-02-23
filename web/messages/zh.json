@@ -380,7 +380,11 @@
     "loadingConditions": "正在加载条件...",
     "aiDescription": "基于 AI 的分析，包含估值评分、风险评估和入场建议。",
     "low": "最低",
-    "high": "最高"
+    "high": "最高",
+    "notAvailable": "暂无数据",
+    "recommendationBuy": "买入",
+    "recommendationWait": "观望",
+    "recommendationAvoid": "回避"
   },
   "backtest": {
     "title": "策略回测",
