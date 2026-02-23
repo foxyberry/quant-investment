@@ -74,8 +74,8 @@ class OHLCVCache:
         self._hits = 0
         self._misses = 0
         self._meta_lock = threading.RLock()
-        # Latest trading date metadata cache: path -> (mtime, latest_date)
-        self._latest_date_cache: Dict[str, Tuple[float, date]] = {}
+        # Latest trading date metadata cache: path -> (mtime, latest_date, close)
+        self._latest_date_cache: Dict[str, Tuple[float, date, Optional[float]]] = {}
 
     def _get_cache_path(self, ticker: str) -> Path:
         """캐시 파일 경로 반환"""
@@ -121,11 +121,32 @@ class OHLCVCache:
                 latest_date = latest.date()
             else:
                 latest_date = pd.to_datetime(latest).date()
+
+            # Capture close price
+            close_val = None
+            if "close" in data.columns:
+                close_val = float(data["close"].iloc[-1])
+
             with self._meta_lock:
-                self._latest_date_cache[cache_key] = (mtime, latest_date)
+                self._latest_date_cache[cache_key] = (mtime, latest_date, close_val)
             return latest_date
         except Exception:
             return None
+
+    def _get_cache_latest_close(self, cache_path: Path) -> Optional[float]:
+        """Get latest close price from metadata cache without re-reading parquet."""
+        cache_key = str(cache_path)
+        with self._meta_lock:
+            cached_meta = self._latest_date_cache.get(cache_key)
+        if cached_meta and len(cached_meta) >= 3:
+            return cached_meta[2]
+        # Populate cache by calling _get_cache_latest_date
+        self._get_cache_latest_date(cache_path)
+        with self._meta_lock:
+            cached_meta = self._latest_date_cache.get(cache_key)
+        if cached_meta and len(cached_meta) >= 3:
+            return cached_meta[2]
+        return None
 
     def _is_cache_fresh(self, cache_path: Path, required_days: int) -> bool:
         """캐시가 신선한지 확인 (오늘 데이터가 있으면 신선)"""
@@ -305,14 +326,11 @@ class OHLCVCache:
         for ticker in tickers:
             cache_path = self._get_cache_path(ticker)
             if self._is_cache_fresh(cache_path, days):
-                try:
-                    df = pd.read_parquet(cache_path)
-                    if df is not None and not df.empty and "close" in df.columns:
-                        prices[ticker] = float(df["close"].iloc[-1])
-                        self._hits += 1
-                        continue
-                except Exception:
-                    pass
+                close = self._get_cache_latest_close(cache_path)
+                if close is not None:
+                    prices[ticker] = close
+                    self._hits += 1
+                    continue
             missing.append(ticker)
 
         # Step 2: Batch fetch for misses.

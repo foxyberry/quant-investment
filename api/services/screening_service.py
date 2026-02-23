@@ -6,6 +6,7 @@ Bridges the API layer with the screener module.
 """
 
 import logging
+import time
 from typing import List, Dict, Any, Optional
 
 from api.schemas.screening import (
@@ -29,6 +30,10 @@ class ScreeningService:
 
     Provides methods for running screenings, getting presets, and universes.
     """
+
+    # TTL cache for universe stock counts: {universe: (timestamp, count)}
+    _universe_count_cache: Dict[str, tuple] = {}
+    _UNIVERSE_COUNT_TTL = 3600  # 1 hour
 
     # Universe definitions
     UNIVERSES = {
@@ -148,39 +153,51 @@ class ScreeningService:
         """
         Get approximate stock count for a universe.
 
+        Uses a TTL cache to avoid re-fetching symbol lists on every call.
+
         Args:
             universe: Universe name
 
         Returns:
             Approximate number of stocks
         """
-        try:
-            universe_upper = universe.upper()
+        universe_upper = universe.upper()
 
+        # Check cache
+        cached = self._universe_count_cache.get(universe_upper)
+        if cached:
+            ts, count = cached
+            if time.time() - ts < self._UNIVERSE_COUNT_TTL:
+                return count
+
+        defaults = {
+            "KOSPI": 900,
+            "KOSDAQ": 1600,
+            "SP500": 500,
+            "NASDAQ100": 100,
+        }
+
+        try:
             if universe_upper == "KOSPI":
                 symbols = self._kospi_fetcher.get_kospi_symbols()
-                return len(symbols)
+                count = len(symbols)
             elif universe_upper == "KOSDAQ":
                 symbols = self._kospi_fetcher.get_kosdaq_symbols()
-                return len(symbols)
+                count = len(symbols)
             elif universe_upper == "SP500":
                 symbols = self._us_fetcher.get_sp500_symbols()
-                return len(symbols)
+                count = len(symbols)
             elif universe_upper == "NASDAQ100":
                 symbols = self._us_fetcher.get_nasdaq100_symbols()
-                return len(symbols) if symbols else 100  # Fallback
+                count = len(symbols) if symbols else defaults.get(universe_upper, 100)
             else:
                 return 0
+
+            self._universe_count_cache[universe_upper] = (time.time(), count)
+            return count
         except Exception as e:
             logger.warning(f"Failed to get stock count for {universe}: {e}")
-            # Return approximate values
-            defaults = {
-                "KOSPI": 900,
-                "KOSDAQ": 1600,
-                "SP500": 500,
-                "NASDAQ100": 100,
-            }
-            return defaults.get(universe.upper(), 0)
+            return defaults.get(universe_upper, 0)
 
     def _get_universe_tickers(self, universe: str) -> List[str]:
         """
