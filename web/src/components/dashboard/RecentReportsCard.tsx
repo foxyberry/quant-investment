@@ -135,7 +135,7 @@ export default function RecentReportsCard() {
         ))}
 
         <Link
-          href="/analysis"
+          href="/reports"
           className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-[var(--color-primary)] hover:bg-[var(--background)] transition-colors"
         >
           {t('viewAllReports')}

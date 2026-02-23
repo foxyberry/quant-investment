@@ -312,7 +312,27 @@
   },
   "reports": {
     "title": "分析报告",
-    "subtitle": "查看历史分析报告和AI股票洞察"
+    "subtitle": "查看历史分析报告和AI股票洞察",
+    "failedToLoad": "加载报告失败",
+    "retry": "重试",
+    "noReports": "暂无报告",
+    "runScreening": "运行筛选以生成分析报告",
+    "reportCount": "{count} 份报告",
+    "filterAll": "全部时间",
+    "filterToday": "今天",
+    "filterWeek": "最近 7 天",
+    "filterMonth": "最近 30 天",
+    "noFilterMatch": "没有匹配所选筛选条件的报告",
+    "dateToday": "今天",
+    "dateYesterday": "昨天",
+    "dateDaysAgo": "{days} 天前",
+    "totalStocks": "总股票数",
+    "buySignals": "买入信号",
+    "stocksData": "股票数据",
+    "preview": "预览",
+    "viewFullReport": "查看完整报告",
+    "buy": "买入",
+    "stocksUnit": "只股票"
   },
   "stockDetail": {
     "financialOverview": "财务概览",
@@ -860,6 +880,7 @@
     "us": "美国市场",
     "kr": "韩国市场",
     "kospi": "KOSPI",
+    "kosdaq": "KOSDAQ",
     "nasdaq": "NASDAQ",
     "sp500": "标普 500"
   }

@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { FileText, Calendar, Filter, RefreshCw } from 'lucide-react';
 import ReportCard from './ReportCard';
 import { Button } from '@/components/ui';
@@ -21,6 +23,8 @@ export default function ReportList({
   initialLimit = 10,
   className = '',
 }: ReportListProps) {
+  const t = useTranslations('reports');
+  const locale = useLocale();
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,11 +37,11 @@ export default function ReportList({
       const data = await getReports(initialLimit);
       setReports(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load reports');
+      setError(err instanceof Error ? err.message : t('failedToLoad'));
     } finally {
       setIsLoading(false);
     }
-  }, [initialLimit]);
+  }, [initialLimit, t]);
 
   useEffect(() => {
     fetchReports();
@@ -65,7 +69,8 @@ export default function ReportList({
     }
 
     return reports.filter((report) => {
-      const reportDate = new Date(report.date);
+      const d = report.date;
+      const reportDate = new Date(Number(d.slice(0, 4)), Number(d.slice(4, 6)) - 1, Number(d.slice(6, 8)));
       return reportDate >= filterDate;
     });
   }, [reports, dateFilter]);
@@ -87,21 +92,23 @@ export default function ReportList({
 
   const formatGroupDate = (dateStr: string) => {
     try {
-      const date = new Date(dateStr);
+      const y = Number(dateStr.slice(0, 4));
+      const m = Number(dateStr.slice(4, 6)) - 1;
+      const d = Number(dateStr.slice(6, 8));
+      const date = new Date(y, m, d);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const reportDate = new Date(dateStr);
-      reportDate.setHours(0, 0, 0, 0);
+      const reportDate = new Date(y, m, d);
 
       const diffDays = Math.floor(
         (today.getTime() - reportDate.getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      if (diffDays === 0) return 'Today';
-      if (diffDays === 1) return 'Yesterday';
-      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays === 0) return t('dateToday');
+      if (diffDays === 1) return t('dateYesterday');
+      if (diffDays < 7) return t('dateDaysAgo', { days: diffDays });
 
-      return new Intl.DateTimeFormat('en-US', {
+      return new Intl.DateTimeFormat(locale, {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
@@ -139,7 +146,7 @@ export default function ReportList({
         <div className="flex flex-col items-center text-center">
           <FileText className="h-10 w-10 text-red-500 mb-3" />
           <h3 className="text-lg font-medium text-red-800 dark:text-red-200">
-            Failed to Load Reports
+            {t('failedToLoad')}
           </h3>
           <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
           <Button
@@ -149,7 +156,7 @@ export default function ReportList({
             onClick={fetchReports}
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Retry
+            {t('retry')}
           </Button>
         </div>
       </div>
@@ -163,10 +170,10 @@ export default function ReportList({
         <div className="flex flex-col items-center text-center">
           <FileText className="h-12 w-12 text-[var(--foreground-muted)] mb-4" />
           <h3 className="text-lg font-medium text-[var(--foreground)]">
-            No Reports Available
+            {t('noReports')}
           </h3>
           <p className="mt-1 text-sm text-[var(--foreground-muted)]">
-            Run a screening to generate analysis reports
+            {t('runScreening')}
           </p>
         </div>
       </div>
@@ -180,7 +187,7 @@ export default function ReportList({
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-[var(--foreground-muted)]" />
           <span className="text-sm text-[var(--foreground-muted)]">
-            {filteredReports.length} report{filteredReports.length !== 1 ? 's' : ''}
+            {t('reportCount', { count: filteredReports.length })}
           </span>
         </div>
 
@@ -191,10 +198,10 @@ export default function ReportList({
             onChange={(e) => setDateFilter(e.target.value)}
             className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           >
-            <option value="all">All Time</option>
-            <option value="today">Today</option>
-            <option value="week">Last 7 Days</option>
-            <option value="month">Last 30 Days</option>
+            <option value="all">{t('filterAll')}</option>
+            <option value="today">{t('filterToday')}</option>
+            <option value="week">{t('filterWeek')}</option>
+            <option value="month">{t('filterMonth')}</option>
           </select>
         </div>
       </div>
@@ -203,7 +210,7 @@ export default function ReportList({
       {filteredReports.length === 0 && (
         <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-6 text-center">
           <p className="text-[var(--foreground-muted)]">
-            No reports match the selected filter
+            {t('noFilterMatch')}
           </p>
         </div>
       )}
