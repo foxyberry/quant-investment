@@ -189,7 +189,9 @@
     "filterETF": "ETF",
     "loadingHoldings": "加载持仓中...",
     "noHoldingsTitle": "暂无持仓",
-    "noHoldingsInFilter": "没有匹配当前筛选条件的持仓。"
+    "noHoldingsInFilter": "没有匹配当前筛选条件的持仓。",
+    "baseCurrency": "货币",
+    "lastUpdated": "更新于 {time}"
   },
   "strategy": {
     "title": "QuantCanvas",

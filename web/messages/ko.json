@@ -189,7 +189,9 @@
     "filterETF": "ETF",
     "loadingHoldings": "종목 로딩 중...",
     "noHoldingsTitle": "보유 종목이 없습니다",
-    "noHoldingsInFilter": "현재 필터에 해당하는 종목이 없습니다."
+    "noHoldingsInFilter": "현재 필터에 해당하는 종목이 없습니다.",
+    "baseCurrency": "통화",
+    "lastUpdated": "업데이트 {time}"
   },
   "strategy": {
     "title": "퀀트캔버스",

@@ -189,7 +189,9 @@
     "filterETF": "ETF",
     "loadingHoldings": "Loading holdings...",
     "noHoldingsTitle": "No holdings yet",
-    "noHoldingsInFilter": "No holdings match the current filter."
+    "noHoldingsInFilter": "No holdings match the current filter.",
+    "baseCurrency": "Currency",
+    "lastUpdated": "Updated {time}"
   },
   "strategy": {
     "title": "QuantCanvas",

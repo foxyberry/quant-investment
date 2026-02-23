@@ -19,6 +19,9 @@ export function resolveIntlLocale(locale: string): string {
   return LOCALE_MAP[locale] ?? 'en-US';
 }
 
+/** Currencies that never use decimal places. */
+const ZERO_DECIMAL_CURRENCIES = ['KRW', 'JPY'];
+
 /** Format a number as currency using the holding's native currency and the UI locale. */
 export function formatCurrency(
   value: number | null,
@@ -26,11 +29,12 @@ export function formatCurrency(
   locale: string = 'en',
 ): string {
   if (value === null) return '-';
+  const isZeroDecimal = ZERO_DECIMAL_CURRENCIES.includes(currency.toUpperCase());
   return new Intl.NumberFormat(resolveIntlLocale(locale), {
     style: 'currency',
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: isZeroDecimal ? 0 : 2,
+    maximumFractionDigits: isZeroDecimal ? 0 : 2,
   }).format(value);
 }
 
