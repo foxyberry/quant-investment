@@ -119,8 +119,9 @@ export async function deleteHolding(ticker: string): Promise<void> {
 /**
  * Get portfolio summary including total investment, market value, and P&L
  */
-export async function getPortfolioSummary(): Promise<PortfolioSummary> {
-  return fetchApi<PortfolioSummary>('/api/portfolio/summary');
+export async function getPortfolioSummary(baseCurrency?: string): Promise<PortfolioSummary> {
+  const params = baseCurrency ? `?base_currency=${encodeURIComponent(baseCurrency)}` : '';
+  return fetchApi<PortfolioSummary>(`/api/portfolio/summary${params}`);
 }
 
 /**

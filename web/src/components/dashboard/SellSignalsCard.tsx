@@ -59,9 +59,9 @@ export default function SellSignalsCard() {
     },
   };
 
-  const formatPrice = (price: number | null) => {
+  const formatPrice = (price: number | null, currency: string = 'USD') => {
     if (price === null) return '--';
-    return formatCurrency(price, 'USD', locale);
+    return formatCurrency(price, currency, locale);
   };
 
   if (state.loading) {
@@ -143,9 +143,9 @@ export default function SellSignalsCard() {
                     {signal.reason}
                   </p>
                   <div className="mt-1 flex gap-4 text-xs text-[var(--foreground-muted)]">
-                    <span>{t('current', { price: formatPrice(signal.current_price) })}</span>
+                    <span>{t('current', { price: formatPrice(signal.current_price, signal.currency) })}</span>
                     {signal.trigger_price && (
-                      <span>{t('trigger', { price: formatPrice(signal.trigger_price) })}</span>
+                      <span>{t('trigger', { price: formatPrice(signal.trigger_price, signal.currency) })}</span>
                     )}
                   </div>
                 </div>

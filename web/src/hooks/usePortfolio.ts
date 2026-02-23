@@ -19,10 +19,10 @@ export function useHoldings() {
   });
 }
 
-export function usePortfolioSummary() {
+export function usePortfolioSummary(baseCurrency?: string) {
   return useQuery({
-    queryKey: queryKeys.portfolio.summary(),
-    queryFn: getPortfolioSummary,
+    queryKey: queryKeys.portfolio.summary(baseCurrency),
+    queryFn: () => getPortfolioSummary(baseCurrency),
   });
 }
 

@@ -91,6 +91,9 @@ export interface SellSignal {
   reason: string;
   current_price: number | null;
   trigger_price: number | null;
+  avg_price: number;
+  pnl_pct: number;
+  currency: string;
 }
 
 // CSV import types

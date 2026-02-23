@@ -23,6 +23,7 @@ import {
 } from '@/lib/api';
 import type { Holding, HoldingCreate, HoldingUpdate, PortfolioSummary, SellSignal } from '@/lib/types';
 import { formatCurrency as formatCurrencyUtil, formatPercent as formatPercentUtil } from '@/lib/format';
+import { useUserSettings } from '@/contexts/UserSettingsContext';
 
 type FilterTab = 'all' | 'us' | 'kr' | 'etf';
 
@@ -74,6 +75,7 @@ function SummaryCard({ title, value, icon, trend, subValue, iconBgClass = 'bg-bl
 export default function PortfolioPage() {
   const t = useTranslations('portfolio');
   const locale = useLocale();
+  const { settings } = useUserSettings();
   const formatCurrency = (value: number, currency?: string) => formatCurrencyUtil(value, currency, locale);
   const formatPercent = (value: number) => formatPercentUtil(value);
 
@@ -117,7 +119,7 @@ export default function PortfolioPage() {
     try {
       const [holdingsData, summaryData, signalsData] = await Promise.all([
         getHoldings(),
-        getPortfolioSummary(),
+        getPortfolioSummary(settings.baseCurrency),
         getSellSignals(),
       ]);
 
@@ -131,7 +133,7 @@ export default function PortfolioPage() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [settings.baseCurrency]);
 
   // Initial data fetch
   useEffect(() => {
