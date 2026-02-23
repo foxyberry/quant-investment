@@ -16,8 +16,8 @@
 ## PR Rule (Mandatory)
 - Do not push implementation commits directly to `main`.
 - Create a feature branch and open PR to `main`.
-- After opening PR, run review -> PR comment -> fix -> re-review loop until explicit `LGTM`.
-- Merge only after at least one approval, explicit `LGTM`, and validation completion.
+- After opening PR, run Codex self-review -> PR comment -> fix -> re-review loop until explicit `LGTM`.
+- Merge only after Codex self-review `LGTM` and validation completion.
 - Use squash merge.
 
 PR quick flow:
@@ -30,10 +30,10 @@ gh pr create --base main --fill
 PR review loop (required):
 ```text
 1. Open PR
-2. Request/retrieve review
-3. Leave PR comment as Codex with review summary and planned fixes
+2. Run Codex self-review on changed files and behavior
+3. Leave PR comment as Codex with findings and planned fixes
 4. Apply fixes and push update commit(s)
-5. Request/retrieve re-review
+5. Run Codex self-review again
 6. Repeat 3-5 until explicit LGTM
 7. Squash merge
 ```

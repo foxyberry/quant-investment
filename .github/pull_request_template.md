@@ -30,4 +30,4 @@ Commands/Results:
 - [ ] No direct changes to unrelated files
 - [ ] Docs updated (`README.md`, `WORKFLOW.md`, `AGENTS.md` if needed)
 - [ ] Reviewer can reproduce with listed commands
-- [ ] AI cross-review label added (`impl:claude` or `impl:codex`)
+- [ ] Codex self-review completed and summarized in PR comments
