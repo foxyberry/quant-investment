@@ -878,6 +878,19 @@
     "general": "常规",
     "display": "显示"
   },
+  "kiwoom": {
+    "title": "Kiwoom",
+    "connected": "已连接",
+    "disconnected": "已断开",
+    "connecting": "连接中",
+    "unavailable": "不可用",
+    "mockTrading": "模拟盘",
+    "liveTrading": "实盘",
+    "user": "用户",
+    "account": "账户",
+    "noAccount": "无账户",
+    "disconnectedToast": "Kiwoom 连接已断开。"
+  },
   "markets": {
     "us": "美国市场",
     "kr": "韩国市场",

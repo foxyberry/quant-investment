@@ -884,6 +884,19 @@
     "general": "일반",
     "display": "표시"
   },
+  "kiwoom": {
+    "title": "키움",
+    "connected": "연결됨",
+    "disconnected": "연결 끊김",
+    "connecting": "연결 중",
+    "unavailable": "사용 불가",
+    "mockTrading": "모의투자",
+    "liveTrading": "실거래",
+    "user": "사용자",
+    "account": "계좌",
+    "noAccount": "계좌 없음",
+    "disconnectedToast": "키움 연결이 끊어졌습니다."
+  },
   "markets": {
     "us": "미국 시장",
     "kr": "한국 시장",

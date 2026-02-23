@@ -16,6 +16,16 @@ export interface HealthResponse {
   version: string;
 }
 
+export type KiwoomConnectionState = 'connected' | 'disconnected' | 'connecting' | 'unavailable';
+
+export interface KiwoomConnectionStatus {
+  status: KiwoomConnectionState;
+  is_mock_trading: boolean | null;
+  user_id: string | null;
+  accounts: string[];
+  updated_at: string | null;
+}
+
 // Screening types
 export interface PresetInfo {
   name: string;

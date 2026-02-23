@@ -14,6 +14,8 @@ import type {
   TickerAnalysis,
   AIAnalysisResult,
   AnalysisStatus,
+  KiwoomConnectionStatus,
+  KiwoomConnectionState,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -251,6 +253,82 @@ export async function checkStockConditions(
  */
 export async function getAnalysisStatus(): Promise<AnalysisStatus> {
   return fetchApi<AnalysisStatus>('/api/analysis/status');
+}
+
+function normalizeKiwoomStatus(raw: Record<string, unknown>): KiwoomConnectionStatus {
+  const rawStatus = typeof raw.status === 'string' ? raw.status.toLowerCase() : '';
+  const booleanConnected =
+    typeof raw.connected === 'boolean'
+      ? raw.connected
+      : typeof raw.is_connected === 'boolean'
+      ? raw.is_connected
+      : null;
+
+  let status: KiwoomConnectionState = 'unavailable';
+  if (rawStatus === 'connected' || rawStatus === 'disconnected' || rawStatus === 'connecting') {
+    status = rawStatus;
+  } else if (booleanConnected === true) {
+    status = 'connected';
+  } else if (booleanConnected === false) {
+    status = 'disconnected';
+  }
+
+  const accountsRaw = raw.accounts;
+  const accounts = Array.isArray(accountsRaw)
+    ? accountsRaw.filter((v): v is string => typeof v === 'string')
+    : typeof accountsRaw === 'string'
+    ? accountsRaw
+        .split(';')
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0)
+    : [];
+
+  return {
+    status,
+    is_mock_trading:
+      typeof raw.is_mock_trading === 'boolean'
+        ? raw.is_mock_trading
+        : typeof raw.mock_trading === 'boolean'
+        ? raw.mock_trading
+        : null,
+    user_id:
+      typeof raw.user_id === 'string'
+        ? raw.user_id
+        : typeof raw.userId === 'string'
+        ? raw.userId
+        : null,
+    accounts,
+    updated_at: typeof raw.updated_at === 'string' ? raw.updated_at : null,
+  };
+}
+
+export async function getKiwoomConnectionStatus(): Promise<KiwoomConnectionStatus> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/kiwoom/connection/status`);
+    if (!response.ok) {
+      return {
+        status: 'unavailable',
+        is_mock_trading: null,
+        user_id: null,
+        accounts: [],
+        updated_at: null,
+      };
+    }
+    const raw = (await response.json()) as Record<string, unknown>;
+    const payload =
+      raw.data && typeof raw.data === 'object'
+        ? (raw.data as Record<string, unknown>)
+        : raw;
+    return normalizeKiwoomStatus(payload);
+  } catch {
+    return {
+      status: 'unavailable',
+      is_mock_trading: null,
+      user_id: null,
+      accounts: [],
+      updated_at: null,
+    };
+  }
 }
 
 // Strategy API functions
