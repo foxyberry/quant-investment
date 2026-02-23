@@ -989,6 +989,7 @@ function StrategyPageInner() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-var(--header-height))]">
+      <h1 className="sr-only">{t('title')}</h1>
       {/* Toolbar - Stitch-style */}
       <div className="flex items-center gap-3 px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c]">
         {/* Breadcrumb */}

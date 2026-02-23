@@ -15,7 +15,7 @@ test.describe('Visual regression', () => {
   test('portfolio screenshot', async ({ page, mockApi }) => {
     await mockApi();
     await page.goto('/en/portfolio');
-    await expect(page.getByText('AAPL')).toBeVisible();
+    await expect(page.getByText('AAPL').filter({ visible: true })).toHaveCount(1);
 
     await expect(page).toHaveScreenshot('portfolio.png', {
       maxDiffPixelRatio: 0.01,
