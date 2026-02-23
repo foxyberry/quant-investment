@@ -92,6 +92,8 @@ export interface PortfolioSummary {
   total_pnl_pct: number;
   holdings_count: number;
   currency: string;
+  cash_balance?: number | null;
+  available_cash?: number | null;
 }
 
 export interface SellSignal {

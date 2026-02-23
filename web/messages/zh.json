@@ -191,7 +191,11 @@
     "noHoldingsTitle": "暂无持仓",
     "noHoldingsInFilter": "没有匹配当前筛选条件的持仓。",
     "baseCurrency": "货币",
-    "lastUpdated": "更新于 {time}"
+    "lastUpdated": "更新于 {time}",
+    "cashBalance": "可用资金",
+    "liveConnected": "实时",
+    "liveConnecting": "连接中",
+    "liveFallback": "轮询更新"
   },
   "strategy": {
     "title": "QuantCanvas",
