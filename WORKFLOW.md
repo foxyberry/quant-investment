@@ -16,8 +16,11 @@
 ## PR Rule (Mandatory)
 - Do not push implementation commits directly to `main`.
 - Create a feature branch and open PR to `main`.
-- Merge only after at least one approval and validation completion.
+- After opening PR, run Codex self-review -> PR comment -> fix -> re-review loop until explicit `LGTM`.
+- Merge only after Codex self-review `LGTM` and validation completion.
 - Use squash merge.
+- When the above conditions are met, merge immediately without extra wait.
+- After merge, automatically proceed to the next task by workspace routing defaults.
 
 PR quick flow:
 ```bash
@@ -25,6 +28,23 @@ git checkout -b feat/<topic>
 git push -u origin feat/<topic>
 gh pr create --base main --fill
 ```
+
+PR review loop (required):
+```text
+1. Open PR
+2. Run Codex self-review on changed files and behavior
+3. Leave PR comment as Codex with findings and planned fixes
+4. Apply fixes and push update commit(s)
+5. Run Codex self-review again
+6. Repeat 3-5 until explicit LGTM
+7. Squash merge
+8. Delete feature branch and continue to next task automatically
+```
+
+## Workspace Routing Defaults
+- If current working directory is `/Users/miyoungjang/Repository/quant/quant-investment`, continue with frontend tasks only.
+- If current working directory is `/Users/miyoungjang/Repository/quant/quant-investment2`, continue by finding and creating condition-related issues only.
+- If current working directory is `/Users/miyoungjang/Repository/quant/quant-investment3`, continue with backend issues only.
 
 ## Post-Task Retrospective Rule (Mandatory)
 At the end of every task, include a short retrospective block in the final update:
