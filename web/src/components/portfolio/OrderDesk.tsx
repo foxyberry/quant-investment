@@ -26,7 +26,19 @@ const ORDER_STATUSES: KiwoomOrderStatus[] = [
   'REJECTED',
 ];
 
-export default function OrderDesk() {
+interface OrderDeskPrefill {
+  ticker: string;
+  currentPrice: number | null;
+  currency?: string | null;
+  name?: string | null;
+  updatedAt: number;
+}
+
+interface OrderDeskProps {
+  prefill?: OrderDeskPrefill | null;
+}
+
+export default function OrderDesk({ prefill }: OrderDeskProps) {
   const t = useTranslations('portfolio');
   const tCommon = useTranslations('common');
   const locale = useLocale();
@@ -54,6 +66,16 @@ export default function OrderDesk() {
 
   const wsRef = useRef<WebSocket | null>(null);
   const pollRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!prefill?.ticker) return;
+    setTicker(prefill.ticker.toUpperCase());
+    if (orderType === 'LIMIT' && prefill.currentPrice !== null && Number.isFinite(prefill.currentPrice)) {
+      const rounded = Math.round(prefill.currentPrice);
+      setPrice(String(rounded));
+    }
+    setError(null);
+  }, [orderType, prefill]);
 
   const loadOrders = useCallback(async () => {
     try {
@@ -333,6 +355,27 @@ export default function OrderDesk() {
               {connectionLabel}
             </span>
           </div>
+
+          {prefill && (
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span className="text-[var(--foreground-muted)]">
+                  {t('ticker')}: <span className="font-mono text-[var(--foreground)]">{prefill.ticker}</span>
+                </span>
+                <span className="text-[var(--foreground-muted)]">
+                  {t('currentPrice')}:{' '}
+                  <span className="font-mono text-[var(--foreground)]">
+                    {formatCurrency(prefill.currentPrice, prefill.currency ?? 'KRW')}
+                  </span>
+                </span>
+                {prefill.name && (
+                  <span className="text-[var(--foreground-muted)]">
+                    {t('name')}: <span className="text-[var(--foreground)]">{prefill.name}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
             <input
