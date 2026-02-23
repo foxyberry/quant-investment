@@ -2,7 +2,7 @@ export const queryKeys = {
   portfolio: {
     all: ['portfolio'] as const,
     holdings: () => [...queryKeys.portfolio.all, 'holdings'] as const,
-    summary: () => [...queryKeys.portfolio.all, 'summary'] as const,
+    summary: (baseCurrency?: string) => [...queryKeys.portfolio.all, 'summary', baseCurrency] as const,
     sellSignals: () => [...queryKeys.portfolio.all, 'sell-signals'] as const,
   },
   screening: {

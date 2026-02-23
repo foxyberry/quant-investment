@@ -35,12 +35,13 @@ const MOCK_PORTFOLIO_SUMMARY = {
 };
 
 async function installApiMocks(page: Page) {
-  await page.route('**/localhost:8000/**', async (route) => {
-    const url = route.request().url();
+  // Health endpoint is outside /api/ path, so it needs a separate route
+  await page.route('**/health', async (route) => {
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'ok' }) });
+  });
 
-    if (url.includes('/health')) {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'ok' }) });
-    }
+  await page.route('**/api/**', async (route) => {
+    const url = route.request().url();
     if (url.includes('/api/portfolio/holdings')) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_HOLDINGS) });
     }
@@ -48,7 +49,12 @@ async function installApiMocks(page: Page) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_PORTFOLIO_SUMMARY) });
     }
     if (url.includes('/api/portfolio/sell-signals')) {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signals: [], checked_at: new Date().toISOString() }) });
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signals: [
+        { ticker: 'MSFT', name: 'Microsoft Corp.', signal_type: 'stop_loss', reason: 'Price below stop loss', current_price: 380.0, trigger_price: 370.0, avg_price: 350.0, pnl_pct: 8.57, currency: 'USD' },
+      ], checked_at: new Date().toISOString() }) });
+    }
+    if (url.includes('/api/exchange-rates')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ base: 'USD', rates: { KRW: 1350.5, SGD: 1.34, JPY: 149.8, EUR: 0.92, GBP: 0.79, CNY: 7.24, HKD: 7.82 }, updated_at: new Date().toISOString() }) });
     }
     if (url.includes('/api/analysis/reports')) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ reports: [], total_count: 0 }) });

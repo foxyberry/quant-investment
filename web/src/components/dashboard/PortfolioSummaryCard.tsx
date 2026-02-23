@@ -7,6 +7,7 @@ import { getPortfolioSummary } from '@/lib/api';
 import type { PortfolioSummary } from '@/lib/types';
 import { TrendingUp, TrendingDown, Briefcase, DollarSign } from 'lucide-react';
 import { formatCurrency as formatCurrencyUtil, formatPercent as formatPercentUtil } from '@/lib/format';
+import { useUserSettings } from '@/contexts/UserSettingsContext';
 
 interface LoadingState {
   loading: boolean;
@@ -16,13 +17,15 @@ interface LoadingState {
 export default function PortfolioSummaryCard() {
   const t = useTranslations('dashboard');
   const locale = useLocale();
+  const { settings } = useUserSettings();
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [state, setState] = useState<LoadingState>({ loading: true, error: null });
 
   useEffect(() => {
     const fetchSummary = async () => {
+      setState((prev) => ({ ...prev, loading: true }));
       try {
-        const data = await getPortfolioSummary();
+        const data = await getPortfolioSummary(settings.baseCurrency);
         setSummary(data);
         setState({ loading: false, error: null });
       } catch (err) {
@@ -34,7 +37,7 @@ export default function PortfolioSummaryCard() {
     };
 
     fetchSummary();
-  }, []);
+  }, [settings.baseCurrency]);
 
   const formatCurrency = (value: number, currency: string = 'USD') =>
     formatCurrencyUtil(value, currency, locale);
