@@ -386,7 +386,11 @@
     "loadingConditions": "조건 로딩 중...",
     "aiDescription": "밸류에이션 점수, 리스크 평가, 진입 추천을 포함한 AI 기반 분석입니다.",
     "low": "최저",
-    "high": "최고"
+    "high": "최고",
+    "notAvailable": "정보 없음",
+    "recommendationBuy": "매수",
+    "recommendationWait": "관망",
+    "recommendationAvoid": "회피"
   },
   "backtest": {
     "title": "전략 백테스트",
