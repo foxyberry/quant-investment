@@ -34,9 +34,16 @@ class _FakeChejanHandler:
             return self._order_status_by_no[order_no]
         return self._status
 
-    def emit_order_event(self, order_no, code, status):
+    def emit_order_event(self, order_no, code, status, order_qty=0, side=""):
         self._order_status_by_no[order_no] = type("S", (), {"value": status})()
-        payload = {"type": "order", "order_no": order_no, "code": code, "status": status}
+        payload = {
+            "type": "order",
+            "order_no": order_no,
+            "code": code,
+            "status": status,
+            "order_qty": order_qty,
+            "side": side,
+        }
         for cb in list(self._observers):
             cb(payload)
 
@@ -95,6 +102,48 @@ def test_kiwoom_executor_execute_and_status_mapping() -> None:
     status = executor.get_order_status("cid-1")
     assert status is not None
     assert status.status == OrderStatus.FILLED.value
+
+
+def test_kiwoom_executor_fallback_remap_matches_side_and_qty() -> None:
+    order_manager = _FakeOrderManager()
+    chejan_handler = _FakeChejanHandler()
+    executor = KiwoomExecutor(
+        ocx=object(),
+        acc_no="8123456789",
+        risk_manager=_AllowRiskManager(),
+        order_manager=order_manager,
+        chejan_handler=chejan_handler,
+    )
+
+    buy_result = executor.execute(
+        Order(
+            ticker="005930.KS",
+            side="BUY",
+            quantity=2,
+            price=70000,
+            order_type="LIMIT",
+            order_id="cid-buy-2",
+        )
+    )
+    sell_result = executor.execute(
+        Order(
+            ticker="005930.KS",
+            side="SELL",
+            quantity=1,
+            price=71000,
+            order_type="LIMIT",
+            order_id="cid-sell-1",
+        )
+    )
+    assert buy_result.success is True
+    assert sell_result.success is True
+
+    # Broker number differs from provisional number and arrives without mapping.
+    chejan_handler.emit_order_event("real-777", "005930", "FILLED", order_qty=1, side="SELL")
+    buy_status = executor.get_order_status("cid-buy-2")
+    sell_status = executor.get_order_status("cid-sell-1")
+    assert buy_status is not None and buy_status.status == OrderStatus.PENDING.value
+    assert sell_status is not None and sell_status.status == OrderStatus.FILLED.value
 
 
 def test_kiwoom_executor_blocks_by_risk_rule() -> None:
@@ -222,3 +271,37 @@ def test_realtime_trigger_bridge_uses_event_feed() -> None:
     assert len(emitted) == 1
     assert len(events) == 1
     assert events[0]["ticker"] == "005930.KS"
+
+
+def test_realtime_trigger_bridge_resolves_kosdaq_suffix() -> None:
+    checker = ConditionChecker()
+    checker.add_condition("035720.KQ", "PRICE_ABOVE", 50000)
+    bridge = RealtimeTriggerBridge(checker)
+
+    emitted = bridge.on_realtime_event(
+        {"code": "035720", "current_price": 51000, "market": "KOSDAQ"}
+    )
+    assert len(emitted) == 1
+    assert emitted[0].ticker == "035720.KQ"
+
+
+def test_portfolio_realtime_sync_uses_throttled_save(tmp_path) -> None:
+    portfolio_file = tmp_path / "portfolio_throttled.yaml"
+    p = Portfolio(filepath=str(portfolio_file), realtime_save_interval_seconds=60.0)
+    save_calls = {"n": 0}
+
+    def _fake_save():
+        save_calls["n"] += 1
+
+    p._save = _fake_save  # type: ignore[method-assign]
+
+    p.sync_from_kiwoom_balance_event(
+        {"type": "balance", "code": "005930", "holding_qty": 1, "avg_buy_price": 70000}
+    )
+    p.sync_from_kiwoom_balance_event(
+        {"type": "balance", "code": "005930", "holding_qty": 2, "avg_buy_price": 70000}
+    )
+    assert save_calls["n"] == 0
+
+    p.flush_pending_sync_save()
+    assert save_calls["n"] == 1

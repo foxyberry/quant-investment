@@ -367,11 +367,34 @@ class RealtimeTriggerBridge:
         code = str(event.get("code", "")).strip()
         if not code:
             return []
-        ticker = f"{code}.KS"
         price = event.get("current_price")
         if price is None:
             return []
-        return self.on_price_update(ticker, float(price))
+        results: List[TriggerEvent] = []
+        for ticker in self._resolve_tickers(code, event.get("market")):
+            results.extend(self.on_price_update(ticker, float(price)))
+        return results
+
+    def _resolve_tickers(self, code: str, market: Optional[Any]) -> List[str]:
+        """Resolve ticker candidates with KS/KQ suffix from market or conditions."""
+        norm = str(code).strip().upper()
+        market_text = str(market or "").strip().upper()
+        if any(token in market_text for token in ["KOSDAQ", "KQ", "KSQ"]):
+            return [f"{norm}.KQ"]
+        if any(token in market_text for token in ["KOSPI", "KS", "STK"]):
+            return [f"{norm}.KS"]
+
+        ks = f"{norm}.KS"
+        kq = f"{norm}.KQ"
+        has_ks = len(self._checker.get_conditions(ks)) > 0
+        has_kq = len(self._checker.get_conditions(kq)) > 0
+        if has_kq and not has_ks:
+            return [kq]
+        if has_ks and not has_kq:
+            return [ks]
+        if has_ks and has_kq:
+            return [ks, kq]
+        return [ks]
 
     def bind_price_feed(self, subscribe_fn: Callable[[Callable[[Dict[str, Any]], None]], None]) -> None:
         """외부 실시간 피드의 subscribe 함수와 연결."""

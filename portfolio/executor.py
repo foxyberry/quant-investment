@@ -369,6 +369,8 @@ class KiwoomExecutor(BaseExecutor):
         order_no = str(event.get("order_no", "")).strip()
         code = str(event.get("code", "")).strip()
         status = str(event.get("status", "")).strip()
+        event_qty = int(event.get("order_qty", 0) or 0)
+        event_side = str(event.get("side", "")).strip().upper()
 
         client_order_id = self._broker_to_client_order.get(order_no)
         if client_order_id is None and code:
@@ -376,14 +378,22 @@ class KiwoomExecutor(BaseExecutor):
             candidates = [
                 cid
                 for cid, submitted in self._submitted_orders.items()
-                if self._to_kiwoom_code(submitted.ticker) == code and self._client_status.get(cid) not in {
+                if self._to_kiwoom_code(submitted.ticker) == code
+                and (event_qty <= 0 or int(submitted.quantity) == event_qty)
+                and (not event_side or submitted.side.upper() == event_side)
+                and self._client_status.get(cid) not in {
                     OrderStatus.FILLED.value,
                     OrderStatus.CANCELLED.value,
                     OrderStatus.REJECTED.value,
                 }
             ]
             if candidates:
-                client_order_id = candidates[-1]
+                # Prefer the oldest open order to reduce mis-mapping when multiple
+                # provisional ids exist for the same code.
+                client_order_id = sorted(
+                    candidates,
+                    key=lambda cid: self._submitted_orders[cid].created_at,
+                )[0]
                 previous_broker = self._client_to_broker_order.get(client_order_id)
                 if previous_broker:
                     self._broker_to_client_order.pop(previous_broker, None)

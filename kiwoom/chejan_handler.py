@@ -28,6 +28,8 @@ class ChejanOrderEvent:
     order_no: str
     code: str
     raw_status: str
+    order_qty: int
+    side: str
     filled_qty: int
     unfilled_qty: int
     fill_price: int
@@ -89,6 +91,8 @@ class ChejanHandler:
                     "code": event.code,
                     "status": event.status.value,
                     "raw_status": event.raw_status,
+                    "order_qty": event.order_qty,
+                    "side": event.side,
                     "filled_qty": event.filled_qty,
                     "unfilled_qty": event.unfilled_qty,
                     "fill_price": event.fill_price,
@@ -126,6 +130,15 @@ class ChejanHandler:
             return code[1:]
         return code
 
+    @staticmethod
+    def _normalize_side(order_category: str, buy_sell: str) -> str:
+        text = f"{order_category} {buy_sell}".upper().replace("+", "").replace("-", "")
+        if "매수" in text or "BUY" in text:
+            return "BUY"
+        if "매도" in text or "SELL" in text:
+            return "SELL"
+        return ""
+
     def _derive_status(self, raw_status: str, filled_qty: int, unfilled_qty: int) -> OrderStatus:
         status = raw_status.strip()
 
@@ -154,6 +167,11 @@ class ChejanHandler:
         order_no = self._get_chejan_data(FID.ORDER_NO)
         code = self._normalize_code(self._get_chejan_data(FID.CODE))
         raw_status = self._get_chejan_data(FID.ORDER_STATUS)
+        order_qty = self._to_int(self._get_chejan_data(FID.ORDER_QTY))
+        side = self._normalize_side(
+            self._get_chejan_data(FID.ORDER_CATEGORY),
+            self._get_chejan_data(FID.BUY_SELL),
+        )
         fill_price = self._to_int(self._get_chejan_data(FID.FILL_PRICE))
         filled_qty = self._to_int(self._get_chejan_data(FID.FILL_QTY))
         unfilled_qty = self._to_int(self._get_chejan_data(FID.UNFILLED_QTY))
@@ -163,6 +181,8 @@ class ChejanHandler:
             order_no=order_no,
             code=code,
             raw_status=raw_status,
+            order_qty=order_qty,
+            side=side,
             filled_qty=filled_qty,
             unfilled_qty=unfilled_qty,
             fill_price=fill_price,
@@ -195,4 +215,7 @@ class ChejanHandler:
 
     def _notify(self, payload: Dict[str, Any]) -> None:
         for callback in list(self._observers):
-            callback(payload)
+            try:
+                callback(payload)
+            except Exception:
+                continue

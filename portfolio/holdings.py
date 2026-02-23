@@ -14,6 +14,7 @@ Usage:
 
 import yaml
 import logging
+import threading
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
@@ -89,9 +90,16 @@ class Portfolio:
 
     DEFAULT_PATH = Path(__file__).parent.parent / "config" / "portfolio.yaml"
 
-    def __init__(self, filepath: Optional[str] = None):
+    def __init__(
+        self,
+        filepath: Optional[str] = None,
+        realtime_save_interval_seconds: float = 0.5,
+    ):
         self.logger = logging.getLogger(__name__)
         self.filepath = Path(filepath) if filepath else self.DEFAULT_PATH
+        self._realtime_save_interval_seconds = max(0.0, float(realtime_save_interval_seconds))
+        self._pending_save_timer: Optional[threading.Timer] = None
+        self._pending_save_lock = threading.Lock()
         self._holdings: Dict[str, Holding] = {}
         self._load()
 
@@ -346,7 +354,7 @@ class Portfolio:
         if quantity <= 0:
             if ticker in self._holdings:
                 del self._holdings[ticker]
-                self._save()
+                self._schedule_realtime_save()
             return
 
         holding = self._holdings.get(ticker)
@@ -362,11 +370,41 @@ class Portfolio:
         else:
             holding.quantity = quantity
             holding.avg_price = avg_price
-        self._save()
+        self._schedule_realtime_save()
 
     def bind_chejan_handler(self, chejan_handler: Any) -> None:
         """ChejanHandler 옵저버로 등록해 잔고 이벤트를 실시간 반영."""
         chejan_handler.add_observer(self.sync_from_kiwoom_balance_event)
+
+    def flush_pending_sync_save(self) -> None:
+        """Flush pending throttled save from realtime balance sync."""
+        with self._pending_save_lock:
+            timer = self._pending_save_timer
+            self._pending_save_timer = None
+        if timer is not None:
+            timer.cancel()
+        self._save()
+
+    def _schedule_realtime_save(self) -> None:
+        if self._realtime_save_interval_seconds <= 0:
+            self._save()
+            return
+
+        with self._pending_save_lock:
+            if self._pending_save_timer is not None:
+                return
+            timer = threading.Timer(
+                self._realtime_save_interval_seconds,
+                self._flush_scheduled_realtime_save,
+            )
+            timer.daemon = True
+            self._pending_save_timer = timer
+            timer.start()
+
+    def _flush_scheduled_realtime_save(self) -> None:
+        with self._pending_save_lock:
+            self._pending_save_timer = None
+        self._save()
 
     def sync_from_opw00018(self, rows: List[Dict[str, Any]]) -> int:
         """OPW00018 TR 결과로 전체 보유 종목을 수동 동기화."""
