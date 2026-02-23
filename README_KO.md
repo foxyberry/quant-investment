@@ -247,6 +247,7 @@ quant-investment/
 
 ## 문서
 
+- [백엔드 핵심 로직 개요 (데이터 수집/스크리닝/전략 실행)](docs/ko/BACKEND_LOGIC_OVERVIEW.md)
 - [돌파 조건 (Breakout Conditions)](docs/BREAKOUT_CONDITIONS.md)
 - [한국 주식 MA 스크리너](docs/KOREAN_MA_SCREENER.md)
 - [옵션 추적 봇](docs/OPTIONS_TRACKER_README.md)
