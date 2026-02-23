@@ -448,6 +448,16 @@
       },
       "help": "查找近期涨跌幅达到一定百分比的股票。"
     },
+    "return_turnaround": {
+      "label": "收益率反转",
+      "desc": "前N日收益率 <= 阈值 且 近N日收益率 >= 阈值",
+      "params": {
+        "period_days": "周期（天）",
+        "prev_max_return_pct": "前期最大收益率 %",
+        "min_return_pct": "近期最小收益率 %"
+      },
+      "help": "查找先走弱后转强的反转形态股票。"
+    },
     "min_volume": {
       "label": "最小成交量",
       "desc": "成交量 >= 阈值",

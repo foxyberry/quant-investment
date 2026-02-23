@@ -42,6 +42,12 @@ class TestConditionsEndpoint:
         assert "type" in param
         assert "description" in param
 
+    def test_return_turnaround_condition_exposed(self):
+        response = client.get("/api/strategy/conditions")
+        data = response.json()
+        cond_map = {c["key"]: c for c in data["conditions"]}
+        assert "return_turnaround" in cond_map
+
 
 class TestRunStrategyEndpoint:
     """Test POST /api/strategy/run."""
