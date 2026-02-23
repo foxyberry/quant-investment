@@ -13,6 +13,7 @@ class _FakeOcx:
         self.calls = []
         self._callbacks = {}
         self._condition_name_list = ""
+        self._stop_ret = 1
 
     def dynamicCall(self, func_spec, *args):
         self.calls.append((func_spec, args))
@@ -27,7 +28,7 @@ class _FakeOcx:
         if "SendCondition(QString, QString, int, int)" in func_spec:
             return 1
         if "SendConditionStop(QString, QString, int)" in func_spec:
-            return 1
+            return self._stop_ret
         return 0
 
 
@@ -63,6 +64,18 @@ def test_start_and_stop_monitoring_manage_screen_and_calls() -> None:
     stopped = manager.stop_monitoring("급등주", 0)
     assert stopped is True
     assert ("SendConditionStop(QString, QString, int)", ("3100", "급등주", 0)) in ocx.calls
+
+
+def test_stop_monitoring_keeps_state_when_send_condition_stop_fails() -> None:
+    ocx = _FakeOcx()
+    ocx._stop_ret = 0
+    manager = ConditionSearchManager(ocx, screen_manager=ScreenManager(start=3110, end=3112))
+
+    _ = manager.start_monitoring("급등주", 0)
+    stopped = manager.stop_monitoring("급등주", 0)
+
+    assert stopped is False
+    assert manager.active_conditions[(0, "급등주")] == "3110"
 
 
 def test_realtime_condition_limit_enforced() -> None:
@@ -110,3 +123,28 @@ def test_observer_receives_condition_events() -> None:
     assert events[0]["type"] == "condition_ver"
     assert events[1]["type"] == "tr_condition"
     assert events[2]["type"] == "real_condition"
+
+
+def test_invalid_condition_index_is_ignored_in_realtime_callback() -> None:
+    ocx = _FakeOcx()
+    manager = ConditionSearchManager(ocx)
+    events = []
+    manager.add_observer(events.append)
+
+    manager.on_receive_real_condition("005930", "I", "급등주", "")
+    manager.on_receive_real_condition("005930", "I", "급등주", "x")
+
+    assert events == []
+
+
+def test_discovery_ticker_uses_suffix_resolver() -> None:
+    ocx = _FakeOcx()
+    watch_events = []
+    manager = ConditionSearchManager(
+        ocx,
+        watchlist_sink=watch_events.append,
+        ticker_suffix_resolver=lambda code: "KQ" if code == "035720" else "KS",
+    )
+
+    manager.on_receive_real_condition("035720", "I", "코스닥조건", "1")
+    assert watch_events[0]["ticker"] == "035720.KQ"

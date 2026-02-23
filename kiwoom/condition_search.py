@@ -34,11 +34,13 @@ class ConditionSearchManager:
         screen_manager: Optional[ScreenManager] = None,
         watchlist_sink: Optional[Callable[[Dict[str, Any]], None]] = None,
         signal_sink: Optional[Callable[[Dict[str, Any]], None]] = None,
+        ticker_suffix_resolver: Optional[Callable[[str], Optional[str]]] = None,
     ) -> None:
         self._ocx = ocx
         self._screen_manager = screen_manager or ScreenManager(start=3000, end=3999)
         self._watchlist_sink = watchlist_sink
         self._signal_sink = signal_sink
+        self._ticker_suffix_resolver = ticker_suffix_resolver
 
         self._condition_loaded_event = threading.Event()
         self._condition_load_result = 0
@@ -130,17 +132,21 @@ class ConditionSearchManager:
         if not isinstance(condition_index, int) or condition_index < 0:
             raise ValueError("condition_index must be a non-negative int")
         key = (condition_index, condition_name)
-        screen_no = self._active.pop(key, None)
-        self._tracked_codes.pop(key, None)
+        screen_no = self._active.get(key)
         if screen_no is None:
             return False
 
-        self._ocx.dynamicCall(
+        ret = self._ocx.dynamicCall(
             "SendConditionStop(QString, QString, int)",
             screen_no,
             condition_name,
             int(condition_index),
         )
+        if int(ret) != 1:
+            return False
+
+        self._active.pop(key, None)
+        self._tracked_codes.pop(key, None)
         self._screen_manager.release(screen_no)
         return True
 
@@ -179,25 +185,33 @@ class ConditionSearchManager:
         prev_next: int,
     ) -> None:
         _ = prev_next
-        key = (int(condition_index), str(condition_name))
+        try:
+            idx = int(condition_index)
+        except (TypeError, ValueError):
+            return
+
+        key = (idx, str(condition_name))
         codes = self._parse_code_list(code_list)
         self._tracked_codes[key] = set(codes)
         payload = {
             "type": "tr_condition",
             "screen_no": str(screen_no),
             "condition_name": str(condition_name),
-            "condition_index": int(condition_index),
+            "condition_index": idx,
             "codes": codes,
         }
         self._notify(payload)
         for code in codes:
-            self._emit_discovery(action="watch", condition_name=condition_name, condition_index=int(condition_index), code=code)
+            self._emit_discovery(action="watch", condition_name=condition_name, condition_index=idx, code=code)
 
     def on_receive_real_condition(self, code: str, event_type: str, condition_name: str, condition_index: str) -> None:
         norm_code = str(code).strip()
         if not norm_code:
             return
-        idx = int(condition_index)
+        try:
+            idx = int(condition_index)
+        except (TypeError, ValueError):
+            return
         key = (idx, str(condition_name))
         tracked = self._tracked_codes.setdefault(key, set())
 
@@ -242,18 +256,32 @@ class ConditionSearchManager:
         return out
 
     def _emit_discovery(self, action: str, condition_name: str, condition_index: int, code: str) -> None:
+        ticker = self._to_ticker(code)
         payload = {
             "source": "kiwoom_condition",
             "action": action,
             "condition_name": condition_name,
             "condition_index": int(condition_index),
             "code": code,
-            "ticker": f"{code}.KS",
+            "ticker": ticker,
         }
         if self._watchlist_sink is not None:
             self._watchlist_sink(payload)
         if self._signal_sink is not None:
             self._signal_sink(payload)
+
+    def _to_ticker(self, code: str) -> str:
+        suffix = "KS"
+        if self._ticker_suffix_resolver is not None:
+            try:
+                resolved = self._ticker_suffix_resolver(code)
+            except Exception:
+                resolved = None
+            if resolved:
+                text = str(resolved).strip().upper().lstrip(".")
+                if text in {"KS", "KQ"}:
+                    suffix = text
+        return f"{code}.{suffix}"
 
     def _notify(self, payload: Dict[str, Any]) -> None:
         for callback in list(self._observers):
