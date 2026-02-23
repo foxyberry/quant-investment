@@ -23,6 +23,15 @@ Execution workflow is documented in:
   - auto-approval candidates,
   - next-run defaults.
 
+## Auto-Execution Defaults
+- PR completion:
+  - After Codex self-review `LGTM` and passing validations, execute squash merge immediately.
+  - After merge, continue to the next task automatically.
+- Workspace routing:
+  - `/Users/miyoungjang/Repository/quant/quant-investment` -> frontend tasks only
+  - `/Users/miyoungjang/Repository/quant/quant-investment2` -> condition-related issue discovery/creation only
+  - `/Users/miyoungjang/Repository/quant/quant-investment3` -> backend issue work only
+
 ## Codex Preflight Checklist
 - Git user is configured (`user.name`, `user.email`).
 - Remote access works (`ssh -T git@github.com` and `git fetch`).

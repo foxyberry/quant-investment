@@ -50,6 +50,7 @@ gh pr create --base main --fill
 4. Explicit `LGTM` confirmed
 5. Squash merge
 6. Delete feature branch
+7. Continue to next task automatically (by workspace routing defaults)
 
 ## Review Iteration Rule (Mandatory)
 1. After PR creation, run Codex self-review immediately.
