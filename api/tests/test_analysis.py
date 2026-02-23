@@ -471,33 +471,30 @@ class TestTickerAnalysis:
                 "ma_240": 165.0,
             }
 
-            # Mock yfinance for fundamental data
-            with patch("api.routers.analysis.yf") as mock_yf:
-                mock_ticker = MagicMock()
-                mock_yf.Ticker.return_value = mock_ticker
-                mock_ticker.info = {
-                    "marketCap": 2800000000000,
-                    "trailingPE": 28.5,
-                    "dividendYield": 0.005,
-                    "sector": "Technology",
-                }
+            # Mock ticker info lookup for fundamental data
+            mock_service.get_ticker_info.return_value = {
+                "marketCap": 2800000000000,
+                "trailingPE": 28.5,
+                "dividendYield": 0.005,
+                "sector": "Technology",
+            }
 
-                # Act
-                response = client.get("/api/analysis/ticker/AAPL?period=6mo")
+            # Act
+            response = client.get("/api/analysis/ticker/AAPL?period=6mo")
 
-                # Assert
-                assert response.status_code == 200
-                data = response.json()
-                assert data["ticker"] == "AAPL"
-                assert data["name"] == "Apple Inc."
-                assert data["current_price"] == 175.50
-                assert data["change_pct"] == 1.33
-                assert len(data["ohlcv"]) == 1
-                assert data["ohlcv"][0]["time"] == "2026-02-11"
-                assert data["technical"]["rsi"]["value"] == 55.5
-                assert data["technical"]["rsi"]["signal"] == "neutral"
-                assert data["technical"]["macd"]["trend"] == "bullish"
-                assert data["fundamental"]["sector"] == "Technology"
+            # Assert
+            assert response.status_code == 200
+            data = response.json()
+            assert data["ticker"] == "AAPL"
+            assert data["name"] == "Apple Inc."
+            assert data["current_price"] == 175.50
+            assert data["change_pct"] == 1.33
+            assert len(data["ohlcv"]) == 1
+            assert data["ohlcv"][0]["time"] == "2026-02-11"
+            assert data["technical"]["rsi"]["value"] == 55.5
+            assert data["technical"]["rsi"]["signal"] == "neutral"
+            assert data["technical"]["macd"]["trend"] == "bullish"
+            assert data["fundamental"]["sector"] == "Technology"
 
     def test_get_ticker_analysis_not_found(self, client):
         """Test GET /api/analysis/ticker/{ticker} with invalid ticker returns 404."""
@@ -551,16 +548,15 @@ class TestTickerAnalysis:
             mock_service.get_technical_indicators.return_value = None
 
             # No fundamental data
-            with patch("api.routers.analysis.yf") as mock_yf:
-                mock_yf.Ticker.side_effect = Exception("Not found")
+            mock_service.get_ticker_info.return_value = {}
 
-                # Act
-                response = client.get("/api/analysis/ticker/NEWSTOCK")
+            # Act
+            response = client.get("/api/analysis/ticker/NEWSTOCK")
 
-                # Assert
-                assert response.status_code == 200
-                data = response.json()
-                assert data["ticker"] == "NEWSTOCK"
-                assert data["name"] == "NEWSTOCK"  # Falls back to ticker
-                assert data["technical"]["rsi"] is None
-                assert data["fundamental"] is None
+            # Assert
+            assert response.status_code == 200
+            data = response.json()
+            assert data["ticker"] == "NEWSTOCK"
+            assert data["name"] == "NEWSTOCK"  # Falls back to ticker
+            assert data["technical"]["rsi"] is None
+            assert data["fundamental"] is None

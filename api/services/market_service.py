@@ -6,6 +6,7 @@ OHLCV data, quotes, and technical indicators.
 """
 
 import logging
+from collections import OrderedDict
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -25,7 +26,9 @@ class MarketService:
     data retrieval and TechnicalEnricher for indicator calculations.
     """
 
-    _ticker_info_cache: Dict[str, Dict[str, Any]] = {}
+    _TICKER_INFO_TTL_SECONDS = 60 * 60
+    _TICKER_INFO_MAXSIZE = 256
+    _ticker_info_cache: "OrderedDict[str, tuple[datetime, Dict[str, Any]]]" = OrderedDict()
 
     def __init__(self, cache: Optional[OHLCVCache] = None):
         """
@@ -49,6 +52,7 @@ class MarketService:
         Args:
             ticker: Stock ticker symbol (e.g., 'AAPL', '005930.KS')
             days: Number of days to retrieve (default: 100)
+            data: Optional pre-fetched OHLCV DataFrame to avoid extra cache reads.
 
         Returns:
             Dictionary containing ticker, data list, and period_days,
@@ -87,6 +91,8 @@ class MarketService:
 
         Args:
             ticker: Stock ticker symbol
+            data: Optional pre-fetched OHLCV DataFrame (uses latest 5 rows).
+            include_name: Whether to resolve company name from cached ticker info.
 
         Returns:
             Dictionary with current quote information, or None if unavailable.
@@ -148,6 +154,7 @@ class MarketService:
 
         Args:
             ticker: Stock ticker symbol
+            data: Optional pre-fetched OHLCV DataFrame to reuse upstream fetch.
 
         Returns:
             Dictionary with technical indicators, or None if unavailable.
@@ -227,17 +234,27 @@ class MarketService:
         return frame[["date", "open", "high", "low", "close", "volume"]].to_dict("records")
 
     def get_ticker_info(self, ticker: str) -> Dict[str, Any]:
-        """Get yfinance info with simple in-memory cache."""
+        """Get yfinance info with bounded in-memory cache (TTL + maxsize)."""
+        now = datetime.now()
         cached = self._ticker_info_cache.get(ticker)
         if cached is not None:
-            return cached
+            ts, payload = cached
+            if (now - ts).total_seconds() <= self._TICKER_INFO_TTL_SECONDS:
+                self._ticker_info_cache.move_to_end(ticker)
+                return payload
+            self._ticker_info_cache.pop(ticker, None)
+
         try:
             import yfinance as yf
             info = yf.Ticker(ticker).info or {}
-            self._ticker_info_cache[ticker] = info
+            self._ticker_info_cache[ticker] = (now, info)
+            while len(self._ticker_info_cache) > self._TICKER_INFO_MAXSIZE:
+                self._ticker_info_cache.popitem(last=False)
             return info
         except Exception:
-            self._ticker_info_cache[ticker] = {}
+            self._ticker_info_cache[ticker] = (now, {})
+            while len(self._ticker_info_cache) > self._TICKER_INFO_MAXSIZE:
+                self._ticker_info_cache.popitem(last=False)
             return {}
 
     def _get_ticker_name(self, ticker: str) -> Optional[str]:

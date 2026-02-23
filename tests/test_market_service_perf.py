@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from datetime import datetime, timedelta
 
 import pandas as pd
 
@@ -64,3 +65,62 @@ def test_get_ohlcv_uses_provided_data_without_cache_hit():
     assert result["period_days"] == 5
     assert len(result["data"]) == 5
     assert cache.calls == 0
+
+
+def test_get_ticker_info_refetches_after_ttl_expiry(monkeypatch):
+    calls = {"count": 0}
+
+    class FakeTicker:
+        def __init__(self, ticker: str):
+            calls["count"] += 1
+            self.info = {"shortName": f"{ticker}-{calls['count']}"}
+
+    fake_yf = SimpleNamespace(Ticker=FakeTicker)
+    monkeypatch.setitem(__import__("sys").modules, "yfinance", fake_yf)
+
+    MarketService._ticker_info_cache.clear()
+    service = MarketService(cache=None)
+
+    first = service.get_ticker_info("AAPL")
+    assert first.get("shortName") == "AAPL-1"
+    assert calls["count"] == 1
+
+    # Force cached entry stale and verify re-fetch.
+    ts, payload = MarketService._ticker_info_cache["AAPL"]
+    _ = payload
+    MarketService._ticker_info_cache["AAPL"] = (
+        datetime.now() - timedelta(seconds=MarketService._TICKER_INFO_TTL_SECONDS + 1),
+        {"shortName": "stale"},
+    )
+
+    second = service.get_ticker_info("AAPL")
+    assert second.get("shortName") == "AAPL-2"
+    assert calls["count"] == 2
+
+
+def test_get_ticker_info_respects_maxsize(monkeypatch):
+    calls = {"count": 0}
+
+    class FakeTicker:
+        def __init__(self, ticker: str):
+            calls["count"] += 1
+            self.info = {"shortName": ticker}
+
+    fake_yf = SimpleNamespace(Ticker=FakeTicker)
+    monkeypatch.setitem(__import__("sys").modules, "yfinance", fake_yf)
+
+    MarketService._ticker_info_cache.clear()
+    old_maxsize = MarketService._TICKER_INFO_MAXSIZE
+    MarketService._TICKER_INFO_MAXSIZE = 2
+    try:
+        service = MarketService(cache=None)
+        service.get_ticker_info("AAPL")
+        service.get_ticker_info("MSFT")
+        service.get_ticker_info("GOOG")
+    finally:
+        MarketService._TICKER_INFO_MAXSIZE = old_maxsize
+
+    assert len(MarketService._ticker_info_cache) == 2
+    assert "AAPL" not in MarketService._ticker_info_cache
+    assert "MSFT" in MarketService._ticker_info_cache
+    assert "GOOG" in MarketService._ticker_info_cache

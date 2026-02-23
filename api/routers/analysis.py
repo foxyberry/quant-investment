@@ -7,7 +7,6 @@ Provides endpoints for stock analysis and data enrichment operations.
 import logging
 from typing import List, Optional
 
-import yfinance as yf
 from fastapi import APIRouter, HTTPException, Query
 
 from api.schemas.analysis import (
@@ -441,8 +440,9 @@ def get_ticker_analysis(
     # Get fundamental data
     fundamental = None
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        info = market_service.get_ticker_info(ticker)
+        if not isinstance(info, dict):
+            info = {}
         if info:
             name = info.get("shortName") or info.get("longName") or name
             fundamental = TickerFundamental(
