@@ -102,6 +102,19 @@ from .time_price import (
     DayOfWeekSeasonalityCondition,
 )
 
+from .quant_trend import (
+    Momentum121Condition,
+    VolatilityNDayCondition,
+    DistanceFrom52WHighCondition,
+    RelativeStrengthVsBenchmarkCondition,
+    ADXTrendStrengthCondition,
+    MARibbonAlignmentCondition,
+    GoldenCross50200Condition,
+    DeathCross50200Condition,
+    DonchianChannelBreakoutCondition,
+    KeltnerChannelBreakoutCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -190,6 +203,13 @@ __all__ = [
     'GapDownExhaustionCondition', 'OpeningRangeBreakoutCondition',
     'PivotPointBreakoutCondition', 'MonthOfYearSeasonalityCondition',
     'TurnOfMonthEffectCondition', 'DayOfWeekSeasonalityCondition',
+
+    # Quant Trend Batch 4
+    'Momentum121Condition', 'VolatilityNDayCondition',
+    'DistanceFrom52WHighCondition', 'RelativeStrengthVsBenchmarkCondition',
+    'ADXTrendStrengthCondition', 'MARibbonAlignmentCondition',
+    'GoldenCross50200Condition', 'DeathCross50200Condition',
+    'DonchianChannelBreakoutCondition', 'KeltnerChannelBreakoutCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
