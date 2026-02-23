@@ -25,8 +25,12 @@ from screener.conditions.registry import get_condition_class_map, get_condition_
 from screener import StockScreener
 from screener.sector_fetcher import get_sector_fetcher
 from api.services.screening_service import ScreeningService
+from utils.fundamental_cache import FundamentalCache
 
 logger = logging.getLogger(__name__)
+
+FUNDAMENTAL_TTL_SECONDS = 24 * 60 * 60
+_fundamental_cache = FundamentalCache()
 
 # Auto-populated from @register_condition decorators
 CONDITION_CLASS_MAP: Dict[str, Type[BaseCondition]] = get_condition_class_map()
@@ -67,19 +71,34 @@ def _normalize_dividend_yield(value: Any) -> Optional[float]:
 
 def _fetch_kr_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[float]]]:
     """Fetch KR fundamentals in bulk via pykrx (best effort)."""
+    fundamentals: Dict[str, Dict[str, Optional[float]]] = {}
+    missing_tickers: List[str] = []
+
+    for ticker in tickers:
+        cached = _fundamental_cache.get("fundamental_kr", ticker, FUNDAMENTAL_TTL_SECONDS)
+        if cached is not None:
+            fundamentals[ticker] = {
+                "per": cached.get("per"),
+                "pbr": cached.get("pbr"),
+                "dividend_yield": cached.get("dividend_yield"),
+            }
+        else:
+            missing_tickers.append(ticker)
+
+    if not missing_tickers:
+        return fundamentals
+
     try:
         from pykrx import stock as pykrx_stock
     except ImportError:
-        return {}
+        return fundamentals
 
     by_market: Dict[str, Dict[str, str]] = {"KOSPI": {}, "KOSDAQ": {}}
-    for ticker in tickers:
+    for ticker in missing_tickers:
         if ticker.endswith(".KS"):
             by_market["KOSPI"][_extract_krx_code(ticker)] = ticker
         elif ticker.endswith(".KQ"):
             by_market["KOSDAQ"][_extract_krx_code(ticker)] = ticker
-
-    fundamentals: Dict[str, Dict[str, Optional[float]]] = {}
 
     for market, code_to_ticker in by_market.items():
         if not code_to_ticker:
@@ -108,11 +127,13 @@ def _fetch_kr_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[f
                 continue
 
             row = df.loc[code]
-            fundamentals[full_ticker] = {
+            parsed = {
                 "per": _to_optional_float(row.get("PER")),
                 "pbr": _to_optional_float(row.get("PBR")),
                 "dividend_yield": _to_optional_float(row.get("DIV")),  # pykrx DIV is already in %
             }
+            fundamentals[full_ticker] = parsed
+            _fundamental_cache.set("fundamental_kr", full_ticker, parsed)
 
     return fundamentals
 
@@ -122,19 +143,37 @@ def _fetch_us_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[f
     if not tickers:
         return {}
 
+    fundamentals: Dict[str, Dict[str, Optional[float]]] = {}
+    missing_tickers: List[str] = []
+
+    for ticker in tickers:
+        cached = _fundamental_cache.get("fundamental_us", ticker, FUNDAMENTAL_TTL_SECONDS)
+        if cached is not None:
+            fundamentals[ticker] = {
+                "per": cached.get("per"),
+                "pbr": cached.get("pbr"),
+                "dividend_yield": cached.get("dividend_yield"),
+            }
+        else:
+            missing_tickers.append(ticker)
+
+    if not missing_tickers:
+        return fundamentals
+
     try:
         import yfinance as yf
     except ImportError:
-        return {}
-
-    fundamentals: Dict[str, Dict[str, Optional[float]]] = {}
+        return fundamentals
 
     try:
-        tickers_obj = yf.Tickers(" ".join(tickers))
+        tickers_obj = yf.Tickers(" ".join(missing_tickers))
     except Exception:
         tickers_obj = None
 
-    def _fetch_one(ticker: str) -> Dict[str, Optional[float]]:
+    def _is_success_payload(payload: Dict[str, Optional[float]]) -> bool:
+        return any(v is not None for v in payload.values())
+
+    def _fetch_one(ticker: str) -> tuple[Dict[str, Optional[float]], bool]:
         try:
             info: Dict[str, Any] = {}
             if tickers_obj is not None:
@@ -144,31 +183,38 @@ def _fetch_us_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[f
             if not info:
                 info = yf.Ticker(ticker).info or {}
 
-            return {
+            payload = {
                 "per": _to_optional_float(info.get("trailingPE")),
                 "pbr": _to_optional_float(info.get("priceToBook")),
                 "dividend_yield": _normalize_dividend_yield(info.get("dividendYield")),
             }
+            return payload, _is_success_payload(payload)
         except Exception:
             return {
                 "per": None,
                 "pbr": None,
                 "dividend_yield": None,
-            }
+            }, False
 
-    max_workers = min(8, len(tickers))
+    max_workers = min(8, len(missing_tickers))
     if max_workers <= 1:
-        ticker = tickers[0]
-        fundamentals[ticker] = _fetch_one(ticker)
+        ticker = missing_tickers[0]
+        fetched, success = _fetch_one(ticker)
+        fundamentals[ticker] = fetched
+        if success:
+            _fundamental_cache.set("fundamental_us", ticker, fetched)
         return fundamentals
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_map = {executor.submit(_fetch_one, ticker): ticker for ticker in tickers}
+        future_map = {executor.submit(_fetch_one, ticker): ticker for ticker in missing_tickers}
         try:
             for future in as_completed(future_map, timeout=10):
                 ticker = future_map[future]
                 try:
-                    fundamentals[ticker] = future.result(timeout=5)
+                    fetched, success = future.result(timeout=5)
+                    fundamentals[ticker] = fetched
+                    if success:
+                        _fundamental_cache.set("fundamental_us", ticker, fetched)
                 except Exception:
                     fundamentals[ticker] = {
                         "per": None,
