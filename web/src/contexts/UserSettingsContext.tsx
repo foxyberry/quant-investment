@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type { BaseCurrency } from '@/lib/format';
 
 interface UserSettings {
@@ -41,11 +41,7 @@ function saveSettings(settings: UserSettings) {
 }
 
 export function UserSettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
-
-  useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
+  const [settings, setSettings] = useState<UserSettings>(() => loadSettings());
 
   const updateBaseCurrency = useCallback((currency: BaseCurrency) => {
     setSettings((prev) => {

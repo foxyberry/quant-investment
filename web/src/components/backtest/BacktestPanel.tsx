@@ -170,7 +170,7 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
 
   // --- Queries & mutations ---
   const { data: strategiesData, isLoading: strategiesLoading } =
-    useBacktestStrategies();
+    useBacktestStrategies(isOpen);
   const runBacktest = useRunBacktest();
 
   // Resolved strategy metadata

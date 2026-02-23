@@ -16,8 +16,11 @@ test.describe('Portfolio page', () => {
   });
 
   test('holdings render with AAPL and GOOGL', async ({ page }) => {
-    await expect(page.getByText('AAPL')).toBeVisible();
-    await expect(page.getByText('GOOGL')).toBeVisible();
+    const aapl = page.getByText('AAPL').filter({ visible: true });
+    const googl = page.getByText('GOOGL').filter({ visible: true });
+
+    await expect(aapl).toHaveCount(1);
+    await expect(googl).toHaveCount(1);
   });
 
   test('summary cards are visible', async ({ page }) => {

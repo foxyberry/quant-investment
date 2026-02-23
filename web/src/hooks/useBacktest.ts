@@ -10,10 +10,11 @@ import {
   type OptimizeRequest,
 } from '@/lib/api';
 
-export function useBacktestStrategies() {
+export function useBacktestStrategies(enabled: boolean = true) {
   return useQuery({
     queryKey: queryKeys.backtest.strategies(),
     queryFn: getBacktestStrategies,
+    enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes - strategies rarely change
   });
 }

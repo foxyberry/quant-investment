@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   description:
     'Quantitative investment analysis and portfolio management platform',
   keywords: ['quant', 'investment', 'trading', 'portfolio', 'analysis'],
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 type Props = {
