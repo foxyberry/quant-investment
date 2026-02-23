@@ -20,6 +20,7 @@ from api.schemas.analysis import (
     SearchResult,
 )
 from api.schemas.common import ApiResponse, ErrorResponse, HealthResponse
+from api.schemas.exchange_rate import ExchangeRatesResponse
 from api.schemas.market import (
     OHLCVItem,
     OHLCVResponse,
@@ -89,6 +90,7 @@ __all__ = [
     "ApiResponse",
     "ErrorResponse",
     "HealthResponse",
+    "ExchangeRatesResponse",
     # Market
     "OHLCVItem",
     "OHLCVResponse",

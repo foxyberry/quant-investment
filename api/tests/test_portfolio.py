@@ -350,6 +350,24 @@ class TestGetPortfolioSummary:
         assert data["total_pnl_pct"] == 20.0
         assert data["holdings_count"] == 5
 
+    def test_get_summary_with_base_currency(self, client, mock_portfolio_service):
+        """Test GET /api/portfolio/summary passes base_currency to service."""
+        mock_portfolio_service.get_summary.return_value = {
+            "total_investment": 7407.41,
+            "total_market_value": 8888.89,
+            "total_pnl": 1481.48,
+            "total_pnl_pct": 20.0,
+            "holdings_count": 2,
+            "currency": "USD",
+            "last_updated": datetime.now().isoformat(),
+        }
+
+        response = client.get("/api/portfolio/summary?base_currency=usd")
+
+        assert response.status_code == 200
+        mock_portfolio_service.get_summary.assert_called_once_with(base_currency="usd")
+        assert response.json()["currency"] == "USD"
+
     def test_get_summary_empty_portfolio(self, client, mock_portfolio_service):
         """Test GET /api/portfolio/summary with empty portfolio."""
         # Arrange
@@ -388,7 +406,8 @@ class TestGetSellSignals:
                 "current_price": 180.0,
                 "trigger_price": 180.0,
                 "avg_price": 150.0,
-                "pnl_pct": 20.0
+                "pnl_pct": 20.0,
+                "currency": "USD",
             },
             {
                 "ticker": "MSFT",
@@ -398,7 +417,8 @@ class TestGetSellSignals:
                 "current_price": 270.0,
                 "trigger_price": 270.0,
                 "avg_price": 300.0,
-                "pnl_pct": -10.0
+                "pnl_pct": -10.0,
+                "currency": "USD",
             }
         ]
 
@@ -413,6 +433,7 @@ class TestGetSellSignals:
         assert len(data["signals"]) == 2
         assert data["signals"][0]["signal_type"] == "take_profit"
         assert data["signals"][1]["signal_type"] == "stop_loss"
+        assert data["signals"][0]["currency"] == "USD"
 
     def test_get_sell_signals_empty(self, client, mock_portfolio_service):
         """Test GET /api/portfolio/sell-signals with no signals."""
@@ -776,3 +797,33 @@ class TestPriceCache:
 
                 # Assert - prices fetched only once (2 tickers), not twice (4 calls)
                 assert mock_price.call_count == 2
+
+
+class TestSummaryCurrencyConversion:
+    """Tests for PortfolioService summary currency conversion."""
+
+    def test_get_summary_converts_to_requested_base_currency(self):
+        test_session = _setup_test_db([
+            {"ticker": "005930.KS", "name": "Samsung", "quantity": 10, "avg_price": 10000.0, "currency": "KRW"},
+            {"ticker": "AAPL", "name": "Apple", "quantity": 2, "avg_price": 100.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+            # Keep market values equal to cost basis for deterministic totals.
+            with patch.object(service, "_get_current_price", return_value=None):
+                with patch.object(service._fx, "get_rates") as mock_rates:
+                    # Base USD: 1 USD = 1350 KRW
+                    mock_rates.return_value = {
+                        "base": "USD",
+                        "rates": {"KRW": 1350.0, "JPY": 150.0},
+                        "updated_at": datetime.now(),
+                    }
+
+                    summary = service.get_summary(base_currency="USD")
+
+                    # 100,000 KRW -> 74.074... USD, plus 200 USD = 274.074...
+                    assert summary.currency == "USD"
+                    assert summary.total_investment == pytest.approx(274.074074, rel=1e-6)
+                    assert summary.total_market_value == pytest.approx(274.074074, rel=1e-6)
+                    assert summary.total_pnl == pytest.approx(0.0, abs=1e-9)
