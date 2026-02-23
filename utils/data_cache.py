@@ -24,7 +24,7 @@ import os
 import logging
 from pathlib import Path
 from datetime import datetime, date, timedelta
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 
 import pandas as pd
 
@@ -72,6 +72,8 @@ class OHLCVCache:
         # 통계
         self._hits = 0
         self._misses = 0
+        # Latest trading date metadata cache: path -> (mtime, latest_date)
+        self._latest_date_cache: Dict[str, Tuple[float, date]] = {}
 
     def _get_cache_path(self, ticker: str) -> Path:
         """캐시 파일 경로 반환"""
@@ -102,13 +104,22 @@ class OHLCVCache:
         if not cache_path.exists():
             return None
         try:
+            cache_key = str(cache_path)
+            mtime = cache_path.stat().st_mtime
+            cached_meta = self._latest_date_cache.get(cache_key)
+            if cached_meta and cached_meta[0] == mtime:
+                return cached_meta[1]
+
             data = pd.read_parquet(cache_path)
             if data.empty:
                 return None
             latest = data.index.max()
             if hasattr(latest, 'date'):
-                return latest.date()
-            return pd.to_datetime(latest).date()
+                latest_date = latest.date()
+            else:
+                latest_date = pd.to_datetime(latest).date()
+            self._latest_date_cache[cache_key] = (mtime, latest_date)
+            return latest_date
         except Exception:
             return None
 
@@ -173,6 +184,115 @@ class OHLCVCache:
         """yfinance로 데이터 가져오기"""
         if not YFINANCE_AVAILABLE:
             return None
+
+    def _fetch_latest_prices_batch(self, tickers: List[str]) -> Dict[str, float]:
+        """
+        Fetch latest close prices for multiple tickers via a single yfinance download call.
+        """
+        if not YFINANCE_AVAILABLE or not tickers:
+            return {}
+
+        try:
+            data = yf.download(
+                tickers=tickers,
+                period="10d",
+                group_by="ticker",
+                auto_adjust=False,
+                progress=False,
+                threads=True,
+            )
+        except Exception as e:
+            logger.warning(f"Batch yfinance download failed: {e}")
+            return {}
+
+        if data is None or data.empty:
+            return {}
+
+        prices: Dict[str, float] = {}
+
+        for ticker in tickers:
+            try:
+                # Single ticker result often has single-level columns.
+                if isinstance(data.columns, pd.MultiIndex):
+                    if ticker not in data.columns.get_level_values(0):
+                        continue
+                    ticker_df = data[ticker]
+                else:
+                    ticker_df = data
+
+                if ticker_df is None or ticker_df.empty or "Close" not in ticker_df.columns:
+                    continue
+
+                close_series = ticker_df["Close"].dropna()
+                if close_series.empty:
+                    continue
+
+                last_close = float(close_series.iloc[-1])
+                prices[ticker] = last_close
+
+                # Save compact OHLCV cache for fast subsequent access.
+                save_df = ticker_df.copy()
+                # Normalize to expected lowercase columns and keep essentials.
+                rename_map = {}
+                for col in save_df.columns:
+                    rename_map[col] = str(col).lower()
+                save_df = save_df.rename(columns=rename_map)
+                required_cols = ["open", "high", "low", "close", "volume"]
+                save_df = save_df[[c for c in required_cols if c in save_df.columns]]
+                if not save_df.empty:
+                    save_df["ticker"] = ticker
+                    cache_path = self._get_cache_path(ticker)
+                    save_df.to_parquet(cache_path)
+                    self._latest_date_cache.pop(str(cache_path), None)
+            except Exception as e:
+                logger.debug(f"Failed to parse/save batch price for {ticker}: {e}")
+                continue
+
+        return prices
+
+    def get_latest_prices(self, tickers: List[str], days: int = 5) -> Dict[str, float]:
+        """
+        Get latest prices for multiple tickers optimized for portfolio holdings.
+
+        Strategy:
+        1) Read fresh parquet cache when available
+        2) Batch-fetch missing tickers via single yfinance download
+        3) Fallback to per-ticker fetch for remaining misses
+        """
+        if not tickers:
+            return {}
+
+        prices: Dict[str, float] = {}
+        missing: List[str] = []
+
+        # Step 1: Use fresh cache first.
+        for ticker in tickers:
+            cache_path = self._get_cache_path(ticker)
+            if self._is_cache_fresh(cache_path, days):
+                try:
+                    df = pd.read_parquet(cache_path)
+                    if df is not None and not df.empty and "close" in df.columns:
+                        prices[ticker] = float(df["close"].iloc[-1])
+                        self._hits += 1
+                        continue
+                except Exception:
+                    pass
+            missing.append(ticker)
+
+        # Step 2: Batch fetch for misses.
+        if missing:
+            self._misses += len(missing)
+            batch_prices = self._fetch_latest_prices_batch(missing)
+            prices.update(batch_prices)
+            missing = [t for t in missing if t not in batch_prices]
+
+        # Step 3: Fallback per ticker.
+        for ticker in missing:
+            data = self.get(ticker, days=days, force_refresh=False)
+            if data is not None and not data.empty and "close" in data.columns:
+                prices[ticker] = float(data["close"].iloc[-1])
+
+        return prices
 
         try:
             stock = yf.Ticker(ticker)
@@ -367,6 +487,7 @@ class OHLCVCache:
             cache_path = self._get_cache_path(ticker)
             if cache_path.exists():
                 cache_path.unlink()
+                self._latest_date_cache.pop(str(cache_path), None)
                 return 1
             return 0
 
@@ -374,6 +495,7 @@ class OHLCVCache:
         count = 0
         for f in self.cache_dir.glob("*.parquet"):
             f.unlink()
+            self._latest_date_cache.pop(str(f), None)
             count += 1
 
         return count
