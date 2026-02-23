@@ -63,6 +63,19 @@ from .rsi import (
     RSIRangeCondition,
 )
 
+from .momentum import (
+    EMACrossCondition,
+    EMASlopeCondition,
+    SMASlopeCondition,
+    MACDSignalCrossCondition,
+    MACDHistogramSlopeCondition,
+    CCIOverboughtOversoldCondition,
+    WilliamsRReversalCondition,
+    TRIXCrossCondition,
+    AroonTrendSignalCondition,
+    MoneyFlowIndexSignalCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -131,6 +144,12 @@ __all__ = [
 
     # RSI
     'RSIOversoldCondition', 'RSIOverboughtCondition', 'RSIRangeCondition',
+
+    # Momentum
+    'EMACrossCondition', 'EMASlopeCondition', 'SMASlopeCondition',
+    'MACDSignalCrossCondition', 'MACDHistogramSlopeCondition',
+    'CCIOverboughtOversoldCondition', 'WilliamsRReversalCondition',
+    'TRIXCrossCondition', 'AroonTrendSignalCondition', 'MoneyFlowIndexSignalCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
