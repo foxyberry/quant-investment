@@ -5,6 +5,7 @@
 
 import pandas as pd
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -111,15 +112,24 @@ class KospiListFetcher:
                 logger.warning("pykrx에서 종목 리스트 가져오기 실패")
                 return self._fetch_from_krx()
 
+            def fetch_name(ticker_code):
+                try:
+                    name = stock.get_market_ticker_name(ticker_code)
+                    return ticker_code, name
+                except Exception:
+                    return ticker_code, ticker_code
+
             symbols = []
-            for ticker in tickers:
-                name = stock.get_market_ticker_name(ticker)
-                symbols.append({
-                    'symbol': f"{ticker}.KS",
-                    'code': ticker,
-                    'name': name,
-                    'sector': ''
-                })
+            with ThreadPoolExecutor(max_workers=20) as executor:
+                futures = {executor.submit(fetch_name, t): t for t in tickers}
+                for future in as_completed(futures):
+                    ticker_code, name = future.result()
+                    symbols.append({
+                        'symbol': f"{ticker_code}.KS",
+                        'code': ticker_code,
+                        'name': name,
+                        'sector': ''
+                    })
 
             return symbols if symbols else self._fetch_from_krx()
 
@@ -201,15 +211,24 @@ class KospiListFetcher:
             today = datetime.now().strftime("%Y%m%d")
             tickers = stock.get_market_ticker_list(today, market="KOSDAQ")
 
+            def fetch_name(ticker_code):
+                try:
+                    name = stock.get_market_ticker_name(ticker_code)
+                    return ticker_code, name
+                except Exception:
+                    return ticker_code, ticker_code
+
             symbols = []
-            for ticker in tickers:
-                name = stock.get_market_ticker_name(ticker)
-                symbols.append({
-                    'symbol': f"{ticker}.KQ",
-                    'code': ticker,
-                    'name': name,
-                    'sector': ''
-                })
+            with ThreadPoolExecutor(max_workers=20) as executor:
+                futures = {executor.submit(fetch_name, t): t for t in tickers}
+                for future in as_completed(futures):
+                    ticker_code, name = future.result()
+                    symbols.append({
+                        'symbol': f"{ticker_code}.KQ",
+                        'code': ticker_code,
+                        'name': name,
+                        'sector': ''
+                    })
 
             return symbols
         except ImportError:
