@@ -44,7 +44,7 @@ class PortfolioService:
     TAKE_PROFIT_PCT = 20.0  # +20% triggers take profit
 
     # Price cache TTL in seconds (deduplicates concurrent requests)
-    PRICE_CACHE_TTL = 300
+    PRICE_CACHE_TTL = 60
 
     def __init__(self):
         self._lock = threading.RLock()
@@ -129,7 +129,7 @@ class PortfolioService:
             prices: Dict[str, float] = {}
 
             # Prefer OHLCVCache batch path to avoid N independent yfinance calls.
-            if isinstance(self._cache, OHLCVCache):
+            if hasattr(self._cache, "get_latest_prices"):
                 try:
                     prices = self._cache.get_latest_prices(tickers, days=5)
                 except Exception as e:

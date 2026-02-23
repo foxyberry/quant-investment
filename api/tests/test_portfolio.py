@@ -795,6 +795,39 @@ class TestPriceCache:
                     assert result["MSFT"] == 320.0
                     mock_price.assert_not_called()
 
+    def test_batch_price_fetch_partial_results_fallback(self):
+        """Missing tickers from batch response should use per-ticker fallback only for misses."""
+        test_session = _setup_test_db([
+            {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
+            {"ticker": "MSFT", "name": "Microsoft", "quantity": 5, "avg_price": 300.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+            with patch.object(service._cache, "get_latest_prices", return_value={"AAPL": 175.0}):
+                with patch.object(service, "_get_current_price", return_value=320.0) as mock_price:
+                    result = service._get_current_prices(["AAPL", "MSFT"])
+                    assert result["AAPL"] == 175.0
+                    assert result["MSFT"] == 320.0
+                    mock_price.assert_called_once_with("MSFT")
+
+    def test_batch_price_fetch_exception_fallback(self):
+        """If batch path raises, service falls back to per-ticker fetch for all tickers."""
+        test_session = _setup_test_db([
+            {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
+            {"ticker": "MSFT", "name": "Microsoft", "quantity": 5, "avg_price": 300.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+            with patch.object(service._cache, "get_latest_prices", side_effect=RuntimeError("batch failed")):
+                price_map = {"AAPL": 175.0, "MSFT": 320.0}
+                with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
+                    result = service._get_current_prices(["AAPL", "MSFT"])
+                    assert result["AAPL"] == 175.0
+                    assert result["MSFT"] == 320.0
+                    assert mock_price.call_count == 2
+
     def test_summary_reuses_cached_prices(self):
         """get_summary reuses prices cached by a prior get_all_holdings call."""
         # Arrange

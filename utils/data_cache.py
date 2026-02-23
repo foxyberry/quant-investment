@@ -22,6 +22,7 @@ Usage:
 
 import os
 import logging
+import threading
 from pathlib import Path
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any, Tuple
@@ -72,6 +73,7 @@ class OHLCVCache:
         # 통계
         self._hits = 0
         self._misses = 0
+        self._meta_lock = threading.RLock()
         # Latest trading date metadata cache: path -> (mtime, latest_date)
         self._latest_date_cache: Dict[str, Tuple[float, date]] = {}
 
@@ -106,7 +108,8 @@ class OHLCVCache:
         try:
             cache_key = str(cache_path)
             mtime = cache_path.stat().st_mtime
-            cached_meta = self._latest_date_cache.get(cache_key)
+            with self._meta_lock:
+                cached_meta = self._latest_date_cache.get(cache_key)
             if cached_meta and cached_meta[0] == mtime:
                 return cached_meta[1]
 
@@ -118,7 +121,8 @@ class OHLCVCache:
                 latest_date = latest.date()
             else:
                 latest_date = pd.to_datetime(latest).date()
-            self._latest_date_cache[cache_key] = (mtime, latest_date)
+            with self._meta_lock:
+                self._latest_date_cache[cache_key] = (mtime, latest_date)
             return latest_date
         except Exception:
             return None
@@ -184,6 +188,28 @@ class OHLCVCache:
         """yfinance로 데이터 가져오기"""
         if not YFINANCE_AVAILABLE:
             return None
+        try:
+            stock = yf.Ticker(ticker)
+            data = stock.history(period=f"{days}d")
+
+            if data.empty:
+                return None
+
+            # 컬럼명 소문자로 통일
+            data.columns = [c.lower() for c in data.columns]
+
+            # 필요한 컬럼만 선택
+            cols = ['open', 'high', 'low', 'close', 'volume']
+            data = data[[c for c in cols if c in data.columns]]
+
+            # 티커 컬럼 추가
+            data['ticker'] = ticker
+
+            return data
+
+        except Exception as e:
+            logger.warning(f"yfinance 데이터 로드 실패 ({ticker}): {e}")
+            return None
 
     def _fetch_latest_prices_batch(self, tickers: List[str]) -> Dict[str, float]:
         """
@@ -230,7 +256,7 @@ class OHLCVCache:
                 last_close = float(close_series.iloc[-1])
                 prices[ticker] = last_close
 
-                # Save compact OHLCV cache for fast subsequent access.
+                # Update existing OHLCV cache without truncating historical rows.
                 save_df = ticker_df.copy()
                 # Normalize to expected lowercase columns and keep essentials.
                 rename_map = {}
@@ -242,8 +268,18 @@ class OHLCVCache:
                 if not save_df.empty:
                     save_df["ticker"] = ticker
                     cache_path = self._get_cache_path(ticker)
-                    save_df.to_parquet(cache_path)
-                    self._latest_date_cache.pop(str(cache_path), None)
+                    if cache_path.exists():
+                        try:
+                            existing_df = pd.read_parquet(cache_path)
+                            merged = pd.concat([existing_df, save_df])
+                            merged = merged[~merged.index.duplicated(keep='last')].sort_index()
+                            merged.to_parquet(cache_path)
+                        except Exception:
+                            save_df.to_parquet(cache_path)
+                    else:
+                        save_df.to_parquet(cache_path)
+                    with self._meta_lock:
+                        self._latest_date_cache.pop(str(cache_path), None)
             except Exception as e:
                 logger.debug(f"Failed to parse/save batch price for {ticker}: {e}")
                 continue
@@ -293,29 +329,6 @@ class OHLCVCache:
                 prices[ticker] = float(data["close"].iloc[-1])
 
         return prices
-
-        try:
-            stock = yf.Ticker(ticker)
-            data = stock.history(period=f"{days}d")
-
-            if data.empty:
-                return None
-
-            # 컬럼명 소문자로 통일
-            data.columns = [c.lower() for c in data.columns]
-
-            # 필요한 컬럼만 선택
-            cols = ['open', 'high', 'low', 'close', 'volume']
-            data = data[[c for c in cols if c in data.columns]]
-
-            # 티커 컬럼 추가
-            data['ticker'] = ticker
-
-            return data
-
-        except Exception as e:
-            logger.warning(f"yfinance 데이터 로드 실패 ({ticker}): {e}")
-            return None
 
     def _fetch_data(self, ticker: str, days: int) -> Optional[pd.DataFrame]:
         """데이터 가져오기 (pykrx 우선, yfinance 폴백)"""
@@ -487,7 +500,8 @@ class OHLCVCache:
             cache_path = self._get_cache_path(ticker)
             if cache_path.exists():
                 cache_path.unlink()
-                self._latest_date_cache.pop(str(cache_path), None)
+                with self._meta_lock:
+                    self._latest_date_cache.pop(str(cache_path), None)
                 return 1
             return 0
 
@@ -495,7 +509,8 @@ class OHLCVCache:
         count = 0
         for f in self.cache_dir.glob("*.parquet"):
             f.unlink()
-            self._latest_date_cache.pop(str(f), None)
+            with self._meta_lock:
+                self._latest_date_cache.pop(str(f), None)
             count += 1
 
         return count
