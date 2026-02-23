@@ -47,5 +47,13 @@ gh pr create --base main --fill
 1. Reviewer approval
 2. Checks green
 3. Conversation resolved
-4. Squash merge
-5. Delete feature branch
+4. Explicit `LGTM` confirmed
+5. Squash merge
+6. Delete feature branch
+
+## Review Iteration Rule (Mandatory)
+1. After PR creation, request/retrieve review immediately.
+2. Post a PR comment as Codex summarizing findings and fix plan.
+3. Push fix commit(s), then request/retrieve re-review.
+4. Repeat steps 2-3 until explicit `LGTM`.
+5. Do not merge before `LGTM` even if checks are green.
