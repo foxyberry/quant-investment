@@ -884,6 +884,19 @@
     "general": "General",
     "display": "Display"
   },
+  "kiwoom": {
+    "title": "Kiwoom",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "connecting": "Connecting",
+    "unavailable": "Unavailable",
+    "mockTrading": "Mock",
+    "liveTrading": "Live",
+    "user": "User",
+    "account": "Account",
+    "noAccount": "No account",
+    "disconnectedToast": "Kiwoom connection was lost."
+  },
   "markets": {
     "us": "US Market",
     "kr": "Korea Market",
