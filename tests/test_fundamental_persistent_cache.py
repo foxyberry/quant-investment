@@ -1,3 +1,5 @@
+import json
+import sys
 from types import SimpleNamespace
 
 import pandas as pd
@@ -35,6 +37,18 @@ def test_get_info_uses_persistent_cache(monkeypatch, tmp_path):
     monkeypatch.setattr(fundamental_module.yf, "Ticker", FailTicker)
     second = fundamental_module._get_info("AAPL")
     assert second["trailingPE"] == 10.5
+
+
+def test_clear_info_cache_with_persistent_option(monkeypatch, tmp_path):
+    cache = FundamentalCache(cache_dir=str(tmp_path / "clear_cache"))
+    monkeypatch.setattr(fundamental_module, "_persistent_cache", cache)
+    fundamental_module.clear_info_cache()
+
+    cache.set("yf_info", "AAPL", {"trailingPE": 9.5})
+    assert cache.get("yf_info", "AAPL", ttl_seconds=3600) is not None
+
+    fundamental_module.clear_info_cache(include_persistent=True)
+    assert cache.get("yf_info", "AAPL", ttl_seconds=3600) is None
 
 
 def test_get_financial_statements_uses_persistent_cache(monkeypatch, tmp_path):
@@ -94,7 +108,7 @@ def test_fetch_us_fundamentals_uses_persistent_cache(monkeypatch, tmp_path):
             self.tickers = {}
 
     fake_yf = SimpleNamespace(Ticker=FakeYFTicker, Tickers=FakeYFTickers)
-    monkeypatch.setitem(__import__("sys").modules, "yfinance", fake_yf)
+    monkeypatch.setitem(sys.modules, "yfinance", fake_yf)
 
     first = strategy_service._fetch_us_fundamentals(["AAPL"])
     assert first["AAPL"]["per"] == 22.0
@@ -104,3 +118,80 @@ def test_fetch_us_fundamentals_uses_persistent_cache(monkeypatch, tmp_path):
     second = strategy_service._fetch_us_fundamentals(["AAPL"])
     assert second["AAPL"]["per"] == 22.0
     assert calls["count"] == 1
+
+
+def test_fetch_us_fundamentals_failure_not_cached(monkeypatch, tmp_path):
+    cache = FundamentalCache(cache_dir=str(tmp_path / "us_fund_cache_fail"))
+    monkeypatch.setattr(strategy_service, "_fundamental_cache", cache)
+
+    calls = {"count": 0}
+
+    class FlakyYFTicker:
+        def __init__(self, ticker: str):
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise RuntimeError("temporary yfinance outage")
+            self.info = {"trailingPE": 18.0, "priceToBook": 3.5, "dividendYield": 0.01}
+
+    class FakeYFTickers:
+        def __init__(self, joined: str):
+            self.tickers = {}
+
+    fake_yf = SimpleNamespace(Ticker=FlakyYFTicker, Tickers=FakeYFTickers)
+    monkeypatch.setitem(sys.modules, "yfinance", fake_yf)
+
+    first = strategy_service._fetch_us_fundamentals(["MSFT"])
+    assert first["MSFT"]["per"] is None
+    assert calls["count"] == 1
+
+    # Must re-fetch (not cached as None), and then succeed.
+    second = strategy_service._fetch_us_fundamentals(["MSFT"])
+    assert second["MSFT"]["per"] == 18.0
+    assert calls["count"] == 2
+
+
+def test_fetch_kr_fundamentals_uses_persistent_cache(monkeypatch, tmp_path):
+    cache = FundamentalCache(cache_dir=str(tmp_path / "kr_fund_cache"))
+    monkeypatch.setattr(strategy_service, "_fundamental_cache", cache)
+
+    calls = {"count": 0}
+
+    def fake_get_market_fundamental_by_ticker(date: str, market: str):
+        calls["count"] += 1
+        return pd.DataFrame(
+            {"PER": [11.0], "PBR": [0.9], "DIV": [2.2]},
+            index=["005930"],
+        )
+
+    fake_pykrx_stock = SimpleNamespace(get_market_fundamental_by_ticker=fake_get_market_fundamental_by_ticker)
+    fake_pykrx = SimpleNamespace(stock=fake_pykrx_stock)
+    monkeypatch.setitem(sys.modules, "pykrx", fake_pykrx)
+
+    first = strategy_service._fetch_kr_fundamentals(["005930.KS"])
+    assert first["005930.KS"]["per"] == 11.0
+    assert calls["count"] >= 1
+
+    # Second call should hit cache and avoid pykrx function invocation.
+    calls_before = calls["count"]
+    second = strategy_service._fetch_kr_fundamentals(["005930.KS"])
+    assert second["005930.KS"]["pbr"] == 0.9
+    assert calls["count"] == calls_before
+
+
+def test_fundamental_cache_ttl_expiry_and_corrupt_file(tmp_path):
+    cache = FundamentalCache(cache_dir=str(tmp_path / "ttl_cache"))
+    cache.set("ns", "AAPL", {"per": 10.0})
+    assert cache.get("ns", "AAPL", ttl_seconds=3600) == {"per": 10.0}
+    assert cache.get("ns", "AAPL", ttl_seconds=0) is None
+
+    bad_path = tmp_path / "ttl_cache" / "ns__MSFT.json"
+    bad_path.write_text("{not-json}", encoding="utf-8")
+    assert cache.get("ns", "MSFT", ttl_seconds=3600) is None
+
+    stale_path = tmp_path / "ttl_cache" / "ns__GOOG.json"
+    stale_path.write_text(
+        json.dumps({"_updated_at": "2000-01-01T00:00:00+00:00", "payload": {"per": 9.0}}),
+        encoding="utf-8",
+    )
+    removed = cache.clear_expired(ttl_seconds=60, namespace="ns")
+    assert removed >= 1

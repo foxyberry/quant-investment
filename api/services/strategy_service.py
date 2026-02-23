@@ -78,9 +78,9 @@ def _fetch_kr_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[f
         cached = _fundamental_cache.get("fundamental_kr", ticker, FUNDAMENTAL_TTL_SECONDS)
         if cached is not None:
             fundamentals[ticker] = {
-                "per": _to_optional_float(cached.get("per")),
-                "pbr": _to_optional_float(cached.get("pbr")),
-                "dividend_yield": _to_optional_float(cached.get("dividend_yield")),
+                "per": cached.get("per"),
+                "pbr": cached.get("pbr"),
+                "dividend_yield": cached.get("dividend_yield"),
             }
         else:
             missing_tickers.append(ticker)
@@ -150,9 +150,9 @@ def _fetch_us_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[f
         cached = _fundamental_cache.get("fundamental_us", ticker, FUNDAMENTAL_TTL_SECONDS)
         if cached is not None:
             fundamentals[ticker] = {
-                "per": _to_optional_float(cached.get("per")),
-                "pbr": _to_optional_float(cached.get("pbr")),
-                "dividend_yield": _to_optional_float(cached.get("dividend_yield")),
+                "per": cached.get("per"),
+                "pbr": cached.get("pbr"),
+                "dividend_yield": cached.get("dividend_yield"),
             }
         else:
             missing_tickers.append(ticker)
@@ -170,7 +170,10 @@ def _fetch_us_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[f
     except Exception:
         tickers_obj = None
 
-    def _fetch_one(ticker: str) -> Dict[str, Optional[float]]:
+    def _is_success_payload(payload: Dict[str, Optional[float]]) -> bool:
+        return any(v is not None for v in payload.values())
+
+    def _fetch_one(ticker: str) -> tuple[Dict[str, Optional[float]], bool]:
         try:
             info: Dict[str, Any] = {}
             if tickers_obj is not None:
@@ -180,24 +183,26 @@ def _fetch_us_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[f
             if not info:
                 info = yf.Ticker(ticker).info or {}
 
-            return {
+            payload = {
                 "per": _to_optional_float(info.get("trailingPE")),
                 "pbr": _to_optional_float(info.get("priceToBook")),
                 "dividend_yield": _normalize_dividend_yield(info.get("dividendYield")),
             }
+            return payload, _is_success_payload(payload)
         except Exception:
             return {
                 "per": None,
                 "pbr": None,
                 "dividend_yield": None,
-            }
+            }, False
 
     max_workers = min(8, len(missing_tickers))
     if max_workers <= 1:
         ticker = missing_tickers[0]
-        fetched = _fetch_one(ticker)
+        fetched, success = _fetch_one(ticker)
         fundamentals[ticker] = fetched
-        _fundamental_cache.set("fundamental_us", ticker, fetched)
+        if success:
+            _fundamental_cache.set("fundamental_us", ticker, fetched)
         return fundamentals
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -206,16 +211,16 @@ def _fetch_us_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[f
             for future in as_completed(future_map, timeout=10):
                 ticker = future_map[future]
                 try:
-                    fetched = future.result(timeout=5)
+                    fetched, success = future.result(timeout=5)
                     fundamentals[ticker] = fetched
-                    _fundamental_cache.set("fundamental_us", ticker, fetched)
+                    if success:
+                        _fundamental_cache.set("fundamental_us", ticker, fetched)
                 except Exception:
                     fundamentals[ticker] = {
                         "per": None,
                         "pbr": None,
                         "dividend_yield": None,
                     }
-                    _fundamental_cache.set("fundamental_us", ticker, fundamentals[ticker])
         except TimeoutError:
             logger.warning("US fundamentals fetch timed out; filling remaining with None")
             for future, ticker in future_map.items():
@@ -226,7 +231,6 @@ def _fetch_us_fundamentals(tickers: List[str]) -> Dict[str, Dict[str, Optional[f
                         "pbr": None,
                         "dividend_yield": None,
                     }
-                    _fundamental_cache.set("fundamental_us", ticker, fundamentals[ticker])
 
     return fundamentals
 

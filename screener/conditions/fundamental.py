@@ -111,13 +111,18 @@ def _get_financial_statements(ticker: str) -> Tuple[pd.DataFrame, pd.DataFrame, 
     return _statement_cache[ticker]
 
 
-def clear_info_cache() -> None:
-    """Clear the module-level info cache.
+def clear_info_cache(include_persistent: bool = False) -> None:
+    """Clear in-memory caches used by fundamental conditions.
 
-    Call this between screening runs to free memory and ensure fresh data.
+    Args:
+        include_persistent: When True, also clear on-disk persistent cache
+            for yfinance info/statements.
     """
     _info_cache.clear()
     _statement_cache.clear()
+    if include_persistent:
+        _persistent_cache.clear(namespace="yf_info")
+        _persistent_cache.clear(namespace="yf_statements")
 
 
 # ---------------------------------------------------------------------------

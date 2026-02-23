@@ -46,6 +46,10 @@ class FundamentalCache:
             if updated_dt.tzinfo is None:
                 updated_dt = updated_dt.replace(tzinfo=timezone.utc)
             if datetime.now(timezone.utc) - updated_dt > timedelta(seconds=ttl_seconds):
+                try:
+                    path.unlink()
+                except Exception:
+                    pass
                 return None
 
             if isinstance(payload, dict):
@@ -68,3 +72,66 @@ class FundamentalCache:
             path.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
         except Exception as e:
             logger.debug("Failed to write cache %s: %s", path, e)
+
+    def clear(self, namespace: Optional[str] = None, key: Optional[str] = None) -> int:
+        """
+        Delete cached files and return removed file count.
+
+        Args:
+            namespace: Optional namespace filter.
+            key: Optional cache key filter (requires namespace).
+        """
+        removed = 0
+
+        if namespace and key:
+            target = self._cache_path(namespace, key)
+            if target.exists():
+                target.unlink()
+                return 1
+            return 0
+
+        if namespace:
+            pattern = f"{self._safe_key(namespace)}__*.json"
+        else:
+            pattern = "*.json"
+
+        for path in self.cache_dir.glob(pattern):
+            try:
+                path.unlink()
+                removed += 1
+            except Exception:
+                continue
+        return removed
+
+    def clear_expired(self, ttl_seconds: int, namespace: Optional[str] = None) -> int:
+        """
+        Remove expired cache files and return removed file count.
+        """
+        removed = 0
+        pattern = f"{self._safe_key(namespace)}__*.json" if namespace else "*.json"
+        now = datetime.now(timezone.utc)
+
+        for path in self.cache_dir.glob(pattern):
+            try:
+                raw = json.loads(path.read_text(encoding="utf-8"))
+                updated_at = raw.get("_updated_at")
+                if not updated_at:
+                    path.unlink()
+                    removed += 1
+                    continue
+
+                updated_dt = datetime.fromisoformat(updated_at)
+                if updated_dt.tzinfo is None:
+                    updated_dt = updated_dt.replace(tzinfo=timezone.utc)
+
+                if now - updated_dt > timedelta(seconds=ttl_seconds):
+                    path.unlink()
+                    removed += 1
+            except Exception:
+                # Corrupted cache files are removed proactively.
+                try:
+                    path.unlink()
+                    removed += 1
+                except Exception:
+                    pass
+        return removed
