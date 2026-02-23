@@ -16,6 +16,8 @@ import type {
   AnalysisStatus,
   KiwoomConnectionStatus,
   KiwoomConnectionState,
+  KiwoomCondition,
+  KiwoomConditionMatch,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -329,6 +331,91 @@ export async function getKiwoomConnectionStatus(): Promise<KiwoomConnectionStatu
       updated_at: null,
     };
   }
+}
+
+export async function getKiwoomConditionList(): Promise<KiwoomCondition[]> {
+  const raw = await fetchApi<unknown>('/api/kiwoom/conditions');
+  const asRecord = (v: unknown): Record<string, unknown> | null =>
+    v && typeof v === 'object' ? (v as Record<string, unknown>) : null;
+  const normalize = (item: unknown): KiwoomCondition | null => {
+    const record = asRecord(item);
+    if (!record) return null;
+    const indexRaw = record.index ?? record.condition_index ?? record.id;
+    const nameRaw = record.name ?? record.condition_name ?? record.label;
+    const index = typeof indexRaw === 'number' ? indexRaw : Number(indexRaw);
+    const name = typeof nameRaw === 'string' ? nameRaw : null;
+    if (!Number.isFinite(index) || !name) return null;
+    return { index, name };
+  };
+
+  if (Array.isArray(raw)) {
+    return raw.map(normalize).filter((v): v is KiwoomCondition => v !== null);
+  }
+
+  const payload = asRecord(raw);
+  const listCandidate = payload?.conditions ?? payload?.data;
+  if (Array.isArray(listCandidate)) {
+    return listCandidate.map(normalize).filter((v): v is KiwoomCondition => v !== null);
+  }
+  return [];
+}
+
+export async function startKiwoomConditionMonitor(condition: KiwoomCondition): Promise<void> {
+  await fetchApi('/api/kiwoom/conditions/start', {
+    method: 'POST',
+    body: JSON.stringify({
+      condition_index: condition.index,
+      condition_name: condition.name,
+    }),
+  });
+}
+
+export async function stopKiwoomConditionMonitor(condition: KiwoomCondition): Promise<void> {
+  await fetchApi('/api/kiwoom/conditions/stop', {
+    method: 'POST',
+    body: JSON.stringify({
+      condition_index: condition.index,
+      condition_name: condition.name,
+    }),
+  });
+}
+
+export async function getKiwoomConditionMatches(condition: KiwoomCondition): Promise<KiwoomConditionMatch[]> {
+  const raw = await fetchApi<unknown>(
+    `/api/kiwoom/conditions/matches?condition_index=${encodeURIComponent(String(condition.index))}&condition_name=${encodeURIComponent(condition.name)}`
+  );
+  const asRecord = (v: unknown): Record<string, unknown> | null =>
+    v && typeof v === 'object' ? (v as Record<string, unknown>) : null;
+  const normalize = (item: unknown): KiwoomConditionMatch | null => {
+    const record = asRecord(item);
+    if (!record) return null;
+    const tickerRaw = record.ticker ?? record.code ?? record.symbol;
+    const ticker = typeof tickerRaw === 'string' ? tickerRaw : null;
+    if (!ticker) return null;
+    const priceRaw = record.current_price ?? record.price ?? null;
+    const price =
+      typeof priceRaw === 'number'
+        ? priceRaw
+        : typeof priceRaw === 'string'
+        ? Number(priceRaw.replace(/,/g, ''))
+        : null;
+    return {
+      ticker,
+      name: typeof record.name === 'string' ? record.name : null,
+      current_price: Number.isFinite(price as number) ? (price as number) : null,
+      updated_at: typeof record.updated_at === 'string' ? record.updated_at : null,
+    };
+  };
+
+  if (Array.isArray(raw)) {
+    return raw.map(normalize).filter((v): v is KiwoomConditionMatch => v !== null);
+  }
+  const payload = asRecord(raw);
+  const listCandidate = payload?.matches ?? payload?.stocks ?? payload?.data;
+  if (Array.isArray(listCandidate)) {
+    return listCandidate.map(normalize).filter((v): v is KiwoomConditionMatch => v !== null);
+  }
+  return [];
 }
 
 // Strategy API functions

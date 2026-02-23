@@ -60,6 +60,28 @@ export interface ScreeningResponse {
   matched_count: number;
 }
 
+export interface KiwoomCondition {
+  index: number;
+  name: string;
+}
+
+export type KiwoomConditionSignalType = 'I' | 'D';
+
+export interface KiwoomConditionEvent {
+  type: KiwoomConditionSignalType;
+  ticker: string;
+  name?: string | null;
+  price?: number | null;
+  occurred_at: string;
+}
+
+export interface KiwoomConditionMatch {
+  ticker: string;
+  name?: string | null;
+  current_price?: number | null;
+  updated_at?: string | null;
+}
+
 // Portfolio types
 export interface Holding {
   ticker: string;
