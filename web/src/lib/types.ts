@@ -16,6 +16,16 @@ export interface HealthResponse {
   version: string;
 }
 
+export type KiwoomConnectionState = 'connected' | 'disconnected' | 'connecting' | 'unavailable';
+
+export interface KiwoomConnectionStatus {
+  status: KiwoomConnectionState;
+  is_mock_trading: boolean | null;
+  user_id: string | null;
+  accounts: string[];
+  updated_at: string | null;
+}
+
 // Screening types
 export interface PresetInfo {
   name: string;
@@ -50,6 +60,55 @@ export interface ScreeningResponse {
   matched_count: number;
 }
 
+export interface KiwoomCondition {
+  index: number;
+  name: string;
+}
+
+export type KiwoomConditionSignalType = 'I' | 'D';
+
+export interface KiwoomConditionEvent {
+  type: KiwoomConditionSignalType;
+  ticker: string;
+  name?: string | null;
+  price?: number | null;
+  occurred_at: string;
+}
+
+export interface KiwoomConditionMatch {
+  ticker: string;
+  name?: string | null;
+  current_price?: number | null;
+  updated_at?: string | null;
+}
+
+export type KiwoomOrderSide = 'BUY' | 'SELL';
+export type KiwoomOrderType = 'MARKET' | 'LIMIT';
+export type KiwoomOrderStatus = 'RECEIVED' | 'CONFIRMED' | 'FILLED' | 'CANCELED' | 'REJECTED' | 'PARTIAL';
+
+export interface KiwoomOrderRequest {
+  ticker: string;
+  side: KiwoomOrderSide;
+  quantity: number;
+  order_type: KiwoomOrderType;
+  price?: number | null;
+}
+
+export interface KiwoomOrder {
+  order_id: string;
+  ticker: string;
+  side: KiwoomOrderSide;
+  quantity: number;
+  filled_quantity: number;
+  unfilled_quantity: number;
+  order_type: KiwoomOrderType;
+  price: number | null;
+  filled_price: number | null;
+  status: KiwoomOrderStatus;
+  created_at: string;
+  updated_at?: string | null;
+}
+
 // Portfolio types
 export interface Holding {
   ticker: string;
@@ -82,6 +141,8 @@ export interface PortfolioSummary {
   total_pnl_pct: number;
   holdings_count: number;
   currency: string;
+  cash_balance?: number | null;
+  available_cash?: number | null;
 }
 
 export interface SellSignal {

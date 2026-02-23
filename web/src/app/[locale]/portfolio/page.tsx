@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download, Search } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
@@ -11,6 +11,7 @@ import {
   DeleteConfirmModal,
   SellSignalBanner,
   CsvImportModal,
+  OrderDesk,
 } from '@/components/portfolio';
 import {
   getHoldings,
@@ -27,6 +28,14 @@ import { useUserSettings } from '@/contexts/UserSettingsContext';
 import type { BaseCurrency } from '@/lib/format';
 
 type FilterTab = 'all' | 'us' | 'kr' | 'etf';
+type LiveConnectionState = 'connecting' | 'connected' | 'fallback';
+type PriceDirection = 'up' | 'down';
+
+interface LivePriceUpdate {
+  ticker: string;
+  current_price: number;
+  currency?: string;
+}
 
 /**
  * Portfolio summary card component
@@ -104,10 +113,18 @@ export default function PortfolioPage() {
 
   // Last refresh timestamp
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
+  const [liveConnectionState, setLiveConnectionState] = useState<LiveConnectionState>('connecting');
+  const [priceChangeDirection, setPriceChangeDirection] = useState<Record<string, PriceDirection>>({});
 
   // Filter state
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const wsRef = useRef<WebSocket | null>(null);
+  const pollingIntervalRef = useRef<number | null>(null);
+  const reconnectIntervalRef = useRef<number | null>(null);
+  const highlightTimeoutRef = useRef<Record<string, number>>({});
+  const lastSnapshotSyncAtRef = useRef<number>(0);
+  const [wsRetrySeed, setWsRetrySeed] = useState(0);
 
   // Quick currency toggle
   const quickCurrencies = useMemo<BaseCurrency[]>(() => {
@@ -116,6 +133,155 @@ export default function PortfolioPage() {
       return defaults;
     }
     return [settings.baseCurrency, ...defaults];
+  }, [settings.baseCurrency]);
+  const tickerList = useMemo(
+    () => Array.from(new Set(holdings.map((h) => h.ticker).filter((ticker) => ticker.length > 0))),
+    [holdings]
+  );
+  const tickerKey = useMemo(() => tickerList.join(','), [tickerList]);
+
+  const mergeLivePrices = useCallback((updates: LivePriceUpdate[]) => {
+    if (updates.length === 0) return;
+
+    const updatesByTicker = new Map(updates.map((u) => [u.ticker.toUpperCase(), u]));
+
+    setHoldings((prev) => {
+      const next = prev.map((holding) => {
+        const update = updatesByTicker.get(holding.ticker.toUpperCase());
+        if (!update) return holding;
+
+        const prevPrice = holding.current_price;
+        const nextPrice = update.current_price;
+        let direction: PriceDirection | null = null;
+
+        if (prevPrice !== null && nextPrice !== prevPrice) {
+          direction = nextPrice > prevPrice ? 'up' : 'down';
+        }
+
+        if (direction) {
+          setPriceChangeDirection((prevDirection) => ({
+            ...prevDirection,
+            [holding.ticker]: direction,
+          }));
+
+          const prevTimeout = highlightTimeoutRef.current[holding.ticker];
+          if (prevTimeout) {
+            window.clearTimeout(prevTimeout);
+          }
+
+          highlightTimeoutRef.current[holding.ticker] = window.setTimeout(() => {
+            setPriceChangeDirection((prevDirection) => {
+              const nextDirection = { ...prevDirection };
+              delete nextDirection[holding.ticker];
+              return nextDirection;
+            });
+            delete highlightTimeoutRef.current[holding.ticker];
+          }, 1200);
+        }
+
+        const marketValue = nextPrice * holding.quantity;
+        const costBasis = holding.avg_price * holding.quantity;
+        const pnl = marketValue - costBasis;
+        const pnlPct = costBasis > 0 ? (pnl / costBasis) * 100 : null;
+
+        return {
+          ...holding,
+          current_price: nextPrice,
+          market_value: marketValue,
+          pnl,
+          pnl_pct: pnlPct,
+          currency: update.currency ?? holding.currency,
+        };
+      });
+
+      return next;
+    });
+  }, []);
+
+  const parseLiveUpdates = useCallback((messageData: string): LivePriceUpdate[] => {
+    try {
+      const parsed = JSON.parse(messageData) as unknown;
+      const asRecord = (v: unknown): Record<string, unknown> | null =>
+        v && typeof v === 'object' ? (v as Record<string, unknown>) : null;
+
+      const extract = (item: unknown): LivePriceUpdate | null => {
+        const record = asRecord(item);
+        if (!record) return null;
+        const tickerRaw = record.ticker ?? record.symbol ?? record.code;
+        const priceRaw = record.current_price ?? record.price ?? record.last_price;
+        const ticker = typeof tickerRaw === 'string' ? tickerRaw : null;
+        const price =
+          typeof priceRaw === 'number'
+            ? priceRaw
+            : typeof priceRaw === 'string'
+            ? Number(priceRaw.replace(/,/g, ''))
+            : Number.NaN;
+        if (!ticker || !Number.isFinite(price)) return null;
+        return {
+          ticker,
+          current_price: price,
+          currency: typeof record.currency === 'string' ? record.currency : undefined,
+        };
+      };
+
+      if (Array.isArray(parsed)) {
+        return parsed.map(extract).filter((v): v is LivePriceUpdate => v !== null);
+      }
+
+      const parsedRecord = asRecord(parsed);
+      if (!parsedRecord) return [];
+      const candidates = [
+        parsedRecord.updates,
+        asRecord(parsedRecord.data)?.updates,
+        parsedRecord.ticks,
+      ];
+
+      for (const candidate of candidates) {
+        if (Array.isArray(candidate)) {
+          return candidate.map(extract).filter((v): v is LivePriceUpdate => v !== null);
+        }
+      }
+
+      const single = extract(parsedRecord);
+      return single ? [single] : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const buildPortfolioWsUrl = useCallback(
+    (tickers: string[]): string | null => {
+      try {
+        const configured = process.env.NEXT_PUBLIC_PORTFOLIO_WS_URL;
+        const baseUrl = configured ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+        const wsUrl = new URL(baseUrl);
+        if (!configured) {
+          wsUrl.protocol = wsUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+          wsUrl.pathname = '/api/portfolio/realtime/ws';
+        }
+        if (tickers.length > 0) {
+          wsUrl.searchParams.set('tickers', tickers.join(','));
+        }
+        return wsUrl.toString();
+      } catch {
+        return null;
+      }
+    },
+    []
+  );
+
+  const fetchRealtimeSnapshot = useCallback(async () => {
+    try {
+      const [holdingsData, summaryData] = await Promise.all([
+        getHoldings(),
+        getPortfolioSummary(settings.baseCurrency),
+      ]);
+      setHoldings(holdingsData);
+      setSummary(summaryData);
+      setLastRefreshedAt(new Date());
+    } catch {
+      // Keep existing data and rely on manual refresh error handling.
+    }
   }, [settings.baseCurrency]);
 
   /**
@@ -153,6 +319,106 @@ export default function PortfolioPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Realtime updates via websocket (with polling fallback).
+  useEffect(() => {
+    const wsUrl = buildPortfolioWsUrl(tickerKey ? tickerKey.split(',') : []);
+
+    const startFallback = () => {
+      setLiveConnectionState('fallback');
+      if (!pollingIntervalRef.current) {
+        pollingIntervalRef.current = window.setInterval(() => {
+          fetchRealtimeSnapshot();
+        }, 10000);
+      }
+      if (!reconnectIntervalRef.current) {
+        reconnectIntervalRef.current = window.setInterval(() => {
+          setWsRetrySeed((prev) => prev + 1);
+        }, 15000);
+      }
+    };
+
+    if (!wsUrl) {
+      startFallback();
+      return;
+    }
+
+    setLiveConnectionState('connecting');
+    const ws = new WebSocket(wsUrl);
+    let disposed = false;
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      setLiveConnectionState('connected');
+      if (pollingIntervalRef.current) {
+        window.clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      if (reconnectIntervalRef.current) {
+        window.clearInterval(reconnectIntervalRef.current);
+        reconnectIntervalRef.current = null;
+      }
+    };
+
+    ws.onmessage = (event) => {
+      if (typeof event.data !== 'string') return;
+      const updates = parseLiveUpdates(event.data);
+      if (updates.length > 0) {
+        mergeLivePrices(updates);
+        setLastRefreshedAt(new Date());
+        const now = Date.now();
+        if (now - lastSnapshotSyncAtRef.current >= 15000) {
+          lastSnapshotSyncAtRef.current = now;
+          fetchRealtimeSnapshot();
+        }
+      }
+    };
+
+    const toFallback = () => {
+      if (disposed) return;
+      startFallback();
+    };
+
+    ws.onerror = toFallback;
+    ws.onclose = toFallback;
+
+    return () => {
+      disposed = true;
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
+      ws.close();
+      if (wsRef.current === ws) {
+        wsRef.current = null;
+      }
+      if (reconnectIntervalRef.current) {
+        window.clearInterval(reconnectIntervalRef.current);
+        reconnectIntervalRef.current = null;
+      }
+    };
+  }, [buildPortfolioWsUrl, fetchRealtimeSnapshot, mergeLivePrices, parseLiveUpdates, tickerKey, wsRetrySeed]);
+
+  useEffect(() => {
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      if (pollingIntervalRef.current) {
+        window.clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      if (reconnectIntervalRef.current) {
+        window.clearInterval(reconnectIntervalRef.current);
+        reconnectIntervalRef.current = null;
+      }
+      for (const timeout of Object.values(highlightTimeoutRef.current)) {
+        window.clearTimeout(timeout);
+      }
+      highlightTimeoutRef.current = {};
+    };
+  }, []);
 
   /**
    * Filter holdings based on active filter tab and search query
@@ -294,6 +560,21 @@ export default function PortfolioPage() {
               })}
             </span>
           )}
+          <span
+            className={`rounded-full px-2 py-1 text-xs font-medium ${
+              liveConnectionState === 'connected'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                : liveConnectionState === 'connecting'
+                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                : 'bg-slate-100 text-slate-700 dark:bg-slate-800/70 dark:text-slate-200'
+            }`}
+          >
+            {liveConnectionState === 'connected'
+              ? t('liveConnected')
+              : liveConnectionState === 'connecting'
+              ? t('liveConnecting')
+              : t('liveFallback')}
+          </span>
           <Button
             variant="outline"
             onClick={() => fetchData(false)}
@@ -343,7 +624,7 @@ export default function PortfolioPage() {
 
       {/* Portfolio Summary */}
       {!isLoading && summary && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <SummaryCard
             title={t('totalInvestment')}
             value={formatCurrency(summary.total_investment, summary.currency)}
@@ -373,6 +654,18 @@ export default function PortfolioPage() {
                 ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
                 : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
             }
+          />
+          <SummaryCard
+            title={t('cashBalance')}
+            value={
+              summary.cash_balance !== undefined && summary.cash_balance !== null
+                ? formatCurrency(summary.cash_balance, summary.currency)
+                : summary.available_cash !== undefined && summary.available_cash !== null
+                ? formatCurrency(summary.available_cash, summary.currency)
+                : '-'
+            }
+            icon={<DollarSign className="h-4 w-4" />}
+            iconBgClass="bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400"
           />
           <SummaryCard
             title={t('holdings')}
@@ -424,8 +717,11 @@ export default function PortfolioPage() {
           onRowClick={handleRowClick}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
+          priceChangeDirection={priceChangeDirection}
         />
       </Card>
+
+      <OrderDesk />
 
       {/* Add Holding Modal */}
       <AddHoldingModal

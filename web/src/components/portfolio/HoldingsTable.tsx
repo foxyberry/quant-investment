@@ -20,6 +20,8 @@ interface HoldingsTableProps {
   onEdit?: (holding: Holding) => void;
   /** Callback when delete button is clicked */
   onDelete?: (holding: Holding) => void;
+  /** Per-ticker current price change direction for transient highlight */
+  priceChangeDirection?: Record<string, 'up' | 'down'>;
 }
 
 interface SortButtonProps {
@@ -76,6 +78,7 @@ export default function HoldingsTable({
   onRowClick,
   onEdit,
   onDelete,
+  priceChangeDirection,
 }: HoldingsTableProps) {
   const t = useTranslations('portfolio');
   const locale = useLocale();
@@ -228,7 +231,15 @@ export default function HoldingsTable({
                 <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
                   {formatCurrency(holding.avg_price, holding.currency)}
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td
+                  className={`px-4 py-3 text-right font-mono text-[var(--foreground)] transition-colors ${
+                    priceChangeDirection?.[holding.ticker] === 'up'
+                      ? 'bg-red-100/70 dark:bg-red-900/30'
+                      : priceChangeDirection?.[holding.ticker] === 'down'
+                      ? 'bg-blue-100/70 dark:bg-blue-900/30'
+                      : ''
+                  }`}
+                >
                   {formatCurrency(holding.current_price, holding.currency)}
                 </td>
                 <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
@@ -287,6 +298,7 @@ export default function HoldingsTable({
             onRowClick={onRowClick}
             onEdit={onEdit}
             onDelete={onDelete}
+            priceChangeDirection={priceChangeDirection}
           />
         ))}
       </div>
@@ -299,12 +311,13 @@ interface MobileCardProps {
   onRowClick?: (holding: Holding) => void;
   onEdit?: (holding: Holding) => void;
   onDelete?: (holding: Holding) => void;
+  priceChangeDirection?: Record<string, 'up' | 'down'>;
 }
 
 /**
  * Mobile card component for responsive display
  */
-function MobileCard({ holding, onRowClick, onEdit, onDelete }: MobileCardProps) {
+function MobileCard({ holding, onRowClick, onEdit, onDelete, priceChangeDirection }: MobileCardProps) {
   const t = useTranslations('portfolio');
   const locale = useLocale();
   const formatCurrency = (value: number | null, currency?: string) => formatCurrencyUtil(value, currency, locale);
@@ -371,7 +384,15 @@ function MobileCard({ holding, onRowClick, onEdit, onDelete }: MobileCardProps) 
         </div>
         <div>
           <p className="text-[var(--foreground-muted)]">{t('currentPrice')}</p>
-          <p className="font-mono font-medium text-[var(--foreground)]">
+          <p
+            className={`font-mono font-medium text-[var(--foreground)] inline-block rounded px-1 transition-colors ${
+              priceChangeDirection?.[holding.ticker] === 'up'
+                ? 'bg-red-100/70 dark:bg-red-900/30'
+                : priceChangeDirection?.[holding.ticker] === 'down'
+                ? 'bg-blue-100/70 dark:bg-blue-900/30'
+                : ''
+            }`}
+          >
             {formatCurrency(holding.current_price, holding.currency)}
           </p>
         </div>

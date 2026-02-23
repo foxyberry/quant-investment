@@ -12,6 +12,7 @@ const localeLabels: Record<Locale, string> = {
 };
 
 const localeOrder: Locale[] = ['en', 'ko', 'zh'];
+const LOCALE_SYNC_KEY = 'quant-investment:locale-sync';
 
 interface LocaleSwitcherProps {
   variant?: 'default' | 'sidebar';
@@ -26,6 +27,10 @@ export default function LocaleSwitcher({ variant = 'default' }: LocaleSwitcherPr
   const nextLocale = localeOrder[(currentIndex + 1) % localeOrder.length];
 
   const handleSwitch = () => {
+    window.localStorage.setItem(
+      LOCALE_SYNC_KEY,
+      JSON.stringify({ locale: nextLocale })
+    );
     router.replace(pathname, { locale: nextLocale });
   };
 

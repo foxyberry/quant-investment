@@ -14,6 +14,7 @@ const LOCALE_LABELS: Record<string, string> = {
   ko: '한국어',
   zh: '中文',
 };
+const LOCALE_SYNC_KEY = 'quant-investment:locale-sync';
 
 export default function SettingsPage() {
   const t = useTranslations('settings');
@@ -23,6 +24,10 @@ export default function SettingsPage() {
   const { settings, updateBaseCurrency } = useUserSettings();
 
   const handleLocaleChange = (newLocale: string) => {
+    window.localStorage.setItem(
+      LOCALE_SYNC_KEY,
+      JSON.stringify({ locale: newLocale })
+    );
     router.replace(pathname, { locale: newLocale });
   };
 
