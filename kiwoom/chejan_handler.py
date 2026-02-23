@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import queue
+import threading
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from kiwoom.constants import ChejanGubun, FID
 
@@ -42,14 +44,23 @@ class ChejanHandler:
         ocx: Any,
         order_manager: Any | None = None,
         get_chejan_data_fn: Optional[Callable[[int], str]] = None,
+        async_notify: bool = True,
     ) -> None:
         self._ocx = ocx
         self._order_manager = order_manager
         self._get_chejan_data_fn = get_chejan_data_fn
+        self._async_notify = async_notify
 
         self._order_status: Dict[str, OrderStatus] = {}
         self._positions: Dict[str, Dict[str, int]] = {}
         self._observers: List[Callable[[Dict[str, Any]], None]] = []
+        self._state_lock = threading.RLock()
+        self._observer_lock = threading.RLock()
+        self._notify_queue: "queue.Queue[Dict[str, Any]]" = queue.Queue()
+        self._notify_worker: Optional[threading.Thread] = None
+        if self._async_notify:
+            self._notify_worker = threading.Thread(target=self._notify_loop, daemon=True)
+            self._notify_worker.start()
 
         self._bind_events()
 
@@ -60,27 +71,31 @@ class ChejanHandler:
             self._ocx._callbacks["OnReceiveChejanData"] = self.on_receive_chejan_data
 
     def add_observer(self, callback: Callable[[Dict[str, Any]], None]) -> None:
-        self._observers.append(callback)
+        with self._observer_lock:
+            self._observers.append(callback)
 
     def remove_observer(self, callback: Callable[[Dict[str, Any]], None]) -> None:
-        if callback in self._observers:
-            self._observers.remove(callback)
+        with self._observer_lock:
+            if callback in self._observers:
+                self._observers.remove(callback)
 
     def get_order_status(self, order_no: str) -> Optional[OrderStatus]:
-        return self._order_status.get(order_no)
+        with self._state_lock:
+            return self._order_status.get(order_no)
 
     @property
     def positions(self) -> Dict[str, Dict[str, int]]:
-        return dict(self._positions)
+        with self._state_lock:
+            return dict(self._positions)
 
     def on_receive_chejan_data(self, sGubun: str, nItemCnt: int, sFidList: str) -> None:
-        _ = nItemCnt
-        _ = sFidList
+        requested_fids = self._parse_fid_list(sFidList) if nItemCnt > 0 else set()
         if sGubun == ChejanGubun.ORDER.value:
-            event = self._parse_order_event()
+            event = self._parse_order_event(requested_fids)
             if not event.order_no:
                 return
-            self._order_status[event.order_no] = event.status
+            with self._state_lock:
+                self._order_status[event.order_no] = event.status
             self._sync_order_manager(event)
             self._notify(
                 {
@@ -95,12 +110,28 @@ class ChejanHandler:
                 }
             )
         elif sGubun == ChejanGubun.BALANCE.value:
-            position = self._parse_balance_event()
+            position = self._parse_balance_event(requested_fids)
             if not position:
                 return
             code = position["code"]
-            self._positions[code] = position
+            with self._state_lock:
+                self._positions[code] = position
             self._notify({"type": "balance", **position})
+
+    @staticmethod
+    def _parse_fid_list(s_fid_list: str) -> Set[int]:
+        if not s_fid_list:
+            return set()
+        parsed: Set[int] = set()
+        for token in s_fid_list.split(";"):
+            token = token.strip()
+            if not token:
+                continue
+            try:
+                parsed.add(int(token))
+            except ValueError:
+                continue
+        return parsed
 
     def _get_chejan_data(self, fid: int) -> str:
         if self._get_chejan_data_fn is not None:
@@ -150,13 +181,29 @@ class ChejanHandler:
             return OrderStatus.FILLED
         return OrderStatus.PENDING
 
-    def _parse_order_event(self) -> ChejanOrderEvent:
-        order_no = self._get_chejan_data(FID.ORDER_NO)
-        code = self._normalize_code(self._get_chejan_data(FID.CODE))
-        raw_status = self._get_chejan_data(FID.ORDER_STATUS)
-        fill_price = self._to_int(self._get_chejan_data(FID.FILL_PRICE))
-        filled_qty = self._to_int(self._get_chejan_data(FID.FILL_QTY))
-        unfilled_qty = self._to_int(self._get_chejan_data(FID.UNFILLED_QTY))
+    def _get_fid_values(self, required_fids: List[int], requested_fids: Set[int]) -> Dict[int, str]:
+        if not requested_fids:
+            return {fid: self._get_chejan_data(fid) for fid in required_fids}
+        return {fid: self._get_chejan_data(fid) for fid in required_fids if fid in requested_fids}
+
+    def _parse_order_event(self, requested_fids: Set[int]) -> ChejanOrderEvent:
+        values = self._get_fid_values(
+            [
+                FID.ORDER_NO,
+                FID.CODE,
+                FID.ORDER_STATUS,
+                FID.FILL_PRICE,
+                FID.FILL_QTY,
+                FID.UNFILLED_QTY,
+            ],
+            requested_fids,
+        )
+        order_no = values.get(FID.ORDER_NO, "")
+        code = self._normalize_code(values.get(FID.CODE, ""))
+        raw_status = values.get(FID.ORDER_STATUS, "")
+        fill_price = self._to_int(values.get(FID.FILL_PRICE, ""))
+        filled_qty = self._to_int(values.get(FID.FILL_QTY, ""))
+        unfilled_qty = self._to_int(values.get(FID.UNFILLED_QTY, ""))
 
         status = self._derive_status(raw_status, filled_qty, unfilled_qty)
         return ChejanOrderEvent(
@@ -169,19 +216,31 @@ class ChejanHandler:
             status=status,
         )
 
-    def _parse_balance_event(self) -> Optional[Dict[str, int]]:
-        code = self._normalize_code(self._get_chejan_data(FID.CODE))
+    def _parse_balance_event(self, requested_fids: Set[int]) -> Optional[Dict[str, int]]:
+        values = self._get_fid_values(
+            [
+                FID.CODE,
+                FID.HOLDING_QTY,
+                FID.AVG_BUY_PRICE,
+                FID.TOTAL_COST,
+                FID.ORDERABLE_QTY,
+                FID.DAY_PNL,
+                FID.PNL_RATE,
+            ],
+            requested_fids,
+        )
+        code = self._normalize_code(values.get(FID.CODE, ""))
         if not code:
             return None
 
         return {
             "code": code,
-            "holding_qty": self._to_int(self._get_chejan_data(FID.HOLDING_QTY)),
-            "avg_buy_price": self._to_int(self._get_chejan_data(FID.AVG_BUY_PRICE)),
-            "total_cost": self._to_int(self._get_chejan_data(FID.TOTAL_COST)),
-            "orderable_qty": self._to_int(self._get_chejan_data(FID.ORDERABLE_QTY)),
-            "day_pnl": self._to_int(self._get_chejan_data(FID.DAY_PNL)),
-            "pnl_rate": self._to_int(self._get_chejan_data(FID.PNL_RATE)),
+            "holding_qty": self._to_int(values.get(FID.HOLDING_QTY, "")),
+            "avg_buy_price": self._to_int(values.get(FID.AVG_BUY_PRICE, "")),
+            "total_cost": self._to_int(values.get(FID.TOTAL_COST, "")),
+            "orderable_qty": self._to_int(values.get(FID.ORDERABLE_QTY, "")),
+            "day_pnl": self._to_int(values.get(FID.DAY_PNL, "")),
+            "pnl_rate": self._to_int(values.get(FID.PNL_RATE, "")),
         }
 
     def _sync_order_manager(self, event: ChejanOrderEvent) -> None:
@@ -193,9 +252,25 @@ class ChejanHandler:
         order.status = event.status.value.lower()
         order.message = event.raw_status
 
-    def _notify(self, payload: Dict[str, Any]) -> None:
-        for callback in list(self._observers):
+    def _notify_loop(self) -> None:
+        while True:
+            payload = self._notify_queue.get()
+            try:
+                self._dispatch(payload)
+            finally:
+                self._notify_queue.task_done()
+
+    def _dispatch(self, payload: Dict[str, Any]) -> None:
+        with self._observer_lock:
+            observers = list(self._observers)
+        for callback in observers:
             try:
                 callback(payload)
             except Exception:
                 continue
+
+    def _notify(self, payload: Dict[str, Any]) -> None:
+        if self._async_notify:
+            self._notify_queue.put(payload)
+            return
+        self._dispatch(payload)
