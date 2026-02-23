@@ -110,7 +110,13 @@ export default function PortfolioPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Quick currency toggle
-  const quickCurrencies: BaseCurrency[] = ['USD', 'KRW'];
+  const quickCurrencies = useMemo<BaseCurrency[]>(() => {
+    const defaults: BaseCurrency[] = ['USD', 'KRW'];
+    if (defaults.includes(settings.baseCurrency)) {
+      return defaults;
+    }
+    return [settings.baseCurrency, ...defaults];
+  }, [settings.baseCurrency]);
 
   /**
    * Fetch all portfolio data
@@ -251,7 +257,7 @@ export default function PortfolioPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl font-bold text-[var(--foreground)]">{t('title')}</h1>
             {/* Currency quick-toggle */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" role="group" aria-label={t('baseCurrency')}>
               <span className="text-xs text-[var(--foreground-muted)] mr-1">{t('baseCurrency')}</span>
               <div className="flex gap-0.5 rounded-lg bg-[var(--background)] p-0.5">
                 {quickCurrencies.map((cur) => (
@@ -259,6 +265,7 @@ export default function PortfolioPage() {
                     key={cur}
                     type="button"
                     onClick={() => updateBaseCurrency(cur)}
+                    aria-pressed={settings.baseCurrency === cur}
                     className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                       settings.baseCurrency === cur
                         ? 'bg-[var(--background-secondary)] text-[var(--foreground)] shadow-sm'
