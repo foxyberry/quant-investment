@@ -274,29 +274,12 @@ class UsStockFetcher:
             return self._fetch_nasdaq100_fallback()
 
     def _fetch_nasdaq100_fallback(self) -> List[Dict]:
-        """NASDAQ 100 대체 방법: 마스터 파일 또는 주요 종목 하드코딩"""
-        master_path = Path(self.MASTER_FILE)
+        """NASDAQ 100 대체 방법: 주요 종목 하드코딩.
 
-        if master_path.exists():
-            try:
-                df = pd.read_csv(master_path)
-                symbols = []
-
-                for _, row in df.iterrows():
-                    symbols.append({
-                        'symbol': row['symbol'],
-                        'name': row.get('name', row['symbol']),
-                        'sector': row.get('sector', '')
-                    })
-
-                if symbols:
-                    logger.info(f"마스터 파일에서 NASDAQ100 {len(symbols)}개 종목 로드")
-                    return symbols
-
-            except Exception as e:
-                logger.warning(f"NASDAQ100 마스터 파일 로드 실패: {e}")
-
-        logger.info("NASDAQ100 기본 주요 종목 리스트 사용")
+        Unlike SP500 fallback, we skip us_master.csv because it may contain
+        a broad universe that doesn't represent NASDAQ 100 specifically.
+        """
+        logger.info("NASDAQ100 기본 주요 종목 리스트 사용 (fallback)")
         return self._get_major_stocks()
 
     def _load_nasdaq100_cache(self) -> Optional[List[Dict]]:

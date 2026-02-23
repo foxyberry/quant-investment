@@ -87,7 +87,8 @@ def _get_info(ticker: str) -> dict:
         if cached is not None:
             with _info_cache_lock:
                 _info_cache[ticker] = cached
-                return _info_cache[ticker]
+                _evict_cache(_info_cache, _INFO_CACHE_MAXSIZE)
+            return cached
 
         info = yf.Ticker(ticker).info or {}
         with _info_cache_lock:
@@ -128,6 +129,7 @@ def _get_financial_statements(ticker: str) -> Tuple[pd.DataFrame, pd.DataFrame, 
                     )
                     with _statement_cache_lock:
                         _statement_cache[ticker] = bundle
+                        _evict_cache(_statement_cache, _STATEMENT_CACHE_MAXSIZE)
                     return bundle
                 except Exception:
                     pass
