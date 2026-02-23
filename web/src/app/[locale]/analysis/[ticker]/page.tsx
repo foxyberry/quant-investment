@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { routing } from '@/i18n/routing';
 import {
   ArrowLeft,
   BarChart3,
@@ -199,6 +200,7 @@ export default function TickerAnalysisPage() {
         const payload = JSON.parse(event.newValue) as { locale?: string };
         const nextLocale = payload.locale;
         if (!nextLocale || nextLocale === locale) return;
+        if (!routing.locales.includes(nextLocale as (typeof routing.locales)[number])) return;
         window.location.replace(`/${nextLocale}/analysis/${encodeURIComponent(ticker)}?popup=true`);
       } catch {
         // Ignore malformed payloads.
