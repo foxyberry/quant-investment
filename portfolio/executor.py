@@ -16,7 +16,7 @@ Usage:
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -318,6 +318,7 @@ class KiwoomExecutor(BaseExecutor):
         risk_manager: Optional[RiskManager] = None,
         order_manager: Optional[KiwoomOrderManager] = None,
         chejan_handler: Optional[ChejanHandler] = None,
+        market_price_provider: Optional[Callable[[str], Optional[float]]] = None,
         initial_cash_balance: float = 10000000.0,
     ) -> None:
         self.logger = logging.getLogger(__name__)
@@ -334,7 +335,11 @@ class KiwoomExecutor(BaseExecutor):
         self._daily_trades = 0
         self._positions_cache: Dict[str, Dict[str, Any]] = {}
         self._client_to_broker_order: Dict[str, str] = {}
+        self._broker_to_client_order: Dict[str, str] = {}
         self._submitted_orders: Dict[str, Order] = {}
+        self._client_status: Dict[str, str] = {}
+        self._latest_price_by_code: Dict[str, float] = {}
+        self._market_price_provider = market_price_provider
 
         self._chejan_handler.add_observer(self._on_chejan_event)
 
@@ -356,6 +361,55 @@ class KiwoomExecutor(BaseExecutor):
                 "quantity": int(event.get("holding_qty", 0)),
                 "avg_price": float(event.get("avg_buy_price", 0)),
             }
+            return
+
+        if event.get("type") != "order":
+            return
+
+        order_no = str(event.get("order_no", "")).strip()
+        code = str(event.get("code", "")).strip()
+        status = str(event.get("status", "")).strip()
+
+        client_order_id = self._broker_to_client_order.get(order_no)
+        if client_order_id is None and code:
+            # Fallback remapping when broker order no differs from provisional id.
+            candidates = [
+                cid
+                for cid, submitted in self._submitted_orders.items()
+                if self._to_kiwoom_code(submitted.ticker) == code and self._client_status.get(cid) not in {
+                    OrderStatus.FILLED.value,
+                    OrderStatus.CANCELLED.value,
+                    OrderStatus.REJECTED.value,
+                }
+            ]
+            if candidates:
+                client_order_id = candidates[-1]
+                previous_broker = self._client_to_broker_order.get(client_order_id)
+                if previous_broker:
+                    self._broker_to_client_order.pop(previous_broker, None)
+                self._client_to_broker_order[client_order_id] = order_no
+                self._broker_to_client_order[order_no] = client_order_id
+
+        if client_order_id:
+            self._client_status[client_order_id] = status
+
+    def update_market_price(self, code_or_ticker: str, price: float) -> None:
+        """Update latest price cache used for market-order risk checks."""
+        code = self._to_kiwoom_code(code_or_ticker)
+        self._latest_price_by_code[code] = float(price)
+
+    def _resolve_risk_price(self, order: Order, code: str, is_market: bool, limit_price: int) -> Optional[float]:
+        if not is_market:
+            return float(limit_price)
+
+        provider_price: Optional[float] = None
+        if self._market_price_provider is not None:
+            provider_price = self._market_price_provider(code)
+        cached_price = self._latest_price_by_code.get(code)
+        market_price = provider_price if provider_price and provider_price > 0 else cached_price
+        if market_price is None or market_price <= 0:
+            return None
+        return float(market_price)
 
     def _risk_check(self, order: Order, code: str, price: float) -> Optional[str]:
         result = self._risk_manager.validate_order(
@@ -384,7 +438,17 @@ class KiwoomExecutor(BaseExecutor):
         hoga = KiwoomHogaType.MARKET.value if is_market else KiwoomHogaType.LIMIT.value
         price = 0 if is_market else int(order.price or 0)
 
-        risk_error = self._risk_check(order, code, float(price))
+        risk_price = self._resolve_risk_price(order, code, is_market, price)
+        if risk_price is None:
+            return OrderResult(
+                order_id=order.order_id or "",
+                success=False,
+                status=OrderStatus.REJECTED.value,
+                message="Market price unavailable for risk check",
+                simulated=False,
+            )
+
+        risk_error = self._risk_check(order, code, risk_price)
         if risk_error:
             return OrderResult(
                 order_id=order.order_id or "",
@@ -416,7 +480,9 @@ class KiwoomExecutor(BaseExecutor):
             )
 
         self._client_to_broker_order[order.order_id or ""] = broker_order_no
+        self._broker_to_client_order[broker_order_no] = order.order_id or ""
         self._submitted_orders[order.order_id or ""] = order
+        self._client_status[order.order_id or ""] = OrderStatus.PENDING.value
         self._daily_trades += 1
 
         return OrderResult(
@@ -454,6 +520,26 @@ class KiwoomExecutor(BaseExecutor):
             return False
 
     def get_order_status(self, order_id: str) -> Optional[OrderResult]:
+        mapped_status = self._client_status.get(order_id)
+        if mapped_status is not None:
+            normalized = mapped_status.upper()
+            mapped = {
+                "PLACED": OrderStatus.PENDING.value,
+                "CONFIRMED": OrderStatus.PENDING.value,
+                "PARTIAL": OrderStatus.PARTIAL.value,
+                "FILLED": OrderStatus.FILLED.value,
+                "CANCELLED": OrderStatus.CANCELLED.value,
+                "REJECTED": OrderStatus.REJECTED.value,
+                "PENDING": OrderStatus.PENDING.value,
+            }.get(normalized, OrderStatus.PENDING.value)
+            return OrderResult(
+                order_id=order_id,
+                success=mapped not in {OrderStatus.REJECTED.value},
+                status=mapped,
+                message=f"Chejan status: {normalized}",
+                simulated=False,
+            )
+
         broker_order_no = self._client_to_broker_order.get(order_id)
         if not broker_order_no:
             return None

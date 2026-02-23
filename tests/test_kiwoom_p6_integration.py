@@ -24,13 +24,21 @@ class _FakeChejanHandler:
     def __init__(self, status=None):
         self._status = status
         self._observers = []
+        self._order_status_by_no = {}
 
     def add_observer(self, cb):
         self._observers.append(cb)
 
     def get_order_status(self, order_no):
-        _ = order_no
+        if order_no in self._order_status_by_no:
+            return self._order_status_by_no[order_no]
         return self._status
+
+    def emit_order_event(self, order_no, code, status):
+        self._order_status_by_no[order_no] = type("S", (), {"value": status})()
+        payload = {"type": "order", "order_no": order_no, "code": code, "status": status}
+        for cb in list(self._observers):
+            cb(payload)
 
 
 @dataclass
@@ -83,6 +91,11 @@ def test_kiwoom_executor_execute_and_status_mapping() -> None:
     assert order_manager.calls[0]["code"] == "005930"
     assert order_manager.calls[0]["order_type"] == 1
 
+    chejan_handler.emit_order_event("real-555", "005930", "FILLED")
+    status = executor.get_order_status("cid-1")
+    assert status is not None
+    assert status.status == OrderStatus.FILLED.value
+
 
 def test_kiwoom_executor_blocks_by_risk_rule() -> None:
     executor = KiwoomExecutor(
@@ -109,6 +122,54 @@ def test_kiwoom_executor_blocks_by_risk_rule() -> None:
     assert "blocked" in result.message
 
 
+def test_market_order_rejected_without_market_price_for_risk() -> None:
+    executor = KiwoomExecutor(
+        ocx=object(),
+        acc_no="8123456789",
+        risk_manager=_AllowRiskManager(),
+        order_manager=_FakeOrderManager(),
+        chejan_handler=_FakeChejanHandler(),
+    )
+
+    result = executor.execute(
+        Order(
+            ticker="005930.KS",
+            side="BUY",
+            quantity=1,
+            order_type="MARKET",
+            order_id="cid-market-1",
+        )
+    )
+
+    assert result.success is False
+    assert result.status == OrderStatus.REJECTED.value
+    assert "Market price unavailable" in result.message
+
+
+def test_market_order_uses_price_provider_for_risk_check() -> None:
+    executor = KiwoomExecutor(
+        ocx=object(),
+        acc_no="8123456789",
+        risk_manager=_AllowRiskManager(),
+        order_manager=_FakeOrderManager(),
+        chejan_handler=_FakeChejanHandler(),
+        market_price_provider=lambda code: 70500.0 if code == "005930" else None,
+    )
+
+    result = executor.execute(
+        Order(
+            ticker="005930.KS",
+            side="BUY",
+            quantity=1,
+            order_type="MARKET",
+            order_id="cid-market-2",
+        )
+    )
+
+    assert result.success is True
+    assert result.status == OrderStatus.PENDING.value
+
+
 def test_portfolio_sync_from_chejan_and_opw00018(tmp_path) -> None:
     portfolio_file = tmp_path / "portfolio.yaml"
     p = Portfolio(filepath=str(portfolio_file))
@@ -133,6 +194,19 @@ def test_portfolio_sync_from_chejan_and_opw00018(tmp_path) -> None:
     assert count == 2
     assert p.get("005930.KS").quantity == 10
     assert p.get("000660.KS").quantity == 3
+
+
+def test_portfolio_sync_preserves_market_suffix_for_kosdaq(tmp_path) -> None:
+    portfolio_file = tmp_path / "portfolio_market.yaml"
+    p = Portfolio(filepath=str(portfolio_file))
+
+    count = p.sync_from_opw00018(
+        [
+            {"code": "035720", "name": "카카오", "holding_qty": 2, "avg_buy_price": 50000, "market": "KOSDAQ"},
+        ]
+    )
+    assert count == 1
+    assert p.get("035720.KQ") is not None
 
 
 def test_realtime_trigger_bridge_uses_event_feed() -> None:

@@ -339,7 +339,7 @@ class Portfolio:
         if not code:
             return
 
-        ticker = f"{code}.KS"
+        ticker = self._make_ticker(code, event.get("market"))
         quantity = int(event.get("holding_qty", 0))
         avg_price = float(event.get("avg_buy_price", 0))
 
@@ -375,7 +375,7 @@ class Portfolio:
             code = str(row.get("code", "")).strip()
             if not code:
                 continue
-            ticker = f"{code}.KS"
+            ticker = self._make_ticker(code, row.get("market"))
             quantity = int(row.get("holding_qty", 0))
             if quantity <= 0:
                 continue
@@ -393,6 +393,25 @@ class Portfolio:
         self._holdings = updated
         self._save()
         return len(updated)
+
+    def _make_ticker(self, code: str, market: Optional[Any] = None) -> str:
+        """Build normalized ticker with market suffix (KS/KQ)."""
+        norm = str(code).strip().upper()
+        if norm.endswith(".KS") or norm.endswith(".KQ"):
+            return norm
+
+        if market is not None:
+            market_text = str(market).strip().upper()
+            if any(token in market_text for token in ["KOSDAQ", "KQ", "KSQ"]):
+                return f"{norm}.KQ"
+            if any(token in market_text for token in ["KOSPI", "KS", "STK"]):
+                return f"{norm}.KS"
+
+        ks = f"{norm}.KS"
+        kq = f"{norm}.KQ"
+        if kq in self._holdings:
+            return kq
+        return ks
 
     def __contains__(self, ticker: str) -> bool:
         return ticker in self._holdings
