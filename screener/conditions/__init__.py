@@ -27,7 +27,7 @@ Usage:
         DividendYieldCondition, EarningsYieldCondition, EbitEvCondition,
         FcfYieldCondition, PegRatioCondition, DebtToEquityCondition,
         CurrentRatioCondition, RoeCondition, PiotroskiFScoreCondition,
-        AltmanZScoreCondition, RoicCondition, clear_info_cache,
+        AltmanZScoreCondition, RoicCondition, DsoTrendFilterCondition, clear_info_cache,
     )
 """
 
@@ -145,6 +145,7 @@ from .fundamental import (
     PiotroskiFScoreCondition,
     AltmanZScoreCondition,
     RoicCondition,
+    DsoTrendFilterCondition,
     clear_info_cache,
 )
 
@@ -209,7 +210,8 @@ __all__ = [
     'PERatioCondition', 'PBRatioCondition', 'PSRatioCondition', 'PCFRatioCondition',
     'DividendYieldCondition', 'EarningsYieldCondition', 'EbitEvCondition', 'FcfYieldCondition',
     'PegRatioCondition', 'DebtToEquityCondition', 'CurrentRatioCondition', 'RoeCondition',
-    'PiotroskiFScoreCondition', 'AltmanZScoreCondition', 'RoicCondition', 'clear_info_cache',
+    'PiotroskiFScoreCondition', 'AltmanZScoreCondition', 'RoicCondition',
+    'DsoTrendFilterCondition', 'clear_info_cache',
 
     # Registry
     'get_condition_class_map', 'get_condition_metadata',
