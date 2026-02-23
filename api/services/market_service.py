@@ -25,6 +25,8 @@ class MarketService:
     data retrieval and TechnicalEnricher for indicator calculations.
     """
 
+    _ticker_info_cache: Dict[str, Dict[str, Any]] = {}
+
     def __init__(self, cache: Optional[OHLCVCache] = None):
         """
         Initialize the market service.
@@ -36,7 +38,10 @@ class MarketService:
         self.technical_enricher = TechnicalEnricher()
 
     def get_ohlcv(
-        self, ticker: str, days: int = 100
+        self,
+        ticker: str,
+        days: int = 100,
+        data: Optional[pd.DataFrame] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Get OHLCV data for a ticker.
@@ -50,29 +55,14 @@ class MarketService:
             or None if data unavailable.
         """
         try:
-            data = self.cache.get(ticker, days=days)
+            if data is None:
+                data = self.cache.get(ticker, days=days)
 
             if data is None or data.empty:
                 logger.warning(f"No OHLCV data found for {ticker}")
                 return None
 
-            # Convert DataFrame to list of dicts with ISO 8601 dates
-            ohlcv_items = []
-            for idx, row in data.iterrows():
-                # Handle different index types
-                if hasattr(idx, "strftime"):
-                    date_str = idx.strftime("%Y-%m-%d")
-                else:
-                    date_str = str(idx)[:10]
-
-                ohlcv_items.append({
-                    "date": date_str,
-                    "open": float(row["open"]),
-                    "high": float(row["high"]),
-                    "low": float(row["low"]),
-                    "close": float(row["close"]),
-                    "volume": int(row["volume"]),
-                })
+            ohlcv_items = self._serialize_ohlcv(data.tail(days))
 
             return {
                 "ticker": ticker,
@@ -84,7 +74,12 @@ class MarketService:
             logger.error(f"Error fetching OHLCV for {ticker}: {e}")
             return None
 
-    def get_quote(self, ticker: str) -> Optional[Dict[str, Any]]:
+    def get_quote(
+        self,
+        ticker: str,
+        data: Optional[pd.DataFrame] = None,
+        include_name: bool = True,
+    ) -> Optional[Dict[str, Any]]:
         """
         Get current quote for a ticker.
 
@@ -97,8 +92,10 @@ class MarketService:
             Dictionary with current quote information, or None if unavailable.
         """
         try:
-            # Get recent data (2 days to compute change)
-            data = self.cache.get(ticker, days=5)
+            if data is None:
+                data = self.cache.get(ticker, days=5)
+            else:
+                data = data.tail(5)
 
             if data is None or data.empty:
                 logger.warning(f"No quote data found for {ticker}")
@@ -125,8 +122,7 @@ class MarketService:
             else:
                 timestamp = datetime.now().isoformat()
 
-            # Try to get company name (only available via yfinance)
-            name = self._get_ticker_name(ticker)
+            name = self._get_ticker_name(ticker) if include_name else None
 
             return {
                 "ticker": ticker,
@@ -142,7 +138,11 @@ class MarketService:
             logger.error(f"Error fetching quote for {ticker}: {e}")
             return None
 
-    def get_technical_indicators(self, ticker: str) -> Optional[Dict[str, Any]]:
+    def get_technical_indicators(
+        self,
+        ticker: str,
+        data: Optional[pd.DataFrame] = None,
+    ) -> Optional[Dict[str, Any]]:
         """
         Get technical indicators for a ticker.
 
@@ -153,8 +153,9 @@ class MarketService:
             Dictionary with technical indicators, or None if unavailable.
         """
         try:
-            # Need sufficient data for all indicators (MA240 needs 240+ days)
-            data = self.cache.get(ticker, days=300)
+            if data is None:
+                # Need sufficient data for all indicators (MA240 needs 240+ days)
+                data = self.cache.get(ticker, days=300)
 
             if data is None or data.empty:
                 logger.warning(f"No data found for technical analysis: {ticker}")
@@ -207,19 +208,46 @@ class MarketService:
             return None
         return round(value, decimals)
 
+    def _serialize_ohlcv(self, data: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Vectorized DataFrame serialization for OHLCV response."""
+        frame = data[["open", "high", "low", "close", "volume"]].copy().reset_index()
+        date_col = frame.columns[0]
+        parsed = pd.to_datetime(frame[date_col], errors="coerce")
+        frame["date"] = parsed.dt.strftime("%Y-%m-%d")
+        frame.loc[frame["date"].isna(), "date"] = frame.loc[
+            frame["date"].isna(), date_col
+        ].astype(str).str[:10]
+
+        frame["open"] = frame["open"].astype(float)
+        frame["high"] = frame["high"].astype(float)
+        frame["low"] = frame["low"].astype(float)
+        frame["close"] = frame["close"].astype(float)
+        frame["volume"] = frame["volume"].fillna(0).astype(int)
+
+        return frame[["date", "open", "high", "low", "close", "volume"]].to_dict("records")
+
+    def get_ticker_info(self, ticker: str) -> Dict[str, Any]:
+        """Get yfinance info with simple in-memory cache."""
+        cached = self._ticker_info_cache.get(ticker)
+        if cached is not None:
+            return cached
+        try:
+            import yfinance as yf
+            info = yf.Ticker(ticker).info or {}
+            self._ticker_info_cache[ticker] = info
+            return info
+        except Exception:
+            self._ticker_info_cache[ticker] = {}
+            return {}
+
     def _get_ticker_name(self, ticker: str) -> Optional[str]:
         """
         Get company name for a ticker.
 
         Note: This is a best-effort lookup. Returns None if unavailable.
         """
-        try:
-            import yfinance as yf
-            stock = yf.Ticker(ticker)
-            info = stock.info
-            return info.get("shortName") or info.get("longName")
-        except Exception:
-            return None
+        info = self.get_ticker_info(ticker)
+        return info.get("shortName") or info.get("longName")
 
 
 # Module-level service instance for convenience functions
