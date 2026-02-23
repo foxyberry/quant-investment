@@ -108,6 +108,24 @@ def test_observer_receives_order_and_balance_events() -> None:
     assert events[1]["type"] == "balance"
 
 
+def test_observer_exception_does_not_block_next_observer() -> None:
+    ocx = _FakeOcx()
+    handler = ChejanHandler(ocx)
+    events = []
+
+    def _broken(_payload):
+        raise RuntimeError("observer failure")
+
+    handler.add_observer(_broken)
+    handler.add_observer(events.append)
+
+    _set_order_chejan(ocx, order_no="334", code="A005930", status="접수", fill_price=0, fill_qty=0, unfilled_qty=10)
+    handler.on_receive_chejan_data("0", 0, "")
+
+    assert len(events) == 1
+    assert events[0]["type"] == "order"
+
+
 def test_syncs_status_to_order_manager_history() -> None:
     ocx = _FakeOcx()
     order_manager = KiwoomOrderManager(ocx, throttle_seconds=0.0)

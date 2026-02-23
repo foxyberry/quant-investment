@@ -195,4 +195,7 @@ class ChejanHandler:
 
     def _notify(self, payload: Dict[str, Any]) -> None:
         for callback in list(self._observers):
-            callback(payload)
+            try:
+                callback(payload)
+            except Exception:
+                continue
