@@ -500,6 +500,37 @@ export default function TickerAnalysisPage() {
             showVolume={true}
           />
 
+          {/* Popup KPI strip */}
+          {isPopup && (
+            <div className="grid grid-cols-3 gap-2">
+              <Card padding="sm">
+                <p className="text-xs text-[var(--foreground-muted)]">{t('popupKpiPrice')}</p>
+                <p className="mt-1 font-mono font-semibold text-[var(--foreground)]">
+                  ${tickerData.current_price.toFixed(2)}
+                </p>
+              </Card>
+              <Card padding="sm">
+                <p className="text-xs text-[var(--foreground-muted)]">{t('popupKpiChange')}</p>
+                <p
+                  className={`mt-1 font-mono font-semibold ${
+                    tickerData.change_pct >= 0
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {tickerData.change_pct >= 0 ? '+' : ''}
+                  {tickerData.change_pct.toFixed(2)}%
+                </p>
+              </Card>
+              <Card padding="sm">
+                <p className="text-xs text-[var(--foreground-muted)]">{t('popupKpiVolume')}</p>
+                <p className="mt-1 font-mono font-semibold text-[var(--foreground)]">
+                  {(tickerData.ohlcv[tickerData.ohlcv.length - 1]?.volume ?? 0).toLocaleString()}
+                </p>
+              </Card>
+            </div>
+          )}
+
           {/* Technical Indicators */}
           <CollapsibleSection
             title={t('technicalIndicators')}
@@ -1005,6 +1036,13 @@ export default function TickerAnalysisPage() {
             </Card>
           </div>
         </>
+      )}
+
+      {!tickerData && !isLoading && !error && (
+        <Card padding="lg" className="text-center">
+          <p className="font-medium text-[var(--foreground)]">{t('emptyStateTitle')}</p>
+          <p className="mt-2 text-sm text-[var(--foreground-muted)]">{t('emptyStateDesc')}</p>
+        </Card>
       )}
     </div>
   );
