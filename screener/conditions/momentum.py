@@ -89,11 +89,11 @@ def _aroon(data: pd.DataFrame, period: int):
 
     def _up(window: np.ndarray) -> float:
         idx = np.argmax(window)
-        return ((period - 1 - idx) / period) * 100.0
+        return ((idx + 1) / period) * 100.0
 
     def _down(window: np.ndarray) -> float:
         idx = np.argmin(window)
-        return ((period - 1 - idx) / period) * 100.0
+        return ((idx + 1) / period) * 100.0
 
     aroon_up = highs.rolling(period).apply(_up, raw=True)
     aroon_down = lows.rolling(period).apply(_down, raw=True)
