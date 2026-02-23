@@ -17,11 +17,13 @@ Usage:
     )
 """
 
-from typing import Optional
+from io import StringIO
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 import yfinance as yf
 
+from utils.fundamental_cache import FundamentalCache
 from .base import BaseCondition, ConditionResult
 from .registry import register_condition
 
@@ -29,7 +31,20 @@ from .registry import register_condition
 # Module-level cache for yfinance .info dictionaries
 # ---------------------------------------------------------------------------
 
-_info_cache: dict = {}
+_info_cache: Dict[str, Dict[str, Any]] = {}
+_statement_cache: Dict[str, Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]] = {}
+_persistent_cache = FundamentalCache()
+
+INFO_TTL_SECONDS = 24 * 60 * 60
+STATEMENT_TTL_SECONDS = 7 * 24 * 60 * 60
+
+
+def _df_to_json_payload(df: pd.DataFrame) -> str:
+    return df.to_json(orient="split", date_format="iso")
+
+
+def _df_from_json_payload(payload: str) -> pd.DataFrame:
+    return pd.read_json(StringIO(payload), orient="split")
 
 
 def _get_info(ticker: str) -> dict:
@@ -37,9 +52,63 @@ def _get_info(ticker: str) -> dict:
 
     Returns an empty dict when the API call yields ``None``.
     """
-    if ticker not in _info_cache:
-        _info_cache[ticker] = yf.Ticker(ticker).info or {}
+    if ticker in _info_cache:
+        return _info_cache[ticker]
+
+    cached = _persistent_cache.get("yf_info", ticker, INFO_TTL_SECONDS)
+    if cached is not None:
+        _info_cache[ticker] = cached
+        return _info_cache[ticker]
+
+    info = yf.Ticker(ticker).info or {}
+    _info_cache[ticker] = info
+    _persistent_cache.set("yf_info", ticker, info)
     return _info_cache[ticker]
+
+
+def _get_financial_statements(ticker: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Fetch and cache income/balance/cashflow statements for ticker."""
+    if ticker in _statement_cache:
+        return _statement_cache[ticker]
+
+    cached = _persistent_cache.get("yf_statements", ticker, STATEMENT_TTL_SECONDS)
+    if cached is not None:
+        income_raw = cached.get("income_stmt")
+        balance_raw = cached.get("balance_sheet")
+        cashflow_raw = cached.get("cashflow")
+        if income_raw and balance_raw and cashflow_raw:
+            try:
+                bundle = (
+                    _df_from_json_payload(income_raw),
+                    _df_from_json_payload(balance_raw),
+                    _df_from_json_payload(cashflow_raw),
+                )
+                _statement_cache[ticker] = bundle
+                return bundle
+            except Exception:
+                pass
+
+    t = yf.Ticker(ticker)
+    income = t.income_stmt
+    balance = t.balance_sheet
+    cashflow = t.cashflow
+
+    _statement_cache[ticker] = (income, balance, cashflow)
+    try:
+        _persistent_cache.set(
+            "yf_statements",
+            ticker,
+            {
+                "income_stmt": _df_to_json_payload(income),
+                "balance_sheet": _df_to_json_payload(balance),
+                "cashflow": _df_to_json_payload(cashflow),
+            },
+        )
+    except Exception:
+        # Non-critical: keep in-memory cache even if persistence fails.
+        pass
+
+    return _statement_cache[ticker]
 
 
 def clear_info_cache() -> None:
@@ -48,6 +117,7 @@ def clear_info_cache() -> None:
     Call this between screening runs to free memory and ensure fresh data.
     """
     _info_cache.clear()
+    _statement_cache.clear()
 
 
 # ---------------------------------------------------------------------------
@@ -1061,11 +1131,7 @@ class PiotroskiFScoreCondition(BaseCondition):
         Returns a dict with keys ``s1`` through ``s9`` (int 0 or 1) and
         ``f_score`` (sum).
         """
-        t = yf.Ticker(ticker)
-
-        income = t.income_stmt
-        balance = t.balance_sheet
-        cashflow = t.cashflow
+        income, balance, cashflow = _get_financial_statements(ticker)
 
         signals: dict = {}
         get = self._safe_get
@@ -1263,11 +1329,8 @@ class AltmanZScoreCondition(BaseCondition):
         Returns a dict with keys ``A`` through ``E``, ``z_score``, and raw
         values, or ``None`` when critical data is missing.
         """
-        t = yf.Ticker(ticker)
         info = _get_info(ticker)
-
-        balance = t.balance_sheet
-        income = t.income_stmt
+        income, balance, _ = _get_financial_statements(ticker)
         get = self._safe_get
 
         total_assets = get(balance, "Total Assets")
