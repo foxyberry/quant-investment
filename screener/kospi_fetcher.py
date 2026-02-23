@@ -5,7 +5,7 @@
 
 import pandas as pd
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -121,9 +121,8 @@ class KospiListFetcher:
 
             symbols = []
             with ThreadPoolExecutor(max_workers=20) as executor:
-                futures = {executor.submit(fetch_name, t): t for t in tickers}
-                for future in as_completed(futures):
-                    ticker_code, name = future.result()
+                results = list(executor.map(fetch_name, tickers))
+                for ticker_code, name in results:
                     symbols.append({
                         'symbol': f"{ticker_code}.KS",
                         'code': ticker_code,
@@ -220,9 +219,8 @@ class KospiListFetcher:
 
             symbols = []
             with ThreadPoolExecutor(max_workers=20) as executor:
-                futures = {executor.submit(fetch_name, t): t for t in tickers}
-                for future in as_completed(futures):
-                    ticker_code, name = future.result()
+                results = list(executor.map(fetch_name, tickers))
+                for ticker_code, name in results:
                     symbols.append({
                         'symbol': f"{ticker_code}.KQ",
                         'code': ticker_code,
