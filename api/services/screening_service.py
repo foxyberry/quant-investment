@@ -209,12 +209,30 @@ class ScreeningService:
         else:
             raise ValueError(f"Unknown universe: {universe}")
 
+    @staticmethod
+    def _safe_name(entry: Dict, fallback_key: str = "symbol") -> str:
+        """Return a sanitised stock name from a fetcher entry.
+
+        Handles empty strings, NaN floats, and missing keys by falling
+        back to the ticker symbol itself.
+        """
+        import math
+
+        name = entry.get("name")
+        if name is None:
+            return str(entry.get(fallback_key, ""))
+        if isinstance(name, float):
+            return str(entry.get(fallback_key, "")) if math.isnan(name) else str(name)
+        name_str = str(name).strip()
+        return name_str if name_str else str(entry.get(fallback_key, ""))
+
     def _get_universe_symbols(self, universe: str) -> Dict[str, str]:
         """
         Get {ticker: name} mapping for a universe.
 
         Returns the full symbol-to-name dict so callers can inject
         pre-fetched names into StockScreener, avoiding N+1 yfinance calls.
+        Names are normalised: empty/NaN values fall back to the ticker symbol.
 
         Args:
             universe: Universe name
@@ -226,16 +244,16 @@ class ScreeningService:
 
         if universe_upper == "KOSPI":
             symbols = self._kospi_fetcher.get_kospi_symbols()
-            return {s["symbol"]: s["name"] for s in symbols}
+            return {s["symbol"]: self._safe_name(s) for s in symbols}
         elif universe_upper == "KOSDAQ":
             symbols = self._kospi_fetcher.get_kosdaq_symbols()
-            return {s["symbol"]: s["name"] for s in symbols}
+            return {s["symbol"]: self._safe_name(s) for s in symbols}
         elif universe_upper == "SP500":
             symbols = self._us_fetcher.get_sp500_symbols()
-            return {s["symbol"]: s["name"] for s in symbols}
+            return {s["symbol"]: self._safe_name(s) for s in symbols}
         elif universe_upper == "NASDAQ100":
             symbols = self._us_fetcher.get_nasdaq100_symbols()
-            return {s["symbol"]: s["name"] for s in symbols} if symbols else {}
+            return {s["symbol"]: self._safe_name(s) for s in symbols} if symbols else {}
         else:
             raise ValueError(f"Unknown universe: {universe}")
 
