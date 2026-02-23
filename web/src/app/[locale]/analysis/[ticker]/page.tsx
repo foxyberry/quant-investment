@@ -464,7 +464,7 @@ export default function TickerAnalysisPage() {
             </p>
             <Button
               variant="outline"
-              size={isPopup ? 'xs' : 'sm'}
+              size="sm"
               className={isPopup ? 'mt-3' : 'mt-4'}
               onClick={() => fetchData(selectedPeriod)}
             >
