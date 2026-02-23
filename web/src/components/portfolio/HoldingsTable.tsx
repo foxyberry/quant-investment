@@ -162,47 +162,47 @@ export default function HoldingsTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--background)]/50">
-              <th className="px-5 py-4 text-left">
+              <th className="px-4 py-3 text-left">
                 <SortButton field="ticker" currentField={sortField} direction={sortDirection} onSort={handleSort}>
                   {t('ticker')}
                 </SortButton>
               </th>
-              <th className="px-5 py-4 text-left">
+              <th className="px-4 py-3 text-left">
                 <SortButton field="name" currentField={sortField} direction={sortDirection} onSort={handleSort}>
                   {t('name')}
                 </SortButton>
               </th>
-              <th className="px-5 py-4 text-right">
+              <th className="px-4 py-3 text-right">
                 <SortButton field="quantity" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('qty')}
                 </SortButton>
               </th>
-              <th className="px-5 py-4 text-right">
+              <th className="px-4 py-3 text-right">
                 <SortButton field="avg_price" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('avgPrice')}
                 </SortButton>
               </th>
-              <th className="px-5 py-4 text-right">
+              <th className="px-4 py-3 text-right">
                 <SortButton field="current_price" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('currentPrice')}
                 </SortButton>
               </th>
-              <th className="px-5 py-4 text-right">
+              <th className="px-4 py-3 text-right">
                 <SortButton field="market_value" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('value')}
                 </SortButton>
               </th>
-              <th className="px-5 py-4 text-right">
+              <th className="px-4 py-3 text-right">
                 <SortButton field="pnl" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('pnl')}
                 </SortButton>
               </th>
-              <th className="px-5 py-4 text-right">
+              <th className="px-4 py-3 text-right">
                 <SortButton field="pnl_pct" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('pnlPct')}
                 </SortButton>
               </th>
-              <th className="px-5 py-4 text-center text-sm font-semibold text-[var(--foreground)]">
+              <th className="px-4 py-3 text-center text-sm font-semibold text-[var(--foreground)]">
                 {t('actions')}
               </th>
             </tr>
@@ -214,27 +214,27 @@ export default function HoldingsTable({
                 onClick={() => onRowClick?.(holding)}
                 className={`border-b border-[var(--border)] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
               >
-                <td className="px-5 py-4">
+                <td className="px-4 py-3">
                   <span className="font-mono font-medium text-[var(--color-primary)]">
                     {holding.ticker}
                   </span>
                 </td>
-                <td className="px-5 py-4 text-[var(--foreground)]">
+                <td className="px-4 py-3 text-[var(--foreground)]">
                   {holding.name || '-'}
                 </td>
-                <td className="px-5 py-4 text-right font-mono text-[var(--foreground)]">
+                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
                   {formatQuantity(holding.quantity)}
                 </td>
-                <td className="px-5 py-4 text-right font-mono text-[var(--foreground)]">
+                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
                   {formatCurrency(holding.avg_price, holding.currency)}
                 </td>
-                <td className="px-5 py-4 text-right font-mono text-[var(--foreground)]">
+                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
                   {formatCurrency(holding.current_price, holding.currency)}
                 </td>
-                <td className="px-5 py-4 text-right font-mono text-[var(--foreground)]">
+                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
                   {formatCurrency(holding.market_value, holding.currency)}
                 </td>
-                <td className={`px-5 py-4 text-right font-mono ${getPnlColorClass(holding.pnl)}`}>
+                <td className={`px-4 py-3 text-right font-mono ${getPnlColorClass(holding.pnl)}`}>
                   <span className="flex items-center justify-end gap-1">
                     {holding.pnl !== null && holding.pnl !== 0 && (
                       holding.pnl > 0 ? (
@@ -246,10 +246,10 @@ export default function HoldingsTable({
                     {formatCurrency(holding.pnl, holding.currency)}
                   </span>
                 </td>
-                <td className={`px-5 py-4 text-right font-mono ${getPnlColorClass(holding.pnl_pct)}`}>
+                <td className={`px-4 py-3 text-right font-mono ${getPnlColorClass(holding.pnl_pct)}`}>
                   {formatPercent(holding.pnl_pct)}
                 </td>
-                <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-center gap-2">
                     {onEdit && (
                       <button
@@ -313,7 +313,7 @@ function MobileCard({ holding, onRowClick, onEdit, onDelete }: MobileCardProps) 
 
   return (
     <div
-      className={`p-4 ${onRowClick ? 'cursor-pointer' : ''}`}
+      className={`p-3 ${onRowClick ? 'cursor-pointer' : ''}`}
       onClick={() => onRowClick?.(holding)}
     >
       <div className="flex items-start justify-between">

@@ -24,6 +24,7 @@ import {
 import type { Holding, HoldingCreate, HoldingUpdate, PortfolioSummary, SellSignal } from '@/lib/types';
 import { formatCurrency as formatCurrencyUtil, formatPercent as formatPercentUtil } from '@/lib/format';
 import { useUserSettings } from '@/contexts/UserSettingsContext';
+import type { BaseCurrency } from '@/lib/format';
 
 type FilterTab = 'all' | 'us' | 'kr' | 'etf';
 
@@ -48,14 +49,14 @@ function SummaryCard({ title, value, icon, trend, subValue, iconBgClass = 'bg-bl
       : 'text-[var(--foreground)]';
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-5 hover:shadow-md transition-shadow">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center gap-4">
-        <div className={`rounded-xl p-3 ${iconBgClass}`}>
+        <div className={`rounded-xl p-2.5 ${iconBgClass}`}>
           {icon}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm text-[var(--foreground-muted)]">{title}</p>
-          <p className={`text-xl font-semibold font-mono truncate ${trendColorClass}`}>
+          <p className={`text-lg font-semibold font-mono truncate ${trendColorClass}`}>
             {value}
           </p>
           {subValue && (
@@ -75,7 +76,7 @@ function SummaryCard({ title, value, icon, trend, subValue, iconBgClass = 'bg-bl
 export default function PortfolioPage() {
   const t = useTranslations('portfolio');
   const locale = useLocale();
-  const { settings } = useUserSettings();
+  const { settings, updateBaseCurrency } = useUserSettings();
   const formatCurrency = (value: number, currency?: string) => formatCurrencyUtil(value, currency, locale);
   const formatPercent = (value: number) => formatPercentUtil(value);
 
@@ -101,9 +102,21 @@ export default function PortfolioPage() {
   // Sell signal banner state
   const [isBannerDismissed, setIsBannerDismissed] = useState(false);
 
+  // Last refresh timestamp
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
+
   // Filter state
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Quick currency toggle
+  const quickCurrencies = useMemo<BaseCurrency[]>(() => {
+    const defaults: BaseCurrency[] = ['USD', 'KRW'];
+    if (defaults.includes(settings.baseCurrency)) {
+      return defaults;
+    }
+    return [settings.baseCurrency, ...defaults];
+  }, [settings.baseCurrency]);
 
   /**
    * Fetch all portfolio data
@@ -127,6 +140,7 @@ export default function PortfolioPage() {
       setSummary(summaryData);
       setSellSignals(signalsData);
       setIsBannerDismissed(false);
+      setLastRefreshedAt(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load portfolio data');
     } finally {
@@ -240,12 +254,46 @@ export default function PortfolioPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('title')}</h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-xl font-bold text-[var(--foreground)]">{t('title')}</h1>
+            {/* Currency quick-toggle */}
+            <div className="flex items-center gap-1" role="group" aria-label={t('baseCurrency')}>
+              <span className="text-xs text-[var(--foreground-muted)] mr-1">{t('baseCurrency')}</span>
+              <div className="flex gap-0.5 rounded-lg bg-[var(--background)] p-0.5">
+                {quickCurrencies.map((cur) => (
+                  <button
+                    key={cur}
+                    type="button"
+                    onClick={() => updateBaseCurrency(cur)}
+                    aria-pressed={settings.baseCurrency === cur}
+                    className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                      settings.baseCurrency === cur
+                        ? 'bg-[var(--background-secondary)] text-[var(--foreground)] shadow-sm'
+                        : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+                    }`}
+                  >
+                    {cur}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
           <p className="mt-1 text-[var(--foreground-muted)]">
             {t('subtitle')}
           </p>
         </div>
-        <div className="flex gap-2 sm:gap-3 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          {/* Last updated timestamp */}
+          {lastRefreshedAt && (
+            <span className="text-xs text-[var(--foreground-muted)]">
+              {t('lastUpdated', {
+                time: new Intl.DateTimeFormat(locale, {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }).format(lastRefreshedAt),
+              })}
+            </span>
+          )}
           <Button
             variant="outline"
             onClick={() => fetchData(false)}
@@ -299,13 +347,13 @@ export default function PortfolioPage() {
           <SummaryCard
             title={t('totalInvestment')}
             value={formatCurrency(summary.total_investment, summary.currency)}
-            icon={<DollarSign className="h-5 w-5" />}
+            icon={<DollarSign className="h-4 w-4" />}
             iconBgClass="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
           />
           <SummaryCard
             title={t('marketValue')}
             value={formatCurrency(summary.total_market_value, summary.currency)}
-            icon={<PieChart className="h-5 w-5" />}
+            icon={<PieChart className="h-4 w-4" />}
             iconBgClass="bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
           />
           <SummaryCard
@@ -313,9 +361,9 @@ export default function PortfolioPage() {
             value={formatCurrency(summary.total_pnl, summary.currency)}
             icon={
               summary.total_pnl >= 0 ? (
-                <TrendingUp className="h-5 w-5" />
+                <TrendingUp className="h-4 w-4" />
               ) : (
-                <TrendingDown className="h-5 w-5" />
+                <TrendingDown className="h-4 w-4" />
               )
             }
             trend={getPnlTrend(summary.total_pnl)}
@@ -329,7 +377,7 @@ export default function PortfolioPage() {
           <SummaryCard
             title={t('holdings')}
             value={summary.holdings_count.toString()}
-            icon={<PieChart className="h-5 w-5" />}
+            icon={<PieChart className="h-4 w-4" />}
             iconBgClass="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400"
           />
         </div>
