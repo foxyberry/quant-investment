@@ -209,6 +209,36 @@ class ScreeningService:
         else:
             raise ValueError(f"Unknown universe: {universe}")
 
+    def _get_universe_symbols(self, universe: str) -> Dict[str, str]:
+        """
+        Get {ticker: name} mapping for a universe.
+
+        Returns the full symbol-to-name dict so callers can inject
+        pre-fetched names into StockScreener, avoiding N+1 yfinance calls.
+
+        Args:
+            universe: Universe name
+
+        Returns:
+            Dict mapping ticker symbols to stock names
+        """
+        universe_upper = universe.upper()
+
+        if universe_upper == "KOSPI":
+            symbols = self._kospi_fetcher.get_kospi_symbols()
+            return {s["symbol"]: s["name"] for s in symbols}
+        elif universe_upper == "KOSDAQ":
+            symbols = self._kospi_fetcher.get_kosdaq_symbols()
+            return {s["symbol"]: s["name"] for s in symbols}
+        elif universe_upper == "SP500":
+            symbols = self._us_fetcher.get_sp500_symbols()
+            return {s["symbol"]: s["name"] for s in symbols}
+        elif universe_upper == "NASDAQ100":
+            symbols = self._us_fetcher.get_nasdaq100_symbols()
+            return {s["symbol"]: s["name"] for s in symbols} if symbols else {}
+        else:
+            raise ValueError(f"Unknown universe: {universe}")
+
     def _resolve_conditions(self, preset: str, params: Optional[Dict[str, Any]] = None) -> list:
         """Resolve conditions from a static preset or custom strategy."""
         if preset.startswith("custom:"):
@@ -253,19 +283,22 @@ class ScreeningService:
         """
         conditions = self._resolve_conditions(preset, params)
 
-        # Create screener
+        # Get ticker-to-name mapping upfront to avoid N+1 yfinance calls
+        try:
+            symbols_dict = self._get_universe_symbols(universe)
+        except ValueError as e:
+            raise ValueError(f"Invalid universe: {e}")
+
+        tickers = list(symbols_dict.keys())
+
+        # Create screener with pre-fetched stock names
         screener = StockScreener(
             conditions=conditions,
             max_workers=5,
-            use_full_universe=True,
-            use_cache=True
+            use_full_universe=False,
+            use_cache=True,
+            stock_names=symbols_dict,
         )
-
-        # Get tickers for the universe
-        try:
-            tickers = self._get_universe_tickers(universe)
-        except ValueError as e:
-            raise ValueError(f"Invalid universe: {e}")
 
         total_count = len(tickers)
 

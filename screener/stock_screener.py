@@ -153,7 +153,8 @@ class StockScreener:
         max_workers: int = 5,
         use_full_universe: bool = True,
         request_delay: float = 0.2,
-        use_cache: bool = True
+        use_cache: bool = True,
+        stock_names: Optional[Dict[str, str]] = None,
     ):
         """
         Args:
@@ -162,6 +163,8 @@ class StockScreener:
             use_full_universe: True면 pykrx로 전체 종목 가져옴, False면 하드코딩 목록 사용
             request_delay: API 요청 간 딜레이 (초)
             use_cache: 데이터 캐시 사용 여부 (기본 True)
+            stock_names: Pre-fetched {ticker: name} mapping to avoid
+                         per-stock yfinance info calls (N+1 problem).
         """
         self.conditions: List[BaseCondition] = conditions or []
         self.max_workers = max_workers
@@ -170,6 +173,7 @@ class StockScreener:
         self.use_cache = use_cache and CACHE_AVAILABLE
         self._kospi_fetcher = KospiListFetcher() if use_full_universe else None
         self._cache = get_cache() if self.use_cache else None
+        self._stock_names: Dict[str, str] = stock_names or {}
         self._korean_names: Optional[Dict[str, str]] = None  # 한국어 종목명 캐시
 
     def add_condition(self, condition: BaseCondition) -> "StockScreener":
@@ -317,19 +321,29 @@ class StockScreener:
         return self._korean_names
 
     def _get_stock_name(self, ticker: str) -> str:
-        """종목명 가져오기 (한국 주식은 한국어명 사용)"""
-        # 한국 주식인 경우 한국어명 사용
+        """Get stock name with priority: injected > CSV > yfinance.
+
+        Resolution order:
+            1. self._stock_names (injected at construction time)
+            2. Korean CSV names for .KS/.KQ tickers
+            3. yf.Ticker().info as LAST RESORT
+        """
+        # 1. Injected names (highest priority)
+        if ticker in self._stock_names:
+            return self._stock_names[ticker]
+
+        # 2. Korean CSV names for .KS/.KQ stocks
         if self._is_korean_stock(ticker):
             korean_names = self._load_korean_names()
             if ticker in korean_names:
                 return korean_names[ticker]
 
-        # 해외 주식 또는 한국어명 없는 경우 yfinance 사용
+        # 3. yfinance as last resort
         try:
             stock = yf.Ticker(ticker)
             info = stock.info
             return info.get("shortName", info.get("longName", ticker))
-        except:
+        except Exception:
             return ticker
 
     def _evaluate_stock(self, ticker: str, data: pd.DataFrame) -> ScreeningResult:
