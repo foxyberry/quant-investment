@@ -18,6 +18,8 @@ import type {
   KiwoomConnectionState,
   KiwoomCondition,
   KiwoomConditionMatch,
+  KiwoomOrder,
+  KiwoomOrderRequest,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -416,6 +418,105 @@ export async function getKiwoomConditionMatches(condition: KiwoomCondition): Pro
     return listCandidate.map(normalize).filter((v): v is KiwoomConditionMatch => v !== null);
   }
   return [];
+}
+
+function normalizeKiwoomOrder(raw: unknown): KiwoomOrder | null {
+  const record = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
+  if (!record) return null;
+
+  const orderIdRaw = record.order_id ?? record.order_no ?? record.id;
+  const tickerRaw = record.ticker ?? record.code ?? record.symbol;
+  const sideRaw = record.side ?? record.order_side ?? 'BUY';
+  const orderTypeRaw = record.order_type ?? record.hoga ?? 'LIMIT';
+  const statusRaw = record.status ?? record.order_status ?? 'RECEIVED';
+  const quantityRaw = record.quantity ?? record.order_qty ?? 0;
+  const filledQtyRaw = record.filled_quantity ?? record.executed_qty ?? 0;
+  const unfilledQtyRaw = record.unfilled_quantity ?? record.remaining_qty ?? 0;
+  const priceRaw = record.price ?? record.order_price ?? null;
+  const filledPriceRaw = record.filled_price ?? record.executed_price ?? null;
+  const createdAtRaw = record.created_at ?? record.ordered_at ?? new Date().toISOString();
+
+  const toNumber = (value: unknown): number | null => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const parsed = Number(value.replace(/,/g, ''));
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  };
+
+  const orderId = typeof orderIdRaw === 'string' ? orderIdRaw : String(orderIdRaw ?? '');
+  const ticker = typeof tickerRaw === 'string' ? tickerRaw : '';
+  if (!orderId || !ticker) return null;
+
+  const side = sideRaw === 'SELL' ? 'SELL' : 'BUY';
+  const orderType = orderTypeRaw === 'MARKET' ? 'MARKET' : 'LIMIT';
+  const allowedStatuses = ['RECEIVED', 'CONFIRMED', 'FILLED', 'CANCELED', 'REJECTED', 'PARTIAL'] as const;
+  const status = allowedStatuses.includes(statusRaw as (typeof allowedStatuses)[number])
+    ? (statusRaw as (typeof allowedStatuses)[number])
+    : 'RECEIVED';
+
+  return {
+    order_id: orderId,
+    ticker,
+    side,
+    quantity: toNumber(quantityRaw) ?? 0,
+    filled_quantity: toNumber(filledQtyRaw) ?? 0,
+    unfilled_quantity: toNumber(unfilledQtyRaw) ?? 0,
+    order_type: orderType,
+    price: toNumber(priceRaw),
+    filled_price: toNumber(filledPriceRaw),
+    status,
+    created_at: typeof createdAtRaw === 'string' ? createdAtRaw : new Date().toISOString(),
+    updated_at: typeof record.updated_at === 'string' ? record.updated_at : null,
+  };
+}
+
+export async function placeKiwoomOrder(request: KiwoomOrderRequest): Promise<KiwoomOrder> {
+  const raw = await fetchApi<unknown>('/api/kiwoom/orders', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
+  const normalized = normalizeKiwoomOrder(raw);
+  if (!normalized) {
+    throw new Error('Invalid order response');
+  }
+  return normalized;
+}
+
+export async function getKiwoomOrders(): Promise<KiwoomOrder[]> {
+  const raw = await fetchApi<unknown>('/api/kiwoom/orders');
+  const payload = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
+  const list = Array.isArray(raw)
+    ? raw
+    : Array.isArray(payload?.orders)
+    ? payload?.orders
+    : Array.isArray(payload?.data)
+    ? payload?.data
+    : [];
+  return list.map(normalizeKiwoomOrder).filter((v): v is KiwoomOrder => v !== null);
+}
+
+export async function cancelKiwoomOrder(orderId: string): Promise<void> {
+  await fetchApi<void>(`/api/kiwoom/orders/${encodeURIComponent(orderId)}/cancel`, {
+    method: 'POST',
+  });
+}
+
+export async function amendKiwoomOrder(
+  orderId: string,
+  data: { quantity?: number; price?: number | null }
+): Promise<void> {
+  await fetchApi<void>(`/api/kiwoom/orders/${encodeURIComponent(orderId)}/amend`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function triggerKiwoomKillSwitch(): Promise<void> {
+  await fetchApi<void>('/api/kiwoom/orders/kill-switch', {
+    method: 'POST',
+  });
 }
 
 // Strategy API functions

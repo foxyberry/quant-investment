@@ -11,6 +11,7 @@ import {
   DeleteConfirmModal,
   SellSignalBanner,
   CsvImportModal,
+  OrderDesk,
 } from '@/components/portfolio';
 import {
   getHoldings,
@@ -719,6 +720,8 @@ export default function PortfolioPage() {
           priceChangeDirection={priceChangeDirection}
         />
       </Card>
+
+      <OrderDesk />
 
       {/* Add Holding Modal */}
       <AddHoldingModal

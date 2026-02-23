@@ -82,6 +82,33 @@ export interface KiwoomConditionMatch {
   updated_at?: string | null;
 }
 
+export type KiwoomOrderSide = 'BUY' | 'SELL';
+export type KiwoomOrderType = 'MARKET' | 'LIMIT';
+export type KiwoomOrderStatus = 'RECEIVED' | 'CONFIRMED' | 'FILLED' | 'CANCELED' | 'REJECTED' | 'PARTIAL';
+
+export interface KiwoomOrderRequest {
+  ticker: string;
+  side: KiwoomOrderSide;
+  quantity: number;
+  order_type: KiwoomOrderType;
+  price?: number | null;
+}
+
+export interface KiwoomOrder {
+  order_id: string;
+  ticker: string;
+  side: KiwoomOrderSide;
+  quantity: number;
+  filled_quantity: number;
+  unfilled_quantity: number;
+  order_type: KiwoomOrderType;
+  price: number | null;
+  filled_price: number | null;
+  status: KiwoomOrderStatus;
+  created_at: string;
+  updated_at?: string | null;
+}
+
 // Portfolio types
 export interface Holding {
   ticker: string;
