@@ -432,9 +432,17 @@ export default function TickerAnalysisPage() {
       {/* Loading State */}
       {isLoading && (
         <div className="space-y-4">
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] h-[500px] flex items-center justify-center">
+          <div
+            className={`rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] flex items-center justify-center ${
+              isPopup ? 'h-[260px]' : 'h-[500px]'
+            }`}
+          >
             <div className="flex flex-col items-center gap-3">
-              <div className="animate-spin rounded-full h-10 w-10 border-3 border-[var(--color-primary)] border-t-transparent" />
+              <div
+                className={`animate-spin rounded-full border-3 border-[var(--color-primary)] border-t-transparent ${
+                  isPopup ? 'h-8 w-8' : 'h-10 w-10'
+                }`}
+              />
               <span className="text-[var(--foreground-muted)]">
                 {t('loadingData', { ticker: ticker.toUpperCase() })}
               </span>
@@ -445,10 +453,10 @@ export default function TickerAnalysisPage() {
 
       {/* Error State */}
       {error && !isLoading && (
-        <Card padding="lg" className="text-center">
+        <Card padding={isPopup ? 'md' : 'lg'} className="text-center">
           <div className="flex flex-col items-center">
-            <BarChart3 className="h-12 w-12 text-red-500 mb-4" />
-            <h3 className="text-lg font-medium text-[var(--foreground)]">
+            <BarChart3 className={`${isPopup ? 'h-9 w-9 mb-3' : 'h-12 w-12 mb-4'} text-red-500`} />
+            <h3 className={`${isPopup ? 'text-base' : 'text-lg'} font-medium text-[var(--foreground)]`}>
               {t('loadFailed')}
             </h3>
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -457,7 +465,7 @@ export default function TickerAnalysisPage() {
             <Button
               variant="outline"
               size="sm"
-              className="mt-4"
+              className={isPopup ? 'mt-3' : 'mt-4'}
               onClick={() => fetchData(selectedPeriod)}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -938,103 +946,110 @@ export default function TickerAnalysisPage() {
           )}
 
           {/* ===== Price Summary & Trading Range ===== */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Price Summary */}
-            <Card title={t('priceSummary')}>
-              <div className="space-y-3">
-                {tickerData.ohlcv.length > 0 && (() => {
-                  const prices = tickerData.ohlcv.map(d => d.close);
-                  const highs = tickerData.ohlcv.map(d => d.high);
-                  const lows = tickerData.ohlcv.map(d => d.low);
-                  const periodHigh = Math.max(...highs);
-                  const periodLow = Math.min(...lows);
-                  const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-                  const firstPrice = prices[0];
-                  const lastPrice = prices[prices.length - 1];
-                  const periodReturn = ((lastPrice - firstPrice) / firstPrice) * 100;
+          <CollapsibleSection
+            title={t('priceSummary')}
+            expanded={expandedSections.priceSummary}
+            onToggle={() => toggleSection('priceSummary')}
+            isPopup={isPopup}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Price Summary */}
+              <Card title={t('priceSummary')}>
+                <div className="space-y-3">
+                  {tickerData.ohlcv.length > 0 && (() => {
+                    const prices = tickerData.ohlcv.map(d => d.close);
+                    const highs = tickerData.ohlcv.map(d => d.high);
+                    const lows = tickerData.ohlcv.map(d => d.low);
+                    const periodHigh = Math.max(...highs);
+                    const periodLow = Math.min(...lows);
+                    const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+                    const firstPrice = prices[0];
+                    const lastPrice = prices[prices.length - 1];
+                    const periodReturn = ((lastPrice - firstPrice) / firstPrice) * 100;
 
-                  return (
-                    <>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--foreground-muted)]">{t('periodHigh')}</span>
-                        <span className="font-medium text-[var(--foreground)]">
-                          ${periodHigh.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--foreground-muted)]">{t('periodLow')}</span>
-                        <span className="font-medium text-[var(--foreground)]">
-                          ${periodLow.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--foreground-muted)]">{t('averagePrice')}</span>
-                        <span className="font-medium text-[var(--foreground)]">
-                          ${avgPrice.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="h-px bg-[var(--border)]" />
-                      <div className="flex justify-between items-center">
-                        <span className="text-[var(--foreground-muted)]">{t('periodReturn')}</span>
-                        <span
-                          className={`font-medium ${
-                            periodReturn >= 0
-                              ? 'text-green-600 dark:text-green-400'
-                              : 'text-red-600 dark:text-red-400'
-                          }`}
-                        >
-                          {periodReturn >= 0 ? '+' : ''}{periodReturn.toFixed(2)}%
-                        </span>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </Card>
+                    return (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[var(--foreground-muted)]">{t('periodHigh')}</span>
+                          <span className="font-medium text-[var(--foreground)]">
+                            ${periodHigh.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[var(--foreground-muted)]">{t('periodLow')}</span>
+                          <span className="font-medium text-[var(--foreground)]">
+                            ${periodLow.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[var(--foreground-muted)]">{t('averagePrice')}</span>
+                          <span className="font-medium text-[var(--foreground)]">
+                            ${avgPrice.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="h-px bg-[var(--border)]" />
+                        <div className="flex justify-between items-center">
+                          <span className="text-[var(--foreground-muted)]">{t('periodReturn')}</span>
+                          <span
+                            className={`font-medium ${
+                              periodReturn >= 0
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-red-600 dark:text-red-400'
+                            }`}
+                          >
+                            {periodReturn >= 0 ? '+' : ''}{periodReturn.toFixed(2)}%
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </Card>
 
-            {/* Trading Range */}
-            <Card title={t('tradingRange')}>
-              <div className="space-y-4">
-                {tickerData.ohlcv.length > 0 && (() => {
-                  const highs = tickerData.ohlcv.map(d => d.high);
-                  const lows = tickerData.ohlcv.map(d => d.low);
-                  const periodHigh = Math.max(...highs);
-                  const periodLow = Math.min(...lows);
-                  const currentPrice = tickerData.current_price;
-                  const range = periodHigh - periodLow;
-                  const positionInRange = range > 0
-                    ? ((currentPrice - periodLow) / range) * 100
-                    : 50;
+              {/* Trading Range */}
+              <Card title={t('tradingRange')}>
+                <div className="space-y-4">
+                  {tickerData.ohlcv.length > 0 && (() => {
+                    const highs = tickerData.ohlcv.map(d => d.high);
+                    const lows = tickerData.ohlcv.map(d => d.low);
+                    const periodHigh = Math.max(...highs);
+                    const periodLow = Math.min(...lows);
+                    const currentPrice = tickerData.current_price;
+                    const range = periodHigh - periodLow;
+                    const positionInRange = range > 0
+                      ? ((currentPrice - periodLow) / range) * 100
+                      : 50;
 
-                  return (
-                    <>
-                      <div className="flex justify-between text-sm text-[var(--foreground-muted)]">
-                        <span>{t('low')}: ${periodLow.toFixed(2)}</span>
-                        <span>{t('high')}: ${periodHigh.toFixed(2)}</span>
-                      </div>
-                      <div className="relative h-3 rounded-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400">
-                        <div
-                          className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-[var(--color-primary)] shadow-md"
-                          style={{ left: `calc(${Math.min(100, Math.max(0, positionInRange))}% - 8px)` }}
-                        />
-                      </div>
-                      <div className="text-center">
-                        <span className="text-sm text-[var(--foreground-muted)]">
-                          {t('currentPriceAt')}{' '}
-                        </span>
-                        <span className="font-medium text-[var(--foreground)]">
-                          {positionInRange.toFixed(0)}%
-                        </span>
-                        <span className="text-sm text-[var(--foreground-muted)]">
-                          {' '}{t('ofRange')}
-                        </span>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </Card>
-          </div>
+                    return (
+                      <>
+                        <div className="flex justify-between text-sm text-[var(--foreground-muted)]">
+                          <span>{t('low')}: ${periodLow.toFixed(2)}</span>
+                          <span>{t('high')}: ${periodHigh.toFixed(2)}</span>
+                        </div>
+                        <div className="relative h-3 rounded-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400">
+                          <div
+                            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-[var(--color-primary)] shadow-md"
+                            style={{ left: `calc(${Math.min(100, Math.max(0, positionInRange))}% - 8px)` }}
+                          />
+                        </div>
+                        <div className="text-center">
+                          <span className="text-sm text-[var(--foreground-muted)]">
+                            {t('currentPriceAt')}{' '}
+                          </span>
+                          <span className="font-medium text-[var(--foreground)]">
+                            {positionInRange.toFixed(0)}%
+                          </span>
+                          <span className="text-sm text-[var(--foreground-muted)]">
+                            {' '}{t('ofRange')}
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </Card>
+            </div>
+          </CollapsibleSection>
         </>
       )}
 
