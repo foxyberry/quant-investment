@@ -69,7 +69,17 @@ async function installApiMocks(page: Page) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
     }
     if (url.includes('/api/strategy/conditions')) {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ conditions: [] }) });
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ conditions: [
+        { key: 'return_turnaround', label: 'Return Turnaround', description: 'Prev N-day return <= threshold and recent N-day return >= threshold', category: 'price', recommended: false, order: 60, params: [
+          { name: 'period_days', type: 'int', default: 5, description: 'Return period (days)' },
+          { name: 'prev_max_return_pct', type: 'float', default: -2.0, description: 'Max previous return %' },
+          { name: 'min_return_pct', type: 'float', default: 2.0, description: 'Min recent return %' },
+        ] },
+        { key: 'rsi_oversold', label: 'RSI Oversold', description: 'RSI below threshold', category: 'rsi', recommended: true, order: 10, params: [
+          { name: 'period', type: 'int', default: 14, description: 'RSI period' },
+          { name: 'threshold', type: 'float', default: 30.0, description: 'RSI threshold' },
+        ] },
+      ], categories: ['price', 'rsi'] }) });
     }
     if (url.includes('/api/strategy/saved')) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ strategies: [] }) });
