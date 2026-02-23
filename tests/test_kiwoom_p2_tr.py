@@ -77,3 +77,14 @@ def test_empty_rq_name_raises_value_error() -> None:
 def test_empty_tr_code_raises_value_error() -> None:
     with pytest.raises(ValueError):
         TrRequest(rq_name="rq", tr_code="", prev_next=0, screen_no="1234")
+
+
+def test_tr_request_normalizes_whitespace_fields() -> None:
+    request = TrRequest(
+        rq_name="  opt10001_req  ",
+        tr_code="  opt10001  ",
+        prev_next=0,
+        screen_no="1001",
+    )
+    assert request.rq_name == "opt10001_req"
+    assert request.tr_code == "opt10001"

@@ -33,11 +33,14 @@ class TrRequest:
     screen_no: str
 
     def __post_init__(self) -> None:
-        _validate_non_empty(self.rq_name, "rq_name")
-        _validate_non_empty(self.tr_code, "tr_code")
+        rq_name = _validate_non_empty(self.rq_name, "rq_name")
+        tr_code = _validate_non_empty(self.tr_code, "tr_code")
         if not isinstance(self.prev_next, int):
             raise ValueError("prev_next must be an int")
-        _validate_screen_no(self.screen_no)
+        screen_no = _validate_screen_no(self.screen_no)
+        object.__setattr__(self, "rq_name", rq_name)
+        object.__setattr__(self, "tr_code", tr_code)
+        object.__setattr__(self, "screen_no", screen_no)
 
 
 class KiwoomTrClient:
@@ -48,7 +51,7 @@ class KiwoomTrClient:
 
     def set_input_value(self, key: str, value: str) -> None:
         """Set input value used by subsequent TR request."""
-        _validate_non_empty(key, "key")
+        key = _validate_non_empty(key, "key")
         if value is None:
             raise ValueError("value must not be None")
         self._ocx.dynamicCall("SetInputValue(QString, QString)", key, str(value))
@@ -66,9 +69,9 @@ class KiwoomTrClient:
 
     def get_comm_data(self, tr_code: str, record_name: str, index: int, item_name: str) -> str:
         """Read string data from a TR response payload."""
-        _validate_non_empty(tr_code, "tr_code")
-        _validate_non_empty(record_name, "record_name")
-        _validate_non_empty(item_name, "item_name")
+        tr_code = _validate_non_empty(tr_code, "tr_code")
+        record_name = _validate_non_empty(record_name, "record_name")
+        item_name = _validate_non_empty(item_name, "item_name")
         if not isinstance(index, int) or index < 0:
             raise ValueError("index must be a non-negative int")
 
@@ -83,7 +86,7 @@ class KiwoomTrClient:
 
     def get_repeat_cnt(self, tr_code: str, record_name: str) -> int:
         """Return repeat row count for a TR response record."""
-        _validate_non_empty(tr_code, "tr_code")
-        _validate_non_empty(record_name, "record_name")
+        tr_code = _validate_non_empty(tr_code, "tr_code")
+        record_name = _validate_non_empty(record_name, "record_name")
         ret = self._ocx.dynamicCall("GetRepeatCnt(QString, QString)", tr_code, record_name)
         return int(ret)
