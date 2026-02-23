@@ -191,7 +191,11 @@
     "noHoldingsTitle": "보유 종목이 없습니다",
     "noHoldingsInFilter": "현재 필터에 해당하는 종목이 없습니다.",
     "baseCurrency": "통화",
-    "lastUpdated": "업데이트 {time}"
+    "lastUpdated": "업데이트 {time}",
+    "cashBalance": "예수금",
+    "liveConnected": "실시간",
+    "liveConnecting": "연결 중",
+    "liveFallback": "주기 갱신"
   },
   "strategy": {
     "title": "퀀트캔버스",

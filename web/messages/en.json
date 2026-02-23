@@ -191,7 +191,11 @@
     "noHoldingsTitle": "No holdings yet",
     "noHoldingsInFilter": "No holdings match the current filter.",
     "baseCurrency": "Currency",
-    "lastUpdated": "Updated {time}"
+    "lastUpdated": "Updated {time}",
+    "cashBalance": "Cash",
+    "liveConnected": "Live",
+    "liveConnecting": "Connecting",
+    "liveFallback": "Polling"
   },
   "strategy": {
     "title": "QuantCanvas",
