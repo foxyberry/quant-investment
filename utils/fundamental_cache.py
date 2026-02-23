@@ -4,6 +4,7 @@ Persistent cache utilities for fundamentals and financial statements.
 
 import json
 import logging
+import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -19,6 +20,16 @@ class FundamentalCache:
     def __init__(self, cache_dir: str = DEFAULT_CACHE_DIR):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self._global_lock = threading.Lock()
+        self._key_locks: Dict[str, threading.Lock] = {}
+
+    def _get_key_lock(self, namespace: str, key: str) -> threading.Lock:
+        """Get or create a per-key lock."""
+        lock_key = f"{namespace}__{key}"
+        with self._global_lock:
+            if lock_key not in self._key_locks:
+                self._key_locks[lock_key] = threading.Lock()
+            return self._key_locks[lock_key]
 
     @staticmethod
     def _safe_key(value: str) -> str:

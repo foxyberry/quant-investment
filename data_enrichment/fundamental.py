@@ -16,6 +16,7 @@ Usage:
 
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional, Union
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
@@ -271,9 +272,8 @@ class FundamentalEnricher:
     def _enrich_korean_stock(self, ticker: str) -> FundamentalData:
         """
         Fetch fundamental data for Korean stock.
-
-        Uses pykrx for basic data and Naver Finance for additional metrics.
-        Falls back to yfinance if other sources fail.
+        Phase 1: pykrx + naver in parallel (non-overlapping fields)
+        Phase 2: yfinance fallback (fills None fields sequentially)
 
         Args:
             ticker: Korean stock ticker (e.g., "005930.KS", "035720.KQ")
@@ -286,15 +286,22 @@ class FundamentalEnricher:
         data = FundamentalData(ticker=ticker)
         code = self._extract_code(ticker)
 
-        # Try pykrx first
-        if PYKRX_AVAILABLE:
-            self._enrich_from_pykrx(data, code)
+        # Phase 1: parallel fetch from pykrx and naver
+        def _fetch_pykrx():
+            if PYKRX_AVAILABLE:
+                self._enrich_from_pykrx(data, code)
 
-        # Try Naver Finance for additional data
-        if self.use_naver_fallback:
-            self._enrich_from_naver(data, code)
+        def _fetch_naver():
+            if self.use_naver_fallback:
+                self._enrich_from_naver(data, code)
 
-        # Use yfinance as fallback for missing data
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            pykrx_future = executor.submit(_fetch_pykrx)
+            naver_future = executor.submit(_fetch_naver)
+            pykrx_future.result()
+            naver_future.result()
+
+        # Phase 2: yfinance fallback for remaining None fields
         self._enrich_korean_from_yfinance(data, ticker)
 
         return data

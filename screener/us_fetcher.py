@@ -19,6 +19,7 @@ class UsStockFetcher:
     """미국 주식 종목 리스트 수집기"""
 
     CACHE_FILE = "data/us/sp500_list.csv"
+    NASDAQ100_CACHE_FILE = "data/us/nasdaq100_list.csv"
     MASTER_FILE = "data/us/us_master.csv"
     CACHE_DAYS = 7
 
@@ -215,12 +216,35 @@ class UsStockFetcher:
             logger.warning(f"캐시 저장 실패: {e}")
 
     def get_nasdaq100_symbols(self, refresh: bool = False) -> List[Dict]:
-        """NASDAQ 100 종목 리스트 (추후 구현)"""
+        """
+        NASDAQ 100 종목 리스트 반환
+
+        Args:
+            refresh: True면 캐시 무시하고 새로 가져옴
+
+        Returns:
+            [{'symbol': 'AAPL', 'name': 'Apple Inc.', 'sector': ''}, ...]
+        """
+        if self.use_cache and not refresh:
+            cached = self._load_nasdaq100_cache()
+            if cached is not None:
+                logger.info(f"캐시에서 NASDAQ100 {len(cached)}개 종목 로드")
+                return cached
+
+        symbols = self._fetch_nasdaq100_from_wikipedia()
+
+        if symbols:
+            self._save_nasdaq100_cache(symbols)
+            logger.info(f"NASDAQ 100 {len(symbols)}개 종목 수집 완료")
+
+        return symbols
+
+    def _fetch_nasdaq100_from_wikipedia(self) -> List[Dict]:
+        """Wikipedia에서 NASDAQ 100 종목 리스트 가져오기"""
         try:
             url = "https://en.wikipedia.org/wiki/Nasdaq-100"
             tables = pd.read_html(url)
 
-            # NASDAQ 100 테이블 찾기
             for table in tables:
                 if 'Ticker' in table.columns or 'Symbol' in table.columns:
                     symbol_col = 'Ticker' if 'Ticker' in table.columns else 'Symbol'
@@ -247,6 +271,37 @@ class UsStockFetcher:
         except Exception as e:
             logger.warning(f"NASDAQ 100 조회 실패: {e}")
             return []
+
+    def _load_nasdaq100_cache(self) -> Optional[List[Dict]]:
+        """NASDAQ100 캐시 파일에서 로드"""
+        cache_path = Path(self.NASDAQ100_CACHE_FILE)
+
+        if not cache_path.exists():
+            return None
+
+        mtime = datetime.fromtimestamp(cache_path.stat().st_mtime)
+        if (datetime.now() - mtime).days > self.CACHE_DAYS:
+            logger.info("NASDAQ100 캐시 만료됨")
+            return None
+
+        try:
+            df = pd.read_csv(cache_path)
+            return df.to_dict('records')
+        except Exception as e:
+            logger.warning(f"NASDAQ100 캐시 로드 실패: {e}")
+            return None
+
+    def _save_nasdaq100_cache(self, symbols: List[Dict]) -> None:
+        """NASDAQ100 캐시 파일에 저장"""
+        try:
+            cache_path = Path(self.NASDAQ100_CACHE_FILE)
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+
+            df = pd.DataFrame(symbols)
+            df.to_csv(cache_path, index=False, encoding='utf-8')
+            logger.info(f"NASDAQ100 캐시 저장: {cache_path}")
+        except Exception as e:
+            logger.warning(f"NASDAQ100 캐시 저장 실패: {e}")
 
 
 if __name__ == "__main__":
