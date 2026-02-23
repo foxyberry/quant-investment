@@ -39,7 +39,7 @@ router = APIRouter(prefix="/api/analysis", tags=["Analysis"])
     description="Enrich a single stock with technical indicators, fundamental data, "
                 "and news information. This operation may take 10-30 seconds.",
 )
-async def enrich_stock(request: EnrichRequest) -> EnrichedStock:
+def enrich_stock(request: EnrichRequest) -> EnrichedStock:
     """
     Enrich a single stock with comprehensive data.
 
@@ -87,7 +87,7 @@ async def enrich_stock(request: EnrichRequest) -> EnrichedStock:
     description="Analyze a single stock using Claude AI for valuation and risk assessment. "
                 "Requires ANTHROPIC_API_KEY environment variable. May take 30+ seconds.",
 )
-async def analyze_stock(request: AnalysisRequest) -> AnalysisResult:
+def analyze_stock(request: AnalysisRequest) -> AnalysisResult:
     """
     Analyze a single stock with AI-powered valuation.
 
@@ -150,7 +150,7 @@ async def analyze_stock(request: AnalysisRequest) -> AnalysisResult:
     summary="Get Analysis Reports",
     description="Get list of available analysis reports with summaries.",
 )
-async def get_reports() -> ReportListResponse:
+def get_reports() -> ReportListResponse:
     """
     Get list of available analysis reports.
 
@@ -183,7 +183,7 @@ async def get_reports() -> ReportListResponse:
     summary="Get Report Detail",
     description="Get detailed analysis report for a specific date.",
 )
-async def get_report(
+def get_report(
     date: str,
     market: Optional[str] = Query(
         default=None,
@@ -235,7 +235,7 @@ async def get_report(
     summary="Get Enriched Data",
     description="Get enriched JSON data for a specific date and market.",
 )
-async def get_enriched_data(
+def get_enriched_data(
     date: str,
     market: str = Query(
         default="SP500",
@@ -305,7 +305,7 @@ async def get_enriched_data(
     summary="List Enriched Data Files",
     description="List all available enriched data files.",
 )
-async def list_enriched_files() -> List[dict]:
+def list_enriched_files() -> List[dict]:
     """
     List all available enriched data files.
 
@@ -334,7 +334,7 @@ async def list_enriched_files() -> List[dict]:
     summary="Get Ticker Analysis",
     description="Get combined OHLCV data, technical indicators, and fundamental data for a ticker.",
 )
-async def get_ticker_analysis(
+def get_ticker_analysis(
     ticker: str,
     period: str = Query(
         default="6mo",
@@ -466,7 +466,7 @@ async def get_ticker_analysis(
     summary="Analysis Service Status",
     description="Get analysis service status including Claude API availability.",
 )
-async def get_status() -> dict:
+def get_status() -> dict:
     """
     Get analysis service status.
 
