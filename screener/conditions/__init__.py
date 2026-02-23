@@ -115,6 +115,19 @@ from .quant_trend import (
     KeltnerChannelBreakoutCondition,
 )
 
+from .quant_oscillators import (
+    BollingerSqueezeBreakoutCondition,
+    BollingerPercentBCondition,
+    PPOSignalCrossCondition,
+    StochasticCrossSignalCondition,
+    StochRSISignalCondition,
+    AroonOscillatorSignalCondition,
+    UltimateOscillatorSignalCondition,
+    ChaikinMoneyFlowSignalCondition,
+    ChaikinOscillatorSignalCondition,
+    ADLineTrendCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -211,6 +224,13 @@ __all__ = [
     'ADXTrendStrengthCondition', 'MARibbonAlignmentCondition',
     'GoldenCross50200Condition', 'DeathCross50200Condition',
     'DonchianChannelBreakoutCondition', 'KeltnerChannelBreakoutCondition',
+
+    # Quant Oscillator Batch 5
+    'BollingerSqueezeBreakoutCondition', 'BollingerPercentBCondition',
+    'PPOSignalCrossCondition', 'StochasticCrossSignalCondition',
+    'StochRSISignalCondition', 'AroonOscillatorSignalCondition',
+    'UltimateOscillatorSignalCondition', 'ChaikinMoneyFlowSignalCondition',
+    'ChaikinOscillatorSignalCondition', 'ADLineTrendCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
