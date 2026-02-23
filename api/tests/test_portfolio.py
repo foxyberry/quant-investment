@@ -722,16 +722,17 @@ class TestPriceCache:
             service = PortfolioService()
             price_map = {"AAPL": 175.0, "MSFT": 320.0}
 
-            with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
-                # Act
-                service.get_all_holdings(with_prices=True)
-                service.get_all_holdings(with_prices=True)
+            with patch.object(service._cache, "get_latest_prices", return_value={}):
+                with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
+                    # Act
+                    service.get_all_holdings(with_prices=True)
+                    service.get_all_holdings(with_prices=True)
 
-                # Assert - second call should reuse cache, so only 2 calls total
-                assert mock_price.call_count == 2
+                    # Assert - second call should reuse cache, so only 2 calls total
+                    assert mock_price.call_count == 2
 
     def test_price_cache_expiry(self):
-        """Expired cache triggers a fresh fetch on the next call."""
+        """Expired cache triggers a fresh fetch path on the next call."""
         # Arrange
         test_session = _setup_test_db([
             {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
@@ -740,20 +741,20 @@ class TestPriceCache:
 
         with patch("api.services.portfolio_service.SessionLocal", test_session):
             service = PortfolioService()
-            price_map = {"AAPL": 175.0, "MSFT": 320.0}
+            batch_prices = {"AAPL": 175.0, "MSFT": 320.0}
 
-            with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
+            with patch.object(service._cache, "get_latest_prices", return_value=batch_prices) as mock_batch:
                 # Act - first call fetches prices
                 service.get_all_holdings(with_prices=True)
 
                 # Expire the cache by backdating the timestamp
-                service._price_cache_time = time.monotonic() - 11
+                service._price_cache_time = time.monotonic() - (service.PRICE_CACHE_TTL + 30)
 
                 # Second call should re-fetch because cache is expired
                 service.get_all_holdings(with_prices=True)
 
-                # Assert - 2 calls per invocation = 4 total
-                assert mock_price.call_count == 4
+                # Assert - batch fetch path is invoked again after expiry
+                assert mock_batch.call_count == 2
 
     def test_parallel_price_fetch(self):
         """_get_current_prices returns correct prices for all tickers."""
@@ -768,14 +769,64 @@ class TestPriceCache:
             service = PortfolioService()
             price_map = {"AAPL": 175.0, "MSFT": 320.0, "GOOG": 155.0}
 
-            with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]):
-                # Act
-                result = service._get_current_prices(["AAPL", "MSFT", "GOOG"])
+            with patch.object(service._cache, "get_latest_prices", return_value={}):
+                with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]):
+                    # Act
+                    result = service._get_current_prices(["AAPL", "MSFT", "GOOG"])
 
-                # Assert
-                assert result["AAPL"] == 175.0
-                assert result["MSFT"] == 320.0
-                assert result["GOOG"] == 155.0
+                    # Assert
+                    assert result["AAPL"] == 175.0
+                    assert result["MSFT"] == 320.0
+                    assert result["GOOG"] == 155.0
+
+    def test_batch_price_fetch_path(self):
+        """When batch cache path returns prices, per-ticker fallback is skipped."""
+        test_session = _setup_test_db([
+            {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
+            {"ticker": "MSFT", "name": "Microsoft", "quantity": 5, "avg_price": 300.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+            with patch.object(service._cache, "get_latest_prices", return_value={"AAPL": 175.0, "MSFT": 320.0}):
+                with patch.object(service, "_get_current_price") as mock_price:
+                    result = service._get_current_prices(["AAPL", "MSFT"])
+                    assert result["AAPL"] == 175.0
+                    assert result["MSFT"] == 320.0
+                    mock_price.assert_not_called()
+
+    def test_batch_price_fetch_partial_results_fallback(self):
+        """Missing tickers from batch response should use per-ticker fallback only for misses."""
+        test_session = _setup_test_db([
+            {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
+            {"ticker": "MSFT", "name": "Microsoft", "quantity": 5, "avg_price": 300.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+            with patch.object(service._cache, "get_latest_prices", return_value={"AAPL": 175.0}):
+                with patch.object(service, "_get_current_price", return_value=320.0) as mock_price:
+                    result = service._get_current_prices(["AAPL", "MSFT"])
+                    assert result["AAPL"] == 175.0
+                    assert result["MSFT"] == 320.0
+                    mock_price.assert_called_once_with("MSFT")
+
+    def test_batch_price_fetch_exception_fallback(self):
+        """If batch path raises, service falls back to per-ticker fetch for all tickers."""
+        test_session = _setup_test_db([
+            {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
+            {"ticker": "MSFT", "name": "Microsoft", "quantity": 5, "avg_price": 300.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+            with patch.object(service._cache, "get_latest_prices", side_effect=RuntimeError("batch failed")):
+                price_map = {"AAPL": 175.0, "MSFT": 320.0}
+                with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
+                    result = service._get_current_prices(["AAPL", "MSFT"])
+                    assert result["AAPL"] == 175.0
+                    assert result["MSFT"] == 320.0
+                    assert mock_price.call_count == 2
 
     def test_summary_reuses_cached_prices(self):
         """get_summary reuses prices cached by a prior get_all_holdings call."""
@@ -789,14 +840,15 @@ class TestPriceCache:
             service = PortfolioService()
             price_map = {"AAPL": 175.0, "MSFT": 320.0}
 
-            with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
-                # Act - first call populates the cache
-                service.get_all_holdings(with_prices=True)
-                # get_summary internally calls get_all_holdings(with_prices=True)
-                service.get_summary()
+            with patch.object(service._cache, "get_latest_prices", return_value={}):
+                with patch.object(service, "_get_current_price", side_effect=lambda t: price_map[t]) as mock_price:
+                    # Act - first call populates the cache
+                    service.get_all_holdings(with_prices=True)
+                    # get_summary internally calls get_all_holdings(with_prices=True)
+                    service.get_summary()
 
-                # Assert - prices fetched only once (2 tickers), not twice (4 calls)
-                assert mock_price.call_count == 2
+                    # Assert - prices fetched only once (2 tickers), not twice (4 calls)
+                    assert mock_price.call_count == 2
 
 
 class TestSummaryCurrencyConversion:

@@ -44,7 +44,7 @@ class PortfolioService:
     TAKE_PROFIT_PCT = 20.0  # +20% triggers take profit
 
     # Price cache TTL in seconds (deduplicates concurrent requests)
-    PRICE_CACHE_TTL = 10
+    PRICE_CACHE_TTL = 60
 
     def __init__(self):
         self._lock = threading.RLock()
@@ -126,21 +126,31 @@ class PortfolioService:
                     and all(t in self._price_cache for t in tickers)):
                 return {t: self._price_cache[t] for t in tickers}
 
-            # Parallel fetch with ThreadPoolExecutor
             prices: Dict[str, float] = {}
-            with ThreadPoolExecutor(max_workers=min(len(tickers), 8)) as executor:
-                futures = {
-                    executor.submit(self._get_current_price, t): t
-                    for t in tickers
-                }
-                for future in as_completed(futures):
-                    ticker = futures[future]
-                    try:
-                        price = future.result()
-                        if price is not None:
-                            prices[ticker] = price
-                    except Exception as e:
-                        logger.warning(f"Failed to fetch price for {ticker}: {e}")
+
+            # Prefer OHLCVCache batch path to avoid N independent yfinance calls.
+            if hasattr(self._cache, "get_latest_prices"):
+                try:
+                    prices = self._cache.get_latest_prices(tickers, days=5)
+                except Exception as e:
+                    logger.warning(f"Batch price fetch failed; fallback to per-ticker: {e}")
+
+            # Fallback: per-ticker parallel fetch for any missing tickers.
+            missing_tickers = [t for t in tickers if t not in prices]
+            if missing_tickers:
+                with ThreadPoolExecutor(max_workers=min(len(missing_tickers), 8)) as executor:
+                    futures = {
+                        executor.submit(self._get_current_price, t): t
+                        for t in missing_tickers
+                    }
+                    for future in as_completed(futures):
+                        ticker = futures[future]
+                        try:
+                            price = future.result()
+                            if price is not None:
+                                prices[ticker] = price
+                        except Exception as e:
+                            logger.warning(f"Failed to fetch price for {ticker}: {e}")
 
             # Update cache
             self._price_cache = prices
