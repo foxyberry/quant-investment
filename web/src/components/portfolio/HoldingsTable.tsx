@@ -14,6 +14,8 @@ interface HoldingsTableProps {
   holdings: Holding[];
   /** Whether data is loading */
   isLoading?: boolean;
+  /** Callback when a holding row is clicked */
+  onRowClick?: (holding: Holding) => void;
   /** Callback when edit button is clicked */
   onEdit?: (holding: Holding) => void;
   /** Callback when delete button is clicked */
@@ -71,6 +73,7 @@ function getPnlColorClass(value: number | null): string {
 export default function HoldingsTable({
   holdings,
   isLoading,
+  onRowClick,
   onEdit,
   onDelete,
 }: HoldingsTableProps) {
@@ -208,7 +211,8 @@ export default function HoldingsTable({
             {sortedHoldings.map((holding) => (
               <tr
                 key={holding.ticker}
-                className="border-b border-[var(--border)] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
+                onClick={() => onRowClick?.(holding)}
+                className={`border-b border-[var(--border)] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 <td className="px-5 py-4">
                   <span className="font-mono font-medium text-[var(--color-primary)]">
@@ -245,7 +249,7 @@ export default function HoldingsTable({
                 <td className={`px-5 py-4 text-right font-mono ${getPnlColorClass(holding.pnl_pct)}`}>
                   {formatPercent(holding.pnl_pct)}
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-center gap-2">
                     {onEdit && (
                       <button
@@ -280,6 +284,7 @@ export default function HoldingsTable({
           <MobileCard
             key={holding.ticker}
             holding={holding}
+            onRowClick={onRowClick}
             onEdit={onEdit}
             onDelete={onDelete}
           />
@@ -291,6 +296,7 @@ export default function HoldingsTable({
 
 interface MobileCardProps {
   holding: Holding;
+  onRowClick?: (holding: Holding) => void;
   onEdit?: (holding: Holding) => void;
   onDelete?: (holding: Holding) => void;
 }
@@ -298,7 +304,7 @@ interface MobileCardProps {
 /**
  * Mobile card component for responsive display
  */
-function MobileCard({ holding, onEdit, onDelete }: MobileCardProps) {
+function MobileCard({ holding, onRowClick, onEdit, onDelete }: MobileCardProps) {
   const t = useTranslations('portfolio');
   const locale = useLocale();
   const formatCurrency = (value: number | null, currency?: string) => formatCurrencyUtil(value, currency, locale);
@@ -306,7 +312,10 @@ function MobileCard({ holding, onEdit, onDelete }: MobileCardProps) {
   const formatQuantity = (value: number) => formatQuantityUtil(value, locale);
 
   return (
-    <div className="p-4">
+    <div
+      className={`p-4 ${onRowClick ? 'cursor-pointer' : ''}`}
+      onClick={() => onRowClick?.(holding)}
+    >
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -323,7 +332,7 @@ function MobileCard({ holding, onEdit, onDelete }: MobileCardProps) {
           </div>
           <p className="mt-1 text-sm text-[var(--foreground)]">{holding.name || '-'}</p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           {onEdit && (
             <button
               type="button"
