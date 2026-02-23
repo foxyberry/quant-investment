@@ -16,6 +16,7 @@ Usage:
 
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any, Optional, Union
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
@@ -271,9 +272,9 @@ class FundamentalEnricher:
     def _enrich_korean_stock(self, ticker: str) -> FundamentalData:
         """
         Fetch fundamental data for Korean stock.
-
-        Uses pykrx for basic data and Naver Finance for additional metrics.
-        Falls back to yfinance if other sources fail.
+        Phase 1: pykrx + naver in parallel (each returns a separate FundamentalData)
+        Phase 2: deterministic merge (pykrx priority, naver fills None)
+        Phase 3: yfinance fallback (fills remaining None fields sequentially)
 
         Args:
             ticker: Korean stock ticker (e.g., "005930.KS", "035720.KQ")
@@ -283,18 +284,38 @@ class FundamentalEnricher:
         """
         logger.info(f"Fetching Korean stock fundamental data: {ticker}")
 
-        data = FundamentalData(ticker=ticker)
         code = self._extract_code(ticker)
 
-        # Try pykrx first
-        if PYKRX_AVAILABLE:
-            self._enrich_from_pykrx(data, code)
+        # Phase 1: parallel fetch into separate objects to avoid shared state
+        pykrx_data = FundamentalData(ticker=ticker)
+        naver_data = FundamentalData(ticker=ticker)
 
-        # Try Naver Finance for additional data
-        if self.use_naver_fallback:
-            self._enrich_from_naver(data, code)
+        def _fetch_pykrx():
+            if PYKRX_AVAILABLE:
+                self._enrich_from_pykrx(pykrx_data, code)
 
-        # Use yfinance as fallback for missing data
+        def _fetch_naver():
+            if self.use_naver_fallback:
+                self._enrich_from_naver(naver_data, code)
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            pykrx_future = executor.submit(_fetch_pykrx)
+            naver_future = executor.submit(_fetch_naver)
+            pykrx_future.result()
+            naver_future.result()
+
+        # Phase 2: deterministic merge — pykrx wins, naver fills None
+        data = FundamentalData(ticker=ticker)
+        for f in FundamentalData.__dataclass_fields__:
+            if f in ("ticker", "last_updated"):
+                continue
+            pykrx_val = getattr(pykrx_data, f)
+            naver_val = getattr(naver_data, f)
+            merged = pykrx_val if pykrx_val is not None else naver_val
+            if merged is not None:
+                setattr(data, f, merged)
+
+        # Phase 3: yfinance fallback for remaining None fields
         self._enrich_korean_from_yfinance(data, ticker)
 
         return data

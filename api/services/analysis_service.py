@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -130,23 +131,34 @@ class AnalysisService:
         if ma_240 and ma_240 > 0:
             distance_pct = (current_price - ma_240) / ma_240 * 100
 
-        # Enrich with technical indicators
+        # Enrich technical and fundamental in parallel
         technical = {}
-        try:
-            technical = self.technical_enricher.enrich(ticker, data)
-        except Exception as e:
-            logger.warning(f"Technical enrichment failed for {ticker}: {e}")
-
-        # Enrich with fundamental data
         fundamental = {}
         name = None
-        try:
-            fundamental = self.fundamental_enricher.enrich(ticker)
-            name = fundamental.get("name")
-        except Exception as e:
-            logger.warning(f"Fundamental enrichment failed for {ticker}: {e}")
 
-        # Enrich with news (optional)
+        def _enrich_technical():
+            try:
+                return self.technical_enricher.enrich(ticker, data)
+            except Exception as e:
+                logger.warning(f"Technical enrichment failed for {ticker}: {e}")
+                return {}
+
+        def _enrich_fundamental():
+            try:
+                return self.fundamental_enricher.enrich(ticker)
+            except Exception as e:
+                logger.warning(f"Fundamental enrichment failed for {ticker}: {e}")
+                return {}
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            tech_future = executor.submit(_enrich_technical)
+            fund_future = executor.submit(_enrich_fundamental)
+            technical = tech_future.result()
+            fundamental = fund_future.result()
+
+        name = fundamental.get("name") if fundamental else None
+
+        # Enrich with news (depends on name from fundamental)
         news = None
         if include_news:
             try:
