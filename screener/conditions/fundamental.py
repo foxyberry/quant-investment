@@ -1613,8 +1613,13 @@ class DsoTrendFilterCondition(BaseCondition):
         recent_idx = 0
         past_idx = self.lookback_years
 
-        receivable_labels = ["Accounts Receivable", "Net Receivables", "Receivables"]
-        revenue_labels = ["Total Revenue", "Revenue"]
+        receivable_labels = [
+            "Accounts Receivable",
+            "Accounts Receivable Net",
+            "Net Receivables",
+            "Receivables",
+        ]
+        revenue_labels = ["Total Revenue", "TotalRevenue", "Revenue"]
 
         receivables_recent = self._safe_get(balance, receivable_labels, recent_idx)
         receivables_past = self._safe_get(balance, receivable_labels, past_idx)

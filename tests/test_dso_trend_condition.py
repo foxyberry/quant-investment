@@ -87,3 +87,22 @@ def test_dso_trend_filter_registered_metadata():
     metadata = get_condition_metadata()
     assert "dso_trend_filter" in metadata
     assert metadata["dso_trend_filter"]["category"] == "Fundamental"
+
+
+def test_dso_trend_filter_supports_alternative_row_labels(monkeypatch):
+    from screener.conditions import fundamental as fundamental_module
+
+    income = pd.DataFrame({"2024": [365.0], "2023": [365.0]}, index=["TotalRevenue"])
+    balance = pd.DataFrame({"2024": [110.0], "2023": [100.0]}, index=["Accounts Receivable Net"])
+    cashflow = pd.DataFrame()
+    monkeypatch.setattr(
+        fundamental_module,
+        "_get_financial_statements",
+        lambda _ticker: (income, balance, cashflow),
+    )
+
+    cond = DsoTrendFilterCondition(lookback_years=1, min_dso_increase_pct=5.0)
+    result = cond.evaluate("TEST", pd.DataFrame())
+
+    assert result.matched is True
+    assert result.details["dso_change_pct"] == 10.0
