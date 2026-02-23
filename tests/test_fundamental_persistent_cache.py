@@ -1,5 +1,7 @@
 import json
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
 
 import pandas as pd
@@ -195,3 +197,46 @@ def test_fundamental_cache_ttl_expiry_and_corrupt_file(tmp_path):
     )
     removed = cache.clear_expired(ttl_seconds=60, namespace="ns")
     assert removed >= 1
+
+
+def test_fundamental_cache_get_or_set_deduplicates_concurrent_loaders(tmp_path):
+    cache = FundamentalCache(cache_dir=str(tmp_path / "dedupe_cache"))
+    calls = {"count": 0}
+
+    def loader():
+        calls["count"] += 1
+        time.sleep(0.05)
+        return {"per": 12.3}
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [
+            executor.submit(cache.get_or_set, "ns", "AAPL", 3600, loader)
+            for _ in range(5)
+        ]
+        results = [future.result() for future in futures]
+
+    assert calls["count"] == 1
+    assert all(result == {"per": 12.3} for result in results)
+
+
+def test_get_info_concurrent_calls_use_single_yfinance_lookup(monkeypatch, tmp_path):
+    cache = FundamentalCache(cache_dir=str(tmp_path / "info_lock_cache"))
+    monkeypatch.setattr(fundamental_module, "_persistent_cache", cache)
+    fundamental_module.clear_info_cache(include_persistent=True)
+
+    calls = {"count": 0}
+
+    class SlowTicker:
+        def __init__(self, ticker: str):
+            calls["count"] += 1
+            time.sleep(0.05)
+            self.info = {"trailingPE": 13.0, "ticker": ticker}
+
+    monkeypatch.setattr(fundamental_module.yf, "Ticker", SlowTicker)
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(fundamental_module._get_info, "AAPL") for _ in range(5)]
+        results = [future.result() for future in futures]
+
+    assert calls["count"] == 1
+    assert all(result.get("trailingPE") == 13.0 for result in results)
