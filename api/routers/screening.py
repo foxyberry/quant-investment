@@ -105,6 +105,7 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
         result = service.run_screening(
             preset=request.preset,
             universe=request.universe,
+            universes=request.universes,
             params=request.params
         )
 

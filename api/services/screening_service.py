@@ -14,6 +14,7 @@ from api.schemas.screening import (
     ConditionResultItem,
     PresetInfo,
     UniverseInfo,
+    normalize_universe_values,
 )
 
 # Import screener module
@@ -33,6 +34,7 @@ class ScreeningService:
 
     # TTL cache for universe stock counts: {universe: (timestamp, count)}
     _universe_count_cache: Dict[str, tuple] = {}
+    _universe_combo_count_cache: Dict[str, tuple] = {}
     _UNIVERSE_COUNT_TTL = 3600  # 1 hour
 
     # Universe definitions
@@ -226,6 +228,25 @@ class ScreeningService:
         else:
             raise ValueError(f"Unknown universe: {universe}")
 
+    def resolve_universes(self, universe_input: Any) -> List[str]:
+        """
+        Resolve universe input to a validated, normalized list.
+
+        Rules:
+            - "KOSPI" -> ["KOSPI"]
+            - "KOSPI,KOSDAQ" -> ["KOSPI", "KOSDAQ"]
+            - []/None -> ["KOSPI"]
+            - stable order + dedupe
+        """
+        normalized = normalize_universe_values(universe_input)
+        if not normalized:
+            normalized = ["KOSPI"]
+
+        invalid = [u for u in normalized if u not in self.UNIVERSES]
+        if invalid:
+            raise ValueError(f"Unknown universe: {', '.join(invalid)}")
+        return normalized
+
     @staticmethod
     def _safe_name(entry: Dict, fallback_key: str = "symbol") -> str:
         """Return a sanitised stock name from a fetcher entry.
@@ -274,6 +295,79 @@ class ScreeningService:
         else:
             raise ValueError(f"Unknown universe: {universe}")
 
+    def _get_symbols_for_universes(
+        self,
+        universe_input: Any,
+        fail_fast: bool = False,
+    ) -> tuple[Dict[str, str], List[str], Dict[str, str]]:
+        """
+        Merge symbols across universes with stable-order dedupe.
+
+        Returns:
+            (merged_symbols, resolved_universes, failed_universe_errors)
+        """
+        resolved_universes = self.resolve_universes(universe_input)
+        merged_symbols: Dict[str, str] = {}
+        failed_errors: Dict[str, str] = {}
+
+        for universe in resolved_universes:
+            try:
+                symbols = self._get_universe_symbols(universe)
+            except Exception as e:
+                message = str(e)
+                failed_errors[universe] = message
+                logger.warning("Universe fetch failed for %s: %s", universe, message)
+                if fail_fast:
+                    raise ValueError(f"Failed to fetch universe {universe}: {message}")
+                continue
+
+            # Stable merge: first seen ticker wins.
+            for ticker, name in symbols.items():
+                if ticker not in merged_symbols:
+                    merged_symbols[ticker] = name
+
+        return merged_symbols, resolved_universes, failed_errors
+
+    def get_tickers_for_universes(
+        self,
+        universe_input: Any,
+        fail_fast: bool = False,
+    ) -> List[str]:
+        """Return deduplicated tickers across one or more universes."""
+        symbols, resolved_universes, failed_errors = self._get_symbols_for_universes(
+            universe_input=universe_input,
+            fail_fast=fail_fast,
+        )
+        if not symbols:
+            if failed_errors:
+                details = ", ".join(f"{k}: {v}" for k, v in failed_errors.items())
+                raise ValueError(f"Failed to fetch all universes ({details})")
+            raise ValueError(f"No tickers available for universes: {resolved_universes}")
+        return list(symbols.keys())
+
+    def _get_universe_stock_count_multi(self, universe_input: Any) -> int:
+        """
+        Get approximate stock count for one or more universes.
+
+        Single universe uses existing per-universe cache.
+        Multi-universe uses combo cache keyed by normalized list.
+        """
+        resolved_universes = self.resolve_universes(universe_input)
+        if len(resolved_universes) == 1:
+            return self._get_universe_stock_count(resolved_universes[0])
+
+        cache_key = "|".join(resolved_universes)
+        cached = self._universe_combo_count_cache.get(cache_key)
+        if cached:
+            ts, count = cached
+            if time.time() - ts < self._UNIVERSE_COUNT_TTL:
+                return count
+
+        symbols, _, _ = self._get_symbols_for_universes(resolved_universes, fail_fast=False)
+        count = len(symbols)
+        self._universe_combo_count_cache[cache_key] = (time.time(), count)
+        return count
+
     def _resolve_conditions(self, preset: str, params: Optional[Dict[str, Any]] = None) -> list:
         """Resolve conditions from a static preset or custom strategy."""
         if preset.startswith("custom:"):
@@ -302,27 +396,39 @@ class ScreeningService:
     def run_screening(
         self,
         preset: str,
-        universe: str,
-        params: Optional[Dict[str, Any]] = None
+        universe: Optional[str] = None,
+        params: Optional[Dict[str, Any]] = None,
+        universes: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Run stock screening with the given preset and universe.
 
         Args:
             preset: Preset name (static name or 'custom:{strategy_id}')
-            universe: Universe name
+            universe: Universe name (backward-compatible single value)
             params: Optional parameters to override preset defaults
+            universes: Universe list (preferred for multi-market)
 
         Returns:
-            Dict with results, total_count, and matched_count
+            Dict with results, total_count, matched_count, and resolved universes
         """
         conditions = self._resolve_conditions(preset, params)
 
-        # Get ticker-to-name mapping upfront to avoid N+1 yfinance calls
+        requested_universes: Any = universes if universes is not None else universe
+
         try:
-            symbols_dict = self._get_universe_symbols(universe)
+            symbols_dict, resolved_universes, failed_errors = self._get_symbols_for_universes(
+                universe_input=requested_universes,
+                fail_fast=False,
+            )
         except ValueError as e:
             raise ValueError(f"Invalid universe: {e}")
+
+        if not symbols_dict:
+            if failed_errors:
+                details = ", ".join(f"{k}: {v}" for k, v in failed_errors.items())
+                raise ValueError(f"Failed to fetch all universes ({details})")
+            raise ValueError("No tickers available for screening")
 
         tickers = list(symbols_dict.keys())
 
@@ -363,7 +469,9 @@ class ScreeningService:
         return {
             "results": result_items,
             "total_count": total_count,
-            "matched_count": len(result_items)
+            "matched_count": len(result_items),
+            "resolved_universes": resolved_universes,
+            "failed_universe_errors": failed_errors,
         }
 
     def check_single_stock(
