@@ -353,6 +353,7 @@
     "andMore": "+{count} more",
     "filterMetrics": "Filter Values",
     "runFirst": "Run strategy to see results",
+    "loadingConditions": "Loading conditions...",
     "exportJson": "Export JSON",
     "lastRunAt": "Last run: {time}",
     "exportCsv": "Export CSV",

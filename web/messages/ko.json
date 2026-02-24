@@ -353,6 +353,7 @@
     "andMore": "+{count}개 더",
     "filterMetrics": "필터 값",
     "runFirst": "전략을 먼저 실행하세요",
+    "loadingConditions": "조건 로딩 중...",
     "exportJson": "JSON 내보내기",
     "lastRunAt": "마지막 실행: {time}",
     "exportCsv": "CSV 내보내기",
