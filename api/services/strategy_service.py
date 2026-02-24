@@ -314,6 +314,42 @@ def _coerce_param(value: Any, param_type: str) -> Any:
     return value
 
 
+def _resolve_execution_universes(
+    graph: StrategyGraph,
+    screening_service: ScreeningService,
+    universe_override: Optional[str] = None,
+    universe_overrides: Optional[List[str]] = None,
+) -> tuple[List[str], str]:
+    """
+    Resolve strategy execution universes with deterministic priority.
+
+    Priority:
+    1) request-level `universe_overrides` (multi)
+    2) request-level `universe_override` (single)
+    3) graph universe node values (`universes` then `universe`)
+    4) default `KOSPI`
+    """
+    if universe_overrides:
+        resolved = screening_service.resolve_universes(universe_overrides)
+        return resolved, resolved[0]
+
+    if universe_override:
+        resolved = screening_service.resolve_universes(universe_override)
+        return resolved, resolved[0]
+
+    for node in graph.nodes:
+        if node.data.node_type != "universe":
+            continue
+        graph_values: Any = node.data.universes or node.data.universe
+        if graph_values:
+            resolved = screening_service.resolve_universes(graph_values)
+            return resolved, resolved[0]
+        break
+
+    resolved = screening_service.resolve_universes(None)
+    return resolved, resolved[0]
+
+
 def _build_condition(condition_type: str, params: Dict[str, Any]) -> BaseCondition:
     """Instantiate a single condition from type key and params."""
     cls = CONDITION_CLASS_MAP.get(condition_type)
@@ -755,6 +791,7 @@ def _compute_node_survivors(
 def execute_strategy_with_progress(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
+    universe_overrides: Optional[List[str]] = None,
     progress_callback: Optional[Callable[[int, int, int], None]] = None,
     skip_enrich: bool = False,
 ) -> Dict[str, Any]:
@@ -766,6 +803,7 @@ def execute_strategy_with_progress(
     return execute_strategy(
         graph=graph,
         universe_override=universe_override,
+        universe_overrides=universe_overrides,
         progress_callback=progress_callback,
         skip_enrich=skip_enrich,
     )
@@ -774,6 +812,7 @@ def execute_strategy_with_progress(
 def execute_strategy(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
+    universe_overrides: Optional[List[str]] = None,
     progress_callback: Optional[Callable[[int, int, int], None]] = None,
     skip_enrich: bool = False,
 ) -> Dict[str, Any]:
@@ -783,6 +822,7 @@ def execute_strategy(
     Args:
         graph: The strategy graph
         universe_override: Override the universe from graph
+        universe_overrides: Multi-universe overrides (priority over universe_override)
 
     Returns:
         Dict with results, counts, universe, conditions used, and node_results
@@ -813,27 +853,36 @@ def execute_strategy(
         if sector_nodes[0].id not in reachable:
             sector_nodes = []  # Disconnected sector node — ignore
 
-    leaf_conditions, graph_universe, node_meta = build_flat_conditions_from_graph(graph)
+    leaf_conditions, _, node_meta = build_flat_conditions_from_graph(graph)
 
     if not leaf_conditions:
         raise ValueError("No conditions found in graph")
 
-    universe = universe_override or graph_universe
-
-    # Get tickers from universe
     screening_service = ScreeningService()
-    tickers = screening_service._get_universe_tickers(universe)
+    resolved_universes, primary_universe = _resolve_execution_universes(
+        graph=graph,
+        screening_service=screening_service,
+        universe_override=universe_override,
+        universe_overrides=universe_overrides,
+    )
+    tickers = screening_service.get_tickers_for_universes(
+        universe_input=resolved_universes,
+        fail_fast=False,
+    )
     total_count = len(tickers)
 
     # Apply sector filtering (already validated above)
     if sector_nodes:
         sector_name = (sector_nodes[0].data.sector or "").strip()
         fetcher = get_sector_fetcher()
-        sector_tickers = set(fetcher.get_sector_tickers(universe, sector_name))
+        sector_tickers = set(fetcher.get_sector_tickers(primary_universe, sector_name))
         tickers = [t for t in tickers if t in sector_tickers]
         logger.info(
-            "Sector filter '%s': %d -> %d tickers",
-            sector_name, total_count, len(tickers),
+            "Sector filter '%s' on %s: %d -> %d tickers",
+            sector_name,
+            primary_universe,
+            total_count,
+            len(tickers),
         )
 
     # Create screener with flat leaf conditions and run with return_all=True
@@ -940,7 +989,8 @@ def execute_strategy(
         "total_count": total_count,
         "screened_count": len(tickers),
         "matched_count": len(final_items),
-        "universe": universe,
+        "universe": primary_universe,
+        "universes": resolved_universes,
         "conditions_used": conditions_used,
         "node_results": node_results,
     }

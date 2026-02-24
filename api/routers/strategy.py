@@ -220,8 +220,9 @@ async def run_strategy(request: StrategyExecuteRequest) -> StrategyExecuteRespon
         result = execute_strategy(
             graph=request.graph,
             universe_override=request.universe_override,
+            universe_overrides=request.universe_overrides,
         )
-        response_universes = request.universe_overrides or [result["universe"]]
+        response_universes = result.get("universes") or request.universe_overrides or [result["universe"]]
         return StrategyExecuteResponse(**result, universes=response_universes)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -277,10 +278,11 @@ async def run_strategy_stream(request: StrategyExecuteRequest):
             result = execute_strategy_with_progress(
                 graph=request.graph,
                 universe_override=request.universe_override,
+                universe_overrides=request.universe_overrides,
                 progress_callback=_progress_cb,
                 skip_enrich=True,
             )
-            result["universes"] = request.universe_overrides or [result["universe"]]
+            result["universes"] = result.get("universes") or request.universe_overrides or [result["universe"]]
             if cancel_event.is_set():
                 return
             screened = result.get("screened_count", result["total_count"])
