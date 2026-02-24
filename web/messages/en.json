@@ -134,6 +134,7 @@
     "ticker": "Ticker",
     "name": "Name",
     "price": "Price",
+    "actions": "Actions",
     "match": "Match",
     "details": "Details",
     "noConditions": "No conditions to display",
