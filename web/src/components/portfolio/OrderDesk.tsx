@@ -66,6 +66,11 @@ export default function OrderDesk({ prefill }: OrderDeskProps) {
 
   const wsRef = useRef<WebSocket | null>(null);
   const pollRef = useRef<number | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const reconnectTimerRef = useRef<number | null>(null);
+
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const RECONNECT_CAP_MS = 30_000;
 
   useEffect(() => {
     if (!prefill?.ticker) return;
@@ -112,6 +117,8 @@ export default function OrderDesk({ prefill }: OrderDeskProps) {
   }, [t]);
 
   useEffect(() => {
+    let unmounted = false;
+
     const configured = process.env.NEXT_PUBLIC_KIWOOM_ORDERS_WS_URL;
     const baseUrl = configured ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
     let wsUrl: string | null = null;
@@ -138,64 +145,117 @@ export default function OrderDesk({ prefill }: OrderDeskProps) {
       };
     }
 
-    setConnectionMode('connecting');
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setConnectionMode('connected');
-    };
-
-    ws.onmessage = (event) => {
-      if (typeof event.data !== 'string') return;
-      try {
-        const parsed = JSON.parse(event.data) as unknown;
-        const payload = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
-        const ordersPayload = Array.isArray(payload?.orders)
-          ? payload?.orders
-          : Array.isArray(payload?.data)
-          ? payload?.data
-          : Array.isArray(parsed)
-          ? parsed
-          : null;
-
-        if (ordersPayload) {
-          void loadOrders();
-          return;
-        }
-
-        const one = payload?.order && typeof payload.order === 'object' ? payload.order : payload;
-        if (one && typeof one === 'object') {
-          void loadOrders();
-        }
-      } catch {
-        // ignore malformed messages
-      }
-    };
-
-    const fallback = () => {
+    const startPollingFallback = () => {
       setConnectionMode('fallback');
       if (!pollRef.current) {
         pollRef.current = window.setInterval(loadOrders, 5000);
       }
     };
 
-    ws.onerror = fallback;
-    ws.onclose = fallback;
-
-    return () => {
-      ws.onopen = null;
-      ws.onmessage = null;
-      ws.onerror = null;
-      ws.onclose = null;
-      ws.close();
-      if (wsRef.current === ws) {
-        wsRef.current = null;
-      }
+    const stopPolling = () => {
       if (pollRef.current) {
         window.clearInterval(pollRef.current);
         pollRef.current = null;
       }
+    };
+
+    const connectWs = () => {
+      if (unmounted) return;
+
+      setConnectionMode('connecting');
+      const ws = new WebSocket(wsUrl!);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        if (unmounted) return;
+        reconnectAttemptRef.current = 0;
+        setConnectionMode('connected');
+        stopPolling();
+      };
+
+      ws.onmessage = (event) => {
+        if (typeof event.data !== 'string') return;
+        try {
+          const parsed = JSON.parse(event.data) as unknown;
+          const payload = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null;
+          const ordersPayload = Array.isArray(payload?.orders)
+            ? payload?.orders
+            : Array.isArray(payload?.data)
+            ? payload?.data
+            : Array.isArray(parsed)
+            ? parsed
+            : null;
+
+          if (ordersPayload) {
+            void loadOrders();
+            return;
+          }
+
+          const one = payload?.order && typeof payload.order === 'object' ? payload.order : payload;
+          if (one && typeof one === 'object') {
+            void loadOrders();
+          }
+        } catch {
+          // ignore malformed messages
+        }
+      };
+
+      const handleWsClose = () => {
+        if (unmounted) return;
+
+        // Null out listeners on the closed socket to prevent duplicate handling
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
+
+        if (wsRef.current === ws) {
+          wsRef.current = null;
+        }
+
+        const attempt = reconnectAttemptRef.current;
+        if (attempt >= MAX_RECONNECT_ATTEMPTS) {
+          startPollingFallback();
+          return;
+        }
+
+        setConnectionMode('connecting');
+        const delayMs = Math.min(1000 * Math.pow(2, attempt), RECONNECT_CAP_MS);
+        reconnectAttemptRef.current = attempt + 1;
+
+        reconnectTimerRef.current = window.setTimeout(() => {
+          reconnectTimerRef.current = null;
+          connectWs();
+        }, delayMs);
+      };
+
+      ws.onerror = () => {
+        // onerror is always followed by onclose; let onclose handle reconnection.
+      };
+      ws.onclose = handleWsClose;
+    };
+
+    connectWs();
+
+    return () => {
+      unmounted = true;
+
+      if (reconnectTimerRef.current !== null) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+
+      const ws = wsRef.current;
+      if (ws) {
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
+        ws.close();
+        wsRef.current = null;
+      }
+
+      stopPolling();
     };
   }, [loadOrders]);
 
