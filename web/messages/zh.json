@@ -169,6 +169,7 @@
     "pnl": "盈亏",
     "pnlPct": "盈亏 %",
     "actions": "操作",
+    "openAnalysis": "打开分析",
     "quantity": "数量",
     "currency": "货币",
     "tickerRequired": "代码为必填项",

@@ -169,6 +169,7 @@
     "pnl": "손익",
     "pnlPct": "손익률",
     "actions": "작업",
+    "openAnalysis": "분석 열기",
     "quantity": "수량",
     "currency": "통화",
     "tickerRequired": "종목코드를 입력하세요",

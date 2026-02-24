@@ -511,6 +511,18 @@ export default function PortfolioPage() {
     orderDeskRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
+  const handleAnalyzeClick = useCallback((holding: Holding) => {
+    const width = 900;
+    const height = 700;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    window.open(
+      `/${locale}/analysis/${encodeURIComponent(holding.ticker)}?popup=true`,
+      `analysis_${holding.ticker}`,
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+  }, [locale]);
+
   const getPnlTrend = (value: number): 'up' | 'down' | 'neutral' => {
     if (value > 0) return 'up';
     if (value < 0) return 'down';
@@ -724,6 +736,7 @@ export default function PortfolioPage() {
           holdings={filteredHoldings}
           isLoading={isLoading}
           onRowClick={handleRowClick}
+          onAnalyze={handleAnalyzeClick}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
           priceChangeDirection={priceChangeDirection}

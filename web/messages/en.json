@@ -169,6 +169,7 @@
     "pnl": "P&L",
     "pnlPct": "P&L %",
     "actions": "Actions",
+    "openAnalysis": "Open Analysis",
     "quantity": "Quantity",
     "currency": "Currency",
     "tickerRequired": "Ticker is required",

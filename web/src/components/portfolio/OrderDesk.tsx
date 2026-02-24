@@ -71,8 +71,7 @@ export default function OrderDesk({ prefill }: OrderDeskProps) {
     if (!prefill?.ticker) return;
     setTicker(prefill.ticker.toUpperCase());
     if (orderType === 'LIMIT' && prefill.currentPrice !== null && Number.isFinite(prefill.currentPrice)) {
-      const rounded = Math.round(prefill.currentPrice);
-      setPrice(String(rounded));
+      setPrice(String(prefill.currentPrice));
     }
     setError(null);
   }, [orderType, prefill]);
