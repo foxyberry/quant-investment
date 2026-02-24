@@ -154,6 +154,19 @@ from .quant_statistical import (
     AnalystRevision3MCondition,
 )
 
+from .quant_fundamental_batch8 import (
+    ReceivablesTurnoverRatioCondition,
+    InventoryTurnoverRatioCondition,
+    AssetTurnoverRatioCondition,
+    CashflowToDebtRatioCondition,
+    PriceToTangibleBookCondition,
+    EVToSalesRatioCondition,
+    EVToEbitdaRatioCondition,
+    BookToMarketRatioCondition,
+    EPSCAGR3YCondition,
+    EPSGrowthYoYCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -271,6 +284,13 @@ __all__ = [
     'BetaToBenchmarkCondition', 'CorrelationToBenchmarkCondition',
     'SupportRetestSignalCondition', 'ResistanceRetestSignalCondition',
     'AnalystRevision1MCondition', 'AnalystRevision3MCondition',
+
+    # Quant Fundamental Batch 8
+    'ReceivablesTurnoverRatioCondition', 'InventoryTurnoverRatioCondition',
+    'AssetTurnoverRatioCondition', 'CashflowToDebtRatioCondition',
+    'PriceToTangibleBookCondition', 'EVToSalesRatioCondition',
+    'EVToEbitdaRatioCondition', 'BookToMarketRatioCondition',
+    'EPSCAGR3YCondition', 'EPSGrowthYoYCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
