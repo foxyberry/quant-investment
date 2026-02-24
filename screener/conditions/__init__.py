@@ -128,6 +128,19 @@ from .quant_oscillators import (
     ADLineTrendCondition,
 )
 
+from .quant_indicators import (
+    VWAPCrossSignalCondition,
+    VWAPDistancePctCondition,
+    RelativeVolumePercentileCondition,
+    TurnoverRatioMinCondition,
+    ATRPercentileFilterCondition,
+    ATRExpansionBreakoutCondition,
+    NATRFilterCondition,
+    DMIDirectionalCrossCondition,
+    IchimokuCloudBreakoutCondition,
+    IchimokuTenkanKijunCrossCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -231,6 +244,13 @@ __all__ = [
     'StochRSISignalCondition', 'AroonOscillatorSignalCondition',
     'UltimateOscillatorSignalCondition', 'ChaikinMoneyFlowSignalCondition',
     'ChaikinOscillatorSignalCondition', 'ADLineTrendCondition',
+
+    # Quant Indicator Batch 6
+    'VWAPCrossSignalCondition', 'VWAPDistancePctCondition',
+    'RelativeVolumePercentileCondition', 'TurnoverRatioMinCondition',
+    'ATRPercentileFilterCondition', 'ATRExpansionBreakoutCondition',
+    'NATRFilterCondition', 'DMIDirectionalCrossCondition',
+    'IchimokuCloudBreakoutCondition', 'IchimokuTenkanKijunCrossCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
