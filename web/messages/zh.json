@@ -539,10 +539,10 @@
       "params": {
         "min_price": "最低价格"
       },
-      "help": "按该规则筛选股票：Stock price >= threshold。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`min_price` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（min_price）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`min_price`(float)=5000",
+      "caution": "上线前务必完成样本外验证。（min_price）"
     },
     "max_price": {
       "label": "最高价格",
@@ -550,10 +550,10 @@
       "params": {
         "max_price": "最高价格"
       },
-      "help": "按该规则筛选股票：Stock price <= threshold。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`max_price` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（max_price）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`max_price`(float)=100000",
+      "caution": "上线前务必完成样本外验证。（max_price）"
     },
     "price_range": {
       "label": "价格区间",
@@ -562,10 +562,10 @@
         "min_price": "最低价",
         "max_price": "最高价"
       },
-      "help": "按该规则筛选股票：Stock price within range。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`price_range` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（price_range）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`min_price`(float)=0, `max_price`(float)=999999",
+      "caution": "上线前务必完成样本外验证。（price_range）"
     },
     "price_change": {
       "label": "涨跌幅 %",
@@ -575,10 +575,10 @@
         "max_change_pct": "最大涨跌幅 %",
         "days": "周期（天）"
       },
-      "help": "按该规则筛选股票：Price change over N days。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`price_change` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（price_change）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`min_change_pct`(float)=None, `max_change_pct`(float)=None, `days`(int)=1",
+      "caution": "上线前务必完成样本外验证。（price_change）"
     },
     "return_turnaround": {
       "label": "收益率反转",
@@ -588,10 +588,10 @@
         "prev_max_return_pct": "前期最大收益率 %",
         "min_return_pct": "近期最小收益率 %"
       },
-      "help": "按该规则筛选股票：Previous N-day return <= threshold and recent N-day return >= threshold。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`return_turnaround` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（return_turnaround）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`period_days`(int)=5, `prev_max_return_pct`(float)=-2.0, `min_return_pct`(float)=2.0",
+      "caution": "上线前务必完成样本外验证。（return_turnaround）"
     },
     "min_volume": {
       "label": "最小成交量",
@@ -599,10 +599,10 @@
       "params": {
         "min_volume": "最小成交量"
       },
-      "help": "按该规则筛选股票：Volume >= threshold。",
-      "whenToUse": "当你需要成交量/资金流对价格进行确认时使用。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 将量能/资金流作为价格的确认或预警信号。",
-      "caution": "低流动性阶段的信号稳定性会下降。"
+      "help": "`min_volume` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于需要量能/资金流来确认价格动作的场景。（min_volume）",
+      "howToRead": "更严格的资金流确认可降噪，但可能错过最早启动段。 关键参数：`min_volume`(int)=100000",
+      "caution": "低流动性标的的资金流信号稳定性较差。（min_volume）"
     },
     "volume_above_avg": {
       "label": "成交量高于均值",
@@ -611,10 +611,10 @@
         "multiplier": "均量倍数",
         "period": "均值周期"
       },
-      "help": "按该规则筛选股票：Volume above moving average。",
-      "whenToUse": "当你需要成交量/资金流对价格进行确认时使用。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 将量能/资金流作为价格的确认或预警信号。",
-      "caution": "低流动性阶段的信号稳定性会下降。"
+      "help": "`volume_above_avg` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于需要量能/资金流来确认价格动作的场景。（volume_above_avg）",
+      "howToRead": "更严格的资金流确认可降噪，但可能错过最早启动段。 关键参数：`multiplier`(float)=1.0, `period`(int)=20",
+      "caution": "低流动性标的的资金流信号稳定性较差。（volume_above_avg）"
     },
     "volume_spike": {
       "label": "成交量激增",
@@ -623,10 +623,10 @@
         "multiplier": "放量倍数",
         "period": "均值周期"
       },
-      "help": "按该规则筛选股票：Sudden volume increase。",
-      "whenToUse": "当你需要成交量/资金流对价格进行确认时使用。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 将量能/资金流作为价格的确认或预警信号。",
-      "caution": "低流动性阶段的信号稳定性会下降。"
+      "help": "`volume_spike` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于需要量能/资金流来确认价格动作的场景。（volume_spike）",
+      "howToRead": "更严格的资金流确认可降噪，但可能错过最早启动段。 关键参数：`multiplier`(float)=1.5, `period`(int)=20",
+      "caution": "低流动性标的的资金流信号稳定性较差。（volume_spike）"
     },
     "ma_touch": {
       "label": "触及均线",
@@ -635,10 +635,10 @@
         "period": "均线周期",
         "threshold": "触及阈值（比例）"
       },
-      "help": "按该规则筛选股票：Price near moving average。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`ma_touch` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（ma_touch）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=120, `threshold`(float)=0.02",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（ma_touch）"
     },
     "above_ma": {
       "label": "高于均线",
@@ -647,10 +647,10 @@
         "period": "均线周期",
         "min_distance_pct": "最小距离 %"
       },
-      "help": "按该规则筛选股票：Price above moving average。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`above_ma` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（above_ma）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=20, `min_distance_pct`(float)=0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（above_ma）"
     },
     "below_ma": {
       "label": "低于均线",
@@ -659,10 +659,10 @@
         "period": "均线周期",
         "max_distance_pct": "最大距离 %"
       },
-      "help": "按该规则筛选股票：Price below moving average。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`below_ma` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（below_ma）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=20, `max_distance_pct`(float)=0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（below_ma）"
     },
     "ma_cross_up": {
       "label": "均线上穿",
@@ -672,10 +672,10 @@
         "long_period": "长期均线周期",
         "lookback_days": "回看天数"
       },
-      "help": "按该规则筛选股票：Golden cross (short MA crosses above long MA)。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`ma_cross_up` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（ma_cross_up）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`short_period`(int)=5, `long_period`(int)=20, `lookback_days`(int)=5",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（ma_cross_up）"
     },
     "ma_cross_down": {
       "label": "均线下穿",
@@ -685,10 +685,10 @@
         "long_period": "长期均线周期",
         "lookback_days": "回看天数"
       },
-      "help": "按该规则筛选股票：Death cross (short MA crosses below long MA)。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`ma_cross_down` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（ma_cross_down）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`short_period`(int)=20, `long_period`(int)=60, `lookback_days`(int)=5",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（ma_cross_down）"
     },
     "rsi_oversold": {
       "label": "RSI 超卖 (RSI Oversold)",
@@ -697,10 +697,10 @@
         "threshold": "RSI 阈值",
         "period": "RSI 周期"
       },
-      "help": "按该规则筛选股票：RSI below threshold。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`rsi_oversold` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_RSICORE`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（rsi_oversold）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`threshold`(float)=35, `period`(int)=14",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（rsi_oversold）"
     },
     "rsi_overbought": {
       "label": "RSI 超买 (RSI Overbought)",
@@ -709,10 +709,10 @@
         "threshold": "RSI 阈值",
         "period": "RSI 周期"
       },
-      "help": "按该规则筛选股票：RSI above threshold。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`rsi_overbought` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_RSICORE`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（rsi_overbought）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`threshold`(float)=70, `period`(int)=14",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（rsi_overbought）"
     },
     "rsi_range": {
       "label": "RSI 区间",
@@ -722,10 +722,10 @@
         "upper": "上限",
         "period": "RSI 周期"
       },
-      "help": "按该规则筛选股票：RSI within range。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`rsi_range` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_RSICORE`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（rsi_range）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`lower`(float)=50, `upper`(float)=70, `period`(int)=14",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（rsi_range）"
     },
     "bollinger_width": {
       "label": "布林带宽度 (Bollinger Width)",
@@ -735,10 +735,10 @@
         "period": "BB 周期",
         "std_dev": "标准差"
       },
-      "help": "按该规则筛选股票：BB width contraction。",
-      "whenToUse": "当你需要成交量/资金流对价格进行确认时使用。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 将量能/资金流作为价格的确认或预警信号。",
-      "caution": "低流动性阶段的信号稳定性会下降。"
+      "help": "`bollinger_width` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_BB`",
+      "whenToUse": "适用于需要量能/资金流来确认价格动作的场景。（bollinger_width）",
+      "howToRead": "更严格的资金流确认可降噪，但可能错过最早启动段。 关键参数：`max_width_pct`(float)=15.0, `period`(int)=20, `std_dev`(float)=2.0",
+      "caution": "低流动性标的的资金流信号稳定性较差。（bollinger_width）"
     },
     "volume_below_avg": {
       "label": "成交量低于均值",
@@ -747,10 +747,10 @@
         "multiplier": "相对均值最大比率",
         "period": "均值周期"
       },
-      "help": "按该规则筛选股票：Quiet volume zone。",
-      "whenToUse": "当你需要成交量/资金流对价格进行确认时使用。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 将量能/资金流作为价格的确认或预警信号。",
-      "caution": "低流动性阶段的信号稳定性会下降。"
+      "help": "`volume_below_avg` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于需要量能/资金流来确认价格动作的场景。（volume_below_avg）",
+      "howToRead": "更严格的资金流确认可降噪，但可能错过最早启动段。 关键参数：`multiplier`(float)=1.0, `period`(int)=20",
+      "caution": "低流动性标的的资金流信号稳定性较差。（volume_below_avg）"
     },
     "price_flat": {
       "label": "价格横盘",
@@ -759,10 +759,10 @@
         "max_range_pct": "最大波动区间 %",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：Price consolidation (low volatility)。",
-      "whenToUse": "当你需要成交量/资金流对价格进行确认时使用。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 将量能/资金流作为价格的确认或预警信号。",
-      "caution": "低流动性阶段的信号稳定性会下降。"
+      "help": "`price_flat` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于需要量能/资金流来确认价格动作的场景。（price_flat）",
+      "howToRead": "更严格的资金流确认可降噪，但可能错过最早启动段。 关键参数：`max_range_pct`(float)=10.0, `period`(int)=20",
+      "caution": "低流动性标的的资金流信号稳定性较差。（price_flat）"
     },
     "obv_trend": {
       "label": "OBV 趋势",
@@ -771,10 +771,10 @@
         "direction": "趋势方向（up/down）",
         "lookback": "回看周期"
       },
-      "help": "按该规则筛选股票：On-Balance Volume trend direction。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "方向/模式条件：需与策略方向（多/空）一致。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`obv_trend` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_OBV`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（obv_trend）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`direction`(str)=up, `lookback`(int)=20",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（obv_trend）"
     },
     "stochastic_level": {
       "label": "随机指标水平 (Stochastic)",
@@ -785,10 +785,10 @@
         "k_period": "%K 周期",
         "d_period": "%D 周期"
       },
-      "help": "按该规则筛选股票：Stochastic oscillator level。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "从默认值开始，再做 ±20~30% 敏感性测试。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`stochastic_level` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_STOCH`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（stochastic_level）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`threshold`(float)=20.0, `condition`(str)=below, `k_period`(int)=14, `d_period`(int)=3",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（stochastic_level）"
     },
     "vpci_trend": {
       "label": "VPCI 趋势",
@@ -799,10 +799,10 @@
         "long_period": "长周期",
         "lookback": "回看周期"
       },
-      "help": "按该规则筛选股票：Volume Price Confirmation Indicator trend。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`vpci_trend` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（vpci_trend）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`direction`(str)=up, `short_period`(int)=5, `long_period`(int)=20, `lookback`(int)=10",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（vpci_trend）"
     },
     "obv_divergence": {
       "label": "OBV 背离",
@@ -812,10 +812,10 @@
         "obv_min_change_pct": "OBV 变化 %",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：Price flat + OBV rising (accumulation signal)。",
-      "whenToUse": "当你需要成交量/资金流对价格进行确认时使用。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 将量能/资金流作为价格的确认或预警信号。",
-      "caution": "低流动性阶段的信号稳定性会下降。"
+      "help": "`obv_divergence` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_OBV`",
+      "whenToUse": "适用于需要量能/资金流来确认价格动作的场景。（obv_divergence）",
+      "howToRead": "更严格的资金流确认可降噪，但可能错过最早启动段。 关键参数：`price_max_range_pct`(float)=5.0, `obv_min_change_pct`(float)=5.0, `period`(int)=20",
+      "caution": "低流动性标的的资金流信号稳定性较差。（obv_divergence）"
     },
     "stochastic_divergence": {
       "label": "随机指标背离 (Stochastic Divergence)",
@@ -826,10 +826,10 @@
         "lookback": "回看周期",
         "divergence_threshold": "阈值 %"
       },
-      "help": "按该规则筛选股票：Price lower low + Stochastic higher low。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "从默认值开始，再做 ±20~30% 敏感性测试。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`stochastic_divergence` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_STOCH`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（stochastic_divergence）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`k_period`(int)=14, `d_period`(int)=3, `lookback`(int)=20, `divergence_threshold`(float)=5.0",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（stochastic_divergence）"
     },
     "vpci_divergence": {
       "label": "VPCI 背离",
@@ -840,10 +840,10 @@
         "long_period": "长周期",
         "lookback": "回看周期"
       },
-      "help": "按该规则筛选股票：Price flat + VPCI rising (quiet accumulation)。",
-      "whenToUse": "当你需要成交量/资金流对价格进行确认时使用。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 将量能/资金流作为价格的确认或预警信号。",
-      "caution": "低流动性阶段的信号稳定性会下降。"
+      "help": "`vpci_divergence` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于需要量能/资金流来确认价格动作的场景。（vpci_divergence）",
+      "howToRead": "更严格的资金流确认可降噪，但可能错过最早启动段。 关键参数：`price_max_range_pct`(float)=5.0, `short_period`(int)=5, `long_period`(int)=20, `lookback`(int)=20",
+      "caution": "低流动性标的的资金流信号稳定性较差。（vpci_divergence）"
     },
     "bottom_breakout": {
       "label": "底部突破",
@@ -852,10 +852,10 @@
         "lookback_days": "回看天数",
         "breakout_pct": "突破幅度 %"
       },
-      "help": "按该规则筛选股票：N-day low breakout。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`bottom_breakout` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（bottom_breakout）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=20, `breakout_pct`(float)=5.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（bottom_breakout）"
     },
     "fresh_breakout": {
       "label": "首次突破",
@@ -864,10 +864,10 @@
         "lookback_days": "回看天数",
         "breakout_pct": "突破幅度 %"
       },
-      "help": "按该规则筛选股票：First-time breakout detection。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`fresh_breakout` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（fresh_breakout）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=20, `breakout_pct`(float)=5.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（fresh_breakout）"
     },
     "breakout_with_volume": {
       "label": "突破 + 成交量",
@@ -879,10 +879,10 @@
         "volume_avg_days": "成交量均值天数",
         "fresh_only": "仅首次突破"
       },
-      "help": "按该规则筛选股票：Breakout confirmed by volume spike。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`breakout_with_volume` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（breakout_with_volume）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=20, `breakout_pct`(float)=5.0, `volume_ratio`(float)=1.5, `volume_avg_days`(int)=10, `fresh_only`(bool)=True",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（breakout_with_volume）"
     },
     "resistance_breakout": {
       "label": "阻力位突破",
@@ -891,10 +891,10 @@
         "lookback_days": "回看天数",
         "breakout_margin_pct": "高于阻力位的幅度 %"
       },
-      "help": "按该规则筛选股票：N-day high resistance breakout。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`resistance_breakout` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（resistance_breakout）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=20, `breakout_margin_pct`(float)=0.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（resistance_breakout）"
     },
     "pe_ratio": {
       "label": "市盈率 (P/E)",
@@ -903,10 +903,10 @@
         "min_pe": "最小 P/E",
         "max_pe": "最大 P/E"
       },
-      "help": "按该规则筛选股票：Price-to-Earnings ratio filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`pe_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（pe_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_pe`(float)=None, `max_pe`(float)=15.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（pe_ratio）"
     },
     "pb_ratio": {
       "label": "市净率 (P/B)",
@@ -916,10 +916,10 @@
         "max_pb": "最大 P/B",
         "exclude_negative_bv": "排除负账面价值"
       },
-      "help": "按该规则筛选股票：Price-to-Book ratio filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`pb_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（pb_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_pb`(float)=None, `max_pb`(float)=1.5, `exclude_negative_bv`(bool)=True",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（pb_ratio）"
     },
     "ps_ratio": {
       "label": "市销率 (P/S)",
@@ -928,10 +928,10 @@
         "min_ps": "最小 P/S",
         "max_ps": "最大 P/S"
       },
-      "help": "按该规则筛选股票：Price-to-Sales ratio filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`ps_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（ps_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ps`(float)=None, `max_ps`(float)=2.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（ps_ratio）"
     },
     "pcf_ratio": {
       "label": "市现率 (P/CF)",
@@ -940,10 +940,10 @@
         "min_pcf": "最小 P/CF",
         "max_pcf": "最大 P/CF"
       },
-      "help": "按该规则筛选股票：Price-to-Cash-Flow ratio filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`pcf_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（pcf_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_pcf`(float)=None, `max_pcf`(float)=10.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（pcf_ratio）"
     },
     "dividend_yield": {
       "label": "股息率",
@@ -952,10 +952,10 @@
         "min_yield": "最小收益率 %",
         "max_yield": "最大收益率 %"
       },
-      "help": "按该规则筛选股票：Dividend yield percentage filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`dividend_yield` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（dividend_yield）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_yield`(float)=3.0, `max_yield`(float)=None",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（dividend_yield）"
     },
     "drawdown_from_high": {
       "label": "高点回撤",
@@ -965,10 +965,10 @@
         "min_drop_pct": "最小跌幅(%)",
         "price_field": "价格字段"
       },
-      "help": "按该规则筛选股票：Drop % from N-day rolling high。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`drawdown_from_high` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（drawdown_from_high）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=120, `min_drop_pct`(float)=20.0, `price_field`(str)=high",
+      "caution": "历史风险指标在突发市场切换时可能失效。（drawdown_from_high）"
     },
     "earnings_yield": {
       "label": "盈利收益率 (E/P)",
@@ -977,10 +977,10 @@
         "min_yield": "最小收益率 %",
         "max_yield": "最大收益率 %"
       },
-      "help": "按该规则筛选股票：Earnings yield (E/P) percentage filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`earnings_yield` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（earnings_yield）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_yield`(float)=8.0, `max_yield`(float)=None",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（earnings_yield）"
     },
     "ebit_ev": {
       "label": "EBIT/EV（息税前利润/企业价值）",
@@ -989,10 +989,10 @@
         "min_ebit_ev": "最小 EBIT/EV %",
         "max_ebit_ev": "最大 EBIT/EV %"
       },
-      "help": "按该规则筛选股票：EBIT / Enterprise Value yield filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`ebit_ev` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（ebit_ev）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ebit_ev`(float)=10.0, `max_ebit_ev`(float)=None",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（ebit_ev）"
     },
     "fcf_yield": {
       "label": "自由现金流收益率 (FCF Yield)",
@@ -1001,10 +1001,10 @@
         "min_fcf_yield": "最小 FCF 收益率 %",
         "max_fcf_yield": "最大 FCF 收益率 %"
       },
-      "help": "按该规则筛选股票：Free Cash Flow yield filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`fcf_yield` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（fcf_yield）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_fcf_yield`(float)=5.0, `max_fcf_yield`(float)=None",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（fcf_yield）"
     },
     "peg_ratio": {
       "label": "PEG 比率",
@@ -1013,10 +1013,10 @@
         "min_peg": "最小 PEG",
         "max_peg": "最大 PEG"
       },
-      "help": "按该规则筛选股票：Price/Earnings-to-Growth ratio filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`peg_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（peg_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_peg`(float)=None, `max_peg`(float)=1.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（peg_ratio）"
     },
     "debt_to_equity": {
       "label": "资产负债比 (D/E)",
@@ -1025,10 +1025,10 @@
         "min_de": "最小 D/E %",
         "max_de": "最大 D/E %"
       },
-      "help": "按该规则筛选股票：Debt-to-Equity ratio filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`debt_to_equity` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（debt_to_equity）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_de`(float)=None, `max_de`(float)=100.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（debt_to_equity）"
     },
     "current_ratio": {
       "label": "流动比率 (Current Ratio)",
@@ -1037,10 +1037,10 @@
         "min_ratio": "最小比率",
         "max_ratio": "最大比率"
       },
-      "help": "按该规则筛选股票：Current ratio (liquidity) filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`current_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（current_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ratio`(float)=1.0, `max_ratio`(float)=3.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（current_ratio）"
     },
     "roe": {
       "label": "净资产收益率 (ROE)",
@@ -1049,10 +1049,10 @@
         "min_roe": "最小 ROE %",
         "max_roe": "最大 ROE %"
       },
-      "help": "按该规则筛选股票：Return on Equity filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`roe` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（roe）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_roe`(float)=15.0, `max_roe`(float)=None",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（roe）"
     },
     "piotroski_fscore": {
       "label": "皮奥特罗斯基 F-评分",
@@ -1061,10 +1061,10 @@
         "min_score": "最小 F 评分",
         "max_score": "最大 F 评分"
       },
-      "help": "按该规则筛选股票：Piotroski F-Score (0-9) financial strength。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`piotroski_fscore` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（piotroski_fscore）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_score`(int)=7, `max_score`(int)=None",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（piotroski_fscore）"
     },
     "altman_zscore": {
       "label": "奥特曼 Z-评分",
@@ -1073,10 +1073,10 @@
         "min_zscore": "最小 Z 评分",
         "max_zscore": "最大 Z 评分"
       },
-      "help": "按该规则筛选股票：Altman Z-Score bankruptcy risk filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`altman_zscore` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（altman_zscore）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_zscore`(float)=2.5, `max_zscore`(float)=None",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（altman_zscore）"
     },
     "avg_trading_value": {
       "label": "平均成交额",
@@ -1085,10 +1085,10 @@
         "lookback_days": "回溯天数",
         "min_value": "最低成交额"
       },
-      "help": "按该规则筛选股票：N-day average trading value >= threshold。",
-      "whenToUse": "当你需要成交量/资金流对价格进行确认时使用。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 将量能/资金流作为价格的确认或预警信号。",
-      "caution": "低流动性阶段的信号稳定性会下降。"
+      "help": "`avg_trading_value` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于需要量能/资金流来确认价格动作的场景。（avg_trading_value）",
+      "howToRead": "更严格的资金流确认可降噪，但可能错过最早启动段。 关键参数：`lookback_days`(int)=20, `min_value`(float)=1500000000",
+      "caution": "低流动性标的的资金流信号稳定性较差。（avg_trading_value）"
     },
     "roic": {
       "label": "投入资本回报率 (ROIC)",
@@ -1097,10 +1097,10 @@
         "min_roic": "最小 ROIC %",
         "max_roic": "最大 ROIC %"
       },
-      "help": "按该规则筛选股票：Return on Invested Capital filter。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`roic` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（roic）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_roic`(float)=15.0, `max_roic`(float)=None",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（roic）"
     },
     "analyst_revision_1m": {
       "label": "分析师预期1个月修正率",
@@ -1108,10 +1108,10 @@
       "params": {
         "min_revision_pct": "最小修正率 %"
       },
-      "help": "按该规则筛选股票：One-month analyst estimate revision。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`analyst_revision_1m` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（analyst_revision_1m）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_revision_pct`(float)=0.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（analyst_revision_1m）"
     },
     "analyst_revision_3m": {
       "label": "分析师预期3个月修正率",
@@ -1119,10 +1119,10 @@
       "params": {
         "min_revision_pct": "最小修正率 %"
       },
-      "help": "按该规则筛选股票：Three-month analyst estimate revision。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`analyst_revision_3m` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（analyst_revision_3m）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_revision_pct`(float)=0.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（analyst_revision_3m）"
     },
     "asset_turnover_ratio": {
       "label": "总资产周转率",
@@ -1130,10 +1130,10 @@
       "params": {
         "min_ratio": "最小比率"
       },
-      "help": "按该规则筛选股票：Revenue to total assets turnover ratio。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`asset_turnover_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（asset_turnover_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ratio`(float)=0.5",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（asset_turnover_ratio）"
     },
     "book_to_market_ratio": {
       "label": "账面价值比率",
@@ -1141,10 +1141,10 @@
       "params": {
         "min_ratio": "最小比率"
       },
-      "help": "按该规则筛选股票：Book value divided by market cap。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`book_to_market_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（book_to_market_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ratio`(float)=0.3",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（book_to_market_ratio）"
     },
     "buyback_yield_filter": {
       "label": "回购收益率筛选",
@@ -1152,10 +1152,10 @@
       "params": {
         "min_yield_pct": "最小收益率 %"
       },
-      "help": "按该规则筛选股票：Minimum buyback yield。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`buyback_yield_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（buyback_yield_filter）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_yield_pct`(float)=1.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（buyback_yield_filter）"
     },
     "cash_conversion_ratio": {
       "label": "现金转换比率",
@@ -1163,10 +1163,10 @@
       "params": {
         "min_ratio": "最小比率"
       },
-      "help": "按该规则筛选股票：Operating cash flow over net income。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`cash_conversion_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（cash_conversion_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ratio`(float)=0.8",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（cash_conversion_ratio）"
     },
     "cashflow_to_debt_ratio": {
       "label": "现金流负债比",
@@ -1174,10 +1174,10 @@
       "params": {
         "min_ratio": "最小比率"
       },
-      "help": "按该规则筛选股票：Operating cash flow to debt ratio。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`cashflow_to_debt_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（cashflow_to_debt_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ratio`(float)=0.2",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（cashflow_to_debt_ratio）"
     },
     "debt_service_coverage_ratio": {
       "label": "偿债覆盖率",
@@ -1185,10 +1185,10 @@
       "params": {
         "min_ratio": "最小比率"
       },
-      "help": "按该规则筛选股票：Operating income over debt service。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`debt_service_coverage_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（debt_service_coverage_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ratio`(float)=1.2",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（debt_service_coverage_ratio）"
     },
     "dividend_growth_5y": {
       "label": "5年股息增长率",
@@ -1196,10 +1196,10 @@
       "params": {
         "min_growth_pct": "最小增长率 %"
       },
-      "help": "按该规则筛选股票：5-year dividend CAGR。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`dividend_growth_5y` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（dividend_growth_5y）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_growth_pct`(float)=3.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（dividend_growth_5y）"
     },
     "earnings_stability_score": {
       "label": "盈利稳定性评分",
@@ -1208,10 +1208,10 @@
         "lookback_years": "回溯年数",
         "max_cv": "最大变异系数"
       },
-      "help": "按该规则筛选股票：Earnings stability based on coefficient of variation。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`earnings_stability_score` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（earnings_stability_score）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`lookback_years`(int)=5, `max_cv`(float)=0.35",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（earnings_stability_score）"
     },
     "eps_cagr_3y": {
       "label": "EPS 3年复合增长率",
@@ -1219,10 +1219,10 @@
       "params": {
         "min_cagr_pct": "最小 CAGR %"
       },
-      "help": "按该规则筛选股票：3-year EPS CAGR。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`eps_cagr_3y` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（eps_cagr_3y）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_cagr_pct`(float)=5.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（eps_cagr_3y）"
     },
     "eps_growth_yoy": {
       "label": "EPS同比增长率",
@@ -1230,10 +1230,10 @@
       "params": {
         "min_growth_pct": "最小增长率 %"
       },
-      "help": "按该规则筛选股票：Year-over-year EPS growth。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`eps_growth_yoy` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（eps_growth_yoy）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_growth_pct`(float)=5.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（eps_growth_yoy）"
     },
     "ev_to_ebitda_ratio": {
       "label": "EV/EBITDA比率",
@@ -1241,10 +1241,10 @@
       "params": {
         "max_ratio": "最大比率"
       },
-      "help": "按该规则筛选股票：Enterprise value to EBITDA ratio。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`ev_to_ebitda_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（ev_to_ebitda_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`max_ratio`(float)=12.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（ev_to_ebitda_ratio）"
     },
     "ev_to_sales_ratio": {
       "label": "EV/销售比率",
@@ -1252,10 +1252,10 @@
       "params": {
         "max_ratio": "最大比率"
       },
-      "help": "按该规则筛选股票：Enterprise value to sales ratio。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`ev_to_sales_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（ev_to_sales_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`max_ratio`(float)=4.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（ev_to_sales_ratio）"
     },
     "free_cash_flow_margin": {
       "label": "自由现金流利润率",
@@ -1263,10 +1263,10 @@
       "params": {
         "min_margin_pct": "最小利润率 %"
       },
-      "help": "按该规则筛选股票：Free cash flow margin。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`free_cash_flow_margin` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（free_cash_flow_margin）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_margin_pct`(float)=5.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（free_cash_flow_margin）"
     },
     "gross_margin": {
       "label": "毛利率",
@@ -1274,10 +1274,10 @@
       "params": {
         "min_margin_pct": "最小利润率 %"
       },
-      "help": "按该规则筛选股票：Gross profit margin。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`gross_margin` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（gross_margin）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_margin_pct`(float)=20.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（gross_margin）"
     },
     "gross_profitability": {
       "label": "毛利盈利能力",
@@ -1285,10 +1285,10 @@
       "params": {
         "min_ratio": "最小比率"
       },
-      "help": "按该规则筛选股票：Gross profit to total assets。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`gross_profitability` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（gross_profitability）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ratio`(float)=0.2",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（gross_profitability）"
     },
     "interest_coverage_ratio": {
       "label": "利息保障倍数",
@@ -1296,10 +1296,10 @@
       "params": {
         "min_ratio": "最小比率"
       },
-      "help": "按该规则筛选股票：EBIT over interest expense。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`interest_coverage_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（interest_coverage_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ratio`(float)=3.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（interest_coverage_ratio）"
     },
     "inventory_turnover_ratio": {
       "label": "存货周转率",
@@ -1307,10 +1307,10 @@
       "params": {
         "min_ratio": "最小比率"
       },
-      "help": "按该规则筛选股票：COGS to inventory turnover ratio。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`inventory_turnover_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（inventory_turnover_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ratio`(float)=3.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（inventory_turnover_ratio）"
     },
     "net_debt_to_ebitda": {
       "label": "净债务/EBITDA",
@@ -1318,10 +1318,10 @@
       "params": {
         "max_ratio": "最大比率"
       },
-      "help": "按该规则筛选股票：Net debt divided by EBITDA。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`net_debt_to_ebitda` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（net_debt_to_ebitda）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`max_ratio`(float)=3.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（net_debt_to_ebitda）"
     },
     "net_margin": {
       "label": "净利率",
@@ -1329,10 +1329,10 @@
       "params": {
         "min_margin_pct": "最小利润率 %"
       },
-      "help": "按该规则筛选股票：Net income margin。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`net_margin` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（net_margin）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_margin_pct`(float)=5.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（net_margin）"
     },
     "operating_margin": {
       "label": "营业利润率",
@@ -1340,10 +1340,10 @@
       "params": {
         "min_margin_pct": "最小利润率 %"
       },
-      "help": "按该规则筛选股票：Operating income margin。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`operating_margin` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（operating_margin）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_margin_pct`(float)=10.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（operating_margin）"
     },
     "payout_ratio_filter": {
       "label": "派息率筛选",
@@ -1351,10 +1351,10 @@
       "params": {
         "max_payout_pct": "最大派息率 %"
       },
-      "help": "按该规则筛选股票：Dividend payout ratio。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`payout_ratio_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（payout_ratio_filter）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`max_payout_pct`(float)=70.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（payout_ratio_filter）"
     },
     "price_to_tangible_book": {
       "label": "市价/有形账面价值比",
@@ -1362,10 +1362,10 @@
       "params": {
         "max_ratio": "最大比率"
       },
-      "help": "按该规则筛选股票：Market cap to tangible book ratio。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`price_to_tangible_book` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（price_to_tangible_book）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`max_ratio`(float)=3.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（price_to_tangible_book）"
     },
     "quality_score": {
       "label": "质量评分",
@@ -1373,10 +1373,10 @@
       "params": {
         "min_score": "最小评分"
       },
-      "help": "按该规则筛选股票：Composite quality score from ROA, gross profitability and accruals。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`quality_score` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（quality_score）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_score`(float)=0.5",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（quality_score）"
     },
     "receivables_turnover_ratio": {
       "label": "应收账款周转率",
@@ -1384,10 +1384,10 @@
       "params": {
         "min_ratio": "最小比率"
       },
-      "help": "按该规则筛选股票：Revenue to receivables turnover ratio。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`receivables_turnover_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（receivables_turnover_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_ratio`(float)=4.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（receivables_turnover_ratio）"
     },
     "revenue_cagr_3y": {
       "label": "营收3年复合增长率",
@@ -1395,10 +1395,10 @@
       "params": {
         "min_cagr_pct": "最小 CAGR %"
       },
-      "help": "按该规则筛选股票：3-year revenue CAGR。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`revenue_cagr_3y` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（revenue_cagr_3y）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_cagr_pct`(float)=5.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（revenue_cagr_3y）"
     },
     "revenue_growth_yoy": {
       "label": "营收同比增长率",
@@ -1406,10 +1406,10 @@
       "params": {
         "min_growth_pct": "最小增长率 %"
       },
-      "help": "按该规则筛选股票：Year-over-year revenue growth。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`revenue_growth_yoy` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（revenue_growth_yoy）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_growth_pct`(float)=5.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（revenue_growth_yoy）"
     },
     "revenue_stability_score": {
       "label": "营收稳定性评分",
@@ -1418,10 +1418,10 @@
         "lookback_years": "回溯年数",
         "max_cv": "最大变异系数"
       },
-      "help": "按该规则筛选股票：Revenue stability based on coefficient of variation。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`revenue_stability_score` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（revenue_stability_score）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`lookback_years`(int)=5, `max_cv`(float)=0.25",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（revenue_stability_score）"
     },
     "shareholder_yield_filter": {
       "label": "股东收益率筛选",
@@ -1429,10 +1429,10 @@
       "params": {
         "min_yield_pct": "最小收益率 %"
       },
-      "help": "按该规则筛选股票：Dividend + buyback - issuance yield。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`shareholder_yield_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（shareholder_yield_filter）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_yield_pct`(float)=2.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（shareholder_yield_filter）"
     },
     "roce_filter": {
       "label": "ROCE筛选",
@@ -1440,10 +1440,10 @@
       "params": {
         "min_roce_pct": "最小 ROCE %"
       },
-      "help": "按该规则筛选股票：Return on capital employed。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`roce_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（roce_filter）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_roce_pct`(float)=10.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（roce_filter）"
     },
     "roa_filter": {
       "label": "ROA筛选",
@@ -1451,10 +1451,10 @@
       "params": {
         "min_roa_pct": "最小 ROA %"
       },
-      "help": "按该规则筛选股票：Return on assets。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`roa_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（roa_filter）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_roa_pct`(float)=5.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（roa_filter）"
     },
     "overnight_return_filter": {
       "label": "隔夜 收益率 筛选",
@@ -1462,10 +1462,10 @@
       "params": {
         "min_overnight_return_pct": "最小隔夜收益率比率 %"
       },
-      "help": "按该规则筛选股票：Previous close to current open return filter。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`overnight_return_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（overnight_return_filter）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`min_overnight_return_pct`(float)=0.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（overnight_return_filter）"
     },
     "distance_from_52w_low": {
       "label": "距52周低点偏离率",
@@ -1474,10 +1474,10 @@
         "lookback_days": "回溯周期天数",
         "max_distance_pct": "最大距离比率 %"
       },
-      "help": "按该规则筛选股票：Distance from 252-day low。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`distance_from_52w_low` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_MOM` `S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（distance_from_52w_low）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`lookback_days`(int)=252, `max_distance_pct`(float)=30.0",
+      "caution": "上线前务必完成样本外验证。（distance_from_52w_low）"
     },
     "distance_from_200d_high": {
       "label": "距200日高点偏离率",
@@ -1486,10 +1486,10 @@
         "lookback_days": "回溯周期天数",
         "max_distance_pct": "最大距离比率 %"
       },
-      "help": "按该规则筛选股票：Distance below 200-day high。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`distance_from_200d_high` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（distance_from_200d_high）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`lookback_days`(int)=200, `max_distance_pct`(float)=15.0",
+      "caution": "上线前务必完成样本外验证。（distance_from_200d_high）"
     },
     "gap_up_breakaway": {
       "label": "Gap Up Breakaway",
@@ -1497,10 +1497,10 @@
       "params": {
         "min_gap_pct": "最小gap比率 %"
       },
-      "help": "按该规则筛选股票：Gap-up breakout using previous high。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`gap_up_breakaway` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（gap_up_breakaway）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`min_gap_pct`(float)=1.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（gap_up_breakaway）"
     },
     "gap_down_exhaustion": {
       "label": "Gap Down Exhaustion",
@@ -1508,10 +1508,10 @@
       "params": {
         "min_gap_down_pct": "最小gapdown比率 %"
       },
-      "help": "按该规则筛选股票：Large down-gap exhaustion signal。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`gap_down_exhaustion` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（gap_down_exhaustion）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`min_gap_down_pct`(float)=2.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（gap_down_exhaustion）"
     },
     "opening_range_breakout": {
       "label": "Opening Range 突破",
@@ -1519,10 +1519,10 @@
       "params": {
         "direction": "direction"
       },
-      "help": "按该规则筛选股票：Close breaks previous day range。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "方向/模式条件：需与策略方向（多/空）一致。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`opening_range_breakout` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（opening_range_breakout）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`direction`(str)=up",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（opening_range_breakout）"
     },
     "pivot_point_breakout": {
       "label": "Pivot Point 突破",
@@ -1530,10 +1530,10 @@
       "params": {
         "direction": "direction"
       },
-      "help": "按该规则筛选股票：Breakout above/below classic pivot。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "方向/模式条件：需与策略方向（多/空）一致。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`pivot_point_breakout` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（pivot_point_breakout）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`direction`(str)=up",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（pivot_point_breakout）"
     },
     "month_of_year_seasonality": {
       "label": "月份季节性",
@@ -1542,10 +1542,10 @@
         "min_avg_return_pct": "最小平均收益率 %",
         "target_month": "目标月份 (1=1月, 12=12月)"
       },
-      "help": "按该规则筛选股票：Average return for target month。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`month_of_year_seasonality` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_SEASONAL`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（month_of_year_seasonality）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`target_month`(int)=1, `min_avg_return_pct`(float)=0.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（month_of_year_seasonality）"
     },
     "turn_of_month_effect": {
       "label": "月末月初效应",
@@ -1554,10 +1554,10 @@
         "min_avg_return_pct": "最小平均收益率 %",
         "window_days": "窗口天数"
       },
-      "help": "按该规则筛选股票：Turn-of-month return effect。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`turn_of_month_effect` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_SEASONAL`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（turn_of_month_effect）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`window_days`(int)=3, `min_avg_return_pct`(float)=0.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（turn_of_month_effect）"
     },
     "day_of_week_seasonality": {
       "label": "星期效应筛选",
@@ -1566,10 +1566,10 @@
         "min_avg_return_pct": "最小平均收益率 %",
         "target_weekday": "目标星期 (0=周一, 4=周五)"
       },
-      "help": "按该规则筛选股票：Average weekday return effect。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`day_of_week_seasonality` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_SEASONAL`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（day_of_week_seasonality）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`target_weekday`(int)=0, `min_avg_return_pct`(float)=0.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（day_of_week_seasonality）"
     },
     "net_share_issuance_filter": {
       "label": "净增发筛选",
@@ -1577,10 +1577,10 @@
       "params": {
         "max_issuance_pct": "最大发行比率 %"
       },
-      "help": "按该规则筛选股票：Limit net share issuance。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`net_share_issuance_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL` `S_ISSUANCE`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（net_share_issuance_filter）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`max_issuance_pct`(float)=1.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（net_share_issuance_filter）"
     },
     "insider_net_buying": {
       "label": "Insider 净 Buying",
@@ -1588,10 +1588,10 @@
       "params": {
         "min_net_buying_pct": "最小净buying比率 %"
       },
-      "help": "按该规则筛选股票：Insider net buying ratio。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`insider_net_buying` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL` `S_INSIDER`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（insider_net_buying）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_net_buying_pct`(float)=0.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（insider_net_buying）"
     },
     "short_float_pct_filter": {
       "label": "流通股做空比例筛选",
@@ -1599,10 +1599,10 @@
       "params": {
         "max_short_float_pct": "最大流通股做空比例 %"
       },
-      "help": "按该规则筛选股票：Short float percentage threshold。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`short_float_pct_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_SHORT`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（short_float_pct_filter）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`max_short_float_pct`(float)=15.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（short_float_pct_filter）"
     },
     "short_interest_ratio_filter": {
       "label": "做空回补天数筛选",
@@ -1610,10 +1610,10 @@
       "params": {
         "max_ratio": "最大比率"
       },
-      "help": "按该规则筛选股票：Days-to-cover threshold。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`short_interest_ratio_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_SHORT`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（short_interest_ratio_filter）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`max_ratio`(float)=5.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（short_interest_ratio_filter）"
     },
     "earnings_surprise_filter": {
       "label": "财报超预期筛选",
@@ -1621,10 +1621,10 @@
       "params": {
         "min_surprise_pct": "最小惊喜比率 %"
       },
-      "help": "按该规则筛选股票：Quarterly earnings surprise threshold。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`earnings_surprise_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_PEAD`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（earnings_surprise_filter）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`min_surprise_pct`(float)=0.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（earnings_surprise_filter）"
     },
     "post_earnings_drift": {
       "label": "后 财报 Drift",
@@ -1632,10 +1632,10 @@
       "params": {
         "min_return_pct": "最小收益率比率 %"
       },
-      "help": "按该规则筛选股票：Post-earnings drift threshold。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`post_earnings_drift` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_PEAD`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（post_earnings_drift）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`min_return_pct`(float)=0.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（post_earnings_drift）"
     },
     "pre_earnings_drift": {
       "label": "前 财报 Drift",
@@ -1643,10 +1643,10 @@
       "params": {
         "min_return_pct": "最小收益率比率 %"
       },
-      "help": "按该规则筛选股票：Pre-earnings drift threshold。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`pre_earnings_drift` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_PEAD`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（pre_earnings_drift）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`min_return_pct`(float)=0.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（pre_earnings_drift）"
     },
     "accruals_ratio": {
       "label": "Accruals 比率",
@@ -1654,10 +1654,10 @@
       "params": {
         "max_ratio": "最大比率"
       },
-      "help": "按该规则筛选股票：Accruals ratio from income and cash flow。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`accruals_ratio` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL` `S_ACCRUALS`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（accruals_ratio）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`max_ratio`(float)=0.1",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（accruals_ratio）"
     },
     "asset_growth_rate": {
       "label": "资产 增长率 Rate",
@@ -1665,10 +1665,10 @@
       "params": {
         "max_growth_pct": "最大增长率比率 %"
       },
-      "help": "按该规则筛选股票：Total asset growth rate。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`asset_growth_rate` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（asset_growth_rate）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`max_growth_pct`(float)=15.0",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（asset_growth_rate）"
     },
     "momentum_12_1": {
       "label": "动量 12 1",
@@ -1678,10 +1678,10 @@
         "min_return_pct": "最小收益率比率 %",
         "skip_recent_months": "skiprecent月数"
       },
-      "help": "按该规则筛选股票：12-month momentum excluding recent 1 month。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`momentum_12_1` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_MOM` `S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（momentum_12_1）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_months`(int)=12, `skip_recent_months`(int)=1, `min_return_pct`(float)=20.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（momentum_12_1）"
     },
     "volatility_n_day": {
       "label": "波动率 N 日",
@@ -1690,10 +1690,10 @@
         "lookback_days": "回溯周期天数",
         "max_annualized_vol_pct": "最大annualizedvol比率 %"
       },
-      "help": "按该规则筛选股票：Annualized N-day volatility filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`volatility_n_day` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（volatility_n_day）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=60, `max_annualized_vol_pct`(float)=25.0",
+      "caution": "历史风险指标在突发市场切换时可能失效。（volatility_n_day）"
     },
     "distance_from_52w_high": {
       "label": "距离 From 52w 高点",
@@ -1702,10 +1702,10 @@
         "lookback_days": "回溯周期天数",
         "max_distance_pct": "最大距离比率 %"
       },
-      "help": "按该规则筛选股票：Distance below 52-week high。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`distance_from_52w_high` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_MOM` `S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（distance_from_52w_high）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`lookback_days`(int)=252, `max_distance_pct`(float)=10.0",
+      "caution": "上线前务必完成样本外验证。（distance_from_52w_high）"
     },
     "relative_strength_vs_benchmark": {
       "label": "Relative Strength Vs Benchmark",
@@ -1714,10 +1714,10 @@
         "lookback_days": "回溯周期天数",
         "min_excess_return_pct": "最小excess收益率比率 %"
       },
-      "help": "按该规则筛选股票：Stock return minus benchmark return。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`relative_strength_vs_benchmark` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_MOM` `S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（relative_strength_vs_benchmark）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=63, `min_excess_return_pct`(float)=5.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（relative_strength_vs_benchmark）"
     },
     "adx_trend_strength": {
       "label": "ADX 趋势 Strength",
@@ -1727,10 +1727,10 @@
         "min_adx": "最小ADX",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：ADX trend strength filter。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`adx_trend_strength` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_ADX`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（adx_trend_strength）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=14, `min_adx`(float)=25.0, `di_direction`(str)=any",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（adx_trend_strength）"
     },
     "ma_ribbon_alignment": {
       "label": "Ma Ribbon Alignment",
@@ -1740,10 +1740,10 @@
         "mid_period": "mid周期",
         "short_period": "short周期"
       },
-      "help": "按该规则筛选股票：Short>Mid>Long MA alignment。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`ma_ribbon_alignment` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（ma_ribbon_alignment）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`short_period`(int)=20, `mid_period`(int)=50, `long_period`(int)=200",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（ma_ribbon_alignment）"
     },
     "golden_cross_50_200": {
       "label": "Golden Cross 50 200",
@@ -1751,10 +1751,10 @@
       "params": {
         "lookback_days": "回溯周期天数"
       },
-      "help": "按该规则筛选股票：50MA crossing above 200MA。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`golden_cross_50_200` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（golden_cross_50_200）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=5",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（golden_cross_50_200）"
     },
     "death_cross_50_200": {
       "label": "Death Cross 50 200",
@@ -1762,10 +1762,10 @@
       "params": {
         "lookback_days": "回溯周期天数"
       },
-      "help": "按该规则筛选股票：50MA crossing below 200MA。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`death_cross_50_200` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（death_cross_50_200）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=5",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（death_cross_50_200）"
     },
     "donchian_channel_breakout": {
       "label": "Donchian Channel 突破",
@@ -1773,10 +1773,10 @@
       "params": {
         "lookback_days": "回溯周期天数"
       },
-      "help": "按该规则筛选股票：Breakout above Donchian upper band。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`donchian_channel_breakout` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_DONCHIAN`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（donchian_channel_breakout）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=20",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（donchian_channel_breakout）"
     },
     "keltner_channel_breakout": {
       "label": "Keltner Channel 突破",
@@ -1786,10 +1786,10 @@
         "atr_period": "ATR周期",
         "ema_period": "ema周期"
       },
-      "help": "按该规则筛选股票：Breakout above EMA + ATR band。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "从默认值开始，再做 ±20~30% 敏感性测试。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`keltner_channel_breakout` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_KELTNER`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（keltner_channel_breakout）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`ema_period`(int)=20, `atr_period`(int)=20, `atr_multiplier`(float)=2.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（keltner_channel_breakout）"
     },
     "parabolic_sar_flip": {
       "label": "Parabolic Sar Flip",
@@ -1799,10 +1799,10 @@
         "af_step": "afstep",
         "lookback_days": "回溯周期天数"
       },
-      "help": "按该规则筛选股票：Bullish SAR flip within lookback。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`parabolic_sar_flip` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_PARABOLIC`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（parabolic_sar_flip）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`lookback_days`(int)=5, `af_step`(float)=0.02, `af_max`(float)=0.2",
+      "caution": "上线前务必完成样本外验证。（parabolic_sar_flip）"
     },
     "linear_regression_slope_filter": {
       "label": "Linear Regression Slope 筛选",
@@ -1811,10 +1811,10 @@
         "lookback_days": "回溯周期天数",
         "min_slope": "最小slope"
       },
-      "help": "按该规则筛选股票：Linear regression slope threshold。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`linear_regression_slope_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（linear_regression_slope_filter）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=60, `min_slope`(float)=0.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（linear_regression_slope_filter）"
     },
     "linear_regression_angle_filter": {
       "label": "Linear Regression Angle 筛选",
@@ -1823,10 +1823,10 @@
         "lookback_days": "回溯周期天数",
         "min_angle_deg": "最小angledeg"
       },
-      "help": "按该规则筛选股票：Linear regression angle threshold。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`linear_regression_angle_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（linear_regression_angle_filter）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`lookback_days`(int)=60, `min_angle_deg`(float)=0.0",
+      "caution": "上线前务必完成样本外验证。（linear_regression_angle_filter）"
     },
     "linear_regression_r2_filter": {
       "label": "Linear Regression R2 筛选",
@@ -1835,10 +1835,10 @@
         "lookback_days": "回溯周期天数",
         "min_r2": "最小r2"
       },
-      "help": "按该规则筛选股票：Linear regression R2 threshold。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`linear_regression_r2_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（linear_regression_r2_filter）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`lookback_days`(int)=60, `min_r2`(float)=0.5",
+      "caution": "上线前务必完成样本外验证。（linear_regression_r2_filter）"
     },
     "beta_to_benchmark": {
       "label": "Beta To Benchmark",
@@ -1847,10 +1847,10 @@
         "lookback_days": "回溯周期天数",
         "max_beta": "最大beta"
       },
-      "help": "按该规则筛选股票：Rolling beta versus benchmark。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`beta_to_benchmark` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（beta_to_benchmark）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=60, `max_beta`(float)=1.2",
+      "caution": "历史风险指标在突发市场切换时可能失效。（beta_to_benchmark）"
     },
     "correlation_to_benchmark": {
       "label": "Correlation To Benchmark",
@@ -1859,10 +1859,10 @@
         "lookback_days": "回溯周期天数",
         "max_corr": "最大corr"
       },
-      "help": "按该规则筛选股票：Rolling correlation versus benchmark。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`correlation_to_benchmark` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（correlation_to_benchmark）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=60, `max_corr`(float)=0.8",
+      "caution": "历史风险指标在突发市场切换时可能失效。（correlation_to_benchmark）"
     },
     "support_retest_signal": {
       "label": "Support Retest 信号",
@@ -1871,10 +1871,10 @@
         "support_lookback": "support回溯周期",
         "tolerance_pct": "tolerance比率 %"
       },
-      "help": "按该规则筛选股票：Price retests support and closes above。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "从默认值开始，再做 ±20~30% 敏感性测试。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`support_retest_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（support_retest_signal）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`support_lookback`(int)=40, `tolerance_pct`(float)=1.0",
+      "caution": "上线前务必完成样本外验证。（support_retest_signal）"
     },
     "resistance_retest_signal": {
       "label": "Resistance Retest 信号",
@@ -1883,10 +1883,10 @@
         "resistance_lookback": "resistance回溯周期",
         "tolerance_pct": "tolerance比率 %"
       },
-      "help": "按该规则筛选股票：Price retests resistance and closes below。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "从默认值开始，再做 ±20~30% 敏感性测试。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`resistance_retest_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（resistance_retest_signal）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`resistance_lookback`(int)=40, `tolerance_pct`(float)=1.0",
+      "caution": "上线前务必完成样本外验证。（resistance_retest_signal）"
     },
     "downside_volatility_filter": {
       "label": "Downside 波动率 筛选",
@@ -1895,10 +1895,10 @@
         "lookback_days": "回溯周期天数",
         "max_downside_vol_pct": "最大downsidevol比率 %"
       },
-      "help": "按该规则筛选股票：Annualized downside volatility filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`downside_volatility_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（downside_volatility_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=60, `max_downside_vol_pct`(float)=20.0",
+      "caution": "历史风险指标在突发市场切换时可能失效。（downside_volatility_filter）"
     },
     "semivariance_filter": {
       "label": "Semivariance 筛选",
@@ -1907,10 +1907,10 @@
         "lookback_days": "回溯周期天数",
         "max_semivariance": "最大semivariance"
       },
-      "help": "按该规则筛选股票：Downside semivariance filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`semivariance_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（semivariance_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=60, `max_semivariance`(float)=0.0004",
+      "caution": "历史风险指标在突发市场切换时可能失效。（semivariance_filter）"
     },
     "rolling_sharpe_filter": {
       "label": "Rolling Sharpe 筛选",
@@ -1919,10 +1919,10 @@
         "lookback_days": "回溯周期天数",
         "min_sharpe": "最小sharpe"
       },
-      "help": "按该规则筛选股票：Rolling Sharpe ratio filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`rolling_sharpe_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（rolling_sharpe_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=60, `min_sharpe`(float)=1.0",
+      "caution": "历史风险指标在突发市场切换时可能失效。（rolling_sharpe_filter）"
     },
     "rolling_sortino_filter": {
       "label": "Rolling Sortino 筛选",
@@ -1931,10 +1931,10 @@
         "lookback_days": "回溯周期天数",
         "min_sortino": "最小sortino"
       },
-      "help": "按该规则筛选股票：Rolling Sortino ratio filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`rolling_sortino_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（rolling_sortino_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=60, `min_sortino`(float)=1.0",
+      "caution": "历史风险指标在突发市场切换时可能失效。（rolling_sortino_filter）"
     },
     "ulcer_index_filter": {
       "label": "Ulcer Index 筛选",
@@ -1943,10 +1943,10 @@
         "lookback_days": "回溯周期天数",
         "max_ulcer_index": "最大ulcerindex"
       },
-      "help": "按该规则筛选股票：Ulcer index filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`ulcer_index_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（ulcer_index_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=60, `max_ulcer_index`(float)=10.0",
+      "caution": "历史风险指标在突发市场切换时可能失效。（ulcer_index_filter）"
     },
     "calmar_ratio_filter": {
       "label": "Calmar 比率 筛选",
@@ -1955,10 +1955,10 @@
         "lookback_days": "回溯周期天数",
         "min_calmar": "最小calmar"
       },
-      "help": "按该规则筛选股票：Calmar ratio filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`calmar_ratio_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（calmar_ratio_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=252, `min_calmar`(float)=0.5",
+      "caution": "历史风险指标在突发市场切换时可能失效。（calmar_ratio_filter）"
     },
     "max_drawdown_window_filter": {
       "label": "Max Drawdown Window 筛选",
@@ -1967,10 +1967,10 @@
         "lookback_days": "回溯周期天数",
         "max_drawdown_pct": "最大drawdown比率 %"
       },
-      "help": "按该规则筛选股票：Window max drawdown filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`max_drawdown_window_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（max_drawdown_window_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=120, `max_drawdown_pct`(float)=20.0",
+      "caution": "历史风险指标在突发市场切换时可能失效。（max_drawdown_window_filter）"
     },
     "return_skewness_filter": {
       "label": "收益率 Skewness 筛选",
@@ -1979,10 +1979,10 @@
         "lookback_days": "回溯周期天数",
         "min_skewness": "最小skewness"
       },
-      "help": "按该规则筛选股票：Return skewness filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`return_skewness_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（return_skewness_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=60, `min_skewness`(float)=-1.0",
+      "caution": "历史风险指标在突发市场切换时可能失效。（return_skewness_filter）"
     },
     "return_kurtosis_filter": {
       "label": "收益率 Kurtosis 筛选",
@@ -1991,10 +1991,10 @@
         "lookback_days": "回溯周期天数",
         "max_kurtosis": "最大kurtosis"
       },
-      "help": "按该规则筛选股票：Return kurtosis filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`return_kurtosis_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（return_kurtosis_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`lookback_days`(int)=60, `max_kurtosis`(float)=10.0",
+      "caution": "历史风险指标在突发市场切换时可能失效。（return_kurtosis_filter）"
     },
     "intraday_return_filter": {
       "label": "Intraday 收益率 筛选",
@@ -2002,10 +2002,10 @@
       "params": {
         "min_intraday_return_pct": "最小intraday收益率比率 %"
       },
-      "help": "按该规则筛选股票：Intraday return filter。",
-      "whenToUse": "适用于财报季或日历效应明显的窗口期。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 事件效应受市场阶段影响，需分阶段验证。",
-      "caution": "考虑交易成本、滑点与拥挤后，效应可能衰减。"
+      "help": "`intraday_return_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于财报窗口或日历效应主导收益的场景。（intraday_return_filter）",
+      "howToRead": "事件阈值受市场阶段影响，必须做分阶段与成本后验证。 关键参数：`min_intraday_return_pct`(float)=0.0",
+      "caution": "计入手续费、滑点与拥挤交易后，优势可能明显衰减。（intraday_return_filter）"
     },
     "dso_trend_filter": {
       "label": "Dso 趋势 筛选",
@@ -2014,10 +2014,10 @@
         "lookback_years": "回溯周期年数",
         "min_dso_increase_pct": "最小dsoincrease比率 %"
       },
-      "help": "按该规则筛选股票：Days Sales Outstanding deterioration trend filter。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`dso_trend_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（dso_trend_filter）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_years`(int)=1, `min_dso_increase_pct`(float)=5.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（dso_trend_filter）"
     },
     "ema_cross": {
       "label": "Ema Cross",
@@ -2028,10 +2028,10 @@
         "lookback_days": "回溯周期天数",
         "slow_period": "slow周期"
       },
-      "help": "按该规则筛选股票：EMA cross signal。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`ema_cross` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（ema_cross）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`fast_period`(int)=12, `slow_period`(int)=26, `lookback_days`(int)=5, `direction`(str)=bullish",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（ema_cross）"
     },
     "ema_slope": {
       "label": "Ema Slope",
@@ -2041,10 +2041,10 @@
         "min_slope_pct": "最小slope比率 %",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：EMA slope over lookback。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`ema_slope` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（ema_slope）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=20, `lookback_days`(int)=5, `min_slope_pct`(float)=0.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（ema_slope）"
     },
     "sma_slope": {
       "label": "Sma Slope",
@@ -2054,10 +2054,10 @@
         "min_slope_pct": "最小slope比率 %",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：SMA slope over lookback。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`sma_slope` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（sma_slope）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=20, `lookback_days`(int)=5, `min_slope_pct`(float)=0.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（sma_slope）"
     },
     "macd_signal_cross": {
       "label": "MACD 信号 Cross",
@@ -2069,10 +2069,10 @@
         "signal_period": "信号周期",
         "slow_period": "slow周期"
       },
-      "help": "按该规则筛选股票：MACD line crossing signal line。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`macd_signal_cross` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_MACD`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（macd_signal_cross）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`fast_period`(int)=12, `slow_period`(int)=26, `signal_period`(int)=9, `lookback_days`(int)=5, `direction`(str)=bullish",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（macd_signal_cross）"
     },
     "macd_histogram_slope": {
       "label": "MACD Histogram Slope",
@@ -2084,10 +2084,10 @@
         "signal_period": "信号周期",
         "slow_period": "slow周期"
       },
-      "help": "按该规则筛选股票：MACD histogram slope。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`macd_histogram_slope` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_MACD`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（macd_histogram_slope）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`fast_period`(int)=12, `slow_period`(int)=26, `signal_period`(int)=9, `lookback_days`(int)=3, `min_slope`(float)=0.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（macd_histogram_slope）"
     },
     "cci_overbought_oversold": {
       "label": "CCI Overbought Oversold",
@@ -2097,10 +2097,10 @@
         "period": "周期",
         "threshold": "阈值"
       },
-      "help": "按该规则筛选股票：CCI threshold filter。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`cci_overbought_oversold` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_CCI`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（cci_overbought_oversold）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`period`(int)=20, `mode`(str)=oversold, `threshold`(float)=100",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（cci_overbought_oversold）"
     },
     "williams_r_reversal": {
       "label": "Williams R Reversal",
@@ -2111,10 +2111,10 @@
         "oversold": "oversold",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：Williams %R reversal signal。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`williams_r_reversal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_WILLR`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（williams_r_reversal）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`period`(int)=14, `oversold`(float)=-80, `overbought`(float)=-20, `direction`(str)=bullish",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（williams_r_reversal）"
     },
     "trix_cross": {
       "label": "Trix Cross",
@@ -2125,10 +2125,10 @@
         "period": "周期",
         "signal_period": "信号周期"
       },
-      "help": "按该规则筛选股票：TRIX crossing signal line。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`trix_cross` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（trix_cross）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=15, `signal_period`(int)=9, `lookback_days`(int)=5, `direction`(str)=bullish",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（trix_cross）"
     },
     "aroon_trend_signal": {
       "label": "Aroon 趋势 信号",
@@ -2138,10 +2138,10 @@
         "min_aroon": "最小aroon",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：Aroon trend strength signal。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`aroon_trend_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_AROON`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（aroon_trend_signal）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=25, `min_aroon`(float)=70, `direction`(str)=up",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（aroon_trend_signal）"
     },
     "money_flow_index_signal": {
       "label": "Money 流 Index 信号",
@@ -2152,10 +2152,10 @@
         "oversold": "oversold",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：MFI threshold signal。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`money_flow_index_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_MFI`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（money_flow_index_signal）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`period`(int)=14, `mode`(str)=oversold, `oversold`(float)=20, `overbought`(float)=80",
+      "caution": "上线前务必完成样本外验证。（money_flow_index_signal）"
     },
     "vwap_cross_signal": {
       "label": "Vwap Cross 信号",
@@ -2164,10 +2164,10 @@
         "lookback_days": "回溯周期天数",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：Close crossing above VWAP。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`vwap_cross_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VWAP`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（vwap_cross_signal）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=20, `lookback_days`(int)=3",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（vwap_cross_signal）"
     },
     "vwap_distance_pct": {
       "label": "Vwap 距离 Pct",
@@ -2176,10 +2176,10 @@
         "max_distance_pct": "最大距离比率 %",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：Distance between close and VWAP。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`vwap_distance_pct` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VWAP`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（vwap_distance_pct）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=20, `max_distance_pct`(float)=5.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（vwap_distance_pct）"
     },
     "relative_volume_percentile": {
       "label": "Relative 成交量 Percentile",
@@ -2188,10 +2188,10 @@
         "lookback_days": "回溯周期天数",
         "min_percentile": "最小percentile"
       },
-      "help": "按该规则筛选股票：Current volume percentile within lookback。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`relative_volume_percentile` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（relative_volume_percentile）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=60, `min_percentile`(float)=70.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（relative_volume_percentile）"
     },
     "turnover_ratio_min": {
       "label": "周转率 比率 Min",
@@ -2199,10 +2199,10 @@
       "params": {
         "min_turnover_ratio": "最小周转率比率"
       },
-      "help": "按该规则筛选股票：Minimum turnover ratio。",
-      "whenToUse": "用于价值/质量筛选中增强财务稳健性。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 按各指标的 min/max 方向解读估值或质量信号。",
-      "caution": "财报滞后与一次性项目可能扭曲信号。"
+      "help": "`turnover_ratio_min` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_VAL`",
+      "whenToUse": "适用于先看企业质量与估值，而不是只看价格涨跌的场景。（turnover_ratio_min）",
+      "howToRead": "按估值/质量方向解释阈值；阈值更严格时候选更少，但财务质量通常更高。 关键参数：`min_turnover_ratio`(float)=0.01",
+      "caution": "行业结构差异很大，尽量做同业比较，并警惕一次性会计项目。（turnover_ratio_min）"
     },
     "atr_percentile_filter": {
       "label": "ATR Percentile 筛选",
@@ -2212,10 +2212,10 @@
         "lookback_days": "回溯周期天数",
         "max_percentile": "最大percentile"
       },
-      "help": "按该规则筛选股票：ATR percentile within lookback。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`atr_percentile_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_ATR`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（atr_percentile_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`atr_period`(int)=14, `lookback_days`(int)=120, `max_percentile`(float)=80.0",
+      "caution": "历史风险指标在突发市场切换时可能失效。（atr_percentile_filter）"
     },
     "atr_expansion_breakout": {
       "label": "ATR Expansion 突破",
@@ -2225,10 +2225,10 @@
         "atr_period": "ATR周期",
         "breakout_lookback": "突破回溯周期"
       },
-      "help": "按该规则筛选股票：ATR expansion and price breakout。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "从默认值开始，再做 ±20~30% 敏感性测试。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`atr_expansion_breakout` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_ATR`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（atr_expansion_breakout）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`atr_period`(int)=14, `atr_multiplier`(float)=1.2, `breakout_lookback`(int)=20",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（atr_expansion_breakout）"
     },
     "natr_filter": {
       "label": "Natr 筛选",
@@ -2237,10 +2237,10 @@
         "max_natr_pct": "最大natr比率 %",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：Normalized ATR filter。",
-      "whenToUse": "用于控制波动与回撤暴露的风险护栏。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 风险指标越低，组合通常越防御。",
-      "caution": "风控阈值过严可能同时削弱收益上限。"
+      "help": "`natr_filter` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_ATR`",
+      "whenToUse": "适用于优先控制回撤与波动暴露的策略。（natr_filter）",
+      "howToRead": "收紧风险上限通常能降低回撤，但也可能牺牲部分收益弹性。 关键参数：`period`(int)=14, `max_natr_pct`(float)=5.0",
+      "caution": "历史风险指标在突发市场切换时可能失效。（natr_filter）"
     },
     "dmi_directional_cross": {
       "label": "Dmi Directional Cross",
@@ -2249,10 +2249,10 @@
         "lookback_days": "回溯周期天数",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：+DI crosses above -DI。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`dmi_directional_cross` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_ADX`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（dmi_directional_cross）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=14, `lookback_days`(int)=5",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（dmi_directional_cross）"
     },
     "ichimoku_cloud_breakout": {
       "label": "Ichimoku Cloud 突破",
@@ -2262,10 +2262,10 @@
         "conversion_period": "conversion周期",
         "span_b_period": "spanb周期"
       },
-      "help": "按该规则筛选股票：Close above cloud upper。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "从默认值开始，再做 ±20~30% 敏感性测试。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`ichimoku_cloud_breakout` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_ICHI`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（ichimoku_cloud_breakout）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`conversion_period`(int)=9, `base_period`(int)=26, `span_b_period`(int)=52",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（ichimoku_cloud_breakout）"
     },
     "ichimoku_tenkan_kijun_cross": {
       "label": "Ichimoku Tenkan Kijun Cross",
@@ -2275,10 +2275,10 @@
         "conversion_period": "conversion周期",
         "lookback_days": "回溯周期天数"
       },
-      "help": "按该规则筛选股票：Tenkan crosses above Kijun。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`ichimoku_tenkan_kijun_cross` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_ICHI`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（ichimoku_tenkan_kijun_cross）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`conversion_period`(int)=9, `base_period`(int)=26, `lookback_days`(int)=5",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（ichimoku_tenkan_kijun_cross）"
     },
     "bollinger_squeeze_breakout": {
       "label": "Bollinger Squeeze 突破",
@@ -2288,10 +2288,10 @@
         "period": "周期",
         "std_mult": "stdmult"
       },
-      "help": "按该规则筛选股票：Low BB width followed by upper band breakout。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "最大值条件：阈值越低，筛选越严格。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`bollinger_squeeze_breakout` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_BB`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（bollinger_squeeze_breakout）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`period`(int)=20, `std_mult`(float)=2.0, `max_width_pct`(float)=10.0",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（bollinger_squeeze_breakout）"
     },
     "bollinger_percent_b": {
       "label": "Bollinger Percent B",
@@ -2302,10 +2302,10 @@
         "period": "周期",
         "std_mult": "stdmult"
       },
-      "help": "按该规则筛选股票：Price position within Bollinger bands。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "区间条件（min/max）：先宽后严，候选过多时再收紧。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`bollinger_percent_b` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_BB`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（bollinger_percent_b）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`period`(int)=20, `std_mult`(float)=2.0, `min_percent_b`(float)=0.0, `max_percent_b`(float)=1.0",
+      "caution": "上线前务必完成样本外验证。（bollinger_percent_b）"
     },
     "ppo_signal_cross": {
       "label": "Ppo 信号 Cross",
@@ -2316,10 +2316,10 @@
         "signal_period": "信号周期",
         "slow_period": "slow周期"
       },
-      "help": "按该规则筛选股票：PPO line crossing signal line。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`ppo_signal_cross` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_MACD`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（ppo_signal_cross）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`fast_period`(int)=12, `slow_period`(int)=26, `signal_period`(int)=9, `lookback_days`(int)=5",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（ppo_signal_cross）"
     },
     "stochastic_cross_signal": {
       "label": "Stochastic Cross 信号",
@@ -2329,10 +2329,10 @@
         "k_period": "k周期",
         "lookback_days": "回溯周期天数"
       },
-      "help": "按该规则筛选股票：%K crossing above %D。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`stochastic_cross_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_STOCH`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（stochastic_cross_signal）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`k_period`(int)=14, `d_period`(int)=3, `lookback_days`(int)=5",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（stochastic_cross_signal）"
     },
     "stochrsi_signal": {
       "label": "Stochrsi 信号",
@@ -2342,10 +2342,10 @@
         "rsi_period": "RSI周期",
         "stoch_period": "stoch周期"
       },
-      "help": "按该规则筛选股票：StochRSI threshold signal。",
-      "whenToUse": "建议与流动性、趋势、风险条件组合使用。",
-      "howToRead": "方向/模式条件：需与策略方向（多/空）一致。 优先与流动性、趋势、风险条件联合使用。",
-      "caution": "上线前必须做样本外验证。"
+      "help": "`stochrsi_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适合作为流动性、趋势、风险条件的补充过滤。（stochrsi_signal）",
+      "howToRead": "通过敏感性测试调参，避免单阈值决策。 关键参数：`rsi_period`(int)=14, `stoch_period`(int)=14, `mode`(str)=oversold",
+      "caution": "上线前务必完成样本外验证。（stochrsi_signal）"
     },
     "aroon_oscillator_signal": {
       "label": "Aroon Oscillator 信号",
@@ -2354,10 +2354,10 @@
         "min_oscillator": "最小oscillator",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：Aroon up-down oscillator filter。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`aroon_oscillator_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_AROON`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（aroon_oscillator_signal）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`period`(int)=25, `min_oscillator`(float)=30.0",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（aroon_oscillator_signal）"
     },
     "ultimate_oscillator_signal": {
       "label": "Ultimate Oscillator 信号",
@@ -2365,10 +2365,10 @@
       "params": {
         "min_value": "最小价值"
       },
-      "help": "按该规则筛选股票：Ultimate oscillator threshold。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`ultimate_oscillator_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_FACTORS`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（ultimate_oscillator_signal）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`min_value`(float)=50.0",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（ultimate_oscillator_signal）"
     },
     "chaikin_money_flow_signal": {
       "label": "Chaikin Money 流 信号",
@@ -2377,10 +2377,10 @@
         "min_cmf": "最小cmf",
         "period": "周期"
       },
-      "help": "按该规则筛选股票：CMF threshold signal。",
-      "whenToUse": "当你需要成交量/资金流对价格进行确认时使用。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 将量能/资金流作为价格的确认或预警信号。",
-      "caution": "低流动性阶段的信号稳定性会下降。"
+      "help": "`chaikin_money_flow_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_CHAIKIN`",
+      "whenToUse": "适用于需要量能/资金流来确认价格动作的场景。（chaikin_money_flow_signal）",
+      "howToRead": "更严格的资金流确认可降噪，但可能错过最早启动段。 关键参数：`period`(int)=20, `min_cmf`(float)=0.0",
+      "caution": "低流动性标的的资金流信号稳定性较差。（chaikin_money_flow_signal）"
     },
     "chaikin_oscillator_signal": {
       "label": "Chaikin Oscillator 信号",
@@ -2390,10 +2390,10 @@
         "min_value": "最小价值",
         "slow_period": "slow周期"
       },
-      "help": "按该规则筛选股票：Chaikin oscillator above threshold。",
-      "whenToUse": "适用于动量极值附近的均值回归入场。",
-      "howToRead": "最小值条件：阈值越高，筛选越严格。 振荡指标越接近极值，通常反转压力越强。",
-      "caution": "单边强趋势中，超买/超卖可持续较久。"
+      "help": "`chaikin_oscillator_signal` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_CHAIKIN`",
+      "whenToUse": "适用于围绕超买/超卖做节奏择时。（chaikin_oscillator_signal）",
+      "howToRead": "振荡指标越极端，反转敏感度越高，但强趋势中误报也会增加。 关键参数：`fast_period`(int)=3, `slow_period`(int)=10, `min_value`(float)=0.0",
+      "caution": "超买/超卖并不等于一定反转，单边行情要特别谨慎。（chaikin_oscillator_signal）"
     },
     "ad_line_trend": {
       "label": "Ad Line 趋势",
@@ -2401,10 +2401,10 @@
       "params": {
         "lookback_days": "回溯周期天数"
       },
-      "help": "按该规则筛选股票：Accumulation/distribution line trend。",
-      "whenToUse": "适用于趋势跟随或突破延续策略。",
-      "howToRead": "周期条件：周期短更敏感但噪声大，周期长更平滑。 突破、正斜率、顺向排列通常代表趋势延续更强。",
-      "caution": "震荡行情中假突破（whipsaw）会增加。"
+      "help": "`ad_line_trend` 的实战摘要，依据 issue-487 研究文档整理。参考来源：`S_OBV`",
+      "whenToUse": "适用于顺势交易，而不是逆势猜顶抄底。（ad_line_trend）",
+      "howToRead": "趋势强度越高或结构越清晰，通常候选更少但趋势纯度更高。 关键参数：`lookback_days`(int)=20",
+      "caution": "震荡市假突破会显著增加，建议叠加量能或波动过滤。（ad_line_trend）"
     }
   },
   "settings": {
