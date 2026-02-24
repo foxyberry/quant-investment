@@ -865,7 +865,7 @@
       "help": "주가 대비 이익률(PER의 역수) — 높을수록 저평가입니다."
     },
     "ebit_ev": {
-      "label": "EBIT/EV",
+      "label": "EBIT/EV(영업이익/기업가치)",
       "desc": "EBIT/기업가치 수익률 필터",
       "params": {
         "min_ebit_ev": "최소 EBIT/EV %",

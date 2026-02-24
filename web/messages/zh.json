@@ -864,7 +864,7 @@
       "help": "盈利相对于股价（市盈率的倒数）——越高意味着股票越便宜。"
     },
     "ebit_ev": {
-      "label": "EBIT/EV",
+      "label": "EBIT/EV（息税前利润/企业价值）",
       "desc": "EBIT / 企业价值 (EV) 收益率筛选",
       "params": {
         "min_ebit_ev": "最小 EBIT/EV %",
@@ -918,20 +918,20 @@
       "help": "净资产收益率——衡量公司利用股东权益创造利润的效率。"
     },
     "piotroski_fscore": {
-      "label": "Piotroski F-Score",
+      "label": "皮奥特罗斯基 F-评分",
       "desc": "Piotroski F-Score（0-9）财务稳健度",
       "params": {
-        "min_score": "最小 F-Score",
-        "max_score": "最大 F-Score"
+        "min_score": "最小 F 评分",
+        "max_score": "最大 F 评分"
       },
       "help": "财务实力评分（0-9）——分数越高，公司财务越健康。"
     },
     "altman_zscore": {
-      "label": "Altman Z-Score",
+      "label": "奥特曼 Z-评分",
       "desc": "Altman Z-Score 破产风险筛选",
       "params": {
-        "min_zscore": "最小 Z-Score",
-        "max_zscore": "最大 Z-Score"
+        "min_zscore": "最小 Z 评分",
+        "max_zscore": "最大 Z 评分"
       },
       "help": "破产风险评分——分数越高，违约风险越低。"
     },
