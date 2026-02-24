@@ -373,7 +373,17 @@
     "deleteConfirm": "Delete this strategy?",
     "unsavedChanges": "You have unsaved changes",
     "lastSaved": "Last saved: {time}",
-    "strategyNameRequired": "Strategy name is required"
+    "strategyNameRequired": "Strategy name is required",
+    "guidanceWhenToUse": "When to use",
+    "guidanceHowToRead": "How to read",
+    "guidanceCaution": "Caution",
+    "guidanceFallbackWhenToUse": "Use this condition to narrow candidates before combining with trend/volume confirmation.",
+    "guidanceFallbackHowToReadRange": "Values inside the configured range pass this filter.",
+    "guidanceFallbackHowToReadMin": "Higher values (above the minimum) are favored by this filter.",
+    "guidanceFallbackHowToReadMax": "Lower values (below the maximum) are favored by this filter.",
+    "guidanceFallbackHowToReadTarget": "This checks whether performance is favorable on the selected target bucket (e.g., weekday/month).",
+    "guidanceFallbackHowToReadGeneral": "Tune the threshold using backtest results and keep it stable across market regimes.",
+    "guidanceFallbackCaution": "Avoid using this alone. Combine with risk and trend conditions to reduce false signals."
   },
   "analysis": {
     "title": "Charts & Analysis",
@@ -649,7 +659,10 @@
         "threshold": "RSI threshold",
         "period": "RSI period"
       },
-      "help": "RSI is low — the stock may be oversold and due for a bounce."
+      "help": "RSI is low — the stock may be oversold and due for a bounce.",
+      "whenToUse": "Use for mean-reversion setups after sharp pullbacks.",
+      "howToRead": "Lower RSI means stronger oversold signal. Typical references are around 30.",
+      "caution": "In strong downtrends RSI can stay oversold for extended periods."
     },
     "rsi_overbought": {
       "label": "RSI Overbought",
@@ -658,7 +671,10 @@
         "threshold": "RSI threshold",
         "period": "RSI period"
       },
-      "help": "RSI is high — the stock may be overbought and due for a pullback."
+      "help": "RSI is high — the stock may be overbought and due for a pullback.",
+      "whenToUse": "Use for pullback-risk checks or short-term contrarian setups.",
+      "howToRead": "Higher RSI means stronger overbought signal. Typical references are around 70.",
+      "caution": "In strong uptrends RSI can stay overbought longer than expected."
     },
     "rsi_range": {
       "label": "RSI Range",
@@ -668,7 +684,10 @@
         "upper": "Upper bound",
         "period": "RSI period"
       },
-      "help": "RSI is within a neutral zone — useful for finding stable momentum."
+      "help": "RSI is within a neutral zone — useful for finding stable momentum.",
+      "whenToUse": "Use when you want stable momentum names within a controlled RSI band.",
+      "howToRead": "Only stocks inside the lower-upper RSI band pass.",
+      "caution": "Too narrow a range can overfit and reduce candidate diversity."
     },
     "bollinger_width": {
       "label": "Bollinger Width",
@@ -1290,21 +1309,27 @@
       "help": "Filters stocks based on Turn Of Month threshold settings."
     },
     "day_of_week_seasonality": {
-      "label": "Day Of Week",
-      "desc": "Average weekday return effect",
+      "label": "Day-of-Week Seasonality",
+      "desc": "Filters stocks that historically perform better on a selected weekday.",
       "params": {
         "min_avg_return_pct": "Minimum Avg Return %",
-        "target_weekday": "Target Weekday"
+        "target_weekday": "Target Weekday (0=Mon, 4=Fri)"
       },
-      "help": "Filters stocks based on Day Of Week threshold settings."
+      "help": "Looks for repeatable weekday return patterns in historical data.",
+      "whenToUse": "Use for short-horizon tactical entries when you suspect weekday effects in your market.",
+      "howToRead": "A higher minimum average return is stricter. Start small and verify persistence by period.",
+      "caution": "Weekday effects can disappear after transaction costs or regime shifts; validate out-of-sample."
     },
     "net_share_issuance_filter": {
       "label": "Net Share Issuance Filter",
-      "desc": "Limit net share issuance",
+      "desc": "Limits dilution by filtering companies issuing too many new shares.",
       "params": {
         "max_issuance_pct": "Maximum Issuance %"
       },
-      "help": "Filters stocks based on Net Share Issuance Filter threshold settings."
+      "help": "Keeps companies with controlled net share issuance.",
+      "whenToUse": "Use in quality/value screens to avoid dilution-heavy names.",
+      "howToRead": "This is a max threshold: lower values imply less shareholder dilution.",
+      "caution": "Temporary issuance can be strategic (M&A/capex); review context before excluding."
     },
     "insider_net_buying": {
       "label": "Insider Net Buying",
@@ -1316,27 +1341,36 @@
     },
     "short_float_pct_filter": {
       "label": "Short Float % Filter",
-      "desc": "Short float percentage threshold",
+      "desc": "Limits candidates by short interest as a percentage of float.",
       "params": {
         "max_short_float_pct": "Maximum Short Float %"
       },
-      "help": "Filters stocks based on Short Float % Filter threshold settings."
+      "help": "Keeps stocks where short float is below your risk tolerance.",
+      "whenToUse": "Use to avoid crowded short names in long strategies, or invert logic in squeeze-focused setups.",
+      "howToRead": "This is a max threshold: lower values mean lower shorting pressure and usually lower squeeze risk.",
+      "caution": "High short float is not always bearish; it can also fuel sharp squeezes."
     },
     "short_interest_ratio_filter": {
       "label": "Short Interest Ratio Filter",
-      "desc": "Days-to-cover threshold",
+      "desc": "Filters by days-to-cover level from short interest.",
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Filters stocks based on Short Interest Ratio Filter threshold settings."
+      "help": "Controls exposure to names with heavy short positioning relative to volume.",
+      "whenToUse": "Use with liquidity filters to avoid hard-to-exit names.",
+      "howToRead": "This is a max threshold: lower is generally safer for execution.",
+      "caution": "Low volume periods can inflate days-to-cover temporarily."
     },
     "earnings_surprise_filter": {
       "label": "Earnings Surprise Filter",
-      "desc": "Quarterly earnings surprise threshold",
+      "desc": "Filters stocks with positive earnings surprise vs consensus.",
       "params": {
         "min_surprise_pct": "Minimum Surprise %"
       },
-      "help": "Filters stocks based on Earnings Surprise Filter threshold settings."
+      "help": "Finds names that beat expectations by at least your threshold.",
+      "whenToUse": "Use around earnings seasons for momentum continuation or post-event drift ideas.",
+      "howToRead": "This is a min threshold: higher values demand stronger positive surprise.",
+      "caution": "One-off accounting effects can distort surprise; confirm with guidance/revision metrics."
     },
     "post_earnings_drift": {
       "label": "Post Earnings Drift",

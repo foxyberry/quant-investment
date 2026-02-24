@@ -372,7 +372,17 @@
     "deleteConfirm": "删除该策略？",
     "unsavedChanges": "您有未保存的更改",
     "lastSaved": "上次保存：{time}",
-    "strategyNameRequired": "策略名称为必填项"
+    "strategyNameRequired": "策略名称为必填项",
+    "guidanceWhenToUse": "何时使用",
+    "guidanceHowToRead": "如何解读",
+    "guidanceCaution": "注意事项",
+    "guidanceFallbackWhenToUse": "建议先用该条件做初筛，再与趋势/成交量条件组合确认。",
+    "guidanceFallbackHowToReadRange": "数值落在设定区间内时通过该筛选。",
+    "guidanceFallbackHowToReadMin": "这是最小值门槛条件，数值越高通常越容易通过。",
+    "guidanceFallbackHowToReadMax": "这是最大值门槛条件，数值越低通常越容易通过。",
+    "guidanceFallbackHowToReadTarget": "该条件用于检查所选目标桶（如星期/月）是否更有利。",
+    "guidanceFallbackHowToReadGeneral": "请基于回测调参，并保证在不同市场阶段下参数稳定。",
+    "guidanceFallbackCaution": "不建议单独使用，最好与风险/趋势条件组合以减少误判。"
   },
   "analysis": {
     "title": "图表与分析",
@@ -648,7 +658,10 @@
         "threshold": "RSI 阈值",
         "period": "RSI 周期"
       },
-      "help": "RSI 较低——股票可能超卖，有反弹可能。"
+      "help": "RSI 较低——股票可能超卖，有反弹可能。",
+      "whenToUse": "用于急跌后的反弹（均值回归）候选筛选。",
+      "howToRead": "RSI 越低，超卖强度越高。常见参考值约为 30。",
+      "caution": "在强下跌趋势中，超卖状态可能持续较久。"
     },
     "rsi_overbought": {
       "label": "RSI 超买 (RSI Overbought)",
@@ -657,7 +670,10 @@
         "threshold": "RSI 阈值",
         "period": "RSI 周期"
       },
-      "help": "RSI 较高——股票可能超买，有回调可能。"
+      "help": "RSI 较高——股票可能超买，有回调可能。",
+      "whenToUse": "用于识别短期过热与回调风险。",
+      "howToRead": "RSI 越高，超买强度越高。常见参考值约为 70。",
+      "caution": "在强上涨趋势中，超买状态可能持续较久。"
     },
     "rsi_range": {
       "label": "RSI 区间",
@@ -667,7 +683,10 @@
         "upper": "上限",
         "period": "RSI 周期"
       },
-      "help": "RSI 在中性区间内——适合寻找动量稳定的股票。"
+      "help": "RSI 在中性区间内——适合寻找动量稳定的股票。",
+      "whenToUse": "用于筛选处于中性动量区间的标的。",
+      "howToRead": "只有 RSI 落在下限与上限之间的股票才会通过。",
+      "caution": "区间设置过窄会降低样本并增加过拟合风险。"
     },
     "bollinger_width": {
       "label": "布林带宽度 (Bollinger Width)",
@@ -1289,21 +1308,27 @@
       "help": "仅保留满足Turn Of 月 Effect阈值的股票。"
     },
     "day_of_week_seasonality": {
-      "label": "日 Of 周 Seasonality",
-      "desc": "按日 Of 周 Seasonality条件筛选股票。",
+      "label": "星期效应筛选",
+      "desc": "筛选在指定星期几历史平均收益较好的股票。",
       "params": {
-        "min_avg_return_pct": "最小avg收益率比率 %",
-        "target_weekday": "targetweekday"
+        "min_avg_return_pct": "最小平均收益率 %",
+        "target_weekday": "目标星期 (0=周一, 4=周五)"
       },
-      "help": "仅保留满足日 Of 周 Seasonality阈值的股票。"
+      "help": "用于识别按星期重复出现的日历效应。",
+      "whenToUse": "适合短周期择时，当你怀疑市场存在星期效应时使用。",
+      "howToRead": "最小平均收益阈值越高，筛选越严格。建议从较低阈值开始。",
+      "caution": "星期效应可能被交易成本或市场阶段变化削弱，需要样本外验证。"
     },
     "net_share_issuance_filter": {
-      "label": "净 股份 发行 筛选",
-      "desc": "按净 股份 发行 筛选条件筛选股票。",
+      "label": "净增发筛选",
+      "desc": "过滤掉净增发过高、可能稀释股东权益的公司。",
       "params": {
         "max_issuance_pct": "最大发行比率 %"
       },
-      "help": "仅保留满足净 股份 发行 筛选阈值的股票。"
+      "help": "仅保留净增发比例不超过上限的股票。",
+      "whenToUse": "在质量/价值筛选中控制股权稀释风险。",
+      "howToRead": "这是最大值门槛，数值越低通常稀释压力越小。",
+      "caution": "增发也可能用于并购或扩张投资，需结合基本面判断。"
     },
     "insider_net_buying": {
       "label": "Insider 净 Buying",
@@ -1314,28 +1339,37 @@
       "help": "仅保留满足Insider 净 Buying阈值的股票。"
     },
     "short_float_pct_filter": {
-      "label": "Short Float Pct 筛选",
-      "desc": "按Short Float Pct 筛选条件筛选股票。",
+      "label": "流通股做空比例筛选",
+      "desc": "按流通股做空比例（Short Float）控制候选股票。",
       "params": {
-        "max_short_float_pct": "最大shortfloat比率 %"
+        "max_short_float_pct": "最大流通股做空比例 %"
       },
-      "help": "仅保留满足Short Float Pct 筛选阈值的股票。"
+      "help": "仅保留做空比例低于上限的股票。",
+      "whenToUse": "在做多策略中规避做空拥挤标的时很有用。",
+      "howToRead": "这是最大值门槛，数值越低通常代表做空压力越小。",
+      "caution": "高做空比例不一定看空，也可能触发逼空行情。"
     },
     "short_interest_ratio_filter": {
-      "label": "Short 利息 比率 筛选",
-      "desc": "按Short 利息 比率 筛选条件筛选股票。",
+      "label": "做空回补天数筛选",
+      "desc": "按做空回补天数（days-to-cover）控制候选股票。",
       "params": {
         "max_ratio": "最大比率"
       },
-      "help": "仅保留满足Short 利息 比率 筛选阈值的股票。"
+      "help": "降低对做空拥挤且成交量不足标的的暴露。",
+      "whenToUse": "与流动性条件配合使用，可降低执行风险。",
+      "howToRead": "这是最大值门槛，数值越低通常越容易成交。",
+      "caution": "成交量骤降时该指标会被动抬升。"
     },
     "earnings_surprise_filter": {
-      "label": "财报 惊喜 筛选",
-      "desc": "按财报 惊喜 筛选条件筛选股票。",
+      "label": "财报超预期筛选",
+      "desc": "筛选财报相对一致预期超预期的股票。",
       "params": {
         "min_surprise_pct": "最小惊喜比率 %"
       },
-      "help": "仅保留满足财报 惊喜 筛选阈值的股票。"
+      "help": "仅保留超预期幅度达到阈值的股票。",
+      "whenToUse": "适合财报季动量策略或财报后漂移策略。",
+      "howToRead": "这是最小值门槛，阈值越高代表要求越强的超预期。",
+      "caution": "一次性会计项目可能扭曲结果，建议结合指引与预期修正指标。"
     },
     "post_earnings_drift": {
       "label": "后 财报 Drift",
