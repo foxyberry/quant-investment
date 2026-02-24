@@ -8,6 +8,7 @@ import pandas as pd
 
 from api.schemas.strategy import (
     PortfolioConstructionConfig,
+    RankingConfig,
     StrategyGraph,
     StrategyNode,
     StrategyNodeData,
@@ -15,6 +16,7 @@ from api.schemas.strategy import (
     StrategyResultItem,
 )
 from api.services.strategy_service import (
+    _build_ranking_outputs,
     build_conditions_from_graph,
     get_available_conditions,
     CONDITION_CLASS_MAP,
@@ -775,3 +777,58 @@ class TestPortfolioConstruction:
         assert meta is not None
         assert meta.mode_applied == "equal_weight"
         assert meta.fallback_reason == "insufficient_return_history"
+
+
+class TestRankingOutputs:
+    def test_build_ranking_outputs_generates_rank_and_long_short_baskets(self):
+        items = [
+            StrategyResultItem(ticker="AAPL", name="Apple", current_price=180.0, matched=True, conditions=[]),
+            StrategyResultItem(ticker="MSFT", name="Microsoft", current_price=420.0, matched=True, conditions=[]),
+            StrategyResultItem(ticker="TSLA", name="Tesla", current_price=220.0, matched=True, conditions=[]),
+            StrategyResultItem(ticker="INTC", name="Intel", current_price=35.0, matched=True, conditions=[]),
+        ]
+        ranked, baskets = _build_ranking_outputs(
+            final_items=items,
+            ranking_config=RankingConfig(
+                metric_key="current_price",
+                direction="desc",
+                top_percent=25,
+                bottom_percent=25,
+                max_assets=10,
+                long_short=True,
+            ),
+        )
+        assert len(ranked) == 4
+        assert ranked[0].ticker == "MSFT"
+        assert baskets is not None
+        assert len(baskets.long) == 1
+        assert len(baskets.short) == 1
+        assert baskets.long[0].ticker == "MSFT"
+        assert baskets.short[0].ticker == "INTC"
+
+    def test_build_ranking_outputs_can_rank_by_condition_detail_key(self):
+        items = [
+            StrategyResultItem(
+                ticker="AAA",
+                name="AAA",
+                current_price=10.0,
+                matched=True,
+                conditions=[{"details": {"quality_score": 80}}],
+            ),
+            StrategyResultItem(
+                ticker="BBB",
+                name="BBB",
+                current_price=10.0,
+                matched=True,
+                conditions=[{"details": {"quality_score": 60}}],
+            ),
+        ]
+        ranked, baskets = _build_ranking_outputs(
+            final_items=items,
+            ranking_config=RankingConfig(metric_key="quality_score", direction="desc", top_percent=50, bottom_percent=0, long_short=False),
+        )
+        assert len(ranked) == 2
+        assert ranked[0].ticker == "AAA"
+        assert baskets is not None
+        assert len(baskets.long) == 1
+        assert len(baskets.short) == 0

@@ -222,6 +222,7 @@ async def run_strategy(request: StrategyExecuteRequest) -> StrategyExecuteRespon
             universe_override=request.universe_override,
             universe_overrides=request.universe_overrides,
             portfolio_construction=request.portfolio_construction,
+            ranking_config=request.ranking_config,
         )
         response_universes = result.get("universes") or request.universe_overrides or [result["universe"]]
         return StrategyExecuteResponse(**result, universes=response_universes)
@@ -281,6 +282,7 @@ async def run_strategy_stream(request: StrategyExecuteRequest):
                 universe_override=request.universe_override,
                 universe_overrides=request.universe_overrides,
                 portfolio_construction=request.portfolio_construction,
+                ranking_config=request.ranking_config,
                 progress_callback=_progress_cb,
                 skip_enrich=True,
             )
