@@ -2,6 +2,27 @@
 
 이 문서는 AI가 quant-investment 프로젝트에서 작업하기 전에 읽어야 할 내용과 순서를 정리합니다.
 
+## 0. 이슈 락 규칙 (중복 작업 방지, Mandatory for Claude)
+
+작업 중복을 막기 위해 Claude 에이전트는 이슈 시작/종료 시 아래를 반드시 수행한다.
+
+1. 시작 시 즉시 `in-progress` 라벨 추가
+2. `start` 코멘트 작성
+- `agent`, `started_at(UTC)`, `scope`, `branch` 포함
+3. 구현 시작 전 중복 확인
+- `in-progress` + 타 에이전트의 최근 `start` 코멘트가 있으면 해당 이슈 작업 중단
+4. 완료 시 `done` 코멘트 작성
+- 변경 파일, 검증 명령/결과 요약 포함
+5. 완료 처리 후 `in-progress` 라벨 제거
+
+권장 명령:
+```bash
+gh issue edit <number> --add-label in-progress
+gh issue comment <number> --body "start: agent=<name>, started_at=<YYYY-MM-DD HH:MM UTC>, scope=<scope>, branch=<branch>"
+gh issue comment <number> --body "done: files=<...>, verify=<...>"
+gh issue edit <number> --remove-label in-progress
+```
+
 ## 1. 필수 문서 읽기 순서
 
 ### 1단계: 프로젝트 개요 파악

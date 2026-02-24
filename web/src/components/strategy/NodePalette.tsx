@@ -27,6 +27,13 @@ const SPECIAL_NODES = [
   { type: 'output', labelKey: 'finalOutput', icon: Flag, color: 'text-orange-600 dark:text-orange-400' },
 ];
 
+function toTitleCaseFromKey(value: string): string {
+  return value
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function HelpTooltip({ targetRect, help }: { targetRect: DOMRect; help: string }) {
   const style: React.CSSProperties = {
     position: 'fixed',
@@ -127,6 +134,23 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const conditionsByCategory = useMemo(() => getConditionsByCategory(), [getConditionsByCategory]);
+  const getCategoryLabel = (category: string): string => {
+    const key = `categories.${category}`;
+    return tCond.has(key) ? tCond(key) : toTitleCaseFromKey(category);
+  };
+  const getConditionLabel = (cond: StrategyConditionInfo): string => {
+    const key = `${cond.key}.label`;
+    return tCond.has(key) ? tCond(key) : (cond.label || toTitleCaseFromKey(cond.key));
+  };
+  const getConditionDesc = (cond: StrategyConditionInfo): string => {
+    const key = `${cond.key}.desc`;
+    return tCond.has(key) ? tCond(key) : (cond.description || '');
+  };
+  const getConditionHelp = (cond: StrategyConditionInfo): string | undefined => {
+    const key = `${cond.key}.help`;
+    if (tCond.has(key)) return tCond(key);
+    return cond.description || undefined;
+  };
 
   const toggleCategory = (cat: string) => {
     setCollapsedCategories((prev) => {
@@ -220,7 +244,7 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
                     ) : (
                       <ChevronRight className="h-3 w-3" />
                     )}
-                    <span>{tCond('categories.' + category)}</span>
+                    <span>{getCategoryLabel(category)}</span>
                     <span className="ml-auto text-[10px] font-normal text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 rounded-full">
                       {conditions.length}
                     </span>
@@ -230,9 +254,9 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
                       <DraggableItem
                         key={cond.key}
                         type="condition"
-                        label={tCond(cond.key + '.label')}
-                        description={tCond(cond.key + '.desc')}
-                        help={tCond(cond.key + '.help')}
+                        label={getConditionLabel(cond)}
+                        description={getConditionDesc(cond)}
+                        help={getConditionHelp(cond)}
                         icon={Filter}
                         color="text-[#1313ec] dark:text-blue-400"
                         conditionKey={cond.key}

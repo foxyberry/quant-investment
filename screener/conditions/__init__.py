@@ -102,6 +102,109 @@ from .time_price import (
     DayOfWeekSeasonalityCondition,
 )
 
+from .quant_trend import (
+    Momentum121Condition,
+    VolatilityNDayCondition,
+    DistanceFrom52WHighCondition,
+    RelativeStrengthVsBenchmarkCondition,
+    ADXTrendStrengthCondition,
+    MARibbonAlignmentCondition,
+    GoldenCross50200Condition,
+    DeathCross50200Condition,
+    DonchianChannelBreakoutCondition,
+    KeltnerChannelBreakoutCondition,
+)
+
+from .quant_oscillators import (
+    BollingerSqueezeBreakoutCondition,
+    BollingerPercentBCondition,
+    PPOSignalCrossCondition,
+    StochasticCrossSignalCondition,
+    StochRSISignalCondition,
+    AroonOscillatorSignalCondition,
+    UltimateOscillatorSignalCondition,
+    ChaikinMoneyFlowSignalCondition,
+    ChaikinOscillatorSignalCondition,
+    ADLineTrendCondition,
+)
+
+from .quant_indicators import (
+    VWAPCrossSignalCondition,
+    VWAPDistancePctCondition,
+    RelativeVolumePercentileCondition,
+    TurnoverRatioMinCondition,
+    ATRPercentileFilterCondition,
+    ATRExpansionBreakoutCondition,
+    NATRFilterCondition,
+    DMIDirectionalCrossCondition,
+    IchimokuCloudBreakoutCondition,
+    IchimokuTenkanKijunCrossCondition,
+)
+
+from .quant_statistical import (
+    ParabolicSARFlipCondition,
+    LinearRegressionSlopeFilterCondition,
+    LinearRegressionAngleFilterCondition,
+    LinearRegressionR2FilterCondition,
+    BetaToBenchmarkCondition,
+    CorrelationToBenchmarkCondition,
+    SupportRetestSignalCondition,
+    ResistanceRetestSignalCondition,
+    AnalystRevision1MCondition,
+    AnalystRevision3MCondition,
+)
+
+from .quant_fundamental_batch8 import (
+    ReceivablesTurnoverRatioCondition,
+    InventoryTurnoverRatioCondition,
+    AssetTurnoverRatioCondition,
+    CashflowToDebtRatioCondition,
+    PriceToTangibleBookCondition,
+    EVToSalesRatioCondition,
+    EVToEbitdaRatioCondition,
+    BookToMarketRatioCondition,
+    EPSCAGR3YCondition,
+    EPSGrowthYoYCondition,
+)
+
+from .quant_fundamental_batch9 import (
+    RevenueCAGR3YCondition,
+    RevenueGrowthYoYCondition,
+    RevenueStabilityScoreCondition,
+    EarningsStabilityScoreCondition,
+    DebtServiceCoverageRatioCondition,
+    NetDebtToEbitdaCondition,
+    InterestCoverageRatioCondition,
+    CashConversionRatioCondition,
+    ROCEFilterCondition,
+    ROAFilterCondition,
+)
+
+from .quant_shareholder_batch10 import (
+    NetMarginCondition,
+    GrossMarginCondition,
+    OperatingMarginCondition,
+    FreeCashFlowMarginCondition,
+    PayoutRatioFilterCondition,
+    DividendGrowth5YCondition,
+    ShareholderYieldFilterCondition,
+    NetShareIssuanceFilterCondition,
+    BuybackYieldFilterCondition,
+    InsiderNetBuyingCondition,
+)
+
+from .quant_special_batch11 import (
+    ShortFloatPctFilterCondition,
+    ShortInterestRatioFilterCondition,
+    EarningsSurpriseFilterCondition,
+    PostEarningsDriftCondition,
+    PreEarningsDriftCondition,
+    AccrualsRatioCondition,
+    AssetGrowthRateCondition,
+    GrossProfitabilityCondition,
+    QualityScoreCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -191,6 +294,62 @@ __all__ = [
     'GapDownExhaustionCondition', 'OpeningRangeBreakoutCondition',
     'PivotPointBreakoutCondition', 'MonthOfYearSeasonalityCondition',
     'TurnOfMonthEffectCondition', 'DayOfWeekSeasonalityCondition',
+
+    # Quant Trend Batch 4
+    'Momentum121Condition', 'VolatilityNDayCondition',
+    'DistanceFrom52WHighCondition', 'RelativeStrengthVsBenchmarkCondition',
+    'ADXTrendStrengthCondition', 'MARibbonAlignmentCondition',
+    'GoldenCross50200Condition', 'DeathCross50200Condition',
+    'DonchianChannelBreakoutCondition', 'KeltnerChannelBreakoutCondition',
+
+    # Quant Oscillator Batch 5
+    'BollingerSqueezeBreakoutCondition', 'BollingerPercentBCondition',
+    'PPOSignalCrossCondition', 'StochasticCrossSignalCondition',
+    'StochRSISignalCondition', 'AroonOscillatorSignalCondition',
+    'UltimateOscillatorSignalCondition', 'ChaikinMoneyFlowSignalCondition',
+    'ChaikinOscillatorSignalCondition', 'ADLineTrendCondition',
+
+    # Quant Indicator Batch 6
+    'VWAPCrossSignalCondition', 'VWAPDistancePctCondition',
+    'RelativeVolumePercentileCondition', 'TurnoverRatioMinCondition',
+    'ATRPercentileFilterCondition', 'ATRExpansionBreakoutCondition',
+    'NATRFilterCondition', 'DMIDirectionalCrossCondition',
+    'IchimokuCloudBreakoutCondition', 'IchimokuTenkanKijunCrossCondition',
+
+    # Quant Statistical Batch 7
+    'ParabolicSARFlipCondition', 'LinearRegressionSlopeFilterCondition',
+    'LinearRegressionAngleFilterCondition', 'LinearRegressionR2FilterCondition',
+    'BetaToBenchmarkCondition', 'CorrelationToBenchmarkCondition',
+    'SupportRetestSignalCondition', 'ResistanceRetestSignalCondition',
+    'AnalystRevision1MCondition', 'AnalystRevision3MCondition',
+
+    # Quant Fundamental Batch 8
+    'ReceivablesTurnoverRatioCondition', 'InventoryTurnoverRatioCondition',
+    'AssetTurnoverRatioCondition', 'CashflowToDebtRatioCondition',
+    'PriceToTangibleBookCondition', 'EVToSalesRatioCondition',
+    'EVToEbitdaRatioCondition', 'BookToMarketRatioCondition',
+    'EPSCAGR3YCondition', 'EPSGrowthYoYCondition',
+
+    # Quant Fundamental Batch 9
+    'RevenueCAGR3YCondition', 'RevenueGrowthYoYCondition',
+    'RevenueStabilityScoreCondition', 'EarningsStabilityScoreCondition',
+    'DebtServiceCoverageRatioCondition', 'NetDebtToEbitdaCondition',
+    'InterestCoverageRatioCondition', 'CashConversionRatioCondition',
+    'ROCEFilterCondition', 'ROAFilterCondition',
+
+    # Quant Shareholder Batch 10
+    'NetMarginCondition', 'GrossMarginCondition', 'OperatingMarginCondition',
+    'FreeCashFlowMarginCondition', 'PayoutRatioFilterCondition',
+    'DividendGrowth5YCondition', 'ShareholderYieldFilterCondition',
+    'NetShareIssuanceFilterCondition', 'BuybackYieldFilterCondition',
+    'InsiderNetBuyingCondition',
+
+    # Quant Special Batch 11
+    'ShortFloatPctFilterCondition', 'ShortInterestRatioFilterCondition',
+    'EarningsSurpriseFilterCondition', 'PostEarningsDriftCondition',
+    'PreEarningsDriftCondition', 'AccrualsRatioCondition',
+    'AssetGrowthRateCondition', 'GrossProfitabilityCondition',
+    'QualityScoreCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
