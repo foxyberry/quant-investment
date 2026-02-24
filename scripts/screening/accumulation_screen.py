@@ -48,6 +48,10 @@ Usage:
     # 유니버스 지정
     python scripts/screening/accumulation_screen.py --preset accumulation_basic --universe KOSDAQ
 
+    # 다중 유니버스 지정
+    python scripts/screening/accumulation_screen.py --preset accumulation_basic --universe KOSPI,KOSDAQ
+    python scripts/screening/accumulation_screen.py --preset accumulation_basic --universes KOSPI --universes KOSDAQ
+
 커스텀 파라미터:
     --bb-width 8.0     볼린저밴드 폭 8% 이하 (더 수축된 종목)
     --volume-mult 0.7  평균의 70% 이하 거래량 (더 조용한 종목)
@@ -63,6 +67,7 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 import argparse
+from typing import List
 from screener import (
     StockScreener,
     get_preset,
@@ -80,16 +85,39 @@ from screener import (
 )
 
 
+def parse_universe_inputs(universe: str, universes: List[str] | None = None) -> List[str]:
+    """Parse single/csv/repeated universe inputs with stable dedupe."""
+    tokens: List[str] = []
+    values = list(universes or [])
+    if universe:
+        values.append(universe)
+    for value in values:
+        for item in value.split(","):
+            token = item.strip().upper()
+            if token:
+                tokens.append(token)
+
+    resolved: List[str] = []
+    seen = set()
+    for token in tokens or ["KOSPI"]:
+        if token not in seen:
+            resolved.append(token)
+            seen.add(token)
+    return resolved
+
+
 def run_preset(
     preset_name: str,
     universe: str = "KOSPI",
+    universes: List[str] | None = None,
     **kwargs
 ):
     """프리셋으로 스크리닝 실행"""
+    resolved_universes = parse_universe_inputs(universe, universes)
     print(f"\n{'='*60}")
     print(f"  Quiet Accumulation Zone Screening")
     print(f"  Preset: {preset_name}")
-    print(f"  Universe: {universe}")
+    print(f"  Universe: {', '.join(resolved_universes)}")
     print(f"{'='*60}\n")
 
     conditions = get_preset(preset_name, **kwargs)
@@ -99,8 +127,17 @@ def run_preset(
         print(f"  - {c}")
     print()
 
-    screener = StockScreener(conditions=conditions)
-    results = screener.run(universe=universe)
+    merged = []
+    seen_tickers = set()
+    for selected_universe in resolved_universes:
+        screener = StockScreener(conditions=conditions)
+        results = screener.run(universe=selected_universe)
+        for result in results:
+            if result.ticker in seen_tickers:
+                continue
+            seen_tickers.add(result.ticker)
+            merged.append(result)
+    results = merged
 
     if results:
         print(f"\nMatched Stocks ({len(results)}):\n")
@@ -218,7 +255,11 @@ Examples:
     )
     parser.add_argument(
         "--universe", type=str, default="KOSPI",
-        help="Universe (KOSPI/KOSDAQ/ALL, default: KOSPI)"
+        help="Universe single/CSV (default: KOSPI, example: KOSPI,KOSDAQ)"
+    )
+    parser.add_argument(
+        "--universes", action="append", default=[],
+        help="Universe repeated flags (example: --universes KOSPI --universes KOSDAQ)"
     )
     parser.add_argument(
         "--custom", action="store_true",
@@ -272,7 +313,7 @@ Examples:
     elif args.ticker:
         run_single_stock(args.ticker, args.preset, **preset_kwargs)
     else:
-        run_preset(args.preset, args.universe, **preset_kwargs)
+        run_preset(args.preset, args.universe, args.universes, **preset_kwargs)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,10 @@ Usage:
 
     # 커스텀 조건 (코드로)
     python scripts/screening/run_screener.py --custom
+
+    # 다중 유니버스
+    python scripts/screening/run_screener.py --preset ma_touch_160 --universe KOSPI,KOSDAQ
+    python scripts/screening/run_screener.py --preset ma_touch_160 --universes KOSPI --universes KOSDAQ
 """
 
 import sys
@@ -21,6 +25,7 @@ project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 import argparse
+from typing import List
 from screener import (
     StockScreener,
     get_preset,
@@ -34,13 +39,45 @@ from screener import (
 )
 
 
-def run_preset(preset_name: str, universe: str = "KOSPI"):
+def parse_universe_inputs(universe: str, universes: List[str] | None = None) -> List[str]:
+    """Parse single/csv/repeated universe inputs with stable dedupe."""
+    tokens: List[str] = []
+    values = list(universes or [])
+    if universe:
+        values.append(universe)
+    for value in values:
+        for item in value.split(","):
+            token = item.strip().upper()
+            if token:
+                tokens.append(token)
+
+    resolved: List[str] = []
+    seen = set()
+    for token in tokens or ["KOSPI"]:
+        if token not in seen:
+            resolved.append(token)
+            seen.add(token)
+    return resolved
+
+
+def run_preset(preset_name: str, universe: str = "KOSPI", universes: List[str] | None = None):
     """프리셋으로 스크리닝 실행"""
+    resolved_universes = parse_universe_inputs(universe, universes)
     print(f"\n🎯 프리셋 '{preset_name}' 실행")
+    print(f"   Universes: {', '.join(resolved_universes)}")
 
     conditions = get_preset(preset_name)
-    screener = StockScreener(conditions=conditions)
-    results = screener.run(universe=universe)
+    merged = []
+    seen_tickers = set()
+    for selected_universe in resolved_universes:
+        screener = StockScreener(conditions=conditions)
+        results = screener.run(universe=selected_universe)
+        for result in results:
+            if result.ticker in seen_tickers:
+                continue
+            seen_tickers.add(result.ticker)
+            merged.append(result)
+    results = merged
 
     if results:
         print(f"\n📋 매칭 종목 ({len(results)}개):")
@@ -117,7 +154,8 @@ def main():
     parser.add_argument("--list-presets", action="store_true", help="프리셋 목록 표시")
     parser.add_argument("--custom", action="store_true", help="커스텀 조건 예제 실행")
     parser.add_argument("--ticker", type=str, help="단일 종목 검사 (예: 035420.KS)")
-    parser.add_argument("--universe", type=str, default="KOSPI", help="유니버스 (KOSPI/KOSDAQ/ALL)")
+    parser.add_argument("--universe", type=str, default="KOSPI", help="유니버스 단일/CSV (예: KOSPI,KOSDAQ)")
+    parser.add_argument("--universes", action="append", default=[], help="유니버스 반복 지정 (예: --universes KOSPI --universes KOSDAQ)")
 
     args = parser.parse_args()
 
@@ -128,14 +166,14 @@ def main():
         return
 
     if args.preset:
-        run_preset(args.preset, args.universe)
+        run_preset(args.preset, args.universe, args.universes)
     elif args.custom:
         run_custom_example()
     elif args.ticker:
         run_single_stock(args.ticker)
     else:
         # 기본: 160일선 터치 프리셋
-        run_preset("ma_touch_160", args.universe)
+        run_preset("ma_touch_160", args.universe, args.universes)
 
 
 if __name__ == "__main__":

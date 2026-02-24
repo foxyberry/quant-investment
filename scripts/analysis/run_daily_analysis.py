@@ -16,6 +16,8 @@ Usage:
     # Single market
     python scripts/analysis/run_daily_analysis.py --market KOSPI
     python scripts/analysis/run_daily_analysis.py --market SP500
+    python scripts/analysis/run_daily_analysis.py --market KOSPI,SP500
+    python scripts/analysis/run_daily_analysis.py --markets KOSPI --markets SP500
 
     # Skip Claude analysis (enrichment only)
     python scripts/analysis/run_daily_analysis.py --enrich-only
@@ -59,6 +61,36 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+def parse_market_inputs(market: str, markets: Optional[List[str]] = None) -> List[str]:
+    """Parse single/csv/repeated market inputs with stable dedupe."""
+    tokens: List[str] = []
+    values = list(markets or [])
+    if market:
+        values.append(market)
+
+    for value in values:
+        for item in value.split(","):
+            token = item.strip().upper()
+            if token:
+                tokens.append(token)
+
+    normalized: List[str] = []
+    seen = set()
+    for token in tokens or ["ALL"]:
+        if token == "ALL":
+            for expanded in ("KOSPI", "SP500"):
+                if expanded not in seen:
+                    normalized.append(expanded)
+                    seen.add(expanded)
+            continue
+        if token not in ("KOSPI", "SP500"):
+            raise ValueError(f"Unsupported market: {token}")
+        if token not in seen:
+            normalized.append(token)
+            seen.add(token)
+    return normalized
 
 
 def screen_ma_touch(market: str, ma_period: int = 240, threshold: float = 0.02) -> List[Dict]:
@@ -342,6 +374,7 @@ def generate_report(
 
 def run_pipeline(
     market: str = "ALL",
+    markets: Optional[List[str]] = None,
     capital: float = 10000000,
     enrich_only: bool = False,
     claude_code: bool = False,
@@ -352,7 +385,8 @@ def run_pipeline(
     Run the full analysis pipeline.
 
     Args:
-        market: Market to analyze (ALL, KOSPI, SP500)
+        market: Market to analyze (single/csv, backward-compatible)
+        markets: Repeated market flags
         capital: Total capital for position sizing
         enrich_only: Only run screening and enrichment
         claude_code: Save JSON for Claude Code analysis instead of API
@@ -364,20 +398,19 @@ def run_pipeline(
     print("#" + "Daily Stock Analysis Pipeline".center(58) + "#")
     print("#" + " " * 58 + "#")
     print("#" * 60)
+    selected_markets = parse_market_inputs(market, markets)
+    market_tag = "_".join(selected_markets)
+
     print(f"\nDate: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    print(f"Market: {market}")
+    print(f"Market: {', '.join(selected_markets)}")
     print(f"Capital: {capital:,.0f}")
 
     # 1. Screening
     candidates = []
 
-    if market in ['ALL', 'KOSPI']:
-        kospi_candidates = screen_ma_touch('KOSPI', ma_period, threshold)
-        candidates.extend(kospi_candidates)
-
-    if market in ['ALL', 'SP500']:
-        sp500_candidates = screen_ma_touch('SP500', ma_period, threshold)
-        candidates.extend(sp500_candidates)
+    for selected_market in selected_markets:
+        market_candidates = screen_ma_touch(selected_market, ma_period, threshold)
+        candidates.extend(market_candidates)
 
     if not candidates:
         print("\nNo candidates found. Exiting.")
@@ -389,7 +422,7 @@ def run_pipeline(
     enriched = enrich_stocks(candidates)
 
     # Save enriched data to JSON
-    json_path = save_enriched_json(enriched, market)
+    json_path = save_enriched_json(enriched, market_tag)
 
     if enrich_only:
         print("\n--enrich-only flag set. Skipping analysis.")
@@ -421,7 +454,7 @@ def run_pipeline(
         return enriched
 
     # 4. Report Generation
-    report = generate_report(results, capital, market)
+    report = generate_report(results, capital, market_tag)
 
     print("\n" + "=" * 60)
     print(" Pipeline Complete")
@@ -438,8 +471,13 @@ def main():
         '--market', '-m',
         type=str,
         default='ALL',
-        choices=['ALL', 'KOSPI', 'SP500'],
-        help='Market to analyze (default: ALL)'
+        help='Market single/CSV (ALL/KOSPI/SP500, default: ALL)'
+    )
+    parser.add_argument(
+        '--markets',
+        action='append',
+        default=[],
+        help='Repeated market flags (example: --markets KOSPI --markets SP500)'
     )
     parser.add_argument(
         '--capital', '-c',
@@ -474,6 +512,7 @@ def main():
 
     run_pipeline(
         market=args.market,
+        markets=args.markets,
         capital=args.capital,
         enrich_only=args.enrich_only,
         claude_code=args.claude_code,
