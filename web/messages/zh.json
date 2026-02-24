@@ -1988,7 +1988,8 @@
     "user": "用户",
     "account": "账户",
     "noAccount": "无账户",
-    "disconnectedToast": "Kiwoom 连接已断开。"
+    "disconnectedToast": "Kiwoom 连接已断开。",
+    "reconnected": "Kiwoom 连接已恢复"
   },
   "markets": {
     "us": "美国市场",

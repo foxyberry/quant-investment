@@ -20,6 +20,14 @@ import { formatCurrency as formatCurrencyUtil } from '@/lib/format';
 
 type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'fallback';
 
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_DELAY_CAP_MS = 30_000;
+
+function getReconnectDelay(attempt: number): number {
+  // Exponential backoff: 1s, 2s, 4s, 8s, 16s, capped at 30s
+  return Math.min(1000 * Math.pow(2, attempt), RECONNECT_DELAY_CAP_MS);
+}
+
 export default function ConditionMonitorPanel() {
   const t = useTranslations('screening');
   const locale = useLocale();
@@ -37,6 +45,8 @@ export default function ConditionMonitorPanel() {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const wsRef = useRef<WebSocket | null>(null);
   const fallbackPollRef = useRef<number | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const reconnectTimerRef = useRef<number | null>(null);
 
   const loadConditions = useCallback(async () => {
     setIsLoading(true);
@@ -97,6 +107,11 @@ export default function ConditionMonitorPanel() {
       await stopKiwoomConditionMonitor(selectedCondition);
       setIsMonitoring(false);
       setConnectionState('disconnected');
+      reconnectAttemptRef.current = 0;
+      if (reconnectTimerRef.current !== null) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
@@ -181,15 +196,20 @@ export default function ConditionMonitorPanel() {
       };
     }
 
-    setConnectionState('connecting');
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    // Track whether this effect instance has been cleaned up so that
+    // reconnect timers scheduled before cleanup do not fire stale connections.
+    let cleaned = false;
 
-    ws.onopen = () => {
-      setConnectionState('connected');
+    const startFallbackPolling = () => {
+      setConnectionState('fallback');
+      if (!fallbackPollRef.current) {
+        fallbackPollRef.current = window.setInterval(() => {
+          loadMatches();
+        }, 8000);
+      }
     };
 
-    ws.onmessage = (event) => {
+    const handleWsMessage = (event: MessageEvent) => {
       if (typeof event.data !== 'string') return;
       try {
         const parsed = JSON.parse(event.data) as Record<string, unknown>;
@@ -219,27 +239,80 @@ export default function ConditionMonitorPanel() {
       }
     };
 
-    const fallback = () => {
-      setConnectionState('fallback');
-      if (!fallbackPollRef.current) {
-        fallbackPollRef.current = window.setInterval(() => {
-          loadMatches();
-        }, 8000);
-      }
+    const connect = () => {
+      if (cleaned) return;
+
+      setConnectionState('connecting');
+      const ws = new WebSocket(wsUrl as string);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        if (cleaned) {
+          ws.close();
+          return;
+        }
+        reconnectAttemptRef.current = 0;
+        setConnectionState('connected');
+      };
+
+      ws.onmessage = handleWsMessage;
+
+      const handleWsClose = () => {
+        if (cleaned) return;
+
+        // Null out listeners to prevent duplicate invocation (onerror + onclose).
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
+
+        if (wsRef.current === ws) {
+          wsRef.current = null;
+        }
+
+        if (reconnectAttemptRef.current < MAX_RECONNECT_ATTEMPTS) {
+          const delay = getReconnectDelay(reconnectAttemptRef.current);
+          reconnectAttemptRef.current += 1;
+          setConnectionState('connecting');
+          reconnectTimerRef.current = window.setTimeout(() => {
+            reconnectTimerRef.current = null;
+            connect();
+          }, delay);
+        } else {
+          // Exhausted reconnection attempts -- fall back to polling.
+          startFallbackPolling();
+        }
+      };
+
+      ws.onerror = () => {
+        // onerror is always followed by onclose in modern browsers,
+        // but we guard against double-handling via the null-out above.
+        handleWsClose();
+      };
+      ws.onclose = handleWsClose;
     };
 
-    ws.onerror = fallback;
-    ws.onclose = fallback;
+    // Reset reconnect counter whenever condition/monitoring state changes.
+    reconnectAttemptRef.current = 0;
+    connect();
 
     return () => {
-      ws.onopen = null;
-      ws.onmessage = null;
-      ws.onerror = null;
-      ws.onclose = null;
-      ws.close();
-      if (wsRef.current === ws) {
+      cleaned = true;
+
+      if (reconnectTimerRef.current !== null) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+
+      if (wsRef.current) {
+        wsRef.current.onopen = null;
+        wsRef.current.onmessage = null;
+        wsRef.current.onerror = null;
+        wsRef.current.onclose = null;
+        wsRef.current.close();
         wsRef.current = null;
       }
+
       if (fallbackPollRef.current) {
         window.clearInterval(fallbackPollRef.current);
         fallbackPollRef.current = null;
@@ -249,6 +322,10 @@ export default function ConditionMonitorPanel() {
 
   useEffect(() => {
     return () => {
+      if (reconnectTimerRef.current !== null) {
+        window.clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;

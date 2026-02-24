@@ -62,6 +62,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const { toast, showToast, hideToast } = useToast();
   const [kiwoomStatus, setKiwoomStatus] = useState<KiwoomConnectionStatus>(DEFAULT_KIWOOM_STATUS);
   const previousStatusRef = useRef<KiwoomConnectionState | null>(null);
+  const failCountRef = useRef(0);
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -74,15 +75,29 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     let mounted = true;
 
     const fetchStatus = async () => {
-      const next = await getKiwoomConnectionStatus();
-      if (!mounted) return;
+      try {
+        const next = await getKiwoomConnectionStatus();
+        if (!mounted) return;
 
-      if (previousStatusRef.current === 'connected' && next.status === 'disconnected') {
-        showToast(tKiwoom('disconnectedToast'), 'error');
+        if (failCountRef.current >= 3 && previousStatusRef.current === 'unavailable') {
+          showToast(tKiwoom('reconnected'), 'success');
+        }
+        failCountRef.current = 0;
+
+        if (previousStatusRef.current === 'connected' && next.status === 'disconnected') {
+          showToast(tKiwoom('disconnectedToast'), 'error');
+        }
+
+        previousStatusRef.current = next.status;
+        setKiwoomStatus(next);
+      } catch {
+        if (!mounted) return;
+        failCountRef.current += 1;
+        if (failCountRef.current >= 3) {
+          setKiwoomStatus({ ...DEFAULT_KIWOOM_STATUS, status: 'unavailable' });
+          previousStatusRef.current = 'unavailable';
+        }
       }
-
-      previousStatusRef.current = next.status;
-      setKiwoomStatus(next);
     };
 
     fetchStatus();

@@ -1989,7 +1989,8 @@
     "user": "사용자",
     "account": "계좌",
     "noAccount": "계좌 없음",
-    "disconnectedToast": "키움 연결이 끊어졌습니다."
+    "disconnectedToast": "키움 연결이 끊어졌습니다.",
+    "reconnected": "키움 연결이 복구되었습니다"
   },
   "markets": {
     "us": "미국 시장",

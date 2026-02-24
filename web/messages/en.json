@@ -1989,7 +1989,8 @@
     "user": "User",
     "account": "Account",
     "noAccount": "No account",
-    "disconnectedToast": "Kiwoom connection was lost."
+    "disconnectedToast": "Kiwoom connection was lost.",
+    "reconnected": "Kiwoom connection restored"
   },
   "markets": {
     "us": "US Market",
