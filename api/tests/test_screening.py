@@ -124,6 +124,7 @@ class TestRunScreening:
         mock_screening_service.run_screening.assert_called_once_with(
             preset="accumulation_basic",
             universe="KOSPI",
+            universes=["KOSPI"],
             params=None,
         )
 
@@ -198,6 +199,7 @@ class TestRunScreening:
         mock_screening_service.run_screening.assert_called_once_with(
             preset="accumulation_basic",
             universe="KOSPI",
+            universes=["KOSPI", "KOSDAQ"],
             params=None,
         )
 
