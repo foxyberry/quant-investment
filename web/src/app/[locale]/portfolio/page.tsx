@@ -37,6 +37,14 @@ interface LivePriceUpdate {
   currency?: string;
 }
 
+interface OrderDeskPrefill {
+  ticker: string;
+  currentPrice: number | null;
+  currency?: string | null;
+  name?: string | null;
+  updatedAt: number;
+}
+
 /**
  * Portfolio summary card component
  */
@@ -119,6 +127,8 @@ export default function PortfolioPage() {
   // Filter state
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [orderDeskPrefill, setOrderDeskPrefill] = useState<OrderDeskPrefill | null>(null);
+  const orderDeskRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const pollingIntervalRef = useRef<number | null>(null);
   const reconnectIntervalRef = useRef<number | null>(null);
@@ -491,6 +501,17 @@ export default function PortfolioPage() {
   }, []);
 
   const handleRowClick = useCallback((holding: Holding) => {
+    setOrderDeskPrefill({
+      ticker: holding.ticker,
+      currentPrice: holding.current_price,
+      currency: holding.currency,
+      name: holding.name,
+      updatedAt: Date.now(),
+    });
+    orderDeskRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  const handleAnalyzeClick = useCallback((holding: Holding) => {
     const width = 900;
     const height = 700;
     const left = (screen.width - width) / 2;
@@ -715,13 +736,16 @@ export default function PortfolioPage() {
           holdings={filteredHoldings}
           isLoading={isLoading}
           onRowClick={handleRowClick}
+          onAnalyze={handleAnalyzeClick}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
           priceChangeDirection={priceChangeDirection}
         />
       </Card>
 
-      <OrderDesk />
+      <div ref={orderDeskRef}>
+        <OrderDesk prefill={orderDeskPrefill} />
+      </div>
 
       {/* Add Holding Modal */}
       <AddHoldingModal
