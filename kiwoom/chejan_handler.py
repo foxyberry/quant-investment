@@ -24,6 +24,17 @@ class OrderStatus(str, Enum):
     REJECTED = "REJECTED"
 
 
+_STATUS_PRECEDENCE = {
+    OrderStatus.PENDING: 0,
+    OrderStatus.PLACED: 1,
+    OrderStatus.CONFIRMED: 2,
+    OrderStatus.PARTIAL: 3,
+    OrderStatus.FILLED: 4,
+    OrderStatus.CANCELLED: 4,
+    OrderStatus.REJECTED: 4,
+}
+
+
 @dataclass
 class ChejanOrderEvent:
     """Parsed order/fill event payload."""
@@ -98,33 +109,37 @@ class ChejanHandler:
             if not event.order_no:
                 return
             with self._state_lock:
-                self._order_status[event.order_no] = event.status
+                prev_status = self._order_status.get(event.order_no)
+                next_status = self._resolve_next_status(prev_status, event.status)
+                self._order_status[event.order_no] = next_status
+            event.status = next_status
             self._sync_order_manager(event)
-            self._notify(
-                {
-                    "type": "order",
-                    "order_no": event.order_no,
-                    "code": event.code,
-                    "status": event.status.value,
-                    "raw_status": event.raw_status,
-                    "filled_qty": event.filled_qty,
-                    "unfilled_qty": event.unfilled_qty,
-                    "fill_price": event.fill_price,
-                }
-            )
-            if self._safety_manager is not None:
-                self._safety_manager.on_chejan_event(
+            if prev_status != next_status:
+                self._notify(
                     {
                         "type": "order",
                         "order_no": event.order_no,
                         "code": event.code,
-                        "status": event.status.value,
+                        "status": next_status.value,
                         "raw_status": event.raw_status,
                         "filled_qty": event.filled_qty,
                         "unfilled_qty": event.unfilled_qty,
                         "fill_price": event.fill_price,
                     }
                 )
+                if self._safety_manager is not None:
+                    self._safety_manager.on_chejan_event(
+                        {
+                            "type": "order",
+                            "order_no": event.order_no,
+                            "code": event.code,
+                            "status": next_status.value,
+                            "raw_status": event.raw_status,
+                            "filled_qty": event.filled_qty,
+                            "unfilled_qty": event.unfilled_qty,
+                            "fill_price": event.fill_price,
+                        }
+                    )
         elif sGubun == ChejanGubun.BALANCE.value:
             position = self._parse_balance_event(requested_fids)
             if not position:
@@ -198,6 +213,16 @@ class ChejanHandler:
         if filled_qty > 0 and unfilled_qty == 0:
             return OrderStatus.FILLED
         return OrderStatus.PENDING
+
+    @staticmethod
+    def _resolve_next_status(current: Optional[OrderStatus], candidate: OrderStatus) -> OrderStatus:
+        if current is None:
+            return candidate
+        if current in {OrderStatus.FILLED, OrderStatus.CANCELLED, OrderStatus.REJECTED}:
+            return current
+        if _STATUS_PRECEDENCE[candidate] >= _STATUS_PRECEDENCE[current]:
+            return candidate
+        return current
 
     def _get_fid_values(self, required_fids: List[int], requested_fids: Set[int]) -> Dict[int, str]:
         if not requested_fids:
