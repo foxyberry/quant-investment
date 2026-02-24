@@ -954,6 +954,264 @@
         "max_roic": "최대 ROIC %"
       },
       "help": "투하자본수익률 — 회사가 전체 자본을 얼마나 잘 활용하는지 보여줍니다."
+    },
+    "analyst_revision_1m": {
+      "label": "애널리스트 추정치 1개월 수정률",
+      "desc": "애널리스트 추정치 1개월 수정률 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_revision_pct": "최소 수정률 %"
+      },
+      "help": "애널리스트 추정치 1개월 수정률 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "analyst_revision_3m": {
+      "label": "애널리스트 추정치 3개월 수정률",
+      "desc": "애널리스트 추정치 3개월 수정률 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_revision_pct": "최소 수정률 %"
+      },
+      "help": "애널리스트 추정치 3개월 수정률 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "asset_turnover_ratio": {
+      "label": "총자산회전율",
+      "desc": "총자산회전율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_ratio": "최소 비율"
+      },
+      "help": "총자산회전율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "book_to_market_ratio": {
+      "label": "장부가치 대비 시가총액 비율",
+      "desc": "장부가치 대비 시가총액 비율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_ratio": "최소 비율"
+      },
+      "help": "장부가치 대비 시가총액 비율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "buyback_yield_filter": {
+      "label": "자사주 매입 수익률",
+      "desc": "자사주 매입 수익률 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_yield_pct": "최소 수익률 %"
+      },
+      "help": "자사주 매입 수익률 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "cash_conversion_ratio": {
+      "label": "현금전환비율",
+      "desc": "현금전환비율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_ratio": "최소 비율"
+      },
+      "help": "현금전환비율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "cashflow_to_debt_ratio": {
+      "label": "영업현금흐름 대비 부채비율",
+      "desc": "영업현금흐름 대비 부채비율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_ratio": "최소 비율"
+      },
+      "help": "영업현금흐름 대비 부채비율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "debt_service_coverage_ratio": {
+      "label": "채무상환커버리지비율",
+      "desc": "채무상환커버리지비율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_ratio": "최소 비율"
+      },
+      "help": "채무상환커버리지비율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "dividend_growth_5y": {
+      "label": "5년 배당 성장률",
+      "desc": "5년 배당 성장률 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_growth_pct": "최소 성장률 %"
+      },
+      "help": "5년 배당 성장률 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "earnings_stability_score": {
+      "label": "이익 안정성 점수",
+      "desc": "이익 안정성 점수 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_years": "조회 연수",
+        "max_cv": "최대 변동계수"
+      },
+      "help": "이익 안정성 점수 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "eps_cagr_3y": {
+      "label": "EPS 3년 CAGR",
+      "desc": "EPS 3년 CAGR 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_cagr_pct": "최소 CAGR %"
+      },
+      "help": "EPS 3년 CAGR 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "eps_growth_yoy": {
+      "label": "EPS 전년 대비 성장률",
+      "desc": "EPS 전년 대비 성장률 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_growth_pct": "최소 성장률 %"
+      },
+      "help": "EPS 전년 대비 성장률 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ev_to_ebitda_ratio": {
+      "label": "EV/EBITDA 비율",
+      "desc": "EV/EBITDA 비율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_ratio": "최대 비율"
+      },
+      "help": "EV/EBITDA 비율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ev_to_sales_ratio": {
+      "label": "EV/매출 비율",
+      "desc": "EV/매출 비율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_ratio": "최대 비율"
+      },
+      "help": "EV/매출 비율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "free_cash_flow_margin": {
+      "label": "잉여현금흐름 마진",
+      "desc": "잉여현금흐름 마진 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_margin_pct": "최소 마진 %"
+      },
+      "help": "잉여현금흐름 마진 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "gross_margin": {
+      "label": "매출총이익률",
+      "desc": "매출총이익률 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_margin_pct": "최소 마진 %"
+      },
+      "help": "매출총이익률 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "gross_profitability": {
+      "label": "총이익 수익성",
+      "desc": "총이익 수익성 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_ratio": "최소 비율"
+      },
+      "help": "총이익 수익성 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "interest_coverage_ratio": {
+      "label": "이자보상배율",
+      "desc": "이자보상배율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_ratio": "최소 비율"
+      },
+      "help": "이자보상배율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "inventory_turnover_ratio": {
+      "label": "재고회전율",
+      "desc": "재고회전율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_ratio": "최소 비율"
+      },
+      "help": "재고회전율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "net_debt_to_ebitda": {
+      "label": "순부채/EBITDA",
+      "desc": "순부채/EBITDA 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_ratio": "최대 비율"
+      },
+      "help": "순부채/EBITDA 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "net_margin": {
+      "label": "순이익률",
+      "desc": "순이익률 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_margin_pct": "최소 마진 %"
+      },
+      "help": "순이익률 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "operating_margin": {
+      "label": "영업이익률",
+      "desc": "영업이익률 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_margin_pct": "최소 마진 %"
+      },
+      "help": "영업이익률 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "payout_ratio_filter": {
+      "label": "배당성향 필터",
+      "desc": "배당성향 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_payout_pct": "최대 배당성향 %"
+      },
+      "help": "배당성향 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "price_to_tangible_book": {
+      "label": "주가/유형순자산비율",
+      "desc": "주가/유형순자산비율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_ratio": "최대 비율"
+      },
+      "help": "주가/유형순자산비율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "quality_score": {
+      "label": "퀄리티 점수",
+      "desc": "퀄리티 점수 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_score": "최소 점수"
+      },
+      "help": "퀄리티 점수 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "receivables_turnover_ratio": {
+      "label": "매출채권회전율",
+      "desc": "매출채권회전율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_ratio": "최소 비율"
+      },
+      "help": "매출채권회전율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "revenue_cagr_3y": {
+      "label": "매출 3년 CAGR",
+      "desc": "매출 3년 CAGR 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_cagr_pct": "최소 CAGR %"
+      },
+      "help": "매출 3년 CAGR 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "revenue_growth_yoy": {
+      "label": "매출 전년 대비 성장률",
+      "desc": "매출 전년 대비 성장률 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_growth_pct": "최소 성장률 %"
+      },
+      "help": "매출 전년 대비 성장률 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "revenue_stability_score": {
+      "label": "매출 안정성 점수",
+      "desc": "매출 안정성 점수 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_years": "조회 연수",
+        "max_cv": "최대 변동계수"
+      },
+      "help": "매출 안정성 점수 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "shareholder_yield_filter": {
+      "label": "주주환원 수익률",
+      "desc": "주주환원 수익률 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_yield_pct": "최소 수익률 %"
+      },
+      "help": "주주환원 수익률 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "roce_filter": {
+      "label": "ROCE 필터",
+      "desc": "ROCE 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_roce_pct": "최소 ROCE %"
+      },
+      "help": "ROCE 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "roa_filter": {
+      "label": "ROA 필터",
+      "desc": "ROA 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_roa_pct": "최소 ROA %"
+      },
+      "help": "ROA 필터 기준값을 만족하는 종목만 통과시킵니다."
     }
   },
   "settings": {

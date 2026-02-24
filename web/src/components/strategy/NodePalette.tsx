@@ -224,7 +224,7 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
           {isLoading ? (
             <div className="flex items-center justify-center py-8 text-gray-400">
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span className="text-xs">Loading conditions...</span>
+              <span className="text-xs">{t('loadingConditions')}</span>
             </div>
           ) : (
             categories.map((category) => {
