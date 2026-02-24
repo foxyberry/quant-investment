@@ -288,3 +288,69 @@ class TestRunStrategyEndpoint:
         assert captured["portfolio_construction"].mode == "risk_parity"
         assert len(data["weighted_portfolio"]) == 2
         assert data["portfolio_construction_result"]["mode_applied"] == "risk_parity"
+
+    def test_ranking_config_request_is_passed_and_response_contains_long_short(self, monkeypatch):
+        captured = {"ranking_config": None}
+
+        def _mock_execute_strategy(*args, **kwargs):
+            captured["ranking_config"] = kwargs.get("ranking_config")
+            return {
+                "results": [],
+                "total_count": 10,
+                "matched_count": 4,
+                "universe": "SP500",
+                "conditions_used": [],
+                "node_results": {},
+                "ranked_results": [
+                    {"ticker": "MSFT", "name": "Microsoft", "score": 420.0, "rank": 1},
+                    {"ticker": "AAPL", "name": "Apple", "score": 180.0, "rank": 2},
+                    {"ticker": "TSLA", "name": "Tesla", "score": 120.0, "rank": 3},
+                    {"ticker": "INTC", "name": "Intel", "score": 35.0, "rank": 4},
+                ],
+                "long_short_baskets": {
+                    "metric_key": "current_price",
+                    "direction": "desc",
+                    "long": [
+                        {"ticker": "MSFT", "name": "Microsoft", "score": 420.0, "side": "long", "weight": 1.0}
+                    ],
+                    "short": [
+                        {"ticker": "INTC", "name": "Intel", "score": 35.0, "side": "short", "weight": 1.0}
+                    ],
+                },
+            }
+
+        monkeypatch.setattr("api.routers.strategy.execute_strategy", _mock_execute_strategy)
+
+        response = client.post(
+            "/api/strategy/run",
+            json={
+                "graph": {
+                    "nodes": [
+                        {
+                            "id": "c1",
+                            "data": {
+                                "node_type": "condition",
+                                "condition_type": "min_price",
+                                "params": {"min_price": 5000},
+                            },
+                        },
+                        {"id": "o1", "data": {"node_type": "output"}},
+                    ],
+                    "edges": [{"id": "e1", "source": "c1", "target": "o1"}],
+                },
+                "ranking_config": {
+                    "metric_key": "current_price",
+                    "direction": "desc",
+                    "top_percent": 10,
+                    "bottom_percent": 10,
+                    "max_assets": 100,
+                    "long_short": True,
+                },
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert captured["ranking_config"].metric_key == "current_price"
+        assert len(data["ranked_results"]) == 4
+        assert data["long_short_baskets"]["long"][0]["ticker"] == "MSFT"
+        assert data["long_short_baskets"]["short"][0]["ticker"] == "INTC"

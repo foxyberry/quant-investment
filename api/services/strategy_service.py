@@ -17,9 +17,13 @@ import pandas as pd
 from api.schemas.strategy import (
     ConditionInfo,
     ConditionParamInfo,
+    LongShortBasketItem,
+    LongShortBaskets,
     NodeIntermediateResult,
     PortfolioConstructionConfig,
     PortfolioConstructionResult,
+    RankedResultItem,
+    RankingConfig,
     StrategyGraph,
     StrategyNode,
     StrategyResultItem,
@@ -477,6 +481,104 @@ def _build_weighted_portfolio(
         suggested_gross_leverage=suggested_leverage,
         fallback_reason=fallback_reason,
     )
+
+
+def _extract_ranking_score(item: StrategyResultItem, metric_key: str) -> Optional[float]:
+    if metric_key == "current_price":
+        return _to_optional_float(item.current_price)
+    if metric_key == "per":
+        return _to_optional_float(item.per)
+    if metric_key == "pbr":
+        return _to_optional_float(item.pbr)
+    if metric_key == "dividend_yield":
+        return _to_optional_float(item.dividend_yield)
+
+    for cond in item.conditions:
+        details = cond.get("details", {}) if isinstance(cond, dict) else {}
+        if isinstance(details, dict) and metric_key in details:
+            score = _to_optional_float(details.get(metric_key))
+            if score is not None:
+                return score
+    return None
+
+
+def _build_ranking_outputs(
+    final_items: List[StrategyResultItem],
+    ranking_config: Optional[RankingConfig],
+) -> tuple[List[RankedResultItem], Optional[LongShortBaskets]]:
+    if not ranking_config:
+        return [], None
+
+    candidates = final_items[: int(ranking_config.max_assets)]
+    scored_rows: List[tuple[StrategyResultItem, float]] = []
+    for item in candidates:
+        score = _extract_ranking_score(item, ranking_config.metric_key)
+        if score is None or not np.isfinite(score):
+            continue
+        scored_rows.append((item, float(score)))
+
+    if not scored_rows:
+        return [], LongShortBaskets(
+            metric_key=ranking_config.metric_key,
+            direction=ranking_config.direction,
+            long=[],
+            short=[],
+        )
+
+    reverse = ranking_config.direction == "desc"
+    scored_rows.sort(key=lambda row: row[1], reverse=reverse)
+
+    ranked_results: List[RankedResultItem] = []
+    for idx, (item, score) in enumerate(scored_rows, start=1):
+        ranked_results.append(
+            RankedResultItem(
+                ticker=item.ticker,
+                name=item.name,
+                score=score,
+                rank=idx,
+            )
+        )
+
+    n = len(scored_rows)
+    top_n = max(1, int(np.ceil(n * (ranking_config.top_percent / 100.0))))
+    long_rows = scored_rows[:top_n]
+
+    short_rows: List[tuple[StrategyResultItem, float]] = []
+    if ranking_config.long_short and ranking_config.bottom_percent > 0:
+        bottom_n = max(1, int(np.ceil(n * (ranking_config.bottom_percent / 100.0))))
+        short_rows = scored_rows[-bottom_n:]
+
+    long_weight = (1.0 / len(long_rows)) if long_rows else 0.0
+    short_weight = (1.0 / len(short_rows)) if short_rows else 0.0
+
+    long_basket = [
+        LongShortBasketItem(
+            ticker=item.ticker,
+            name=item.name,
+            score=score,
+            side="long",
+            weight=float(long_weight),
+        )
+        for item, score in long_rows
+    ]
+    short_basket = [
+        LongShortBasketItem(
+            ticker=item.ticker,
+            name=item.name,
+            score=score,
+            side="short",
+            weight=float(short_weight),
+        )
+        for item, score in short_rows
+    ]
+
+    baskets = LongShortBaskets(
+        metric_key=ranking_config.metric_key,
+        direction=ranking_config.direction,
+        long=long_basket,
+        short=short_basket,
+    )
+    return ranked_results, baskets
 
 
 def get_available_conditions() -> List[ConditionInfo]:
@@ -992,6 +1094,7 @@ def execute_strategy_with_progress(
     universe_override: Optional[str] = None,
     universe_overrides: Optional[List[str]] = None,
     portfolio_construction: Optional[PortfolioConstructionConfig] = None,
+    ranking_config: Optional[RankingConfig] = None,
     progress_callback: Optional[Callable[[int, int, int], None]] = None,
     skip_enrich: bool = False,
 ) -> Dict[str, Any]:
@@ -1005,6 +1108,7 @@ def execute_strategy_with_progress(
         universe_override=universe_override,
         universe_overrides=universe_overrides,
         portfolio_construction=portfolio_construction,
+        ranking_config=ranking_config,
         progress_callback=progress_callback,
         skip_enrich=skip_enrich,
     )
@@ -1015,6 +1119,7 @@ def execute_strategy(
     universe_override: Optional[str] = None,
     universe_overrides: Optional[List[str]] = None,
     portfolio_construction: Optional[PortfolioConstructionConfig] = None,
+    ranking_config: Optional[RankingConfig] = None,
     progress_callback: Optional[Callable[[int, int, int], None]] = None,
     skip_enrich: bool = False,
 ) -> Dict[str, Any]:
@@ -1028,7 +1133,7 @@ def execute_strategy(
 
     Returns:
         Dict with results, counts, universe, conditions used, node_results,
-        and optional weighted portfolio output
+        optional weighted portfolio output, and optional ranking outputs
     """
     started_at = time.perf_counter()
 
@@ -1223,6 +1328,10 @@ def execute_strategy(
         leaf_conditions=leaf_conditions,
         config=portfolio_construction,
     )
+    ranked_results, long_short_baskets = _build_ranking_outputs(
+        final_items=final_items,
+        ranking_config=ranking_config,
+    )
 
     conditions_used = [type(c).__name__ for c in leaf_conditions]
 
@@ -1255,4 +1364,6 @@ def execute_strategy(
         "node_results": node_results,
         "weighted_portfolio": weighted_portfolio,
         "portfolio_construction_result": construction_result,
+        "ranked_results": ranked_results,
+        "long_short_baskets": long_short_baskets,
     }
