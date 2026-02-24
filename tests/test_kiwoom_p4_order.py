@@ -262,3 +262,69 @@ def test_order_history_retention_by_max_size() -> None:
     assert first_no not in manager.order_history
     assert second_no in manager.order_history
     assert third_no in manager.order_history
+
+
+def test_submit_order_async_returns_immediately_and_exposes_result() -> None:
+    ocx = _FakeOcx(return_value=0)
+    manager = KiwoomOrderManager(ocx, throttle_seconds=0.0)
+
+    request_id = manager.submit_order_async(
+        rq_name="async_1",
+        screen_no="1001",
+        acc_no="8123456789",
+        order_type=int(OrderType.NEW_BUY),
+        code="005930",
+        qty=1,
+        price=1000,
+        hoga_type=HogaType.LIMIT.value,
+        org_order_no="",
+    )
+    assert request_id.startswith("req-")
+
+    result = manager.wait_for_request_result(request_id, timeout=1.0)
+    assert result is not None
+    assert result["status"] == "sent"
+    assert "order_no" in result
+
+
+def test_send_order_uses_async_submit_compatibly() -> None:
+    ocx = _FakeOcx(return_value=0)
+    manager = KiwoomOrderManager(ocx, throttle_seconds=0.0)
+    order_no = manager.send_order(
+        rq_name="compat_send",
+        screen_no="1001",
+        acc_no="8123456789",
+        order_type=int(OrderType.NEW_BUY),
+        code="005930",
+        qty=1,
+        price=1000,
+        hoga_type=HogaType.LIMIT.value,
+        org_order_no="",
+    )
+    assert order_no in manager.order_history
+
+
+def test_request_result_retention_ttl_cleanup() -> None:
+    ocx = _FakeOcx(return_value=0)
+    manager = KiwoomOrderManager(
+        ocx,
+        throttle_seconds=0.0,
+        request_result_ttl_seconds=0.01,
+    )
+    request_id = manager.submit_order_async(
+        rq_name="ttl_req",
+        screen_no="1001",
+        acc_no="8123456789",
+        order_type=int(OrderType.NEW_BUY),
+        code="005930",
+        qty=1,
+        price=1000,
+        hoga_type=HogaType.LIMIT.value,
+        org_order_no="",
+    )
+    _ = manager.wait_for_request_result(request_id, timeout=1.0)
+    assert manager.get_request_result(request_id) is not None
+    import time as _time
+    _time.sleep(0.02)
+    manager._cleanup_request_results()
+    assert manager.get_request_result(request_id) is None

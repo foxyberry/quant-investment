@@ -57,6 +57,7 @@ class Order:
 
 @dataclass
 class _OrderTask:
+    request_id: str
     rq_name: str
     api_rq_name: str
     screen_no: str
@@ -83,6 +84,7 @@ class KiwoomOrderManager:
         history_ttl_seconds: Optional[float] = 86400.0,
         connection: Optional[Any] = None,
         safety_manager: Optional[KiwoomSafetyManager] = None,
+        request_result_ttl_seconds: float = 3600.0,
         sleep_fn: Callable[[float], None] = time.sleep,
         time_fn: Callable[[], float] = time.monotonic,
     ) -> None:
@@ -94,14 +96,18 @@ class KiwoomOrderManager:
         self._time = time_fn
         self._connection = connection
         self._safety_manager = safety_manager
+        self._request_result_ttl_seconds = request_result_ttl_seconds
 
         self.order_history: Dict[str, Order] = {}
         self._order_by_rq_name: Dict[str, str] = {}
         self._queue: "queue.Queue[_OrderTask]" = queue.Queue()
+        self._request_events: Dict[str, threading.Event] = {}
+        self._request_results: Dict[str, Dict[str, Any]] = {}
         self._lock = threading.RLock()
         self._last_sent_at: float = 0.0
         self._counter = 0
         self._rq_counter = 0
+        self._request_counter = 0
 
         self._worker = threading.Thread(target=self._worker_loop, daemon=True)
         self._worker.start()
@@ -127,6 +133,40 @@ class KiwoomOrderManager:
         org_order_no: str,
     ) -> str:
         """Queue an order and return tracked order number once sent."""
+        request_id = self.submit_order_async(
+            rq_name=rq_name,
+            screen_no=screen_no,
+            acc_no=acc_no,
+            order_type=order_type,
+            code=code,
+            qty=qty,
+            price=price,
+            hoga_type=hoga_type,
+            org_order_no=org_order_no,
+        )
+        result = self.wait_for_request_result(request_id, timeout=10.0)
+        if not result:
+            raise RuntimeError("order send timeout")
+        if result.get("status") == "failed":
+            raise RuntimeError(str(result.get("error", "SendOrder failed")))
+        order_no = result.get("order_no")
+        if not order_no:
+            raise RuntimeError("order send timeout")
+        return str(order_no)
+
+    def submit_order_async(
+        self,
+        rq_name: str,
+        screen_no: str,
+        acc_no: str,
+        order_type: int,
+        code: str,
+        qty: int,
+        price: int,
+        hoga_type: str,
+        org_order_no: str,
+    ) -> str:
+        """Queue an order and return request id immediately."""
         rq_name = _validate_non_empty(rq_name, "rq_name")
         screen_no = _validate_screen_no(screen_no)
         acc_no = _validate_non_empty(acc_no, "acc_no")
@@ -162,9 +202,21 @@ class KiwoomOrderManager:
                 org_order_no=org_order_no,
             )
 
+        request_id = self._next_request_id()
         done_event = threading.Event()
-        result_holder: Dict[str, Any] = {}
+        result_holder: Dict[str, Any] = {"request_id": request_id}
+        now = time.time()
+        with self._lock:
+            self._request_events[request_id] = done_event
+            self._request_results[request_id] = {
+                "request_id": request_id,
+                "status": "queued",
+                "created_at": now,
+                "updated_at": now,
+            }
+            self._cleanup_request_results()
         task = _OrderTask(
+            request_id=request_id,
             rq_name=rq_name,
             api_rq_name=self._next_api_rq_name(rq_name),
             screen_no=screen_no,
@@ -180,13 +232,22 @@ class KiwoomOrderManager:
             result_holder=result_holder,
         )
         self._queue.put(task)
-        done_event.wait(timeout=10.0)
+        return request_id
 
-        if "error" in result_holder:
-            raise RuntimeError(result_holder["error"])
-        if "order_no" not in result_holder:
-            raise RuntimeError("order send timeout")
-        return result_holder["order_no"]
+    def get_request_result(self, request_id: str) -> Optional[Dict[str, Any]]:
+        with self._lock:
+            result = self._request_results.get(request_id)
+            if result is None:
+                return None
+            return dict(result)
+
+    def wait_for_request_result(self, request_id: str, timeout: float = 10.0) -> Optional[Dict[str, Any]]:
+        with self._lock:
+            event = self._request_events.get(request_id)
+        if event is None:
+            return self.get_request_result(request_id)
+        event.wait(timeout=timeout)
+        return self.get_request_result(request_id)
 
     def cancel_open_orders(self) -> int:
         with self._lock:
@@ -245,6 +306,24 @@ class KiwoomOrderManager:
         with self._lock:
             self._rq_counter += 1
             return f"{rq_name}#{self._rq_counter}"
+
+    def _next_request_id(self) -> str:
+        with self._lock:
+            self._request_counter += 1
+            return f"req-{self._request_counter:08d}"
+
+    def _cleanup_request_results(self) -> None:
+        if self._request_result_ttl_seconds <= 0:
+            return
+        now = time.time()
+        stale_ids = []
+        for request_id, result in self._request_results.items():
+            updated_at = float(result.get("updated_at", result.get("created_at", now)))
+            if now - updated_at > self._request_result_ttl_seconds:
+                stale_ids.append(request_id)
+        for request_id in stale_ids:
+            self._request_results.pop(request_id, None)
+            self._request_events.pop(request_id, None)
 
     def _cleanup_history(self) -> None:
         if not self.order_history:
@@ -308,6 +387,16 @@ class KiwoomOrderManager:
 
                 if isinstance(ret, int) and ret < 0:
                     task.result_holder["error"] = f"SendOrder failed: {ret}"
+                    now = time.time()
+                    with self._lock:
+                        self._request_results[task.request_id] = {
+                            "request_id": task.request_id,
+                            "status": "failed",
+                            "error": f"SendOrder failed: {ret}",
+                            "created_at": self._request_results.get(task.request_id, {}).get("created_at", now),
+                            "updated_at": now,
+                        }
+                        self._cleanup_request_results()
                     if self._safety_manager is not None:
                         self._safety_manager.on_order_submit(
                             rq_name=task.rq_name,
@@ -348,7 +437,17 @@ class KiwoomOrderManager:
                 with self._lock:
                     self.order_history[order_no] = order
                     self._order_by_rq_name[task.api_rq_name] = order_no
+                    now = time.time()
+                    self._request_results[task.request_id] = {
+                        "request_id": task.request_id,
+                        "status": "sent",
+                        "order_no": order_no,
+                        "api_rq_name": task.api_rq_name,
+                        "created_at": self._request_results.get(task.request_id, {}).get("created_at", now),
+                        "updated_at": now,
+                    }
                     self._cleanup_history()
+                    self._cleanup_request_results()
                 if self._safety_manager is not None:
                     self._safety_manager.on_order_submit(
                         rq_name=task.rq_name,
@@ -366,6 +465,16 @@ class KiwoomOrderManager:
                 task.done_event.set()
             except Exception as exc:  # pragma: no cover
                 task.result_holder["error"] = str(exc)
+                now = time.time()
+                with self._lock:
+                    self._request_results[task.request_id] = {
+                        "request_id": task.request_id,
+                        "status": "failed",
+                        "error": str(exc),
+                        "created_at": self._request_results.get(task.request_id, {}).get("created_at", now),
+                        "updated_at": now,
+                    }
+                    self._cleanup_request_results()
                 task.done_event.set()
             finally:
                 self._queue.task_done()
