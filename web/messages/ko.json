@@ -134,6 +134,7 @@
     "ticker": "종목코드",
     "name": "종목명",
     "price": "가격",
+    "actions": "작업",
     "match": "매치",
     "details": "상세",
     "noConditions": "표시할 조건이 없습니다",
