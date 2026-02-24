@@ -1212,6 +1212,722 @@
         "min_roa_pct": "최소 ROA %"
       },
       "help": "ROA 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "overnight_return_filter": {
+      "label": "오버나이트 수익률 필터",
+      "desc": "오버나이트 수익률 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_overnight_return_pct": "최소 오버나이트 수익률 비율 %"
+      },
+      "help": "오버나이트 수익률 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "distance_from_52w_low": {
+      "label": "괴리 From 52w 저점",
+      "desc": "괴리 From 52w 저점 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_distance_pct": "최대 괴리 비율 %"
+      },
+      "help": "괴리 From 52w 저점 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "distance_from_200d_high": {
+      "label": "괴리 From 200d 고점",
+      "desc": "괴리 From 200d 고점 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_distance_pct": "최대 괴리 비율 %"
+      },
+      "help": "괴리 From 200d 고점 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "gap_up_breakaway": {
+      "label": "Gap Up Breakaway",
+      "desc": "Gap Up Breakaway 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_gap_pct": "최소 gap 비율 %"
+      },
+      "help": "Gap Up Breakaway 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "gap_down_exhaustion": {
+      "label": "Gap Down Exhaustion",
+      "desc": "Gap Down Exhaustion 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_gap_down_pct": "최소 gap down 비율 %"
+      },
+      "help": "Gap Down Exhaustion 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "opening_range_breakout": {
+      "label": "Opening Range 돌파",
+      "desc": "Opening Range 돌파 조건으로 종목을 필터링합니다.",
+      "params": {
+        "direction": "direction"
+      },
+      "help": "Opening Range 돌파 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "pivot_point_breakout": {
+      "label": "Pivot Point 돌파",
+      "desc": "Pivot Point 돌파 조건으로 종목을 필터링합니다.",
+      "params": {
+        "direction": "direction"
+      },
+      "help": "Pivot Point 돌파 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "month_of_year_seasonality": {
+      "label": "월 Of 년 Seasonality",
+      "desc": "월 Of 년 Seasonality 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_avg_return_pct": "최소 avg 수익률 비율 %",
+        "target_month": "target 월"
+      },
+      "help": "월 Of 년 Seasonality 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "turn_of_month_effect": {
+      "label": "Turn Of 월 Effect",
+      "desc": "Turn Of 월 Effect 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_avg_return_pct": "최소 avg 수익률 비율 %",
+        "window_days": "윈도우 일수"
+      },
+      "help": "Turn Of 월 Effect 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "day_of_week_seasonality": {
+      "label": "일 Of 주 Seasonality",
+      "desc": "일 Of 주 Seasonality 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_avg_return_pct": "최소 avg 수익률 비율 %",
+        "target_weekday": "target weekday"
+      },
+      "help": "일 Of 주 Seasonality 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "net_share_issuance_filter": {
+      "label": "순 주식 발행 필터",
+      "desc": "순 주식 발행 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_issuance_pct": "최대 발행 비율 %"
+      },
+      "help": "순 주식 발행 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "insider_net_buying": {
+      "label": "Insider 순 Buying",
+      "desc": "Insider 순 Buying 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_net_buying_pct": "최소 순 buying 비율 %"
+      },
+      "help": "Insider 순 Buying 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "short_float_pct_filter": {
+      "label": "Short Float Pct 필터",
+      "desc": "Short Float Pct 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_short_float_pct": "최대 short float 비율 %"
+      },
+      "help": "Short Float Pct 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "short_interest_ratio_filter": {
+      "label": "Short 이자 비율 필터",
+      "desc": "Short 이자 비율 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_ratio": "최대 비율"
+      },
+      "help": "Short 이자 비율 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "earnings_surprise_filter": {
+      "label": "실적 서프라이즈 필터",
+      "desc": "실적 서프라이즈 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_surprise_pct": "최소 서프라이즈 비율 %"
+      },
+      "help": "실적 서프라이즈 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "post_earnings_drift": {
+      "label": "사후 실적 Drift",
+      "desc": "사후 실적 Drift 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_return_pct": "최소 수익률 비율 %"
+      },
+      "help": "사후 실적 Drift 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "pre_earnings_drift": {
+      "label": "사전 실적 Drift",
+      "desc": "사전 실적 Drift 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_return_pct": "최소 수익률 비율 %"
+      },
+      "help": "사전 실적 Drift 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "accruals_ratio": {
+      "label": "Accruals 비율",
+      "desc": "Accruals 비율 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_ratio": "최대 비율"
+      },
+      "help": "Accruals 비율 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "asset_growth_rate": {
+      "label": "자산 성장률 Rate",
+      "desc": "자산 성장률 Rate 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_growth_pct": "최대 성장률 비율 %"
+      },
+      "help": "자산 성장률 Rate 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "momentum_12_1": {
+      "label": "모멘텀 12 1",
+      "desc": "모멘텀 12 1 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_months": "조회기간 개월",
+        "min_return_pct": "최소 수익률 비율 %",
+        "skip_recent_months": "skip recent 개월"
+      },
+      "help": "모멘텀 12 1 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "volatility_n_day": {
+      "label": "변동성 N 일",
+      "desc": "변동성 N 일 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_annualized_vol_pct": "최대 annualized vol 비율 %"
+      },
+      "help": "변동성 N 일 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "distance_from_52w_high": {
+      "label": "괴리 From 52w 고점",
+      "desc": "괴리 From 52w 고점 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_distance_pct": "최대 괴리 비율 %"
+      },
+      "help": "괴리 From 52w 고점 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "relative_strength_vs_benchmark": {
+      "label": "Relative Strength Vs Benchmark",
+      "desc": "Relative Strength Vs Benchmark 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_excess_return_pct": "최소 excess 수익률 비율 %"
+      },
+      "help": "Relative Strength Vs Benchmark 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "adx_trend_strength": {
+      "label": "ADX 추세 Strength",
+      "desc": "ADX 추세 Strength 조건으로 종목을 필터링합니다.",
+      "params": {
+        "di_direction": "di direction",
+        "min_adx": "최소 ADX",
+        "period": "기간"
+      },
+      "help": "ADX 추세 Strength 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ma_ribbon_alignment": {
+      "label": "Ma Ribbon Alignment",
+      "desc": "Ma Ribbon Alignment 조건으로 종목을 필터링합니다.",
+      "params": {
+        "long_period": "long 기간",
+        "mid_period": "mid 기간",
+        "short_period": "short 기간"
+      },
+      "help": "Ma Ribbon Alignment 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "golden_cross_50_200": {
+      "label": "Golden Cross 50 200",
+      "desc": "Golden Cross 50 200 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수"
+      },
+      "help": "Golden Cross 50 200 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "death_cross_50_200": {
+      "label": "Death Cross 50 200",
+      "desc": "Death Cross 50 200 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수"
+      },
+      "help": "Death Cross 50 200 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "donchian_channel_breakout": {
+      "label": "Donchian Channel 돌파",
+      "desc": "Donchian Channel 돌파 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수"
+      },
+      "help": "Donchian Channel 돌파 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "keltner_channel_breakout": {
+      "label": "Keltner Channel 돌파",
+      "desc": "Keltner Channel 돌파 조건으로 종목을 필터링합니다.",
+      "params": {
+        "atr_multiplier": "ATR multiplier",
+        "atr_period": "ATR 기간",
+        "ema_period": "ema 기간"
+      },
+      "help": "Keltner Channel 돌파 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "parabolic_sar_flip": {
+      "label": "Parabolic Sar Flip",
+      "desc": "Parabolic Sar Flip 조건으로 종목을 필터링합니다.",
+      "params": {
+        "af_max": "af max",
+        "af_step": "af step",
+        "lookback_days": "조회기간 일수"
+      },
+      "help": "Parabolic Sar Flip 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "linear_regression_slope_filter": {
+      "label": "Linear Regression Slope 필터",
+      "desc": "Linear Regression Slope 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_slope": "최소 slope"
+      },
+      "help": "Linear Regression Slope 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "linear_regression_angle_filter": {
+      "label": "Linear Regression Angle 필터",
+      "desc": "Linear Regression Angle 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_angle_deg": "최소 angle deg"
+      },
+      "help": "Linear Regression Angle 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "linear_regression_r2_filter": {
+      "label": "Linear Regression R2 필터",
+      "desc": "Linear Regression R2 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_r2": "최소 r2"
+      },
+      "help": "Linear Regression R2 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "beta_to_benchmark": {
+      "label": "Beta To Benchmark",
+      "desc": "Beta To Benchmark 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_beta": "최대 beta"
+      },
+      "help": "Beta To Benchmark 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "correlation_to_benchmark": {
+      "label": "Correlation To Benchmark",
+      "desc": "Correlation To Benchmark 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_corr": "최대 corr"
+      },
+      "help": "Correlation To Benchmark 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "support_retest_signal": {
+      "label": "Support Retest 신호",
+      "desc": "Support Retest 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "support_lookback": "support 조회기간",
+        "tolerance_pct": "tolerance 비율 %"
+      },
+      "help": "Support Retest 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "resistance_retest_signal": {
+      "label": "Resistance Retest 신호",
+      "desc": "Resistance Retest 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "resistance_lookback": "resistance 조회기간",
+        "tolerance_pct": "tolerance 비율 %"
+      },
+      "help": "Resistance Retest 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "downside_volatility_filter": {
+      "label": "Downside 변동성 필터",
+      "desc": "Downside 변동성 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_downside_vol_pct": "최대 downside vol 비율 %"
+      },
+      "help": "Downside 변동성 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "semivariance_filter": {
+      "label": "Semivariance 필터",
+      "desc": "Semivariance 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_semivariance": "최대 semivariance"
+      },
+      "help": "Semivariance 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "rolling_sharpe_filter": {
+      "label": "Rolling Sharpe 필터",
+      "desc": "Rolling Sharpe 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_sharpe": "최소 sharpe"
+      },
+      "help": "Rolling Sharpe 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "rolling_sortino_filter": {
+      "label": "Rolling Sortino 필터",
+      "desc": "Rolling Sortino 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_sortino": "최소 sortino"
+      },
+      "help": "Rolling Sortino 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ulcer_index_filter": {
+      "label": "Ulcer Index 필터",
+      "desc": "Ulcer Index 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_ulcer_index": "최대 ulcer index"
+      },
+      "help": "Ulcer Index 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "calmar_ratio_filter": {
+      "label": "Calmar 비율 필터",
+      "desc": "Calmar 비율 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_calmar": "최소 calmar"
+      },
+      "help": "Calmar 비율 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "max_drawdown_window_filter": {
+      "label": "Max Drawdown Window 필터",
+      "desc": "Max Drawdown Window 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_drawdown_pct": "최대 drawdown 비율 %"
+      },
+      "help": "Max Drawdown Window 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "return_skewness_filter": {
+      "label": "수익률 Skewness 필터",
+      "desc": "수익률 Skewness 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_skewness": "최소 skewness"
+      },
+      "help": "수익률 Skewness 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "return_kurtosis_filter": {
+      "label": "수익률 Kurtosis 필터",
+      "desc": "수익률 Kurtosis 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "max_kurtosis": "최대 kurtosis"
+      },
+      "help": "수익률 Kurtosis 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "intraday_return_filter": {
+      "label": "Intraday 수익률 필터",
+      "desc": "Intraday 수익률 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_intraday_return_pct": "최소 intraday 수익률 비율 %"
+      },
+      "help": "Intraday 수익률 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "dso_trend_filter": {
+      "label": "Dso 추세 필터",
+      "desc": "Dso 추세 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_years": "조회기간 연수",
+        "min_dso_increase_pct": "최소 dso increase 비율 %"
+      },
+      "help": "Dso 추세 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ema_cross": {
+      "label": "Ema Cross",
+      "desc": "Ema Cross 조건으로 종목을 필터링합니다.",
+      "params": {
+        "direction": "direction",
+        "fast_period": "fast 기간",
+        "lookback_days": "조회기간 일수",
+        "slow_period": "slow 기간"
+      },
+      "help": "Ema Cross 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ema_slope": {
+      "label": "Ema Slope",
+      "desc": "Ema Slope 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_slope_pct": "최소 slope 비율 %",
+        "period": "기간"
+      },
+      "help": "Ema Slope 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "sma_slope": {
+      "label": "Sma Slope",
+      "desc": "Sma Slope 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_slope_pct": "최소 slope 비율 %",
+        "period": "기간"
+      },
+      "help": "Sma Slope 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "macd_signal_cross": {
+      "label": "MACD 신호 Cross",
+      "desc": "MACD 신호 Cross 조건으로 종목을 필터링합니다.",
+      "params": {
+        "direction": "direction",
+        "fast_period": "fast 기간",
+        "lookback_days": "조회기간 일수",
+        "signal_period": "신호 기간",
+        "slow_period": "slow 기간"
+      },
+      "help": "MACD 신호 Cross 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "macd_histogram_slope": {
+      "label": "MACD Histogram Slope",
+      "desc": "MACD Histogram Slope 조건으로 종목을 필터링합니다.",
+      "params": {
+        "fast_period": "fast 기간",
+        "lookback_days": "조회기간 일수",
+        "min_slope": "최소 slope",
+        "signal_period": "신호 기간",
+        "slow_period": "slow 기간"
+      },
+      "help": "MACD Histogram Slope 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "cci_overbought_oversold": {
+      "label": "CCI Overbought Oversold",
+      "desc": "CCI Overbought Oversold 조건으로 종목을 필터링합니다.",
+      "params": {
+        "mode": "mode",
+        "period": "기간",
+        "threshold": "임계값"
+      },
+      "help": "CCI Overbought Oversold 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "williams_r_reversal": {
+      "label": "Williams R Reversal",
+      "desc": "Williams R Reversal 조건으로 종목을 필터링합니다.",
+      "params": {
+        "direction": "direction",
+        "overbought": "overbought",
+        "oversold": "oversold",
+        "period": "기간"
+      },
+      "help": "Williams R Reversal 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "trix_cross": {
+      "label": "Trix Cross",
+      "desc": "Trix Cross 조건으로 종목을 필터링합니다.",
+      "params": {
+        "direction": "direction",
+        "lookback_days": "조회기간 일수",
+        "period": "기간",
+        "signal_period": "신호 기간"
+      },
+      "help": "Trix Cross 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "aroon_trend_signal": {
+      "label": "Aroon 추세 신호",
+      "desc": "Aroon 추세 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "direction": "direction",
+        "min_aroon": "최소 aroon",
+        "period": "기간"
+      },
+      "help": "Aroon 추세 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "money_flow_index_signal": {
+      "label": "Money 흐름 Index 신호",
+      "desc": "Money 흐름 Index 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "mode": "mode",
+        "overbought": "overbought",
+        "oversold": "oversold",
+        "period": "기간"
+      },
+      "help": "Money 흐름 Index 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "vwap_cross_signal": {
+      "label": "Vwap Cross 신호",
+      "desc": "Vwap Cross 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "period": "기간"
+      },
+      "help": "Vwap Cross 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "vwap_distance_pct": {
+      "label": "Vwap 괴리 Pct",
+      "desc": "Vwap 괴리 Pct 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_distance_pct": "최대 괴리 비율 %",
+        "period": "기간"
+      },
+      "help": "Vwap 괴리 Pct 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "relative_volume_percentile": {
+      "label": "Relative 거래량 Percentile",
+      "desc": "Relative 거래량 Percentile 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "min_percentile": "최소 percentile"
+      },
+      "help": "Relative 거래량 Percentile 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "turnover_ratio_min": {
+      "label": "회전율 비율 Min",
+      "desc": "회전율 비율 Min 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_turnover_ratio": "최소 회전율 비율"
+      },
+      "help": "회전율 비율 Min 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "atr_percentile_filter": {
+      "label": "ATR Percentile 필터",
+      "desc": "ATR Percentile 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "atr_period": "ATR 기간",
+        "lookback_days": "조회기간 일수",
+        "max_percentile": "최대 percentile"
+      },
+      "help": "ATR Percentile 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "atr_expansion_breakout": {
+      "label": "ATR Expansion 돌파",
+      "desc": "ATR Expansion 돌파 조건으로 종목을 필터링합니다.",
+      "params": {
+        "atr_multiplier": "ATR multiplier",
+        "atr_period": "ATR 기간",
+        "breakout_lookback": "돌파 조회기간"
+      },
+      "help": "ATR Expansion 돌파 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "natr_filter": {
+      "label": "Natr 필터",
+      "desc": "Natr 필터 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_natr_pct": "최대 natr 비율 %",
+        "period": "기간"
+      },
+      "help": "Natr 필터 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "dmi_directional_cross": {
+      "label": "Dmi Directional Cross",
+      "desc": "Dmi Directional Cross 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수",
+        "period": "기간"
+      },
+      "help": "Dmi Directional Cross 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ichimoku_cloud_breakout": {
+      "label": "Ichimoku Cloud 돌파",
+      "desc": "Ichimoku Cloud 돌파 조건으로 종목을 필터링합니다.",
+      "params": {
+        "base_period": "base 기간",
+        "conversion_period": "conversion 기간",
+        "span_b_period": "span b 기간"
+      },
+      "help": "Ichimoku Cloud 돌파 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ichimoku_tenkan_kijun_cross": {
+      "label": "Ichimoku Tenkan Kijun Cross",
+      "desc": "Ichimoku Tenkan Kijun Cross 조건으로 종목을 필터링합니다.",
+      "params": {
+        "base_period": "base 기간",
+        "conversion_period": "conversion 기간",
+        "lookback_days": "조회기간 일수"
+      },
+      "help": "Ichimoku Tenkan Kijun Cross 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "bollinger_squeeze_breakout": {
+      "label": "Bollinger Squeeze 돌파",
+      "desc": "Bollinger Squeeze 돌파 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_width_pct": "최대 width 비율 %",
+        "period": "기간",
+        "std_mult": "std mult"
+      },
+      "help": "Bollinger Squeeze 돌파 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "bollinger_percent_b": {
+      "label": "Bollinger Percent B",
+      "desc": "Bollinger Percent B 조건으로 종목을 필터링합니다.",
+      "params": {
+        "max_percent_b": "최대 percent b",
+        "min_percent_b": "최소 percent b",
+        "period": "기간",
+        "std_mult": "std mult"
+      },
+      "help": "Bollinger Percent B 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ppo_signal_cross": {
+      "label": "Ppo 신호 Cross",
+      "desc": "Ppo 신호 Cross 조건으로 종목을 필터링합니다.",
+      "params": {
+        "fast_period": "fast 기간",
+        "lookback_days": "조회기간 일수",
+        "signal_period": "신호 기간",
+        "slow_period": "slow 기간"
+      },
+      "help": "Ppo 신호 Cross 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "stochastic_cross_signal": {
+      "label": "Stochastic Cross 신호",
+      "desc": "Stochastic Cross 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "d_period": "d 기간",
+        "k_period": "k 기간",
+        "lookback_days": "조회기간 일수"
+      },
+      "help": "Stochastic Cross 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "stochrsi_signal": {
+      "label": "Stochrsi 신호",
+      "desc": "Stochrsi 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "mode": "mode",
+        "rsi_period": "RSI 기간",
+        "stoch_period": "stoch 기간"
+      },
+      "help": "Stochrsi 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "aroon_oscillator_signal": {
+      "label": "Aroon Oscillator 신호",
+      "desc": "Aroon Oscillator 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_oscillator": "최소 oscillator",
+        "period": "기간"
+      },
+      "help": "Aroon Oscillator 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ultimate_oscillator_signal": {
+      "label": "Ultimate Oscillator 신호",
+      "desc": "Ultimate Oscillator 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_value": "최소 가치"
+      },
+      "help": "Ultimate Oscillator 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "chaikin_money_flow_signal": {
+      "label": "Chaikin Money 흐름 신호",
+      "desc": "Chaikin Money 흐름 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "min_cmf": "최소 cmf",
+        "period": "기간"
+      },
+      "help": "Chaikin Money 흐름 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "chaikin_oscillator_signal": {
+      "label": "Chaikin Oscillator 신호",
+      "desc": "Chaikin Oscillator 신호 조건으로 종목을 필터링합니다.",
+      "params": {
+        "fast_period": "fast 기간",
+        "min_value": "최소 가치",
+        "slow_period": "slow 기간"
+      },
+      "help": "Chaikin Oscillator 신호 기준값을 만족하는 종목만 통과시킵니다."
+    },
+    "ad_line_trend": {
+      "label": "Ad Line 추세",
+      "desc": "Ad Line 추세 조건으로 종목을 필터링합니다.",
+      "params": {
+        "lookback_days": "조회기간 일수"
+      },
+      "help": "Ad Line 추세 기준값을 만족하는 종목만 통과시킵니다."
     }
   },
   "settings": {

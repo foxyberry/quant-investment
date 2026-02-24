@@ -32,3 +32,6 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
+
+      - name: Verify condition i18n contract
+        run: npm run check:condition-i18n
