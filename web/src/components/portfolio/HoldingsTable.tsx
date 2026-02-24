@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { ArrowUpDown, Edit2, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowUpDown, Edit2, Trash2, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
 import type { Holding } from '@/lib/types';
 import { formatCurrency as formatCurrencyUtil, formatQuantity as formatQuantityUtil, formatPercent as formatPercentUtil } from '@/lib/format';
 
@@ -20,6 +20,8 @@ interface HoldingsTableProps {
   onEdit?: (holding: Holding) => void;
   /** Callback when delete button is clicked */
   onDelete?: (holding: Holding) => void;
+  /** Callback when analysis button is clicked */
+  onAnalyze?: (holding: Holding) => void;
   /** Per-ticker current price change direction for transient highlight */
   priceChangeDirection?: Record<string, 'up' | 'down'>;
 }
@@ -78,6 +80,7 @@ export default function HoldingsTable({
   onRowClick,
   onEdit,
   onDelete,
+  onAnalyze,
   priceChangeDirection,
 }: HoldingsTableProps) {
   const t = useTranslations('portfolio');
@@ -272,6 +275,17 @@ export default function HoldingsTable({
                         <Edit2 className="h-4 w-4" />
                       </button>
                     )}
+                    {onAnalyze && (
+                      <button
+                        type="button"
+                        onClick={() => onAnalyze(holding)}
+                        className="rounded p-1.5 text-[var(--foreground-muted)] hover:bg-[var(--border)] hover:text-[var(--foreground)] transition-colors"
+                        aria-label={`Analyze ${holding.ticker}`}
+                        title={t('openAnalysis')}
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                      </button>
+                    )}
                     {onDelete && (
                       <button
                         type="button"
@@ -298,6 +312,7 @@ export default function HoldingsTable({
             onRowClick={onRowClick}
             onEdit={onEdit}
             onDelete={onDelete}
+            onAnalyze={onAnalyze}
             priceChangeDirection={priceChangeDirection}
           />
         ))}
@@ -311,13 +326,14 @@ interface MobileCardProps {
   onRowClick?: (holding: Holding) => void;
   onEdit?: (holding: Holding) => void;
   onDelete?: (holding: Holding) => void;
+  onAnalyze?: (holding: Holding) => void;
   priceChangeDirection?: Record<string, 'up' | 'down'>;
 }
 
 /**
  * Mobile card component for responsive display
  */
-function MobileCard({ holding, onRowClick, onEdit, onDelete, priceChangeDirection }: MobileCardProps) {
+function MobileCard({ holding, onRowClick, onEdit, onDelete, onAnalyze, priceChangeDirection }: MobileCardProps) {
   const t = useTranslations('portfolio');
   const locale = useLocale();
   const formatCurrency = (value: number | null, currency?: string) => formatCurrencyUtil(value, currency, locale);
@@ -364,6 +380,17 @@ function MobileCard({ holding, onRowClick, onEdit, onDelete, priceChangeDirectio
               aria-label={`Delete ${holding.ticker}`}
             >
               <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+          {onAnalyze && (
+            <button
+              type="button"
+              onClick={() => onAnalyze(holding)}
+              className="rounded p-1.5 text-[var(--foreground-muted)] hover:bg-[var(--border)] hover:text-[var(--foreground)] transition-colors"
+              aria-label={`Analyze ${holding.ticker}`}
+              title={t('openAnalysis')}
+            >
+              <BarChart3 className="h-4 w-4" />
             </button>
           )}
         </div>

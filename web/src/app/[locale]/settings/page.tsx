@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
+import { useEffect, useState } from 'react';
 import { Globe, DollarSign } from 'lucide-react';
 import { useUserSettings } from '@/contexts/UserSettingsContext';
 import { BASE_CURRENCIES, CURRENCY_LABELS } from '@/lib/format';
@@ -17,18 +18,25 @@ const LOCALE_LABELS: Record<string, string> = {
 const LOCALE_SYNC_KEY = 'quant-investment:locale-sync';
 
 export default function SettingsPage() {
+  const tCommon = useTranslations('common');
   const t = useTranslations('settings');
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const { settings, updateBaseCurrency } = useUserSettings();
+  const [selectedLocale, setSelectedLocale] = useState(locale);
 
-  const handleLocaleChange = (newLocale: string) => {
+  useEffect(() => {
+    setSelectedLocale(locale);
+  }, [locale]);
+
+  const handleLocaleSave = () => {
+    if (selectedLocale === locale) return;
     window.localStorage.setItem(
       LOCALE_SYNC_KEY,
-      JSON.stringify({ locale: newLocale })
+      JSON.stringify({ locale: selectedLocale })
     );
-    router.replace(pathname, { locale: newLocale });
+    router.replace(pathname, { locale: selectedLocale });
   };
 
   return (
@@ -57,9 +65,9 @@ export default function SettingsPage() {
                   <button
                     key={loc}
                     type="button"
-                    onClick={() => handleLocaleChange(loc)}
+                    onClick={() => setSelectedLocale(loc)}
                     className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                      locale === loc
+                      selectedLocale === loc
                         ? 'bg-blue-600 text-white'
                         : 'bg-[var(--background)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] border border-[var(--border)]'
                     }`}
@@ -68,6 +76,17 @@ export default function SettingsPage() {
                   </button>
                 ))}
               </div>
+              {selectedLocale !== locale && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={handleLocaleSave}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                  >
+                    {tCommon('save')}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -6,21 +6,48 @@ import type { NodeProps } from '@xyflow/react';
 import { Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
-import NodeEditPopup, { FieldLabel, SelectInput } from './NodeEditPopup';
+import NodeEditPopup, { FieldLabel } from './NodeEditPopup';
 
-const UNIVERSES = ['KOSPI', 'KOSDAQ', 'SP500', 'NASDAQ100'];
+const UNIVERSES = ['KOSPI', 'KOSDAQ', 'SP500', 'NASDAQ100'] as const;
+
+function parseUniverses(value?: string): string[] {
+  if (!value) return ['KOSPI'];
+  const parsed = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item): item is (typeof UNIVERSES)[number] =>
+      (UNIVERSES as readonly string[]).includes(item)
+    );
+  return parsed.length > 0 ? parsed : ['KOSPI'];
+}
+
+function toUniverseValue(values: string[]): string {
+  return values.join(',');
+}
 
 function UniverseNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
   const nodeData = data as unknown as StrategyNodeData;
   const nodeId = useNodeId()!;
   const { updateNodeData, deleteElements } = useReactFlow();
+  const selectedUniverses = parseUniverses(nodeData.universe);
 
-  const handleUniverseChange = useCallback(
+  const handleUniverseToggle = useCallback(
     (value: string) => {
-      updateNodeData(nodeId, { universe: value });
+      const current = parseUniverses(nodeData.universe);
+      const exists = current.includes(value);
+
+      let next: string[];
+      if (exists) {
+        if (current.length === 1) return;
+        next = current.filter((item) => item !== value);
+      } else {
+        next = [...current, value];
+      }
+
+      updateNodeData(nodeId, { universe: toUniverseValue(next) });
     },
-    [nodeId, updateNodeData]
+    [nodeData.universe, nodeId, updateNodeData]
   );
 
   const handleDelete = useCallback(() => {
@@ -48,7 +75,7 @@ function UniverseNode({ data, selected }: NodeProps) {
           {t('marketSelection')}
         </div>
         <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          {t('composite', { universe: nodeData.universe || 'KOSPI' })}
+          {t('composite', { universe: selectedUniverses.join(' + ') })}
         </div>
       </div>
       <Handle
@@ -61,16 +88,22 @@ function UniverseNode({ data, selected }: NodeProps) {
       <NodeEditPopup selected={!!selected} onDelete={handleDelete}>
         <div>
           <FieldLabel>{t('stockUniverse')}</FieldLabel>
-          <SelectInput
-            value={nodeData.universe || 'KOSPI'}
-            onChange={handleUniverseChange}
-          >
-            {UNIVERSES.map((u) => (
-              <option key={u} value={u}>
-                {u}
-              </option>
+          <div className="space-y-2">
+            {UNIVERSES.map((universe) => (
+              <label
+                key={universe}
+                className="flex items-center gap-2.5 rounded-md border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] px-3 py-2 text-sm text-gray-700 dark:text-gray-200"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedUniverses.includes(universe)}
+                  onChange={() => handleUniverseToggle(universe)}
+                  className="rounded border-[#d0d4d9] text-[#1313ec] focus:ring-[#1313ec]/20"
+                />
+                <span>{universe}</span>
+              </label>
             ))}
-          </SelectInput>
+          </div>
         </div>
       </NodeEditPopup>
     </div>

@@ -223,7 +223,6 @@ class ChejanHandler:
         if _STATUS_PRECEDENCE[candidate] >= _STATUS_PRECEDENCE[current]:
             return candidate
         return current
-
     def _get_fid_values(self, required_fids: List[int], requested_fids: Set[int]) -> Dict[int, str]:
         if not requested_fids:
             return {fid: self._get_chejan_data(fid) for fid in required_fids}

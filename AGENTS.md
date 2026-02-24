@@ -23,6 +23,27 @@ Execution workflow is documented in:
   - auto-approval candidates,
   - next-run defaults.
 
+## Issue Lock Rule (Mandatory for Codex)
+- Goal: prevent duplicate agent work on the same issue.
+- On issue start, Codex must immediately:
+  - add `in-progress` label,
+  - add `start` comment including `agent`, `started_at` (UTC), `scope`, `branch`.
+- Before starting implementation, Codex must check:
+  - `in-progress` label exists, and
+  - recent `start` comment from another active agent.
+  - If both are true, stop and pick another issue.
+- On completion, Codex must:
+  - add `done` comment with changed files and verification commands,
+  - remove `in-progress` label.
+
+Recommended commands:
+```bash
+gh issue edit <number> --add-label in-progress
+gh issue comment <number> --body "start: agent=<name>, started_at=<YYYY-MM-DD HH:MM UTC>, scope=<scope>, branch=<branch>"
+gh issue comment <number> --body "done: files=<...>, verify=<...>"
+gh issue edit <number> --remove-label in-progress
+```
+
 ## Auto-Execution Defaults
 - PR completion:
   - After Codex self-review `LGTM` and passing validations, execute squash merge immediately.
