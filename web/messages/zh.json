@@ -304,6 +304,7 @@
     "sectorSelection": "行业 / 产业",
     "sectorStockCount": "行业内 {count} 只股票",
     "sectorInstruction": "点击选择行业",
+    "sectorUnavailableForUniverse": "行业筛选目前仅支持单一韩国市场（KOSPI 或 KOSDAQ）。当前选择：{universe}",
     "loadingSectors": "正在加载行业列表...",
     "marketSelection": "市场选择",
     "composite": "{universe} 综合",

@@ -1,5 +1,8 @@
 import type { Node, Edge } from '@xyflow/react';
 
+export const SUPPORTED_UNIVERSES = ['KOSPI', 'KOSDAQ', 'SP500', 'NASDAQ100'] as const;
+export type SupportedUniverse = (typeof SUPPORTED_UNIVERSES)[number];
+
 export interface StrategyNodeData extends Record<string, unknown> {
   node_type: 'universe' | 'condition' | 'logic' | 'output' | 'sector';
   condition_type?: string;
@@ -11,6 +14,36 @@ export interface StrategyNodeData extends Record<string, unknown> {
   resultCount?: number;
   child_node_ids?: string[];
   intermediateResult?: import('@/lib/api').NodeIntermediateResult;
+}
+
+export function parseUniverseSelection(value?: string): SupportedUniverse[] {
+  if (!value) return ['KOSPI'];
+  const parsed = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(
+      (item): item is SupportedUniverse =>
+        (SUPPORTED_UNIVERSES as readonly string[]).includes(item)
+    );
+  return parsed.length > 0 ? Array.from(new Set(parsed)) : ['KOSPI'];
+}
+
+export function serializeUniverseSelection(values: string[]): string {
+  return values.join(',');
+}
+
+export function resolveSectorMarket(
+  universes: readonly string[]
+): 'KOSPI' | 'KOSDAQ' | null {
+  if (universes.length === 0) return 'KOSPI';
+  const selected = new Set(universes);
+  const hasKorean = selected.has('KOSPI') || selected.has('KOSDAQ');
+  const hasUS = selected.has('SP500') || selected.has('NASDAQ100');
+  if (hasUS) return null;
+  if (selected.has('KOSPI') && selected.has('KOSDAQ')) return null;
+  if (selected.has('KOSDAQ')) return 'KOSDAQ';
+  if (hasKorean) return 'KOSPI';
+  return null;
 }
 
 export interface StrategyNode {

@@ -5,39 +5,28 @@ import { Handle, Position, useNodeId, useReactFlow } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { Globe } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
+import {
+  SUPPORTED_UNIVERSES,
+  parseUniverseSelection,
+  serializeUniverseSelection,
+  type SupportedUniverse,
+  type StrategyNodeData,
+} from '@/lib/strategy/graphSerializer';
 import NodeEditPopup, { FieldLabel } from './NodeEditPopup';
-
-const UNIVERSES = ['KOSPI', 'KOSDAQ', 'SP500', 'NASDAQ100'] as const;
-
-function parseUniverses(value?: string): string[] {
-  if (!value) return ['KOSPI'];
-  const parsed = value
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item): item is (typeof UNIVERSES)[number] =>
-      (UNIVERSES as readonly string[]).includes(item)
-    );
-  return parsed.length > 0 ? parsed : ['KOSPI'];
-}
-
-function toUniverseValue(values: string[]): string {
-  return values.join(',');
-}
 
 function UniverseNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
   const nodeData = data as unknown as StrategyNodeData;
   const nodeId = useNodeId()!;
   const { updateNodeData, deleteElements } = useReactFlow();
-  const selectedUniverses = parseUniverses(nodeData.universe);
+  const selectedUniverses = parseUniverseSelection(nodeData.universe);
 
   const handleUniverseToggle = useCallback(
-    (value: string) => {
-      const current = parseUniverses(nodeData.universe);
+    (value: SupportedUniverse) => {
+      const current = parseUniverseSelection(nodeData.universe);
       const exists = current.includes(value);
 
-      let next: string[];
+      let next: SupportedUniverse[];
       if (exists) {
         if (current.length === 1) return;
         next = current.filter((item) => item !== value);
@@ -45,7 +34,7 @@ function UniverseNode({ data, selected }: NodeProps) {
         next = [...current, value];
       }
 
-      updateNodeData(nodeId, { universe: toUniverseValue(next) });
+      updateNodeData(nodeId, { universe: serializeUniverseSelection(next) });
     },
     [nodeData.universe, nodeId, updateNodeData]
   );
@@ -89,7 +78,7 @@ function UniverseNode({ data, selected }: NodeProps) {
         <div>
           <FieldLabel>{t('stockUniverse')}</FieldLabel>
           <div className="space-y-2">
-            {UNIVERSES.map((universe) => (
+            {SUPPORTED_UNIVERSES.map((universe) => (
               <label
                 key={universe}
                 className="flex items-center gap-2.5 rounded-md border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] px-3 py-2 text-sm text-gray-700 dark:text-gray-200"

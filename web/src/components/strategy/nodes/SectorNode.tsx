@@ -1,11 +1,15 @@
 'use client';
 
-import { memo, useCallback, useState, useEffect } from 'react';
-import { Handle, Position, useNodeId, useReactFlow } from '@xyflow/react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { Handle, Position, useNodeId, useReactFlow, useStore } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import { Building2, Loader2 } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
+import {
+  parseUniverseSelection,
+  resolveSectorMarket,
+  type StrategyNodeData,
+} from '@/lib/strategy/graphSerializer';
 import { getSectors, type SectorInfo } from '@/lib/api';
 import NodeEditPopup, { FieldLabel, SelectInput } from './NodeEditPopup';
 
@@ -14,23 +18,44 @@ function SectorNode({ data, selected }: NodeProps) {
   const nodeData = data as unknown as StrategyNodeData;
   const nodeId = useNodeId()!;
   const { updateNodeData, deleteElements } = useReactFlow();
+  const nodes = useStore((state) => state.nodes);
 
   const [sectors, setSectors] = useState<SectorInfo[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch sectors for the current market (KOSPI/KOSDAQ)
+  const selectedUniverses = useMemo(() => {
+    const universeNode = nodes.find((n) => {
+      const d = n.data as unknown as StrategyNodeData;
+      return d.node_type === 'universe';
+    });
+    const universeData = (universeNode?.data as StrategyNodeData | undefined)?.universe;
+    return parseUniverseSelection(universeData);
+  }, [nodes]);
+
+  const sectorMarket = useMemo(
+    () => resolveSectorMarket(selectedUniverses),
+    [selectedUniverses]
+  );
+  const isSectorSupported = sectorMarket !== null;
+
+  // Fetch sectors based on current universe selection.
   useEffect(() => {
     let cancelled = false;
-    getSectors('KOSPI')
+    if (!sectorMarket) return () => { cancelled = true; };
+    getSectors(sectorMarket)
       .then((res) => {
         if (!cancelled) setSectors(res.sectors);
       })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+      .catch(() => {
+        if (!cancelled) setSectors([]);
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [sectorMarket]);
+
+  useEffect(() => {
+    if (!sectorMarket && nodeData.sector) {
+      updateNodeData(nodeId, { sector: '' });
+    }
+  }, [nodeData.sector, nodeId, sectorMarket, updateNodeData]);
 
   const handleSectorChange = useCallback(
     (value: string) => {
@@ -73,7 +98,9 @@ function SectorNode({ data, selected }: NodeProps) {
         )}
         {!selectedSector && (
           <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            {t('sectorInstruction')}
+            {sectorMarket
+              ? t('sectorInstruction')
+              : t('sectorUnavailableForUniverse', { universe: selectedUniverses.join(' + ') })}
           </div>
         )}
       </div>
@@ -93,10 +120,9 @@ function SectorNode({ data, selected }: NodeProps) {
       <NodeEditPopup selected={!!selected} onDelete={handleDelete}>
         <div>
           <FieldLabel>{t('sectorSelection')}</FieldLabel>
-          {loading ? (
-            <div className="flex items-center gap-2 py-2 text-xs text-gray-400">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              {t('loadingSectors')}
+          {!isSectorSupported ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-200">
+              {t('sectorUnavailableForUniverse', { universe: selectedUniverses.join(' + ') })}
             </div>
           ) : (
             <SelectInput

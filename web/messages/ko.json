@@ -304,6 +304,7 @@
     "sectorSelection": "업종 / 산업",
     "sectorStockCount": "업종 내 {count}개 종목",
     "sectorInstruction": "클릭하여 업종을 선택하세요",
+    "sectorUnavailableForUniverse": "업종 필터는 현재 한국 단일 시장(KOSPI 또는 KOSDAQ)에서만 지원됩니다. 현재 선택: {universe}",
     "loadingSectors": "업종 목록 로딩 중...",
     "marketSelection": "시장 선택",
     "composite": "{universe} 종합",

@@ -304,6 +304,7 @@
     "sectorSelection": "Sector / Industry",
     "sectorStockCount": "{count} stocks in sector",
     "sectorInstruction": "Click to select a sector",
+    "sectorUnavailableForUniverse": "Sector filtering currently supports only a single Korean market (KOSPI or KOSDAQ). Current selection: {universe}",
     "loadingSectors": "Loading sectors...",
     "marketSelection": "Market Selection",
     "composite": "{universe} Composite",
