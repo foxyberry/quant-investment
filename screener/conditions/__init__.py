@@ -141,6 +141,19 @@ from .quant_indicators import (
     IchimokuTenkanKijunCrossCondition,
 )
 
+from .quant_statistical import (
+    ParabolicSARFlipCondition,
+    LinearRegressionSlopeFilterCondition,
+    LinearRegressionAngleFilterCondition,
+    LinearRegressionR2FilterCondition,
+    BetaToBenchmarkCondition,
+    CorrelationToBenchmarkCondition,
+    SupportRetestSignalCondition,
+    ResistanceRetestSignalCondition,
+    AnalystRevision1MCondition,
+    AnalystRevision3MCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -251,6 +264,13 @@ __all__ = [
     'ATRPercentileFilterCondition', 'ATRExpansionBreakoutCondition',
     'NATRFilterCondition', 'DMIDirectionalCrossCondition',
     'IchimokuCloudBreakoutCondition', 'IchimokuTenkanKijunCrossCondition',
+
+    # Quant Statistical Batch 7
+    'ParabolicSARFlipCondition', 'LinearRegressionSlopeFilterCondition',
+    'LinearRegressionAngleFilterCondition', 'LinearRegressionR2FilterCondition',
+    'BetaToBenchmarkCondition', 'CorrelationToBenchmarkCondition',
+    'SupportRetestSignalCondition', 'ResistanceRetestSignalCondition',
+    'AnalystRevision1MCondition', 'AnalystRevision3MCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
