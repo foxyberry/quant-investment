@@ -976,337 +976,460 @@
     },
     "analyst_revision_1m": {
       "label": "애널리스트 추정치 1개월 수정률",
-      "desc": "애널리스트 추정치 1개월 수정률 조건으로 종목을 필터링합니다.",
+      "desc": "애널리스트 추정치 1개월 수정률 이벤트/계절성 조건",
       "params": {
         "min_revision_pct": "최소 수정률 %"
       },
-      "help": "애널리스트 추정치 1개월 수정률 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "애널리스트 추정치 1개월 수정률 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "실적 시즌·캘린더 효과처럼 이벤트 영향이 큰 구간에서 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "이벤트 효과는 시장 구조 변화로 빠르게 약해질 수 있습니다."
     },
     "analyst_revision_3m": {
       "label": "애널리스트 추정치 3개월 수정률",
-      "desc": "애널리스트 추정치 3개월 수정률 조건으로 종목을 필터링합니다.",
+      "desc": "애널리스트 추정치 3개월 수정률 이벤트/계절성 조건",
       "params": {
         "min_revision_pct": "최소 수정률 %"
       },
-      "help": "애널리스트 추정치 3개월 수정률 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "애널리스트 추정치 3개월 수정률 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "실적 시즌·캘린더 효과처럼 이벤트 영향이 큰 구간에서 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "이벤트 효과는 시장 구조 변화로 빠르게 약해질 수 있습니다."
     },
     "asset_turnover_ratio": {
       "label": "총자산회전율",
-      "desc": "총자산회전율 조건으로 종목을 필터링합니다.",
+      "desc": "총자산회전율 펀더멘털 조건",
       "params": {
         "min_ratio": "최소 비율"
       },
-      "help": "총자산회전율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "총자산회전율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "book_to_market_ratio": {
       "label": "장부가치 대비 시가총액 비율",
-      "desc": "장부가치 대비 시가총액 비율 조건으로 종목을 필터링합니다.",
+      "desc": "장부가치 대비 시가총액 비율 펀더멘털 조건",
       "params": {
         "min_ratio": "최소 비율"
       },
-      "help": "장부가치 대비 시가총액 비율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "장부가치 대비 시가총액 비율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "buyback_yield_filter": {
       "label": "자사주 매입 수익률",
-      "desc": "자사주 매입 수익률 조건으로 종목을 필터링합니다.",
+      "desc": "자사주 매입 수익률 펀더멘털 조건",
       "params": {
         "min_yield_pct": "최소 수익률 %"
       },
-      "help": "자사주 매입 수익률 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "자사주 매입 수익률 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "cash_conversion_ratio": {
       "label": "현금전환비율",
-      "desc": "현금전환비율 조건으로 종목을 필터링합니다.",
+      "desc": "현금전환비율 오실레이터 조건",
       "params": {
         "min_ratio": "최소 비율"
       },
-      "help": "현금전환비율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "현금전환비율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "과열/과매도 구간에서 단기 타이밍을 잡을 때 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "강한 추세장에서는 과열·과매도 상태가 오래 유지될 수 있습니다."
     },
     "cashflow_to_debt_ratio": {
       "label": "영업현금흐름 대비 부채비율",
-      "desc": "영업현금흐름 대비 부채비율 조건으로 종목을 필터링합니다.",
+      "desc": "영업현금흐름 대비 부채비율 펀더멘털 조건",
       "params": {
         "min_ratio": "최소 비율"
       },
-      "help": "영업현금흐름 대비 부채비율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "영업현금흐름 대비 부채비율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "debt_service_coverage_ratio": {
       "label": "채무상환커버리지비율",
-      "desc": "채무상환커버리지비율 조건으로 종목을 필터링합니다.",
+      "desc": "채무상환커버리지비율 펀더멘털 조건",
       "params": {
         "min_ratio": "최소 비율"
       },
-      "help": "채무상환커버리지비율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "채무상환커버리지비율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "dividend_growth_5y": {
       "label": "5년 배당 성장률",
-      "desc": "5년 배당 성장률 조건으로 종목을 필터링합니다.",
+      "desc": "5년 배당 성장률 펀더멘털 조건",
       "params": {
         "min_growth_pct": "최소 성장률 %"
       },
-      "help": "5년 배당 성장률 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "5년 배당 성장률 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "earnings_stability_score": {
       "label": "이익 안정성 점수",
-      "desc": "이익 안정성 점수 조건으로 종목을 필터링합니다.",
+      "desc": "이익 안정성 점수 펀더멘털 조건",
       "params": {
         "lookback_years": "조회 연수",
         "max_cv": "최대 변동계수"
       },
-      "help": "이익 안정성 점수 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "이익 안정성 점수 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "eps_cagr_3y": {
       "label": "EPS 3년 CAGR",
-      "desc": "EPS 3년 CAGR 조건으로 종목을 필터링합니다.",
+      "desc": "EPS 3년 CAGR 펀더멘털 조건",
       "params": {
         "min_cagr_pct": "최소 CAGR %"
       },
-      "help": "EPS 3년 CAGR 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "EPS 3년 CAGR 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "eps_growth_yoy": {
       "label": "EPS 전년 대비 성장률",
-      "desc": "EPS 전년 대비 성장률 조건으로 종목을 필터링합니다.",
+      "desc": "EPS 전년 대비 성장률 펀더멘털 조건",
       "params": {
         "min_growth_pct": "최소 성장률 %"
       },
-      "help": "EPS 전년 대비 성장률 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "EPS 전년 대비 성장률 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "ev_to_ebitda_ratio": {
       "label": "EV/EBITDA 비율",
-      "desc": "EV/EBITDA 비율 조건으로 종목을 필터링합니다.",
+      "desc": "EV/EBITDA 비율 펀더멘털 조건",
       "params": {
         "max_ratio": "최대 비율"
       },
-      "help": "EV/EBITDA 비율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "EV/EBITDA 비율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "ev_to_sales_ratio": {
       "label": "EV/매출 비율",
-      "desc": "EV/매출 비율 조건으로 종목을 필터링합니다.",
+      "desc": "EV/매출 비율 펀더멘털 조건",
       "params": {
         "max_ratio": "최대 비율"
       },
-      "help": "EV/매출 비율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "EV/매출 비율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "free_cash_flow_margin": {
       "label": "잉여현금흐름 마진",
-      "desc": "잉여현금흐름 마진 조건으로 종목을 필터링합니다.",
+      "desc": "잉여현금흐름 마진 펀더멘털 조건",
       "params": {
         "min_margin_pct": "최소 마진 %"
       },
-      "help": "잉여현금흐름 마진 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "잉여현금흐름 마진 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "gross_margin": {
       "label": "매출총이익률",
-      "desc": "매출총이익률 조건으로 종목을 필터링합니다.",
+      "desc": "매출총이익률 펀더멘털 조건",
       "params": {
         "min_margin_pct": "최소 마진 %"
       },
-      "help": "매출총이익률 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "매출총이익률 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "gross_profitability": {
       "label": "총이익 수익성",
-      "desc": "총이익 수익성 조건으로 종목을 필터링합니다.",
+      "desc": "총이익 수익성 조건",
       "params": {
         "min_ratio": "최소 비율"
       },
-      "help": "총이익 수익성 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "총이익 수익성 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "interest_coverage_ratio": {
       "label": "이자보상배율",
-      "desc": "이자보상배율 조건으로 종목을 필터링합니다.",
+      "desc": "이자보상배율 펀더멘털 조건",
       "params": {
         "min_ratio": "최소 비율"
       },
-      "help": "이자보상배율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "이자보상배율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "inventory_turnover_ratio": {
       "label": "재고회전율",
-      "desc": "재고회전율 조건으로 종목을 필터링합니다.",
+      "desc": "재고회전율 펀더멘털 조건",
       "params": {
         "min_ratio": "최소 비율"
       },
-      "help": "재고회전율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "재고회전율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "net_debt_to_ebitda": {
       "label": "순부채/EBITDA",
-      "desc": "순부채/EBITDA 조건으로 종목을 필터링합니다.",
+      "desc": "순부채/EBITDA 펀더멘털 조건",
       "params": {
         "max_ratio": "최대 비율"
       },
-      "help": "순부채/EBITDA 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "순부채/EBITDA 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "net_margin": {
       "label": "순이익률",
-      "desc": "순이익률 조건으로 종목을 필터링합니다.",
+      "desc": "순이익률 펀더멘털 조건",
       "params": {
         "min_margin_pct": "최소 마진 %"
       },
-      "help": "순이익률 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "순이익률 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "operating_margin": {
       "label": "영업이익률",
-      "desc": "영업이익률 조건으로 종목을 필터링합니다.",
+      "desc": "영업이익률 펀더멘털 조건",
       "params": {
         "min_margin_pct": "최소 마진 %"
       },
-      "help": "영업이익률 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "영업이익률 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "payout_ratio_filter": {
       "label": "배당성향 필터",
-      "desc": "배당성향 필터 조건으로 종목을 필터링합니다.",
+      "desc": "배당성향 필터 펀더멘털 조건",
       "params": {
         "max_payout_pct": "최대 배당성향 %"
       },
-      "help": "배당성향 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "배당성향 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "price_to_tangible_book": {
       "label": "주가/유형순자산비율",
-      "desc": "주가/유형순자산비율 조건으로 종목을 필터링합니다.",
+      "desc": "주가/유형순자산비율 펀더멘털 조건",
       "params": {
         "max_ratio": "최대 비율"
       },
-      "help": "주가/유형순자산비율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "주가/유형순자산비율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "quality_score": {
       "label": "퀄리티 점수",
-      "desc": "퀄리티 점수 조건으로 종목을 필터링합니다.",
+      "desc": "퀄리티 점수 펀더멘털 조건",
       "params": {
         "min_score": "최소 점수"
       },
-      "help": "퀄리티 점수 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "퀄리티 점수 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "receivables_turnover_ratio": {
       "label": "매출채권회전율",
-      "desc": "매출채권회전율 조건으로 종목을 필터링합니다.",
+      "desc": "매출채권회전율 펀더멘털 조건",
       "params": {
         "min_ratio": "최소 비율"
       },
-      "help": "매출채권회전율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "매출채권회전율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "revenue_cagr_3y": {
       "label": "매출 3년 CAGR",
-      "desc": "매출 3년 CAGR 조건으로 종목을 필터링합니다.",
+      "desc": "매출 3년 CAGR 펀더멘털 조건",
       "params": {
         "min_cagr_pct": "최소 CAGR %"
       },
-      "help": "매출 3년 CAGR 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "매출 3년 CAGR 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "revenue_growth_yoy": {
       "label": "매출 전년 대비 성장률",
-      "desc": "매출 전년 대비 성장률 조건으로 종목을 필터링합니다.",
+      "desc": "매출 전년 대비 성장률 펀더멘털 조건",
       "params": {
         "min_growth_pct": "최소 성장률 %"
       },
-      "help": "매출 전년 대비 성장률 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "매출 전년 대비 성장률 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "revenue_stability_score": {
       "label": "매출 안정성 점수",
-      "desc": "매출 안정성 점수 조건으로 종목을 필터링합니다.",
+      "desc": "매출 안정성 점수 펀더멘털 조건",
       "params": {
         "lookback_years": "조회 연수",
         "max_cv": "최대 변동계수"
       },
-      "help": "매출 안정성 점수 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "매출 안정성 점수 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "shareholder_yield_filter": {
       "label": "주주환원 수익률",
-      "desc": "주주환원 수익률 조건으로 종목을 필터링합니다.",
+      "desc": "주주환원 수익률 펀더멘털 조건",
       "params": {
         "min_yield_pct": "최소 수익률 %"
       },
-      "help": "주주환원 수익률 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "주주환원 수익률 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "roce_filter": {
       "label": "ROCE 필터",
-      "desc": "ROCE 필터 조건으로 종목을 필터링합니다.",
+      "desc": "ROCE 필터 펀더멘털 조건",
       "params": {
         "min_roce_pct": "최소 ROCE %"
       },
-      "help": "ROCE 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "ROCE 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "roa_filter": {
       "label": "ROA 필터",
-      "desc": "ROA 필터 조건으로 종목을 필터링합니다.",
+      "desc": "ROA 필터 펀더멘털 조건",
       "params": {
         "min_roa_pct": "최소 ROA %"
       },
-      "help": "ROA 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "ROA 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "overnight_return_filter": {
       "label": "오버나이트 수익률 필터",
-      "desc": "오버나이트 수익률 필터 조건으로 종목을 필터링합니다.",
+      "desc": "오버나이트 수익률 필터 이벤트/계절성 조건",
       "params": {
         "min_overnight_return_pct": "최소 오버나이트 수익률 비율 %"
       },
-      "help": "오버나이트 수익률 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "오버나이트 수익률 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "실적 시즌·캘린더 효과처럼 이벤트 영향이 큰 구간에서 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "이벤트 효과는 시장 구조 변화로 빠르게 약해질 수 있습니다."
     },
     "distance_from_52w_low": {
-      "label": "괴리 From 52w 저점",
-      "desc": "괴리 From 52w 저점 조건으로 종목을 필터링합니다.",
+      "label": "52주 저점 대비 괴리율",
+      "desc": "52주 저점 대비 괴리율 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_distance_pct": "최대 괴리 비율 %"
       },
-      "help": "괴리 From 52w 저점 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "52주 저점에서 얼마나 떨어져(또는 올라와) 있는지로 종목을 선별합니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "distance_from_200d_high": {
-      "label": "괴리 From 200d 고점",
-      "desc": "괴리 From 200d 고점 조건으로 종목을 필터링합니다.",
+      "label": "200일 고점 대비 괴리율",
+      "desc": "200일 고점 대비 괴리율 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_distance_pct": "최대 괴리 비율 %"
       },
-      "help": "괴리 From 200d 고점 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "200일 고점에서 얼마나 이격되어 있는지 기준으로 종목을 선별합니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "gap_up_breakaway": {
       "label": "Gap Up Breakaway",
-      "desc": "Gap Up Breakaway 조건으로 종목을 필터링합니다.",
+      "desc": "Gap Up Breakaway 이벤트/계절성 조건",
       "params": {
         "min_gap_pct": "최소 gap 비율 %"
       },
-      "help": "Gap Up Breakaway 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Gap Up Breakaway 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "실적 시즌·캘린더 효과처럼 이벤트 영향이 큰 구간에서 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "이벤트 효과는 시장 구조 변화로 빠르게 약해질 수 있습니다."
     },
     "gap_down_exhaustion": {
       "label": "Gap Down Exhaustion",
-      "desc": "Gap Down Exhaustion 조건으로 종목을 필터링합니다.",
+      "desc": "Gap Down Exhaustion 이벤트/계절성 조건",
       "params": {
         "min_gap_down_pct": "최소 gap down 비율 %"
       },
-      "help": "Gap Down Exhaustion 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Gap Down Exhaustion 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "실적 시즌·캘린더 효과처럼 이벤트 영향이 큰 구간에서 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "이벤트 효과는 시장 구조 변화로 빠르게 약해질 수 있습니다."
     },
     "opening_range_breakout": {
       "label": "Opening Range 돌파",
-      "desc": "Opening Range 돌파 조건으로 종목을 필터링합니다.",
+      "desc": "Opening Range 돌파 추세/모멘텀 조건",
       "params": {
         "direction": "direction"
       },
-      "help": "Opening Range 돌파 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Opening Range 돌파 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "pivot_point_breakout": {
       "label": "Pivot Point 돌파",
-      "desc": "Pivot Point 돌파 조건으로 종목을 필터링합니다.",
+      "desc": "Pivot Point 돌파 추세/모멘텀 조건",
       "params": {
         "direction": "direction"
       },
-      "help": "Pivot Point 돌파 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Pivot Point 돌파 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "month_of_year_seasonality": {
-      "label": "월 Of 년 Seasonality",
-      "desc": "월 Of 년 Seasonality 조건으로 종목을 필터링합니다.",
+      "label": "월별 계절성",
+      "desc": "특정 월의 평균 수익률 패턴 조건",
       "params": {
-        "min_avg_return_pct": "최소 avg 수익률 비율 %",
-        "target_month": "target 월"
+        "min_avg_return_pct": "최소 평균 수익률 %",
+        "target_month": "대상 월 (1=1월, 12=12월)"
       },
-      "help": "월 Of 년 Seasonality 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "과거 데이터에서 특정 월에 상대적으로 성과가 좋았던 종목을 찾습니다.",
+      "whenToUse": "실적 시즌·캘린더 효과처럼 이벤트 영향이 큰 구간에서 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "이벤트 효과는 시장 구조 변화로 빠르게 약해질 수 있습니다."
     },
     "turn_of_month_effect": {
-      "label": "Turn Of 월 Effect",
-      "desc": "Turn Of 월 Effect 조건으로 종목을 필터링합니다.",
+      "label": "월말/월초 효과",
+      "desc": "월말과 월초 구간 수익 패턴 조건",
       "params": {
-        "min_avg_return_pct": "최소 avg 수익률 비율 %",
+        "min_avg_return_pct": "최소 평균 수익률 %",
         "window_days": "윈도우 일수"
       },
-      "help": "Turn Of 월 Effect 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "월말~월초 구간에서 반복적으로 나타나는 수익 패턴이 있는 종목을 선별합니다.",
+      "whenToUse": "실적 시즌·캘린더 효과처럼 이벤트 영향이 큰 구간에서 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "이벤트 효과는 시장 구조 변화로 빠르게 약해질 수 있습니다."
     },
     "day_of_week_seasonality": {
       "label": "요일 계절성",
@@ -1333,11 +1456,14 @@
     },
     "insider_net_buying": {
       "label": "Insider 순 Buying",
-      "desc": "Insider 순 Buying 조건으로 종목을 필터링합니다.",
+      "desc": "Insider 순 Buying 펀더멘털 조건",
       "params": {
         "min_net_buying_pct": "최소 순 buying 비율 %"
       },
-      "help": "Insider 순 Buying 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Insider 순 Buying 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "short_float_pct_filter": {
       "label": "공매도 유통주식 비율 필터",
@@ -1374,332 +1500,440 @@
     },
     "post_earnings_drift": {
       "label": "사후 실적 Drift",
-      "desc": "사후 실적 Drift 조건으로 종목을 필터링합니다.",
+      "desc": "사후 실적 Drift 이벤트/계절성 조건",
       "params": {
         "min_return_pct": "최소 수익률 비율 %"
       },
-      "help": "사후 실적 Drift 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "사후 실적 Drift 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "실적 시즌·캘린더 효과처럼 이벤트 영향이 큰 구간에서 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "이벤트 효과는 시장 구조 변화로 빠르게 약해질 수 있습니다."
     },
     "pre_earnings_drift": {
       "label": "사전 실적 Drift",
-      "desc": "사전 실적 Drift 조건으로 종목을 필터링합니다.",
+      "desc": "사전 실적 Drift 이벤트/계절성 조건",
       "params": {
         "min_return_pct": "최소 수익률 비율 %"
       },
-      "help": "사전 실적 Drift 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "사전 실적 Drift 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "실적 시즌·캘린더 효과처럼 이벤트 영향이 큰 구간에서 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "이벤트 효과는 시장 구조 변화로 빠르게 약해질 수 있습니다."
     },
     "accruals_ratio": {
       "label": "Accruals 비율",
-      "desc": "Accruals 비율 조건으로 종목을 필터링합니다.",
+      "desc": "Accruals 비율 펀더멘털 조건",
       "params": {
         "max_ratio": "최대 비율"
       },
-      "help": "Accruals 비율 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Accruals 비율 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "asset_growth_rate": {
       "label": "자산 성장률 Rate",
-      "desc": "자산 성장률 Rate 조건으로 종목을 필터링합니다.",
+      "desc": "자산 성장률 Rate 펀더멘털 조건",
       "params": {
         "max_growth_pct": "최대 성장률 비율 %"
       },
-      "help": "자산 성장률 Rate 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "자산 성장률 Rate 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "momentum_12_1": {
       "label": "모멘텀 12 1",
-      "desc": "모멘텀 12 1 조건으로 종목을 필터링합니다.",
+      "desc": "모멘텀 12 1 추세/모멘텀 조건",
       "params": {
         "lookback_months": "조회기간 개월",
         "min_return_pct": "최소 수익률 비율 %",
         "skip_recent_months": "skip recent 개월"
       },
-      "help": "모멘텀 12 1 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "모멘텀 12 1 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "volatility_n_day": {
       "label": "변동성 N 일",
-      "desc": "변동성 N 일 조건으로 종목을 필터링합니다.",
+      "desc": "변동성 N 일 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_annualized_vol_pct": "최대 annualized vol 비율 %"
       },
-      "help": "변동성 N 일 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "변동성 N 일 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "distance_from_52w_high": {
       "label": "괴리 From 52w 고점",
-      "desc": "괴리 From 52w 고점 조건으로 종목을 필터링합니다.",
+      "desc": "괴리 From 52w 고점 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_distance_pct": "최대 괴리 비율 %"
       },
-      "help": "괴리 From 52w 고점 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "괴리 From 52w 고점 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "relative_strength_vs_benchmark": {
       "label": "Relative Strength Vs Benchmark",
-      "desc": "Relative Strength Vs Benchmark 조건으로 종목을 필터링합니다.",
+      "desc": "Relative Strength Vs Benchmark 추세/모멘텀 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_excess_return_pct": "최소 excess 수익률 비율 %"
       },
-      "help": "Relative Strength Vs Benchmark 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Relative Strength Vs Benchmark 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "adx_trend_strength": {
       "label": "ADX 추세 Strength",
-      "desc": "ADX 추세 Strength 조건으로 종목을 필터링합니다.",
+      "desc": "ADX 추세 Strength 추세/모멘텀 조건",
       "params": {
         "di_direction": "di direction",
         "min_adx": "최소 ADX",
         "period": "기간"
       },
-      "help": "ADX 추세 Strength 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "ADX 추세 Strength 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "ma_ribbon_alignment": {
       "label": "Ma Ribbon Alignment",
-      "desc": "Ma Ribbon Alignment 조건으로 종목을 필터링합니다.",
+      "desc": "Ma Ribbon Alignment 조건",
       "params": {
         "long_period": "long 기간",
         "mid_period": "mid 기간",
         "short_period": "short 기간"
       },
-      "help": "Ma Ribbon Alignment 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Ma Ribbon Alignment 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "golden_cross_50_200": {
       "label": "Golden Cross 50 200",
-      "desc": "Golden Cross 50 200 조건으로 종목을 필터링합니다.",
+      "desc": "Golden Cross 50 200 추세/모멘텀 조건",
       "params": {
         "lookback_days": "조회기간 일수"
       },
-      "help": "Golden Cross 50 200 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Golden Cross 50 200 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "death_cross_50_200": {
       "label": "Death Cross 50 200",
-      "desc": "Death Cross 50 200 조건으로 종목을 필터링합니다.",
+      "desc": "Death Cross 50 200 추세/모멘텀 조건",
       "params": {
         "lookback_days": "조회기간 일수"
       },
-      "help": "Death Cross 50 200 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Death Cross 50 200 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "donchian_channel_breakout": {
       "label": "Donchian Channel 돌파",
-      "desc": "Donchian Channel 돌파 조건으로 종목을 필터링합니다.",
+      "desc": "Donchian Channel 돌파 추세/모멘텀 조건",
       "params": {
         "lookback_days": "조회기간 일수"
       },
-      "help": "Donchian Channel 돌파 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Donchian Channel 돌파 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "keltner_channel_breakout": {
       "label": "Keltner Channel 돌파",
-      "desc": "Keltner Channel 돌파 조건으로 종목을 필터링합니다.",
+      "desc": "Keltner Channel 돌파 추세/모멘텀 조건",
       "params": {
         "atr_multiplier": "ATR multiplier",
         "atr_period": "ATR 기간",
         "ema_period": "ema 기간"
       },
-      "help": "Keltner Channel 돌파 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Keltner Channel 돌파 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "parabolic_sar_flip": {
       "label": "Parabolic Sar Flip",
-      "desc": "Parabolic Sar Flip 조건으로 종목을 필터링합니다.",
+      "desc": "Parabolic Sar Flip 조건",
       "params": {
         "af_max": "af max",
         "af_step": "af step",
         "lookback_days": "조회기간 일수"
       },
-      "help": "Parabolic Sar Flip 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Parabolic Sar Flip 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "linear_regression_slope_filter": {
       "label": "Linear Regression Slope 필터",
-      "desc": "Linear Regression Slope 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Linear Regression Slope 필터 추세/모멘텀 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_slope": "최소 slope"
       },
-      "help": "Linear Regression Slope 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Linear Regression Slope 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "linear_regression_angle_filter": {
       "label": "Linear Regression Angle 필터",
-      "desc": "Linear Regression Angle 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Linear Regression Angle 필터 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_angle_deg": "최소 angle deg"
       },
-      "help": "Linear Regression Angle 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Linear Regression Angle 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "linear_regression_r2_filter": {
       "label": "Linear Regression R2 필터",
-      "desc": "Linear Regression R2 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Linear Regression R2 필터 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_r2": "최소 r2"
       },
-      "help": "Linear Regression R2 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Linear Regression R2 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "beta_to_benchmark": {
       "label": "Beta To Benchmark",
-      "desc": "Beta To Benchmark 조건으로 종목을 필터링합니다.",
+      "desc": "Beta To Benchmark 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_beta": "최대 beta"
       },
-      "help": "Beta To Benchmark 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Beta To Benchmark 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "correlation_to_benchmark": {
       "label": "Correlation To Benchmark",
-      "desc": "Correlation To Benchmark 조건으로 종목을 필터링합니다.",
+      "desc": "Correlation To Benchmark 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_corr": "최대 corr"
       },
-      "help": "Correlation To Benchmark 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Correlation To Benchmark 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "support_retest_signal": {
       "label": "Support Retest 신호",
-      "desc": "Support Retest 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Support Retest 신호 추세/모멘텀 조건",
       "params": {
         "support_lookback": "support 조회기간",
         "tolerance_pct": "tolerance 비율 %"
       },
-      "help": "Support Retest 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Support Retest 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "resistance_retest_signal": {
       "label": "Resistance Retest 신호",
-      "desc": "Resistance Retest 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Resistance Retest 신호 조건",
       "params": {
         "resistance_lookback": "resistance 조회기간",
         "tolerance_pct": "tolerance 비율 %"
       },
-      "help": "Resistance Retest 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Resistance Retest 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "downside_volatility_filter": {
       "label": "Downside 변동성 필터",
-      "desc": "Downside 변동성 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Downside 변동성 필터 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_downside_vol_pct": "최대 downside vol 비율 %"
       },
-      "help": "Downside 변동성 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Downside 변동성 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "semivariance_filter": {
       "label": "Semivariance 필터",
-      "desc": "Semivariance 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Semivariance 필터 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_semivariance": "최대 semivariance"
       },
-      "help": "Semivariance 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Semivariance 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "rolling_sharpe_filter": {
       "label": "Rolling Sharpe 필터",
-      "desc": "Rolling Sharpe 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Rolling Sharpe 필터 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_sharpe": "최소 sharpe"
       },
-      "help": "Rolling Sharpe 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Rolling Sharpe 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "rolling_sortino_filter": {
       "label": "Rolling Sortino 필터",
-      "desc": "Rolling Sortino 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Rolling Sortino 필터 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_sortino": "최소 sortino"
       },
-      "help": "Rolling Sortino 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Rolling Sortino 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "ulcer_index_filter": {
       "label": "Ulcer Index 필터",
-      "desc": "Ulcer Index 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Ulcer Index 필터 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_ulcer_index": "최대 ulcer index"
       },
-      "help": "Ulcer Index 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Ulcer Index 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "calmar_ratio_filter": {
       "label": "Calmar 비율 필터",
-      "desc": "Calmar 비율 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Calmar 비율 필터 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_calmar": "최소 calmar"
       },
-      "help": "Calmar 비율 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Calmar 비율 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "max_drawdown_window_filter": {
       "label": "Max Drawdown Window 필터",
-      "desc": "Max Drawdown Window 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Max Drawdown Window 필터 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_drawdown_pct": "최대 drawdown 비율 %"
       },
-      "help": "Max Drawdown Window 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Max Drawdown Window 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "return_skewness_filter": {
       "label": "수익률 Skewness 필터",
-      "desc": "수익률 Skewness 필터 조건으로 종목을 필터링합니다.",
+      "desc": "수익률 Skewness 필터 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_skewness": "최소 skewness"
       },
-      "help": "수익률 Skewness 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "수익률 Skewness 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "return_kurtosis_filter": {
       "label": "수익률 Kurtosis 필터",
-      "desc": "수익률 Kurtosis 필터 조건으로 종목을 필터링합니다.",
+      "desc": "수익률 Kurtosis 필터 리스크 관리 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "max_kurtosis": "최대 kurtosis"
       },
-      "help": "수익률 Kurtosis 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "수익률 Kurtosis 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "intraday_return_filter": {
       "label": "Intraday 수익률 필터",
-      "desc": "Intraday 수익률 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Intraday 수익률 필터 이벤트/계절성 조건",
       "params": {
         "min_intraday_return_pct": "최소 intraday 수익률 비율 %"
       },
-      "help": "Intraday 수익률 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Intraday 수익률 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "실적 시즌·캘린더 효과처럼 이벤트 영향이 큰 구간에서 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "이벤트 효과는 시장 구조 변화로 빠르게 약해질 수 있습니다."
     },
     "dso_trend_filter": {
       "label": "Dso 추세 필터",
-      "desc": "Dso 추세 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Dso 추세 필터 추세/모멘텀 조건",
       "params": {
         "lookback_years": "조회기간 연수",
         "min_dso_increase_pct": "최소 dso increase 비율 %"
       },
-      "help": "Dso 추세 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Dso 추세 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "ema_cross": {
       "label": "Ema Cross",
-      "desc": "Ema Cross 조건으로 종목을 필터링합니다.",
+      "desc": "Ema Cross 추세/모멘텀 조건",
       "params": {
         "direction": "direction",
         "fast_period": "fast 기간",
         "lookback_days": "조회기간 일수",
         "slow_period": "slow 기간"
       },
-      "help": "Ema Cross 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Ema Cross 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "ema_slope": {
       "label": "Ema Slope",
-      "desc": "Ema Slope 조건으로 종목을 필터링합니다.",
+      "desc": "Ema Slope 추세/모멘텀 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_slope_pct": "최소 slope 비율 %",
         "period": "기간"
       },
-      "help": "Ema Slope 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Ema Slope 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "sma_slope": {
       "label": "Sma Slope",
-      "desc": "Sma Slope 조건으로 종목을 필터링합니다.",
+      "desc": "Sma Slope 추세/모멘텀 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_slope_pct": "최소 slope 비율 %",
         "period": "기간"
       },
-      "help": "Sma Slope 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Sma Slope 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "macd_signal_cross": {
       "label": "MACD 신호 Cross",
-      "desc": "MACD 신호 Cross 조건으로 종목을 필터링합니다.",
+      "desc": "MACD 신호 Cross 추세/모멘텀 조건",
       "params": {
         "direction": "direction",
         "fast_period": "fast 기간",
@@ -1707,11 +1941,14 @@
         "signal_period": "신호 기간",
         "slow_period": "slow 기간"
       },
-      "help": "MACD 신호 Cross 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "MACD 신호 Cross 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "macd_histogram_slope": {
       "label": "MACD Histogram Slope",
-      "desc": "MACD Histogram Slope 조건으로 종목을 필터링합니다.",
+      "desc": "MACD Histogram Slope 추세/모멘텀 조건",
       "params": {
         "fast_period": "fast 기간",
         "lookback_days": "조회기간 일수",
@@ -1719,249 +1956,327 @@
         "signal_period": "신호 기간",
         "slow_period": "slow 기간"
       },
-      "help": "MACD Histogram Slope 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "MACD Histogram Slope 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "cci_overbought_oversold": {
       "label": "CCI Overbought Oversold",
-      "desc": "CCI Overbought Oversold 조건으로 종목을 필터링합니다.",
+      "desc": "CCI Overbought Oversold 오실레이터 조건",
       "params": {
         "mode": "mode",
         "period": "기간",
         "threshold": "임계값"
       },
-      "help": "CCI Overbought Oversold 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "CCI Overbought Oversold 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "과열/과매도 구간에서 단기 타이밍을 잡을 때 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "강한 추세장에서는 과열·과매도 상태가 오래 유지될 수 있습니다."
     },
     "williams_r_reversal": {
       "label": "Williams R Reversal",
-      "desc": "Williams R Reversal 조건으로 종목을 필터링합니다.",
+      "desc": "Williams R Reversal 오실레이터 조건",
       "params": {
         "direction": "direction",
         "overbought": "overbought",
         "oversold": "oversold",
         "period": "기간"
       },
-      "help": "Williams R Reversal 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Williams R Reversal 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "과열/과매도 구간에서 단기 타이밍을 잡을 때 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "강한 추세장에서는 과열·과매도 상태가 오래 유지될 수 있습니다."
     },
     "trix_cross": {
       "label": "Trix Cross",
-      "desc": "Trix Cross 조건으로 종목을 필터링합니다.",
+      "desc": "Trix Cross 추세/모멘텀 조건",
       "params": {
         "direction": "direction",
         "lookback_days": "조회기간 일수",
         "period": "기간",
         "signal_period": "신호 기간"
       },
-      "help": "Trix Cross 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Trix Cross 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "aroon_trend_signal": {
       "label": "Aroon 추세 신호",
-      "desc": "Aroon 추세 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Aroon 추세 신호 추세/모멘텀 조건",
       "params": {
         "direction": "direction",
         "min_aroon": "최소 aroon",
         "period": "기간"
       },
-      "help": "Aroon 추세 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Aroon 추세 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "money_flow_index_signal": {
       "label": "Money 흐름 Index 신호",
-      "desc": "Money 흐름 Index 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Money 흐름 Index 신호 조건",
       "params": {
         "mode": "mode",
         "overbought": "overbought",
         "oversold": "oversold",
         "period": "기간"
       },
-      "help": "Money 흐름 Index 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Money 흐름 Index 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "vwap_cross_signal": {
       "label": "Vwap Cross 신호",
-      "desc": "Vwap Cross 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Vwap Cross 신호 추세/모멘텀 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "period": "기간"
       },
-      "help": "Vwap Cross 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Vwap Cross 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "vwap_distance_pct": {
       "label": "Vwap 괴리 Pct",
-      "desc": "Vwap 괴리 Pct 조건으로 종목을 필터링합니다.",
+      "desc": "Vwap 괴리 Pct 추세/모멘텀 조건",
       "params": {
         "max_distance_pct": "최대 괴리 비율 %",
         "period": "기간"
       },
-      "help": "Vwap 괴리 Pct 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Vwap 괴리 Pct 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "relative_volume_percentile": {
       "label": "Relative 거래량 Percentile",
-      "desc": "Relative 거래량 Percentile 조건으로 종목을 필터링합니다.",
+      "desc": "Relative 거래량 Percentile 펀더멘털 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "min_percentile": "최소 percentile"
       },
-      "help": "Relative 거래량 Percentile 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Relative 거래량 Percentile 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "turnover_ratio_min": {
       "label": "회전율 비율 Min",
-      "desc": "회전율 비율 Min 조건으로 종목을 필터링합니다.",
+      "desc": "회전율 비율 Min 펀더멘털 조건",
       "params": {
         "min_turnover_ratio": "최소 회전율 비율"
       },
-      "help": "회전율 비율 Min 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "회전율 비율 Min 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "atr_percentile_filter": {
       "label": "ATR Percentile 필터",
-      "desc": "ATR Percentile 필터 조건으로 종목을 필터링합니다.",
+      "desc": "ATR Percentile 필터 리스크 관리 조건",
       "params": {
         "atr_period": "ATR 기간",
         "lookback_days": "조회기간 일수",
         "max_percentile": "최대 percentile"
       },
-      "help": "ATR Percentile 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "ATR Percentile 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "atr_expansion_breakout": {
       "label": "ATR Expansion 돌파",
-      "desc": "ATR Expansion 돌파 조건으로 종목을 필터링합니다.",
+      "desc": "ATR Expansion 돌파 추세/모멘텀 조건",
       "params": {
         "atr_multiplier": "ATR multiplier",
         "atr_period": "ATR 기간",
         "breakout_lookback": "돌파 조회기간"
       },
-      "help": "ATR Expansion 돌파 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "ATR Expansion 돌파 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "natr_filter": {
       "label": "Natr 필터",
-      "desc": "Natr 필터 조건으로 종목을 필터링합니다.",
+      "desc": "Natr 필터 리스크 관리 조건",
       "params": {
         "max_natr_pct": "최대 natr 비율 %",
         "period": "기간"
       },
-      "help": "Natr 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Natr 필터 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "변동성·낙폭 관리가 중요한 전략에서 방어 필터로 사용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "기준을 너무 엄격히 두면 기대수익이 큰 종목까지 제외될 수 있습니다."
     },
     "dmi_directional_cross": {
       "label": "Dmi Directional Cross",
-      "desc": "Dmi Directional Cross 조건으로 종목을 필터링합니다.",
+      "desc": "Dmi Directional Cross 추세/모멘텀 조건",
       "params": {
         "lookback_days": "조회기간 일수",
         "period": "기간"
       },
-      "help": "Dmi Directional Cross 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Dmi Directional Cross 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "ichimoku_cloud_breakout": {
       "label": "Ichimoku Cloud 돌파",
-      "desc": "Ichimoku Cloud 돌파 조건으로 종목을 필터링합니다.",
+      "desc": "Ichimoku Cloud 돌파 추세/모멘텀 조건",
       "params": {
         "base_period": "base 기간",
         "conversion_period": "conversion 기간",
         "span_b_period": "span b 기간"
       },
-      "help": "Ichimoku Cloud 돌파 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Ichimoku Cloud 돌파 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "ichimoku_tenkan_kijun_cross": {
       "label": "Ichimoku Tenkan Kijun Cross",
-      "desc": "Ichimoku Tenkan Kijun Cross 조건으로 종목을 필터링합니다.",
+      "desc": "Ichimoku Tenkan Kijun Cross 추세/모멘텀 조건",
       "params": {
         "base_period": "base 기간",
         "conversion_period": "conversion 기간",
         "lookback_days": "조회기간 일수"
       },
-      "help": "Ichimoku Tenkan Kijun Cross 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Ichimoku Tenkan Kijun Cross 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "bollinger_squeeze_breakout": {
       "label": "Bollinger Squeeze 돌파",
-      "desc": "Bollinger Squeeze 돌파 조건으로 종목을 필터링합니다.",
+      "desc": "Bollinger Squeeze 돌파 추세/모멘텀 조건",
       "params": {
         "max_width_pct": "최대 width 비율 %",
         "period": "기간",
         "std_mult": "std mult"
       },
-      "help": "Bollinger Squeeze 돌파 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Bollinger Squeeze 돌파 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "최대값 중심 조건입니다. 기준을 낮출수록 더 엄격해집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "bollinger_percent_b": {
       "label": "Bollinger Percent B",
-      "desc": "Bollinger Percent B 조건으로 종목을 필터링합니다.",
+      "desc": "Bollinger Percent B 펀더멘털 조건",
       "params": {
         "max_percent_b": "최대 percent b",
         "min_percent_b": "최소 percent b",
         "period": "기간",
         "std_mult": "std mult"
       },
-      "help": "Bollinger Percent B 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Bollinger Percent B 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "가치/퀄리티 전략에서 사업 체력과 재무 건전성을 보강할 때 사용합니다.",
+      "howToRead": "최소값~최대값 범위 조건입니다. 범위를 좁힐수록 더 엄격해집니다.",
+      "caution": "펀더멘털 데이터는 반영 주기가 느려 가격 전환점을 늦게 따라갈 수 있습니다."
     },
     "ppo_signal_cross": {
       "label": "Ppo 신호 Cross",
-      "desc": "Ppo 신호 Cross 조건으로 종목을 필터링합니다.",
+      "desc": "Ppo 신호 Cross 추세/모멘텀 조건",
       "params": {
         "fast_period": "fast 기간",
         "lookback_days": "조회기간 일수",
         "signal_period": "신호 기간",
         "slow_period": "slow 기간"
       },
-      "help": "Ppo 신호 Cross 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Ppo 신호 Cross 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     },
     "stochastic_cross_signal": {
       "label": "Stochastic Cross 신호",
-      "desc": "Stochastic Cross 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Stochastic Cross 신호 오실레이터 조건",
       "params": {
         "d_period": "d 기간",
         "k_period": "k 기간",
         "lookback_days": "조회기간 일수"
       },
-      "help": "Stochastic Cross 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Stochastic Cross 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "과열/과매도 구간에서 단기 타이밍을 잡을 때 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "강한 추세장에서는 과열·과매도 상태가 오래 유지될 수 있습니다."
     },
     "stochrsi_signal": {
       "label": "Stochrsi 신호",
-      "desc": "Stochrsi 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Stochrsi 신호 오실레이터 조건",
       "params": {
         "mode": "mode",
         "rsi_period": "RSI 기간",
         "stoch_period": "stoch 기간"
       },
-      "help": "Stochrsi 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Stochrsi 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "과열/과매도 구간에서 단기 타이밍을 잡을 때 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "강한 추세장에서는 과열·과매도 상태가 오래 유지될 수 있습니다."
     },
     "aroon_oscillator_signal": {
       "label": "Aroon Oscillator 신호",
-      "desc": "Aroon Oscillator 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Aroon Oscillator 신호 오실레이터 조건",
       "params": {
         "min_oscillator": "최소 oscillator",
         "period": "기간"
       },
-      "help": "Aroon Oscillator 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Aroon Oscillator 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "과열/과매도 구간에서 단기 타이밍을 잡을 때 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "강한 추세장에서는 과열·과매도 상태가 오래 유지될 수 있습니다."
     },
     "ultimate_oscillator_signal": {
       "label": "Ultimate Oscillator 신호",
-      "desc": "Ultimate Oscillator 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Ultimate Oscillator 신호 오실레이터 조건",
       "params": {
         "min_value": "최소 가치"
       },
-      "help": "Ultimate Oscillator 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Ultimate Oscillator 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "과열/과매도 구간에서 단기 타이밍을 잡을 때 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "강한 추세장에서는 과열·과매도 상태가 오래 유지될 수 있습니다."
     },
     "chaikin_money_flow_signal": {
       "label": "Chaikin Money 흐름 신호",
-      "desc": "Chaikin Money 흐름 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Chaikin Money 흐름 신호 조건",
       "params": {
         "min_cmf": "최소 cmf",
         "period": "기간"
       },
-      "help": "Chaikin Money 흐름 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Chaikin Money 흐름 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "유동성/추세 조건과 함께 결합해 단일 지표 과최적화를 줄이세요.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "구간 분할 백테스트와 거래비용 반영으로 실전 적합성을 확인하세요."
     },
     "chaikin_oscillator_signal": {
       "label": "Chaikin Oscillator 신호",
-      "desc": "Chaikin Oscillator 신호 조건으로 종목을 필터링합니다.",
+      "desc": "Chaikin Oscillator 신호 오실레이터 조건",
       "params": {
         "fast_period": "fast 기간",
         "min_value": "최소 가치",
         "slow_period": "slow 기간"
       },
-      "help": "Chaikin Oscillator 신호 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Chaikin Oscillator 신호 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "과열/과매도 구간에서 단기 타이밍을 잡을 때 유용합니다.",
+      "howToRead": "최소값 중심 조건입니다. 기준을 높일수록 더 엄격해집니다.",
+      "caution": "강한 추세장에서는 과열·과매도 상태가 오래 유지될 수 있습니다."
     },
     "ad_line_trend": {
       "label": "Ad Line 추세",
-      "desc": "Ad Line 추세 조건으로 종목을 필터링합니다.",
+      "desc": "Ad Line 추세 추세/모멘텀 조건",
       "params": {
         "lookback_days": "조회기간 일수"
       },
-      "help": "Ad Line 추세 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "Ad Line 추세 지표를 기준으로 종목을 선별해, 초보자도 이 조건의 역할을 이해할 수 있게 돕습니다.",
+      "whenToUse": "추세 추종 진입이나 상승 지속 후보 압축에 유용합니다.",
+      "howToRead": "조회기간과 임계값을 함께 조정하세요. 너무 촘촘하면 후보가 급감해 과최적화 위험이 커집니다.",
+      "caution": "횡보장에서는 잦은 가짜 신호(휘프쏘)가 발생할 수 있습니다."
     }
   },
   "settings": {
