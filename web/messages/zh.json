@@ -1211,6 +1211,722 @@
         "min_roa_pct": "最小 ROA %"
       },
       "help": "仅保留满足ROA筛选阈值的股票。"
+    },
+    "overnight_return_filter": {
+      "label": "隔夜 收益率 筛选",
+      "desc": "按隔夜 收益率 筛选条件筛选股票。",
+      "params": {
+        "min_overnight_return_pct": "最小隔夜收益率比率 %"
+      },
+      "help": "仅保留满足隔夜 收益率 筛选阈值的股票。"
+    },
+    "distance_from_52w_low": {
+      "label": "距离 From 52w 低点",
+      "desc": "按距离 From 52w 低点条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_distance_pct": "最大距离比率 %"
+      },
+      "help": "仅保留满足距离 From 52w 低点阈值的股票。"
+    },
+    "distance_from_200d_high": {
+      "label": "距离 From 200d 高点",
+      "desc": "按距离 From 200d 高点条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_distance_pct": "最大距离比率 %"
+      },
+      "help": "仅保留满足距离 From 200d 高点阈值的股票。"
+    },
+    "gap_up_breakaway": {
+      "label": "Gap Up Breakaway",
+      "desc": "按Gap Up Breakaway条件筛选股票。",
+      "params": {
+        "min_gap_pct": "最小gap比率 %"
+      },
+      "help": "仅保留满足Gap Up Breakaway阈值的股票。"
+    },
+    "gap_down_exhaustion": {
+      "label": "Gap Down Exhaustion",
+      "desc": "按Gap Down Exhaustion条件筛选股票。",
+      "params": {
+        "min_gap_down_pct": "最小gapdown比率 %"
+      },
+      "help": "仅保留满足Gap Down Exhaustion阈值的股票。"
+    },
+    "opening_range_breakout": {
+      "label": "Opening Range 突破",
+      "desc": "按Opening Range 突破条件筛选股票。",
+      "params": {
+        "direction": "direction"
+      },
+      "help": "仅保留满足Opening Range 突破阈值的股票。"
+    },
+    "pivot_point_breakout": {
+      "label": "Pivot Point 突破",
+      "desc": "按Pivot Point 突破条件筛选股票。",
+      "params": {
+        "direction": "direction"
+      },
+      "help": "仅保留满足Pivot Point 突破阈值的股票。"
+    },
+    "month_of_year_seasonality": {
+      "label": "月 Of 年 Seasonality",
+      "desc": "按月 Of 年 Seasonality条件筛选股票。",
+      "params": {
+        "min_avg_return_pct": "最小avg收益率比率 %",
+        "target_month": "target月"
+      },
+      "help": "仅保留满足月 Of 年 Seasonality阈值的股票。"
+    },
+    "turn_of_month_effect": {
+      "label": "Turn Of 月 Effect",
+      "desc": "按Turn Of 月 Effect条件筛选股票。",
+      "params": {
+        "min_avg_return_pct": "最小avg收益率比率 %",
+        "window_days": "窗口天数"
+      },
+      "help": "仅保留满足Turn Of 月 Effect阈值的股票。"
+    },
+    "day_of_week_seasonality": {
+      "label": "日 Of 周 Seasonality",
+      "desc": "按日 Of 周 Seasonality条件筛选股票。",
+      "params": {
+        "min_avg_return_pct": "最小avg收益率比率 %",
+        "target_weekday": "targetweekday"
+      },
+      "help": "仅保留满足日 Of 周 Seasonality阈值的股票。"
+    },
+    "net_share_issuance_filter": {
+      "label": "净 股份 发行 筛选",
+      "desc": "按净 股份 发行 筛选条件筛选股票。",
+      "params": {
+        "max_issuance_pct": "最大发行比率 %"
+      },
+      "help": "仅保留满足净 股份 发行 筛选阈值的股票。"
+    },
+    "insider_net_buying": {
+      "label": "Insider 净 Buying",
+      "desc": "按Insider 净 Buying条件筛选股票。",
+      "params": {
+        "min_net_buying_pct": "最小净buying比率 %"
+      },
+      "help": "仅保留满足Insider 净 Buying阈值的股票。"
+    },
+    "short_float_pct_filter": {
+      "label": "Short Float Pct 筛选",
+      "desc": "按Short Float Pct 筛选条件筛选股票。",
+      "params": {
+        "max_short_float_pct": "最大shortfloat比率 %"
+      },
+      "help": "仅保留满足Short Float Pct 筛选阈值的股票。"
+    },
+    "short_interest_ratio_filter": {
+      "label": "Short 利息 比率 筛选",
+      "desc": "按Short 利息 比率 筛选条件筛选股票。",
+      "params": {
+        "max_ratio": "最大比率"
+      },
+      "help": "仅保留满足Short 利息 比率 筛选阈值的股票。"
+    },
+    "earnings_surprise_filter": {
+      "label": "财报 惊喜 筛选",
+      "desc": "按财报 惊喜 筛选条件筛选股票。",
+      "params": {
+        "min_surprise_pct": "最小惊喜比率 %"
+      },
+      "help": "仅保留满足财报 惊喜 筛选阈值的股票。"
+    },
+    "post_earnings_drift": {
+      "label": "后 财报 Drift",
+      "desc": "按后 财报 Drift条件筛选股票。",
+      "params": {
+        "min_return_pct": "最小收益率比率 %"
+      },
+      "help": "仅保留满足后 财报 Drift阈值的股票。"
+    },
+    "pre_earnings_drift": {
+      "label": "前 财报 Drift",
+      "desc": "按前 财报 Drift条件筛选股票。",
+      "params": {
+        "min_return_pct": "最小收益率比率 %"
+      },
+      "help": "仅保留满足前 财报 Drift阈值的股票。"
+    },
+    "accruals_ratio": {
+      "label": "Accruals 比率",
+      "desc": "按Accruals 比率条件筛选股票。",
+      "params": {
+        "max_ratio": "最大比率"
+      },
+      "help": "仅保留满足Accruals 比率阈值的股票。"
+    },
+    "asset_growth_rate": {
+      "label": "资产 增长率 Rate",
+      "desc": "按资产 增长率 Rate条件筛选股票。",
+      "params": {
+        "max_growth_pct": "最大增长率比率 %"
+      },
+      "help": "仅保留满足资产 增长率 Rate阈值的股票。"
+    },
+    "momentum_12_1": {
+      "label": "动量 12 1",
+      "desc": "按动量 12 1条件筛选股票。",
+      "params": {
+        "lookback_months": "回溯周期月数",
+        "min_return_pct": "最小收益率比率 %",
+        "skip_recent_months": "skiprecent月数"
+      },
+      "help": "仅保留满足动量 12 1阈值的股票。"
+    },
+    "volatility_n_day": {
+      "label": "波动率 N 日",
+      "desc": "按波动率 N 日条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_annualized_vol_pct": "最大annualizedvol比率 %"
+      },
+      "help": "仅保留满足波动率 N 日阈值的股票。"
+    },
+    "distance_from_52w_high": {
+      "label": "距离 From 52w 高点",
+      "desc": "按距离 From 52w 高点条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_distance_pct": "最大距离比率 %"
+      },
+      "help": "仅保留满足距离 From 52w 高点阈值的股票。"
+    },
+    "relative_strength_vs_benchmark": {
+      "label": "Relative Strength Vs Benchmark",
+      "desc": "按Relative Strength Vs Benchmark条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_excess_return_pct": "最小excess收益率比率 %"
+      },
+      "help": "仅保留满足Relative Strength Vs Benchmark阈值的股票。"
+    },
+    "adx_trend_strength": {
+      "label": "ADX 趋势 Strength",
+      "desc": "按ADX 趋势 Strength条件筛选股票。",
+      "params": {
+        "di_direction": "didirection",
+        "min_adx": "最小ADX",
+        "period": "周期"
+      },
+      "help": "仅保留满足ADX 趋势 Strength阈值的股票。"
+    },
+    "ma_ribbon_alignment": {
+      "label": "Ma Ribbon Alignment",
+      "desc": "按Ma Ribbon Alignment条件筛选股票。",
+      "params": {
+        "long_period": "long周期",
+        "mid_period": "mid周期",
+        "short_period": "short周期"
+      },
+      "help": "仅保留满足Ma Ribbon Alignment阈值的股票。"
+    },
+    "golden_cross_50_200": {
+      "label": "Golden Cross 50 200",
+      "desc": "按Golden Cross 50 200条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数"
+      },
+      "help": "仅保留满足Golden Cross 50 200阈值的股票。"
+    },
+    "death_cross_50_200": {
+      "label": "Death Cross 50 200",
+      "desc": "按Death Cross 50 200条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数"
+      },
+      "help": "仅保留满足Death Cross 50 200阈值的股票。"
+    },
+    "donchian_channel_breakout": {
+      "label": "Donchian Channel 突破",
+      "desc": "按Donchian Channel 突破条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数"
+      },
+      "help": "仅保留满足Donchian Channel 突破阈值的股票。"
+    },
+    "keltner_channel_breakout": {
+      "label": "Keltner Channel 突破",
+      "desc": "按Keltner Channel 突破条件筛选股票。",
+      "params": {
+        "atr_multiplier": "ATRmultiplier",
+        "atr_period": "ATR周期",
+        "ema_period": "ema周期"
+      },
+      "help": "仅保留满足Keltner Channel 突破阈值的股票。"
+    },
+    "parabolic_sar_flip": {
+      "label": "Parabolic Sar Flip",
+      "desc": "按Parabolic Sar Flip条件筛选股票。",
+      "params": {
+        "af_max": "afmax",
+        "af_step": "afstep",
+        "lookback_days": "回溯周期天数"
+      },
+      "help": "仅保留满足Parabolic Sar Flip阈值的股票。"
+    },
+    "linear_regression_slope_filter": {
+      "label": "Linear Regression Slope 筛选",
+      "desc": "按Linear Regression Slope 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_slope": "最小slope"
+      },
+      "help": "仅保留满足Linear Regression Slope 筛选阈值的股票。"
+    },
+    "linear_regression_angle_filter": {
+      "label": "Linear Regression Angle 筛选",
+      "desc": "按Linear Regression Angle 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_angle_deg": "最小angledeg"
+      },
+      "help": "仅保留满足Linear Regression Angle 筛选阈值的股票。"
+    },
+    "linear_regression_r2_filter": {
+      "label": "Linear Regression R2 筛选",
+      "desc": "按Linear Regression R2 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_r2": "最小r2"
+      },
+      "help": "仅保留满足Linear Regression R2 筛选阈值的股票。"
+    },
+    "beta_to_benchmark": {
+      "label": "Beta To Benchmark",
+      "desc": "按Beta To Benchmark条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_beta": "最大beta"
+      },
+      "help": "仅保留满足Beta To Benchmark阈值的股票。"
+    },
+    "correlation_to_benchmark": {
+      "label": "Correlation To Benchmark",
+      "desc": "按Correlation To Benchmark条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_corr": "最大corr"
+      },
+      "help": "仅保留满足Correlation To Benchmark阈值的股票。"
+    },
+    "support_retest_signal": {
+      "label": "Support Retest 信号",
+      "desc": "按Support Retest 信号条件筛选股票。",
+      "params": {
+        "support_lookback": "support回溯周期",
+        "tolerance_pct": "tolerance比率 %"
+      },
+      "help": "仅保留满足Support Retest 信号阈值的股票。"
+    },
+    "resistance_retest_signal": {
+      "label": "Resistance Retest 信号",
+      "desc": "按Resistance Retest 信号条件筛选股票。",
+      "params": {
+        "resistance_lookback": "resistance回溯周期",
+        "tolerance_pct": "tolerance比率 %"
+      },
+      "help": "仅保留满足Resistance Retest 信号阈值的股票。"
+    },
+    "downside_volatility_filter": {
+      "label": "Downside 波动率 筛选",
+      "desc": "按Downside 波动率 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_downside_vol_pct": "最大downsidevol比率 %"
+      },
+      "help": "仅保留满足Downside 波动率 筛选阈值的股票。"
+    },
+    "semivariance_filter": {
+      "label": "Semivariance 筛选",
+      "desc": "按Semivariance 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_semivariance": "最大semivariance"
+      },
+      "help": "仅保留满足Semivariance 筛选阈值的股票。"
+    },
+    "rolling_sharpe_filter": {
+      "label": "Rolling Sharpe 筛选",
+      "desc": "按Rolling Sharpe 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_sharpe": "最小sharpe"
+      },
+      "help": "仅保留满足Rolling Sharpe 筛选阈值的股票。"
+    },
+    "rolling_sortino_filter": {
+      "label": "Rolling Sortino 筛选",
+      "desc": "按Rolling Sortino 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_sortino": "最小sortino"
+      },
+      "help": "仅保留满足Rolling Sortino 筛选阈值的股票。"
+    },
+    "ulcer_index_filter": {
+      "label": "Ulcer Index 筛选",
+      "desc": "按Ulcer Index 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_ulcer_index": "最大ulcerindex"
+      },
+      "help": "仅保留满足Ulcer Index 筛选阈值的股票。"
+    },
+    "calmar_ratio_filter": {
+      "label": "Calmar 比率 筛选",
+      "desc": "按Calmar 比率 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_calmar": "最小calmar"
+      },
+      "help": "仅保留满足Calmar 比率 筛选阈值的股票。"
+    },
+    "max_drawdown_window_filter": {
+      "label": "Max Drawdown Window 筛选",
+      "desc": "按Max Drawdown Window 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_drawdown_pct": "最大drawdown比率 %"
+      },
+      "help": "仅保留满足Max Drawdown Window 筛选阈值的股票。"
+    },
+    "return_skewness_filter": {
+      "label": "收益率 Skewness 筛选",
+      "desc": "按收益率 Skewness 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_skewness": "最小skewness"
+      },
+      "help": "仅保留满足收益率 Skewness 筛选阈值的股票。"
+    },
+    "return_kurtosis_filter": {
+      "label": "收益率 Kurtosis 筛选",
+      "desc": "按收益率 Kurtosis 筛选条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "max_kurtosis": "最大kurtosis"
+      },
+      "help": "仅保留满足收益率 Kurtosis 筛选阈值的股票。"
+    },
+    "intraday_return_filter": {
+      "label": "Intraday 收益率 筛选",
+      "desc": "按Intraday 收益率 筛选条件筛选股票。",
+      "params": {
+        "min_intraday_return_pct": "最小intraday收益率比率 %"
+      },
+      "help": "仅保留满足Intraday 收益率 筛选阈值的股票。"
+    },
+    "dso_trend_filter": {
+      "label": "Dso 趋势 筛选",
+      "desc": "按Dso 趋势 筛选条件筛选股票。",
+      "params": {
+        "lookback_years": "回溯周期年数",
+        "min_dso_increase_pct": "最小dsoincrease比率 %"
+      },
+      "help": "仅保留满足Dso 趋势 筛选阈值的股票。"
+    },
+    "ema_cross": {
+      "label": "Ema Cross",
+      "desc": "按Ema Cross条件筛选股票。",
+      "params": {
+        "direction": "direction",
+        "fast_period": "fast周期",
+        "lookback_days": "回溯周期天数",
+        "slow_period": "slow周期"
+      },
+      "help": "仅保留满足Ema Cross阈值的股票。"
+    },
+    "ema_slope": {
+      "label": "Ema Slope",
+      "desc": "按Ema Slope条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_slope_pct": "最小slope比率 %",
+        "period": "周期"
+      },
+      "help": "仅保留满足Ema Slope阈值的股票。"
+    },
+    "sma_slope": {
+      "label": "Sma Slope",
+      "desc": "按Sma Slope条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_slope_pct": "最小slope比率 %",
+        "period": "周期"
+      },
+      "help": "仅保留满足Sma Slope阈值的股票。"
+    },
+    "macd_signal_cross": {
+      "label": "MACD 信号 Cross",
+      "desc": "按MACD 信号 Cross条件筛选股票。",
+      "params": {
+        "direction": "direction",
+        "fast_period": "fast周期",
+        "lookback_days": "回溯周期天数",
+        "signal_period": "信号周期",
+        "slow_period": "slow周期"
+      },
+      "help": "仅保留满足MACD 信号 Cross阈值的股票。"
+    },
+    "macd_histogram_slope": {
+      "label": "MACD Histogram Slope",
+      "desc": "按MACD Histogram Slope条件筛选股票。",
+      "params": {
+        "fast_period": "fast周期",
+        "lookback_days": "回溯周期天数",
+        "min_slope": "最小slope",
+        "signal_period": "信号周期",
+        "slow_period": "slow周期"
+      },
+      "help": "仅保留满足MACD Histogram Slope阈值的股票。"
+    },
+    "cci_overbought_oversold": {
+      "label": "CCI Overbought Oversold",
+      "desc": "按CCI Overbought Oversold条件筛选股票。",
+      "params": {
+        "mode": "mode",
+        "period": "周期",
+        "threshold": "阈值"
+      },
+      "help": "仅保留满足CCI Overbought Oversold阈值的股票。"
+    },
+    "williams_r_reversal": {
+      "label": "Williams R Reversal",
+      "desc": "按Williams R Reversal条件筛选股票。",
+      "params": {
+        "direction": "direction",
+        "overbought": "overbought",
+        "oversold": "oversold",
+        "period": "周期"
+      },
+      "help": "仅保留满足Williams R Reversal阈值的股票。"
+    },
+    "trix_cross": {
+      "label": "Trix Cross",
+      "desc": "按Trix Cross条件筛选股票。",
+      "params": {
+        "direction": "direction",
+        "lookback_days": "回溯周期天数",
+        "period": "周期",
+        "signal_period": "信号周期"
+      },
+      "help": "仅保留满足Trix Cross阈值的股票。"
+    },
+    "aroon_trend_signal": {
+      "label": "Aroon 趋势 信号",
+      "desc": "按Aroon 趋势 信号条件筛选股票。",
+      "params": {
+        "direction": "direction",
+        "min_aroon": "最小aroon",
+        "period": "周期"
+      },
+      "help": "仅保留满足Aroon 趋势 信号阈值的股票。"
+    },
+    "money_flow_index_signal": {
+      "label": "Money 流 Index 信号",
+      "desc": "按Money 流 Index 信号条件筛选股票。",
+      "params": {
+        "mode": "mode",
+        "overbought": "overbought",
+        "oversold": "oversold",
+        "period": "周期"
+      },
+      "help": "仅保留满足Money 流 Index 信号阈值的股票。"
+    },
+    "vwap_cross_signal": {
+      "label": "Vwap Cross 信号",
+      "desc": "按Vwap Cross 信号条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "period": "周期"
+      },
+      "help": "仅保留满足Vwap Cross 信号阈值的股票。"
+    },
+    "vwap_distance_pct": {
+      "label": "Vwap 距离 Pct",
+      "desc": "按Vwap 距离 Pct条件筛选股票。",
+      "params": {
+        "max_distance_pct": "最大距离比率 %",
+        "period": "周期"
+      },
+      "help": "仅保留满足Vwap 距离 Pct阈值的股票。"
+    },
+    "relative_volume_percentile": {
+      "label": "Relative 成交量 Percentile",
+      "desc": "按Relative 成交量 Percentile条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "min_percentile": "最小percentile"
+      },
+      "help": "仅保留满足Relative 成交量 Percentile阈值的股票。"
+    },
+    "turnover_ratio_min": {
+      "label": "周转率 比率 Min",
+      "desc": "按周转率 比率 Min条件筛选股票。",
+      "params": {
+        "min_turnover_ratio": "最小周转率比率"
+      },
+      "help": "仅保留满足周转率 比率 Min阈值的股票。"
+    },
+    "atr_percentile_filter": {
+      "label": "ATR Percentile 筛选",
+      "desc": "按ATR Percentile 筛选条件筛选股票。",
+      "params": {
+        "atr_period": "ATR周期",
+        "lookback_days": "回溯周期天数",
+        "max_percentile": "最大percentile"
+      },
+      "help": "仅保留满足ATR Percentile 筛选阈值的股票。"
+    },
+    "atr_expansion_breakout": {
+      "label": "ATR Expansion 突破",
+      "desc": "按ATR Expansion 突破条件筛选股票。",
+      "params": {
+        "atr_multiplier": "ATRmultiplier",
+        "atr_period": "ATR周期",
+        "breakout_lookback": "突破回溯周期"
+      },
+      "help": "仅保留满足ATR Expansion 突破阈值的股票。"
+    },
+    "natr_filter": {
+      "label": "Natr 筛选",
+      "desc": "按Natr 筛选条件筛选股票。",
+      "params": {
+        "max_natr_pct": "最大natr比率 %",
+        "period": "周期"
+      },
+      "help": "仅保留满足Natr 筛选阈值的股票。"
+    },
+    "dmi_directional_cross": {
+      "label": "Dmi Directional Cross",
+      "desc": "按Dmi Directional Cross条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数",
+        "period": "周期"
+      },
+      "help": "仅保留满足Dmi Directional Cross阈值的股票。"
+    },
+    "ichimoku_cloud_breakout": {
+      "label": "Ichimoku Cloud 突破",
+      "desc": "按Ichimoku Cloud 突破条件筛选股票。",
+      "params": {
+        "base_period": "base周期",
+        "conversion_period": "conversion周期",
+        "span_b_period": "spanb周期"
+      },
+      "help": "仅保留满足Ichimoku Cloud 突破阈值的股票。"
+    },
+    "ichimoku_tenkan_kijun_cross": {
+      "label": "Ichimoku Tenkan Kijun Cross",
+      "desc": "按Ichimoku Tenkan Kijun Cross条件筛选股票。",
+      "params": {
+        "base_period": "base周期",
+        "conversion_period": "conversion周期",
+        "lookback_days": "回溯周期天数"
+      },
+      "help": "仅保留满足Ichimoku Tenkan Kijun Cross阈值的股票。"
+    },
+    "bollinger_squeeze_breakout": {
+      "label": "Bollinger Squeeze 突破",
+      "desc": "按Bollinger Squeeze 突破条件筛选股票。",
+      "params": {
+        "max_width_pct": "最大width比率 %",
+        "period": "周期",
+        "std_mult": "stdmult"
+      },
+      "help": "仅保留满足Bollinger Squeeze 突破阈值的股票。"
+    },
+    "bollinger_percent_b": {
+      "label": "Bollinger Percent B",
+      "desc": "按Bollinger Percent B条件筛选股票。",
+      "params": {
+        "max_percent_b": "最大percentb",
+        "min_percent_b": "最小percentb",
+        "period": "周期",
+        "std_mult": "stdmult"
+      },
+      "help": "仅保留满足Bollinger Percent B阈值的股票。"
+    },
+    "ppo_signal_cross": {
+      "label": "Ppo 信号 Cross",
+      "desc": "按Ppo 信号 Cross条件筛选股票。",
+      "params": {
+        "fast_period": "fast周期",
+        "lookback_days": "回溯周期天数",
+        "signal_period": "信号周期",
+        "slow_period": "slow周期"
+      },
+      "help": "仅保留满足Ppo 信号 Cross阈值的股票。"
+    },
+    "stochastic_cross_signal": {
+      "label": "Stochastic Cross 信号",
+      "desc": "按Stochastic Cross 信号条件筛选股票。",
+      "params": {
+        "d_period": "d周期",
+        "k_period": "k周期",
+        "lookback_days": "回溯周期天数"
+      },
+      "help": "仅保留满足Stochastic Cross 信号阈值的股票。"
+    },
+    "stochrsi_signal": {
+      "label": "Stochrsi 信号",
+      "desc": "按Stochrsi 信号条件筛选股票。",
+      "params": {
+        "mode": "mode",
+        "rsi_period": "RSI周期",
+        "stoch_period": "stoch周期"
+      },
+      "help": "仅保留满足Stochrsi 信号阈值的股票。"
+    },
+    "aroon_oscillator_signal": {
+      "label": "Aroon Oscillator 信号",
+      "desc": "按Aroon Oscillator 信号条件筛选股票。",
+      "params": {
+        "min_oscillator": "最小oscillator",
+        "period": "周期"
+      },
+      "help": "仅保留满足Aroon Oscillator 信号阈值的股票。"
+    },
+    "ultimate_oscillator_signal": {
+      "label": "Ultimate Oscillator 信号",
+      "desc": "按Ultimate Oscillator 信号条件筛选股票。",
+      "params": {
+        "min_value": "最小价值"
+      },
+      "help": "仅保留满足Ultimate Oscillator 信号阈值的股票。"
+    },
+    "chaikin_money_flow_signal": {
+      "label": "Chaikin Money 流 信号",
+      "desc": "按Chaikin Money 流 信号条件筛选股票。",
+      "params": {
+        "min_cmf": "最小cmf",
+        "period": "周期"
+      },
+      "help": "仅保留满足Chaikin Money 流 信号阈值的股票。"
+    },
+    "chaikin_oscillator_signal": {
+      "label": "Chaikin Oscillator 信号",
+      "desc": "按Chaikin Oscillator 信号条件筛选股票。",
+      "params": {
+        "fast_period": "fast周期",
+        "min_value": "最小价值",
+        "slow_period": "slow周期"
+      },
+      "help": "仅保留满足Chaikin Oscillator 信号阈值的股票。"
+    },
+    "ad_line_trend": {
+      "label": "Ad Line 趋势",
+      "desc": "按Ad Line 趋势条件筛选股票。",
+      "params": {
+        "lookback_days": "回溯周期天数"
+      },
+      "help": "仅保留满足Ad Line 趋势阈值的股票。"
     }
   },
   "settings": {

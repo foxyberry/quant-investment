@@ -1212,6 +1212,722 @@
         "min_roa_pct": "Minimum ROA %"
       },
       "help": "Filters stocks based on ROA Filter threshold settings."
+    },
+    "overnight_return_filter": {
+      "label": "Overnight Return",
+      "desc": "Previous close to current open return filter",
+      "params": {
+        "min_overnight_return_pct": "Minimum Overnight Return %"
+      },
+      "help": "Filters stocks based on Overnight Return threshold settings."
+    },
+    "distance_from_52w_low": {
+      "label": "Distance From 52W Low",
+      "desc": "Distance from 252-day low",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_distance_pct": "Maximum Distance %"
+      },
+      "help": "Filters stocks based on Distance From 52W Low threshold settings."
+    },
+    "distance_from_200d_high": {
+      "label": "Distance From 200D High",
+      "desc": "Distance below 200-day high",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_distance_pct": "Maximum Distance %"
+      },
+      "help": "Filters stocks based on Distance From 200D High threshold settings."
+    },
+    "gap_up_breakaway": {
+      "label": "Gap Up Breakaway",
+      "desc": "Gap-up breakout using previous high",
+      "params": {
+        "min_gap_pct": "Minimum Gap %"
+      },
+      "help": "Filters stocks based on Gap Up Breakaway threshold settings."
+    },
+    "gap_down_exhaustion": {
+      "label": "Gap Down Exhaustion",
+      "desc": "Large down-gap exhaustion signal",
+      "params": {
+        "min_gap_down_pct": "Minimum Gap Down %"
+      },
+      "help": "Filters stocks based on Gap Down Exhaustion threshold settings."
+    },
+    "opening_range_breakout": {
+      "label": "Opening Range Breakout",
+      "desc": "Close breaks previous day range",
+      "params": {
+        "direction": "Direction"
+      },
+      "help": "Filters stocks based on Opening Range Breakout threshold settings."
+    },
+    "pivot_point_breakout": {
+      "label": "Pivot Point Breakout",
+      "desc": "Breakout above/below classic pivot",
+      "params": {
+        "direction": "Direction"
+      },
+      "help": "Filters stocks based on Pivot Point Breakout threshold settings."
+    },
+    "month_of_year_seasonality": {
+      "label": "Month Of Year Seasonality",
+      "desc": "Average return for target month",
+      "params": {
+        "min_avg_return_pct": "Minimum Avg Return %",
+        "target_month": "Target Month"
+      },
+      "help": "Filters stocks based on Month Of Year Seasonality threshold settings."
+    },
+    "turn_of_month_effect": {
+      "label": "Turn Of Month",
+      "desc": "Turn-of-month return effect",
+      "params": {
+        "min_avg_return_pct": "Minimum Avg Return %",
+        "window_days": "Window Days"
+      },
+      "help": "Filters stocks based on Turn Of Month threshold settings."
+    },
+    "day_of_week_seasonality": {
+      "label": "Day Of Week",
+      "desc": "Average weekday return effect",
+      "params": {
+        "min_avg_return_pct": "Minimum Avg Return %",
+        "target_weekday": "Target Weekday"
+      },
+      "help": "Filters stocks based on Day Of Week threshold settings."
+    },
+    "net_share_issuance_filter": {
+      "label": "Net Share Issuance Filter",
+      "desc": "Limit net share issuance",
+      "params": {
+        "max_issuance_pct": "Maximum Issuance %"
+      },
+      "help": "Filters stocks based on Net Share Issuance Filter threshold settings."
+    },
+    "insider_net_buying": {
+      "label": "Insider Net Buying",
+      "desc": "Insider net buying ratio",
+      "params": {
+        "min_net_buying_pct": "Minimum Net Buying %"
+      },
+      "help": "Filters stocks based on Insider Net Buying threshold settings."
+    },
+    "short_float_pct_filter": {
+      "label": "Short Float % Filter",
+      "desc": "Short float percentage threshold",
+      "params": {
+        "max_short_float_pct": "Maximum Short Float %"
+      },
+      "help": "Filters stocks based on Short Float % Filter threshold settings."
+    },
+    "short_interest_ratio_filter": {
+      "label": "Short Interest Ratio Filter",
+      "desc": "Days-to-cover threshold",
+      "params": {
+        "max_ratio": "Maximum Ratio"
+      },
+      "help": "Filters stocks based on Short Interest Ratio Filter threshold settings."
+    },
+    "earnings_surprise_filter": {
+      "label": "Earnings Surprise Filter",
+      "desc": "Quarterly earnings surprise threshold",
+      "params": {
+        "min_surprise_pct": "Minimum Surprise %"
+      },
+      "help": "Filters stocks based on Earnings Surprise Filter threshold settings."
+    },
+    "post_earnings_drift": {
+      "label": "Post Earnings Drift",
+      "desc": "Post-earnings drift threshold",
+      "params": {
+        "min_return_pct": "Minimum Return %"
+      },
+      "help": "Filters stocks based on Post Earnings Drift threshold settings."
+    },
+    "pre_earnings_drift": {
+      "label": "Pre Earnings Drift",
+      "desc": "Pre-earnings drift threshold",
+      "params": {
+        "min_return_pct": "Minimum Return %"
+      },
+      "help": "Filters stocks based on Pre Earnings Drift threshold settings."
+    },
+    "accruals_ratio": {
+      "label": "Accruals Ratio",
+      "desc": "Accruals ratio from income and cash flow",
+      "params": {
+        "max_ratio": "Maximum Ratio"
+      },
+      "help": "Filters stocks based on Accruals Ratio threshold settings."
+    },
+    "asset_growth_rate": {
+      "label": "Asset Growth Rate",
+      "desc": "Total asset growth rate",
+      "params": {
+        "max_growth_pct": "Maximum Growth %"
+      },
+      "help": "Filters stocks based on Asset Growth Rate threshold settings."
+    },
+    "momentum_12_1": {
+      "label": "Momentum 12-1",
+      "desc": "12-month momentum excluding recent 1 month",
+      "params": {
+        "lookback_months": "Lookback Months",
+        "min_return_pct": "Minimum Return %",
+        "skip_recent_months": "Skip Recent Months"
+      },
+      "help": "Filters stocks based on Momentum 12-1 threshold settings."
+    },
+    "volatility_n_day": {
+      "label": "Volatility N Day",
+      "desc": "Annualized N-day volatility filter",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_annualized_vol_pct": "Maximum Annualized Vol %"
+      },
+      "help": "Filters stocks based on Volatility N Day threshold settings."
+    },
+    "distance_from_52w_high": {
+      "label": "Distance From 52W High",
+      "desc": "Distance below 52-week high",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_distance_pct": "Maximum Distance %"
+      },
+      "help": "Filters stocks based on Distance From 52W High threshold settings."
+    },
+    "relative_strength_vs_benchmark": {
+      "label": "Relative Strength Vs Benchmark",
+      "desc": "Stock return minus benchmark return",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_excess_return_pct": "Minimum Excess Return %"
+      },
+      "help": "Filters stocks based on Relative Strength Vs Benchmark threshold settings."
+    },
+    "adx_trend_strength": {
+      "label": "ADX Trend Strength",
+      "desc": "ADX trend strength filter",
+      "params": {
+        "di_direction": "Di Direction",
+        "min_adx": "Minimum ADX",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on ADX Trend Strength threshold settings."
+    },
+    "ma_ribbon_alignment": {
+      "label": "MA Ribbon Alignment",
+      "desc": "Short>Mid>Long MA alignment",
+      "params": {
+        "long_period": "Long Period",
+        "mid_period": "Mid Period",
+        "short_period": "Short Period"
+      },
+      "help": "Filters stocks based on MA Ribbon Alignment threshold settings."
+    },
+    "golden_cross_50_200": {
+      "label": "Golden Cross 50/200",
+      "desc": "50MA crossing above 200MA",
+      "params": {
+        "lookback_days": "Lookback Days"
+      },
+      "help": "Filters stocks based on Golden Cross 50/200 threshold settings."
+    },
+    "death_cross_50_200": {
+      "label": "Death Cross 50/200",
+      "desc": "50MA crossing below 200MA",
+      "params": {
+        "lookback_days": "Lookback Days"
+      },
+      "help": "Filters stocks based on Death Cross 50/200 threshold settings."
+    },
+    "donchian_channel_breakout": {
+      "label": "Donchian Channel Breakout",
+      "desc": "Breakout above Donchian upper band",
+      "params": {
+        "lookback_days": "Lookback Days"
+      },
+      "help": "Filters stocks based on Donchian Channel Breakout threshold settings."
+    },
+    "keltner_channel_breakout": {
+      "label": "Keltner Channel Breakout",
+      "desc": "Breakout above EMA + ATR band",
+      "params": {
+        "atr_multiplier": "ATR Multiplier",
+        "atr_period": "ATR Period",
+        "ema_period": "Ema Period"
+      },
+      "help": "Filters stocks based on Keltner Channel Breakout threshold settings."
+    },
+    "parabolic_sar_flip": {
+      "label": "Parabolic SAR Flip",
+      "desc": "Bullish SAR flip within lookback",
+      "params": {
+        "af_max": "Af Maximum",
+        "af_step": "Af Step",
+        "lookback_days": "Lookback Days"
+      },
+      "help": "Filters stocks based on Parabolic SAR Flip threshold settings."
+    },
+    "linear_regression_slope_filter": {
+      "label": "Linear Regression Slope",
+      "desc": "Linear regression slope threshold",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_slope": "Minimum Slope"
+      },
+      "help": "Filters stocks based on Linear Regression Slope threshold settings."
+    },
+    "linear_regression_angle_filter": {
+      "label": "Linear Regression Angle",
+      "desc": "Linear regression angle threshold",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_angle_deg": "Minimum Angle Deg"
+      },
+      "help": "Filters stocks based on Linear Regression Angle threshold settings."
+    },
+    "linear_regression_r2_filter": {
+      "label": "Linear Regression R2",
+      "desc": "Linear regression R2 threshold",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_r2": "Minimum R2"
+      },
+      "help": "Filters stocks based on Linear Regression R2 threshold settings."
+    },
+    "beta_to_benchmark": {
+      "label": "Beta to Benchmark",
+      "desc": "Rolling beta versus benchmark",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_beta": "Maximum Beta"
+      },
+      "help": "Filters stocks based on Beta to Benchmark threshold settings."
+    },
+    "correlation_to_benchmark": {
+      "label": "Correlation to Benchmark",
+      "desc": "Rolling correlation versus benchmark",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_corr": "Maximum Corr"
+      },
+      "help": "Filters stocks based on Correlation to Benchmark threshold settings."
+    },
+    "support_retest_signal": {
+      "label": "Support Retest Signal",
+      "desc": "Price retests support and closes above",
+      "params": {
+        "support_lookback": "Support Lookback",
+        "tolerance_pct": "Tolerance %"
+      },
+      "help": "Filters stocks based on Support Retest Signal threshold settings."
+    },
+    "resistance_retest_signal": {
+      "label": "Resistance Retest Signal",
+      "desc": "Price retests resistance and closes below",
+      "params": {
+        "resistance_lookback": "Resistance Lookback",
+        "tolerance_pct": "Tolerance %"
+      },
+      "help": "Filters stocks based on Resistance Retest Signal threshold settings."
+    },
+    "downside_volatility_filter": {
+      "label": "Downside Volatility",
+      "desc": "Annualized downside volatility filter",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_downside_vol_pct": "Maximum Downside Vol %"
+      },
+      "help": "Filters stocks based on Downside Volatility threshold settings."
+    },
+    "semivariance_filter": {
+      "label": "Semivariance",
+      "desc": "Downside semivariance filter",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_semivariance": "Maximum Semivariance"
+      },
+      "help": "Filters stocks based on Semivariance threshold settings."
+    },
+    "rolling_sharpe_filter": {
+      "label": "Rolling Sharpe",
+      "desc": "Rolling Sharpe ratio filter",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_sharpe": "Minimum Sharpe"
+      },
+      "help": "Filters stocks based on Rolling Sharpe threshold settings."
+    },
+    "rolling_sortino_filter": {
+      "label": "Rolling Sortino",
+      "desc": "Rolling Sortino ratio filter",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_sortino": "Minimum Sortino"
+      },
+      "help": "Filters stocks based on Rolling Sortino threshold settings."
+    },
+    "ulcer_index_filter": {
+      "label": "Ulcer Index",
+      "desc": "Ulcer index filter",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_ulcer_index": "Maximum Ulcer Index"
+      },
+      "help": "Filters stocks based on Ulcer Index threshold settings."
+    },
+    "calmar_ratio_filter": {
+      "label": "Calmar Ratio",
+      "desc": "Calmar ratio filter",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_calmar": "Minimum Calmar"
+      },
+      "help": "Filters stocks based on Calmar Ratio threshold settings."
+    },
+    "max_drawdown_window_filter": {
+      "label": "Max Drawdown Window",
+      "desc": "Window max drawdown filter",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_drawdown_pct": "Maximum Drawdown %"
+      },
+      "help": "Filters stocks based on Max Drawdown Window threshold settings."
+    },
+    "return_skewness_filter": {
+      "label": "Return Skewness",
+      "desc": "Return skewness filter",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_skewness": "Minimum Skewness"
+      },
+      "help": "Filters stocks based on Return Skewness threshold settings."
+    },
+    "return_kurtosis_filter": {
+      "label": "Return Kurtosis",
+      "desc": "Return kurtosis filter",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "max_kurtosis": "Maximum Kurtosis"
+      },
+      "help": "Filters stocks based on Return Kurtosis threshold settings."
+    },
+    "intraday_return_filter": {
+      "label": "Intraday Return",
+      "desc": "Intraday return filter",
+      "params": {
+        "min_intraday_return_pct": "Minimum Intraday Return %"
+      },
+      "help": "Filters stocks based on Intraday Return threshold settings."
+    },
+    "dso_trend_filter": {
+      "label": "DSO Trend Filter",
+      "desc": "Days Sales Outstanding deterioration trend filter",
+      "params": {
+        "lookback_years": "Lookback Years",
+        "min_dso_increase_pct": "Minimum Dso Increase %"
+      },
+      "help": "Filters stocks based on DSO Trend Filter threshold settings."
+    },
+    "ema_cross": {
+      "label": "EMA Cross",
+      "desc": "EMA cross signal",
+      "params": {
+        "direction": "Direction",
+        "fast_period": "Fast Period",
+        "lookback_days": "Lookback Days",
+        "slow_period": "Slow Period"
+      },
+      "help": "Filters stocks based on EMA Cross threshold settings."
+    },
+    "ema_slope": {
+      "label": "EMA Slope",
+      "desc": "EMA slope over lookback",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_slope_pct": "Minimum Slope %",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on EMA Slope threshold settings."
+    },
+    "sma_slope": {
+      "label": "SMA Slope",
+      "desc": "SMA slope over lookback",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_slope_pct": "Minimum Slope %",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on SMA Slope threshold settings."
+    },
+    "macd_signal_cross": {
+      "label": "MACD Signal Cross",
+      "desc": "MACD line crossing signal line",
+      "params": {
+        "direction": "Direction",
+        "fast_period": "Fast Period",
+        "lookback_days": "Lookback Days",
+        "signal_period": "Signal Period",
+        "slow_period": "Slow Period"
+      },
+      "help": "Filters stocks based on MACD Signal Cross threshold settings."
+    },
+    "macd_histogram_slope": {
+      "label": "MACD Histogram Slope",
+      "desc": "MACD histogram slope",
+      "params": {
+        "fast_period": "Fast Period",
+        "lookback_days": "Lookback Days",
+        "min_slope": "Minimum Slope",
+        "signal_period": "Signal Period",
+        "slow_period": "Slow Period"
+      },
+      "help": "Filters stocks based on MACD Histogram Slope threshold settings."
+    },
+    "cci_overbought_oversold": {
+      "label": "CCI Overbought/Oversold",
+      "desc": "CCI threshold filter",
+      "params": {
+        "mode": "Mode",
+        "period": "Period",
+        "threshold": "Threshold"
+      },
+      "help": "Filters stocks based on CCI Overbought/Oversold threshold settings."
+    },
+    "williams_r_reversal": {
+      "label": "Williams %R Reversal",
+      "desc": "Williams %R reversal signal",
+      "params": {
+        "direction": "Direction",
+        "overbought": "Overbought",
+        "oversold": "Oversold",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on Williams %R Reversal threshold settings."
+    },
+    "trix_cross": {
+      "label": "TRIX Cross",
+      "desc": "TRIX crossing signal line",
+      "params": {
+        "direction": "Direction",
+        "lookback_days": "Lookback Days",
+        "period": "Period",
+        "signal_period": "Signal Period"
+      },
+      "help": "Filters stocks based on TRIX Cross threshold settings."
+    },
+    "aroon_trend_signal": {
+      "label": "Aroon Trend Signal",
+      "desc": "Aroon trend strength signal",
+      "params": {
+        "direction": "Direction",
+        "min_aroon": "Minimum Aroon",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on Aroon Trend Signal threshold settings."
+    },
+    "money_flow_index_signal": {
+      "label": "Money Flow Index",
+      "desc": "MFI threshold signal",
+      "params": {
+        "mode": "Mode",
+        "overbought": "Overbought",
+        "oversold": "Oversold",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on Money Flow Index threshold settings."
+    },
+    "vwap_cross_signal": {
+      "label": "VWAP Cross Signal",
+      "desc": "Close crossing above VWAP",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on VWAP Cross Signal threshold settings."
+    },
+    "vwap_distance_pct": {
+      "label": "VWAP Distance %",
+      "desc": "Distance between close and VWAP",
+      "params": {
+        "max_distance_pct": "Maximum Distance %",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on VWAP Distance % threshold settings."
+    },
+    "relative_volume_percentile": {
+      "label": "Relative Volume Percentile",
+      "desc": "Current volume percentile within lookback",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "min_percentile": "Minimum Percentile"
+      },
+      "help": "Filters stocks based on Relative Volume Percentile threshold settings."
+    },
+    "turnover_ratio_min": {
+      "label": "Turnover Ratio Min",
+      "desc": "Minimum turnover ratio",
+      "params": {
+        "min_turnover_ratio": "Minimum Turnover Ratio"
+      },
+      "help": "Filters stocks based on Turnover Ratio Min threshold settings."
+    },
+    "atr_percentile_filter": {
+      "label": "ATR Percentile",
+      "desc": "ATR percentile within lookback",
+      "params": {
+        "atr_period": "ATR Period",
+        "lookback_days": "Lookback Days",
+        "max_percentile": "Maximum Percentile"
+      },
+      "help": "Filters stocks based on ATR Percentile threshold settings."
+    },
+    "atr_expansion_breakout": {
+      "label": "ATR Expansion Breakout",
+      "desc": "ATR expansion and price breakout",
+      "params": {
+        "atr_multiplier": "ATR Multiplier",
+        "atr_period": "ATR Period",
+        "breakout_lookback": "Breakout Lookback"
+      },
+      "help": "Filters stocks based on ATR Expansion Breakout threshold settings."
+    },
+    "natr_filter": {
+      "label": "NATR Filter",
+      "desc": "Normalized ATR filter",
+      "params": {
+        "max_natr_pct": "Maximum Natr %",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on NATR Filter threshold settings."
+    },
+    "dmi_directional_cross": {
+      "label": "DMI Directional Cross",
+      "desc": "+DI crosses above -DI",
+      "params": {
+        "lookback_days": "Lookback Days",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on DMI Directional Cross threshold settings."
+    },
+    "ichimoku_cloud_breakout": {
+      "label": "Ichimoku Cloud Breakout",
+      "desc": "Close above cloud upper",
+      "params": {
+        "base_period": "Base Period",
+        "conversion_period": "Conversion Period",
+        "span_b_period": "Span B Period"
+      },
+      "help": "Filters stocks based on Ichimoku Cloud Breakout threshold settings."
+    },
+    "ichimoku_tenkan_kijun_cross": {
+      "label": "Ichimoku Tenkan/Kijun Cross",
+      "desc": "Tenkan crosses above Kijun",
+      "params": {
+        "base_period": "Base Period",
+        "conversion_period": "Conversion Period",
+        "lookback_days": "Lookback Days"
+      },
+      "help": "Filters stocks based on Ichimoku Tenkan/Kijun Cross threshold settings."
+    },
+    "bollinger_squeeze_breakout": {
+      "label": "Bollinger Squeeze Breakout",
+      "desc": "Low BB width followed by upper band breakout",
+      "params": {
+        "max_width_pct": "Maximum Width %",
+        "period": "Period",
+        "std_mult": "Std Mult"
+      },
+      "help": "Filters stocks based on Bollinger Squeeze Breakout threshold settings."
+    },
+    "bollinger_percent_b": {
+      "label": "Bollinger Percent B",
+      "desc": "Price position within Bollinger bands",
+      "params": {
+        "max_percent_b": "Maximum Percent B",
+        "min_percent_b": "Minimum Percent B",
+        "period": "Period",
+        "std_mult": "Std Mult"
+      },
+      "help": "Filters stocks based on Bollinger Percent B threshold settings."
+    },
+    "ppo_signal_cross": {
+      "label": "PPO Signal Cross",
+      "desc": "PPO line crossing signal line",
+      "params": {
+        "fast_period": "Fast Period",
+        "lookback_days": "Lookback Days",
+        "signal_period": "Signal Period",
+        "slow_period": "Slow Period"
+      },
+      "help": "Filters stocks based on PPO Signal Cross threshold settings."
+    },
+    "stochastic_cross_signal": {
+      "label": "Stochastic Cross Signal",
+      "desc": "%K crossing above %D",
+      "params": {
+        "d_period": "D Period",
+        "k_period": "K Period",
+        "lookback_days": "Lookback Days"
+      },
+      "help": "Filters stocks based on Stochastic Cross Signal threshold settings."
+    },
+    "stochrsi_signal": {
+      "label": "StochRSI Signal",
+      "desc": "StochRSI threshold signal",
+      "params": {
+        "mode": "Mode",
+        "rsi_period": "RSI Period",
+        "stoch_period": "Stoch Period"
+      },
+      "help": "Filters stocks based on StochRSI Signal threshold settings."
+    },
+    "aroon_oscillator_signal": {
+      "label": "Aroon Oscillator Signal",
+      "desc": "Aroon up-down oscillator filter",
+      "params": {
+        "min_oscillator": "Minimum Oscillator",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on Aroon Oscillator Signal threshold settings."
+    },
+    "ultimate_oscillator_signal": {
+      "label": "Ultimate Oscillator Signal",
+      "desc": "Ultimate oscillator threshold",
+      "params": {
+        "min_value": "Minimum Value"
+      },
+      "help": "Filters stocks based on Ultimate Oscillator Signal threshold settings."
+    },
+    "chaikin_money_flow_signal": {
+      "label": "Chaikin Money Flow",
+      "desc": "CMF threshold signal",
+      "params": {
+        "min_cmf": "Minimum Cmf",
+        "period": "Period"
+      },
+      "help": "Filters stocks based on Chaikin Money Flow threshold settings."
+    },
+    "chaikin_oscillator_signal": {
+      "label": "Chaikin Oscillator",
+      "desc": "Chaikin oscillator above threshold",
+      "params": {
+        "fast_period": "Fast Period",
+        "min_value": "Minimum Value",
+        "slow_period": "Slow Period"
+      },
+      "help": "Filters stocks based on Chaikin Oscillator threshold settings."
+    },
+    "ad_line_trend": {
+      "label": "A/D Line Trend",
+      "desc": "Accumulation/distribution line trend",
+      "params": {
+        "lookback_days": "Lookback Days"
+      },
+      "help": "Filters stocks based on A/D Line Trend threshold settings."
     }
   },
   "settings": {
