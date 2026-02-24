@@ -335,3 +335,100 @@ class Portfolio:
 
     def __len__(self) -> int:
         return len(self._holdings)
+
+    @staticmethod
+    def _normalize_kiwoom_code(code: str) -> str:
+        code = str(code or "").strip()
+        if code.startswith("A"):
+            code = code[1:]
+        if not code:
+            return code
+        if "." in code:
+            return code
+        return f"{code}.KS"
+
+    def apply_balance_event(self, payload: Dict[str, Any]) -> Optional[Holding]:
+        """Apply Kiwoom Chejan balance event payload to holdings."""
+        code = self._normalize_kiwoom_code(payload.get("code", ""))
+        if not code:
+            return None
+
+        holding_qty = int(payload.get("holding_qty", 0) or 0)
+        avg_buy_price = float(payload.get("avg_buy_price", 0) or 0)
+        total_cost = float(payload.get("total_cost", 0) or 0)
+        if holding_qty <= 0:
+            self.remove(code)
+            return None
+
+        effective_avg = avg_buy_price
+        if effective_avg <= 0 and holding_qty > 0 and total_cost > 0:
+            effective_avg = total_cost / holding_qty
+
+        updated = self.update(code, quantity=holding_qty, avg_price=effective_avg)
+        if updated is None:
+            updated = self.add(
+                ticker=code,
+                quantity=holding_qty,
+                avg_price=effective_avg,
+                name=payload.get("name") or code,
+                bought_at=date.today(),
+                note="synced from kiwoom balance",
+            )
+        return updated
+
+    def bind_chejan_handler(self, chejan_handler: Any) -> None:
+        """Subscribe to Chejan balance events for live holdings sync."""
+
+        def _on_chejan(payload: Dict[str, Any]) -> None:
+            if payload.get("type") != "balance":
+                return
+            try:
+                self.apply_balance_event(payload)
+            except Exception as exc:
+                self.logger.warning(f"Failed to apply balance event: {exc}")
+
+        chejan_handler.add_observer(_on_chejan)
+
+    def sync_from_kiwoom_rows(self, rows: List[Dict[str, Any]]) -> int:
+        """Replace current holdings from parsed opw00018 rows."""
+        next_holdings: Dict[str, Holding] = {}
+        for row in rows:
+            code = self._normalize_kiwoom_code(row.get("code") or row.get("ticker") or "")
+            if not code:
+                continue
+            qty = int(row.get("holding_qty") or row.get("quantity") or 0)
+            if qty <= 0:
+                continue
+            avg = float(row.get("avg_buy_price") or row.get("avg_price") or 0)
+            if avg <= 0:
+                total_cost = float(row.get("total_cost") or 0)
+                avg = (total_cost / qty) if qty > 0 and total_cost > 0 else 0.0
+            next_holdings[code] = Holding(
+                ticker=code,
+                name=row.get("name") or code,
+                quantity=qty,
+                avg_price=avg,
+                bought_at=date.today(),
+                note="synced from kiwoom TR",
+                transactions=[],
+            )
+        self._holdings = next_holdings
+        self._save()
+        return len(self._holdings)
+
+    def request_tr_sync(
+        self,
+        tr_client: Any,
+        account_no: str,
+        *,
+        password: str = "",
+        screen_no: str = "9001",
+        rq_name: str = "opw00018_req",
+    ) -> int:
+        """Request opw00018 account holdings snapshot."""
+        tr_client.set_input_value("계좌번호", account_no)
+        tr_client.set_input_value("비밀번호", password)
+        tr_client.set_input_value("비밀번호입력매체구분", "00")
+        tr_client.set_input_value("조회구분", "2")
+        from kiwoom.tr import TrRequest
+        return tr_client.comm_rq_data(TrRequest(rq_name=rq_name, tr_code="opw00018", prev_next=0, screen_no=screen_no))

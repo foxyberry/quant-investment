@@ -22,6 +22,8 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from enum import Enum
 
+from kiwoom.constants import FID
+
 
 class TriggerType(Enum):
     """트리거 조건 타입"""
@@ -348,3 +350,50 @@ class ConditionChecker:
             condition.last_triggered = None
             condition.trigger_count = 0
             condition.enabled = True
+
+
+class RealtimeTriggerBridge:
+    """Bridge Kiwoom real-time ticks into ConditionChecker."""
+
+    def __init__(self, checker: ConditionChecker):
+        self.logger = logging.getLogger(__name__)
+        self._checker = checker
+        self._latest_prices: Dict[str, float] = {}
+        self._latest_changes: Dict[str, float] = {}
+
+    @staticmethod
+    def _normalize_code(code: str) -> str:
+        code = str(code or "").strip()
+        if code.startswith("A"):
+            code = code[1:]
+        if "." not in code and code:
+            return f"{code}.KS"
+        return code
+
+    def subscribe(self, realtime_manager: Any, ticker: str) -> str:
+        code = self._normalize_code(ticker).split(".")[0]
+        return realtime_manager.register(code, [FID.CURRENT_PRICE, FID.CHANGE_RATE], real_type="1")
+
+    def unsubscribe(self, realtime_manager: Any, ticker: str) -> None:
+        code = self._normalize_code(ticker).split(".")[0]
+        realtime_manager.unregister(code)
+
+    def on_tick(self, payload: Dict[str, Any]) -> List[TriggerEvent]:
+        code = payload.get("code") or payload.get("ticker") or ""
+        ticker = self._normalize_code(code)
+        if not ticker:
+            return []
+        price = float(payload.get("current_price") or payload.get("price") or 0)
+        change_pct = float(payload.get("change_pct") or payload.get("change_rate") or 0)
+        if price <= 0:
+            return []
+
+        self._latest_prices[ticker] = price
+        self._latest_changes[ticker] = change_pct
+        events = self._checker.check_with_change(
+            prices={ticker: price},
+            changes={ticker: change_pct},
+        )
+        if events:
+            self.logger.info("Realtime trigger events=%d ticker=%s", len(events), ticker)
+        return events

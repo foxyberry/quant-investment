@@ -12,7 +12,7 @@ import logging
 import platform
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from kiwoom.constants import ErrorCode
 
@@ -138,11 +138,25 @@ class KiwoomConnection:
 
     _LOGIN_TIMEOUT: int = 60  # 로그인 대기 타임아웃 (초)
 
-    def __init__(self, mock: bool = False) -> None:
+    def __init__(
+        self,
+        mock: bool = False,
+        reconnect_attempts: int = 3,
+        reconnect_interval: float = 2.0,
+        on_disconnect: Optional[Callable[[int], None]] = None,
+        on_reconnect_failure: Optional[Callable[[int], None]] = None,
+    ) -> None:
         self._mock = mock or (not IS_WINDOWS)
         self._connected: bool = False
         self._login_event = threading.Event()
         self._login_error_code: Optional[int] = None
+        self._login_lock = threading.RLock()
+        self._reconnect_lock = threading.RLock()
+        self._reconnecting: bool = False
+        self._reconnect_attempts = reconnect_attempts
+        self._reconnect_interval = reconnect_interval
+        self._on_disconnect = on_disconnect
+        self._on_reconnect_failure = on_reconnect_failure
 
         # OCX 컨트롤 초기화
         if self._mock:
@@ -165,36 +179,37 @@ class KiwoomConnection:
         bool
             *True* if the login succeeded, *False* on timeout or error.
         """
-        logger.info("Requesting Kiwoom login …")
-        self._login_event.clear()
-        self._login_error_code = None
+        with self._login_lock:
+            logger.info("Requesting Kiwoom login …")
+            self._login_event.clear()
+            self._login_error_code = None
 
-        # CommConnect 호출 (OCX에 로그인 요청)
-        ret = self._ocx.dynamicCall("CommConnect()")
-        if ret != 0:
-            logger.warning(
-                "CommConnect returned %d (%s)", ret, _error_description(ret)
-            )
-            return False
+            # CommConnect 호출 (OCX에 로그인 요청)
+            ret = self._ocx.dynamicCall("CommConnect()")
+            if ret != 0:
+                logger.warning(
+                    "CommConnect returned %d (%s)", ret, _error_description(ret)
+                )
+                return False
 
-        # OnEventConnect 콜백 대기 (타임아웃 포함)
-        arrived = self._login_event.wait(timeout=self._LOGIN_TIMEOUT)
-        if not arrived:
-            logger.warning("Login timed out after %ds", self._LOGIN_TIMEOUT)
-            return False
+            # OnEventConnect 콜백 대기 (타임아웃 포함)
+            arrived = self._login_event.wait(timeout=self._LOGIN_TIMEOUT)
+            if not arrived:
+                logger.warning("Login timed out after %ds", self._LOGIN_TIMEOUT)
+                return False
 
-        # 에러코드 확인
-        if self._login_error_code != 0:
-            logger.warning(
-                "Login failed: code=%s (%s)",
-                self._login_error_code,
-                _error_description(self._login_error_code or -1),
-            )
-            return False
+            # 에러코드 확인
+            if self._login_error_code != 0:
+                logger.warning(
+                    "Login failed: code=%s (%s)",
+                    self._login_error_code,
+                    _error_description(self._login_error_code or -1),
+                )
+                return False
 
-        self._connected = True
-        logger.info("Kiwoom login successful")
-        return True
+            self._connected = True
+            logger.info("Kiwoom login successful")
+            return True
 
     def logout(self) -> None:
         """Tear down the current session."""
@@ -261,17 +276,53 @@ class KiwoomConnection:
         err_code : int
             ``0`` on success; negative value on failure.
         """
+        was_connected = self._connected
         self._login_error_code = err_code
         if err_code == 0:
+            self._connected = True
             logger.info("OnEventConnect: login succeeded (code=0)")
         else:
+            self._connected = False
             logger.warning(
                 "OnEventConnect: login failed — code=%d (%s)",
                 err_code,
                 _error_description(err_code),
             )
+            if was_connected and self._on_disconnect is not None:
+                try:
+                    self._on_disconnect(err_code)
+                except Exception:
+                    logger.exception("on_disconnect callback failed")
+            if was_connected:
+                self._schedule_reconnect(err_code)
         # 대기 중인 login() 스레드에 완료 시그널 전송
         self._login_event.set()
+
+    def _schedule_reconnect(self, err_code: int) -> None:
+        with self._reconnect_lock:
+            if self._reconnecting:
+                return
+            self._reconnecting = True
+
+        def _reconnect() -> None:
+            try:
+                for attempt in range(1, self._reconnect_attempts + 1):
+                    logger.warning("Reconnect attempt %d/%d", attempt, self._reconnect_attempts)
+                    if self.login():
+                        logger.info("Reconnect succeeded")
+                        return
+                    if attempt < self._reconnect_attempts:
+                        time.sleep(self._reconnect_interval)
+                if self._on_reconnect_failure is not None:
+                    try:
+                        self._on_reconnect_failure(err_code)
+                    except Exception:
+                        logger.exception("on_reconnect_failure callback failed")
+            finally:
+                with self._reconnect_lock:
+                    self._reconnecting = False
+
+        threading.Thread(target=_reconnect, daemon=True).start()
 
     # -- Private helpers (내부 유틸) --
 

@@ -7,6 +7,7 @@ for the Korean stock market via Kiwoom Securities API.
 from kiwoom.connection import KiwoomConnection
 from kiwoom.chejan_handler import ChejanHandler, OrderStatus
 from kiwoom.order import KiwoomOrderManager, Order
+from kiwoom.safety import AuditLogger, DuplicateOrderGuard, KillSwitch, KiwoomSafetyManager, SafetyViolation
 from kiwoom.condition_search import ConditionDefinition, ConditionSearchManager
 from kiwoom.realtime import RealtimeSubscriptionManager, ScreenManager
 from kiwoom.tr import KiwoomTrClient, TrRequest
@@ -27,6 +28,11 @@ __all__ = [
     "OrderStatus",
     "KiwoomOrderManager",
     "Order",
+    "KiwoomSafetyManager",
+    "KillSwitch",
+    "AuditLogger",
+    "DuplicateOrderGuard",
+    "SafetyViolation",
     "ConditionDefinition",
     "ConditionSearchManager",
     "KiwoomTrClient",

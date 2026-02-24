@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Optional
 
 from kiwoom.constants import HogaType, OrderType
+from kiwoom.safety import KiwoomSafetyManager
 
 
 _ALLOWED_HOGA = {item.value for item in HogaType}
@@ -66,6 +67,7 @@ class _OrderTask:
     price: int
     hoga_type: str
     org_order_no: str
+    order_signature: Any
     done_event: threading.Event
     result_holder: Dict[str, Any]
 
@@ -79,6 +81,8 @@ class KiwoomOrderManager:
         throttle_seconds: float = 1.0,
         max_history_size: int = 2000,
         history_ttl_seconds: Optional[float] = 86400.0,
+        connection: Optional[Any] = None,
+        safety_manager: Optional[KiwoomSafetyManager] = None,
         sleep_fn: Callable[[float], None] = time.sleep,
         time_fn: Callable[[], float] = time.monotonic,
     ) -> None:
@@ -88,6 +92,8 @@ class KiwoomOrderManager:
         self._history_ttl_seconds = history_ttl_seconds
         self._sleep = sleep_fn
         self._time = time_fn
+        self._connection = connection
+        self._safety_manager = safety_manager
 
         self.order_history: Dict[str, Order] = {}
         self._order_by_rq_name: Dict[str, str] = {}
@@ -144,6 +150,18 @@ class KiwoomOrderManager:
         if hoga_type == HogaType.MARKET.value and price != 0:
             raise ValueError("market order must use price=0")
 
+        order_signature = None
+        if self._safety_manager is not None:
+            order_signature = self._safety_manager.validate_pre_order(
+                connection=self._connection,
+                order_type=order_type,
+                code=code,
+                qty=qty,
+                price=price,
+                acc_no=acc_no,
+                org_order_no=org_order_no,
+            )
+
         done_event = threading.Event()
         result_holder: Dict[str, Any] = {}
         task = _OrderTask(
@@ -157,6 +175,7 @@ class KiwoomOrderManager:
             price=price,
             hoga_type=hoga_type,
             org_order_no=org_order_no,
+            order_signature=order_signature,
             done_event=done_event,
             result_holder=result_holder,
         )
@@ -168,6 +187,36 @@ class KiwoomOrderManager:
         if "order_no" not in result_holder:
             raise RuntimeError("order send timeout")
         return result_holder["order_no"]
+
+    def cancel_open_orders(self) -> int:
+        with self._lock:
+            candidates = [
+                order
+                for order in self.order_history.values()
+                if order.status in {"sent", "accepted", "placed", "confirmed", "partial"}
+                and order.order_type in {int(OrderType.NEW_BUY), int(OrderType.NEW_SELL)}
+                and order.order_no
+            ]
+
+        cancelled = 0
+        for order in candidates:
+            cancel_type = int(OrderType.CANCEL_BUY) if order.order_type == int(OrderType.NEW_BUY) else int(OrderType.CANCEL_SELL)
+            try:
+                self.send_order(
+                    rq_name=f"kill_cancel_{order.order_no}",
+                    screen_no=order.screen_no,
+                    acc_no=order.acc_no,
+                    order_type=cancel_type,
+                    code=order.code,
+                    qty=order.qty,
+                    price=0,
+                    hoga_type=HogaType.LIMIT.value,
+                    org_order_no=order.order_no,
+                )
+                cancelled += 1
+            except Exception:
+                continue
+        return cancelled
 
     def on_receive_msg(self, screen_no: str, rq_name: str, tr_code: str, msg: str) -> None:
         """Handle OnReceiveMsg and update tracked order status/message."""
@@ -259,6 +308,18 @@ class KiwoomOrderManager:
 
                 if isinstance(ret, int) and ret < 0:
                     task.result_holder["error"] = f"SendOrder failed: {ret}"
+                    if self._safety_manager is not None:
+                        self._safety_manager.on_order_submit(
+                            rq_name=task.rq_name,
+                            api_rq_name=task.api_rq_name,
+                            acc_no=task.acc_no,
+                            order_type=task.order_type,
+                            code=task.code,
+                            qty=task.qty,
+                            price=task.price,
+                            status="failed",
+                            message=str(ret),
+                        )
                     task.done_event.set()
                     continue
 
@@ -288,6 +349,19 @@ class KiwoomOrderManager:
                     self.order_history[order_no] = order
                     self._order_by_rq_name[task.api_rq_name] = order_no
                     self._cleanup_history()
+                if self._safety_manager is not None:
+                    self._safety_manager.on_order_submit(
+                        rq_name=task.rq_name,
+                        api_rq_name=task.api_rq_name,
+                        acc_no=task.acc_no,
+                        order_type=task.order_type,
+                        code=task.code,
+                        qty=task.qty,
+                        price=task.price,
+                        status="sent",
+                        order_no=order_no,
+                        signature=task.order_signature,
+                    )
                 task.result_holder["order_no"] = order_no
                 task.done_event.set()
             except Exception as exc:  # pragma: no cover
