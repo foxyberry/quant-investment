@@ -457,6 +457,116 @@ class TestExecuteStrategyMultiUniverse:
         assert result["total_count"] == 3
         assert result["screened_count"] == 3
 
+    def test_duplicate_universe_inputs_are_normalized_stably(self, monkeypatch):
+        graph = self._make_graph(
+            nodes=[
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "min_price", "params": {"min_price": 10}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[{"id": "e1", "source": "c1", "target": "o1"}],
+        )
+
+        captured = {"universe_input": None}
+
+        def _mock_get_tickers_for_universes(self, universe_input, fail_fast=False):
+            captured["universe_input"] = universe_input
+            return ["005930.KS", "AAPL"]
+
+        class _MockScreener:
+            def run(self, tickers, show_progress, return_all, progress_callback=None):
+                return []
+
+        monkeypatch.setattr(
+            "api.services.strategy_service.ScreeningService.get_tickers_for_universes",
+            _mock_get_tickers_for_universes,
+        )
+        monkeypatch.setattr(
+            "api.services.strategy_service.StockScreener",
+            lambda **kwargs: _MockScreener(),
+        )
+
+        result = execute_strategy(
+            graph=graph,
+            universe_overrides=["kospi", "SP500", "KOSPI", "sp500"],
+        )
+        assert captured["universe_input"] == ["KOSPI", "SP500"]
+        assert result["universes"] == ["KOSPI", "SP500"]
+        assert result["universe"] == "KOSPI"
+
+    def test_total_and_matched_count_follow_result_sizes(self, monkeypatch):
+        graph = self._make_graph(
+            nodes=[
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "min_price", "params": {"min_price": 10}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[{"id": "e1", "source": "c1", "target": "o1"}],
+        )
+
+        class _Result:
+            def __init__(self, ticker: str, matched: bool):
+                self.ticker = ticker
+                self.name = ticker
+                self.current_price = 100.0
+                self.matched = matched
+                self.condition_results = [
+                    type(
+                        "_ConditionResult",
+                        (),
+                        {
+                            "condition_name": "min_price",
+                            "matched": matched,
+                            "details": {},
+                        },
+                    )()
+                ]
+
+        monkeypatch.setattr(
+            "api.services.strategy_service.ScreeningService.get_tickers_for_universes",
+            lambda self, universe_input, fail_fast=False: ["005930.KS", "AAPL", "MSFT"],
+        )
+
+        class _MockScreener:
+            def run(self, tickers, show_progress, return_all, progress_callback=None):
+                return [_Result("005930.KS", True), _Result("AAPL", True), _Result("MSFT", True)]
+
+        monkeypatch.setattr(
+            "api.services.strategy_service.StockScreener",
+            lambda **kwargs: _MockScreener(),
+        )
+
+        result = execute_strategy(graph=graph, universe_overrides=["KOSPI", "SP500"])
+        assert result["total_count"] == 3
+        assert result["matched_count"] == 3
+        assert len(result["results"]) == 3
+
+    def test_partial_market_fetch_failure_is_allowed_when_tickers_exist(self, monkeypatch):
+        graph = self._make_graph(
+            nodes=[
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "min_price", "params": {"min_price": 10}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[{"id": "e1", "source": "c1", "target": "o1"}],
+        )
+
+        # Simulate service already degraded one market and returned remaining tickers.
+        monkeypatch.setattr(
+            "api.services.strategy_service.ScreeningService.get_tickers_for_universes",
+            lambda self, universe_input, fail_fast=False: ["005930.KS"],
+        )
+
+        class _MockScreener:
+            def run(self, tickers, show_progress, return_all, progress_callback=None):
+                return []
+
+        monkeypatch.setattr(
+            "api.services.strategy_service.StockScreener",
+            lambda **kwargs: _MockScreener(),
+        )
+
+        result = execute_strategy(graph=graph, universe_overrides=["KOSPI", "KOSDAQ"])
+        assert result["total_count"] == 1
+        assert result["screened_count"] == 1
+
     def test_progress_total_matches_merged_ticker_count(self, monkeypatch):
         graph = self._make_graph(
             nodes=[
