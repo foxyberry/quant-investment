@@ -68,6 +68,15 @@ def _register_default_brokers() -> None:
     except Exception:
         logger.debug("Kiwoom adapter not available; skipping registration", exc_info=True)
 
+    # -- IBKR adapter ------------------------------------------------------
+    try:
+        from brokers.ibkr.adapter import IBKRBrokerAdapter
+
+        _default_registry.register("ibkr", IBKRBrokerAdapter)
+        logger.debug("Registered broker adapter: ibkr")
+    except Exception:
+        logger.debug("IBKR adapter not available; skipping registration", exc_info=True)
+
 
 def get_broker(name: str) -> BrokerAdapter:
     """Return an adapter instance from the default registry.
