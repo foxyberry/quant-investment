@@ -145,3 +145,72 @@ class TestRunStrategyEndpoint:
         )
         # Should not be a validation error (422)
         assert response.status_code != 422
+
+    def test_invalid_universe_override_returns_standard_400(self):
+        """Invalid override universe should return standard 400 message."""
+        response = client.post(
+            "/api/strategy/run",
+            json={
+                "graph": {
+                    "nodes": [
+                        {
+                            "id": "c1",
+                            "data": {
+                                "node_type": "condition",
+                                "condition_type": "min_price",
+                                "params": {"min_price": 5000},
+                            },
+                        },
+                        {"id": "o1", "data": {"node_type": "output"}},
+                    ],
+                    "edges": [{"id": "e1", "source": "c1", "target": "o1"}],
+                },
+                "universe_overrides": ["INVALID"],
+            },
+        )
+        assert response.status_code == 400
+        assert (
+            response.json()["detail"]
+            == "Invalid universe value(s): INVALID. Allowed values: KOSPI, KOSDAQ, SP500, NASDAQ100"
+        )
+
+    def test_multi_universe_override_is_normalized_and_reflected(self, monkeypatch):
+        """Normalized override list should be returned with backward-compatible universe."""
+
+        def _mock_execute_strategy(*args, **kwargs):
+            return {
+                "results": [],
+                "total_count": 100,
+                "matched_count": 0,
+                "universe": "KOSPI",
+                "conditions_used": [],
+                "node_results": {},
+            }
+
+        monkeypatch.setattr("api.routers.strategy.execute_strategy", _mock_execute_strategy)
+
+        response = client.post(
+            "/api/strategy/run",
+            json={
+                "graph": {
+                    "nodes": [
+                        {
+                            "id": "c1",
+                            "data": {
+                                "node_type": "condition",
+                                "condition_type": "min_price",
+                                "params": {"min_price": 5000},
+                            },
+                        },
+                        {"id": "o1", "data": {"node_type": "output"}},
+                    ],
+                    "edges": [{"id": "e1", "source": "c1", "target": "o1"}],
+                },
+                "universe_override": "kospi,kosdaq",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["universe"] == "KOSPI"
+        assert data["universes"] == ["KOSPI", "KOSDAQ"]

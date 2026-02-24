@@ -6,7 +6,54 @@ Pydantic models for stock screening request/response validation.
 
 from typing import List, Optional, Dict, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+
+SUPPORTED_UNIVERSES: tuple[str, ...] = ("KOSPI", "KOSDAQ", "SP500", "NASDAQ100")
+
+
+def normalize_universe_values(value: Any) -> List[str]:
+    """Normalize universe input to uppercase, de-duplicated list (stable order)."""
+    if value is None:
+        return []
+
+    tokens: List[str] = []
+    if isinstance(value, str):
+        tokens = [part.strip() for part in value.split(",")]
+    elif isinstance(value, list):
+        for item in value:
+            if isinstance(item, str):
+                tokens.extend([part.strip() for part in item.split(",")])
+            elif item is None:
+                continue
+            else:
+                tokens.append(str(item).strip())
+    else:
+        tokens = [str(value).strip()]
+
+    normalized: List[str] = []
+    seen = set()
+    for token in tokens:
+        if not token:
+            continue
+        upper = token.upper()
+        if upper in seen:
+            continue
+        normalized.append(upper)
+        seen.add(upper)
+    return normalized
+
+
+def find_invalid_universes(universes: List[str]) -> List[str]:
+    """Return invalid universe values in input order."""
+    return [universe for universe in universes if universe not in SUPPORTED_UNIVERSES]
+
+
+def format_invalid_universe_error(invalid_universes: List[str]) -> str:
+    """Build the standard invalid universe error message."""
+    invalid = ", ".join(invalid_universes)
+    allowed = ", ".join(SUPPORTED_UNIVERSES)
+    return f"Invalid universe value(s): {invalid}. Allowed values: {allowed}"
 
 
 class ConditionResultItem(BaseModel):
@@ -67,10 +114,28 @@ class ScreeningRequest(BaseModel):
         default="KOSPI",
         description="Stock universe (KOSPI, KOSDAQ, SP500, etc.)"
     )
+    universes: List[str] = Field(
+        default_factory=list,
+        description="Multi-market universes (backward-compatible with `universe`)",
+    )
     params: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Optional parameters to override preset defaults"
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_universe_inputs(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        explicit = data.get("universes")
+        primary = data.get("universe")
+        normalized = normalize_universe_values(explicit if explicit is not None else primary)
+        if not normalized:
+            normalized = ["KOSPI"]
+        data["universes"] = normalized
+        data["universe"] = normalized[0]
+        return data
 
     model_config = {
         "json_schema_extra": {
@@ -78,6 +143,19 @@ class ScreeningRequest(BaseModel):
                 {
                     "preset": "accumulation_basic",
                     "universe": "KOSPI",
+                    "universes": ["KOSPI"],
+                    "params": {"min_price": 10000}
+                },
+                {
+                    "preset": "accumulation_basic",
+                    "universe": "KOSPI",
+                    "universes": ["KOSPI", "KOSDAQ"],
+                    "params": {"min_price": 10000}
+                },
+                {
+                    "preset": "accumulation_basic",
+                    "universe": "SP500",
+                    "universes": ["SP500", "NASDAQ100"],
                     "params": {"min_price": 10000}
                 }
             ]
@@ -101,6 +179,11 @@ class ScreeningResponse(BaseModel):
     )
     total_count: int = Field(..., description="Total number of stocks screened")
     matched_count: int = Field(..., description="Number of matched stocks")
+    universe: str = Field(default="KOSPI", description="Primary universe for compatibility")
+    universes: List[str] = Field(
+        default_factory=list,
+        description="Normalized universe list used by the request",
+    )
 
 
 class PresetInfo(BaseModel):

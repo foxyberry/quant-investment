@@ -5,7 +5,9 @@ Pydantic models for the visual strategy builder graph serialization and executio
 """
 
 from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from api.schemas.screening import normalize_universe_values
 
 
 class StrategyNodeData(BaseModel):
@@ -27,12 +29,32 @@ class StrategyNodeData(BaseModel):
     universe: Optional[str] = Field(
         None, description="Universe name (e.g., 'KOSPI', 'SP500')"
     )
+    universes: List[str] = Field(
+        default_factory=list,
+        description="Normalized multi-market values for universe node",
+    )
     sector: Optional[str] = Field(
         None, description="Sector name for sector node filtering (e.g., '전기전자')"
     )
     child_node_ids: Optional[List[str]] = Field(
         None, description="Child node IDs for group/logic nodes"
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_universe_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        if data.get("node_type") != "universe":
+            return data
+        explicit = data.get("universes")
+        primary = data.get("universe")
+        normalized = normalize_universe_values(explicit if explicit is not None else primary)
+        if not normalized:
+            return data
+        data["universes"] = normalized
+        data["universe"] = normalized[0]
+        return data
 
 
 class StrategyNode(BaseModel):
@@ -65,6 +87,79 @@ class StrategyExecuteRequest(BaseModel):
     universe_override: Optional[str] = Field(
         None, description="Override universe from graph"
     )
+    universe_overrides: List[str] = Field(
+        default_factory=list,
+        description="Normalized multi-market universe overrides",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_override_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        explicit = data.get("universe_overrides")
+        primary = data.get("universe_override")
+        normalized = normalize_universe_values(explicit if explicit is not None else primary)
+        data["universe_overrides"] = normalized
+        data["universe_override"] = normalized[0] if normalized else None
+        return data
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "graph": {
+                        "nodes": [
+                            {
+                                "id": "u1",
+                                "data": {"node_type": "universe", "universe": "KOSPI"},
+                            },
+                            {
+                                "id": "c1",
+                                "data": {
+                                    "node_type": "condition",
+                                    "condition_type": "min_price",
+                                    "params": {"min_price": 5000},
+                                },
+                            },
+                            {"id": "o1", "data": {"node_type": "output"}},
+                        ],
+                        "edges": [
+                            {"id": "e1", "source": "u1", "target": "c1"},
+                            {"id": "e2", "source": "c1", "target": "o1"},
+                        ],
+                    },
+                    "universe_override": "KOSPI",
+                    "universe_overrides": ["KOSPI"],
+                },
+                {
+                    "graph": {
+                        "nodes": [
+                            {
+                                "id": "u1",
+                                "data": {"node_type": "universe", "universe": "KOSPI"},
+                            },
+                            {
+                                "id": "c1",
+                                "data": {
+                                    "node_type": "condition",
+                                    "condition_type": "min_price",
+                                    "params": {"min_price": 5000},
+                                },
+                            },
+                            {"id": "o1", "data": {"node_type": "output"}},
+                        ],
+                        "edges": [
+                            {"id": "e1", "source": "u1", "target": "c1"},
+                            {"id": "e2", "source": "c1", "target": "o1"},
+                        ],
+                    },
+                    "universe_override": "KOSPI",
+                    "universe_overrides": ["KOSPI", "KOSDAQ"],
+                },
+            ]
+        }
+    }
 
 
 class StrategyResultItem(BaseModel):
@@ -97,6 +192,7 @@ class StrategyExecuteResponse(BaseModel):
     total_count: int
     matched_count: int
     universe: str
+    universes: List[str] = Field(default_factory=list)
     conditions_used: List[str] = Field(default_factory=list)
     node_results: Dict[str, NodeIntermediateResult] = Field(default_factory=dict)
 
