@@ -24,6 +24,19 @@ function toTitleCaseFromKey(value: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function getFallbackHowToRead(paramNames: string[], t: (key: string) => string): string {
+  const hasTarget = paramNames.some((name) => name.startsWith('target_'));
+  const hasLowerUpper = paramNames.includes('lower') || paramNames.includes('upper');
+  const hasMin = paramNames.some((name) => name.startsWith('min_'));
+  const hasMax = paramNames.some((name) => name.startsWith('max_'));
+
+  if (hasTarget) return t('guidanceFallbackHowToReadTarget');
+  if (hasLowerUpper || (hasMin && hasMax)) return t('guidanceFallbackHowToReadRange');
+  if (hasMin) return t('guidanceFallbackHowToReadMin');
+  if (hasMax) return t('guidanceFallbackHowToReadMax');
+  return t('guidanceFallbackHowToReadGeneral');
+}
+
 function ConditionNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
@@ -210,6 +223,22 @@ function ConditionNode({ data, selected }: NodeProps) {
             const { paired, standalone } = groupParams(
               currentMeta.params as ConditionParam[]
             );
+            const whenToUseKey = currentMeta.key + '.whenToUse';
+            const howToReadKey = currentMeta.key + '.howToRead';
+            const cautionKey = currentMeta.key + '.caution';
+            const fallbackHowToRead = getFallbackHowToRead(
+              currentMeta.params.map((p) => p.name),
+              t
+            );
+            const whenToUse = tCond.has(whenToUseKey)
+              ? tCond(whenToUseKey)
+              : t('guidanceFallbackWhenToUse');
+            const howToRead = tCond.has(howToReadKey)
+              ? tCond(howToReadKey)
+              : fallbackHowToRead;
+            const caution = tCond.has(cautionKey)
+              ? tCond(cautionKey)
+              : t('guidanceFallbackCaution');
 
             return (
               <>
@@ -286,6 +315,26 @@ function ConditionNode({ data, selected }: NodeProps) {
                       ? tCond(currentMeta.key + '.help')
                       : (currentMeta.description || '')}
                   </p>
+                  <div className="mt-2 space-y-1.5 text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
+                    <p>
+                      <span className="font-semibold text-[#1313ec] dark:text-blue-400">
+                        {t('guidanceWhenToUse')}:
+                      </span>{' '}
+                      {whenToUse}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-[#1313ec] dark:text-blue-400">
+                        {t('guidanceHowToRead')}:
+                      </span>{' '}
+                      {howToRead}
+                    </p>
+                    <p>
+                      <span className="font-semibold text-[#1313ec] dark:text-blue-400">
+                        {t('guidanceCaution')}:
+                      </span>{' '}
+                      {caution}
+                    </p>
+                  </div>
                 </div>
               </>
             );

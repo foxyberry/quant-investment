@@ -373,7 +373,17 @@
     "deleteConfirm": "이 전략을 삭제할까요?",
     "unsavedChanges": "저장되지 않은 변경 사항이 있습니다",
     "lastSaved": "마지막 저장: {time}",
-    "strategyNameRequired": "전략 이름을 입력하세요"
+    "strategyNameRequired": "전략 이름을 입력하세요",
+    "guidanceWhenToUse": "언제 사용하면 좋은가",
+    "guidanceHowToRead": "해석 방법",
+    "guidanceCaution": "주의할 점",
+    "guidanceFallbackWhenToUse": "이 조건은 1차 후보를 좁힐 때 사용하고, 추세/거래량 조건과 함께 조합하는 것이 좋습니다.",
+    "guidanceFallbackHowToReadRange": "설정한 범위 안에 값이 들어오면 통과합니다.",
+    "guidanceFallbackHowToReadMin": "최소값 기준 조건이므로 값이 높을수록 통과에 유리합니다.",
+    "guidanceFallbackHowToReadMax": "최대값 기준 조건이므로 값이 낮을수록 통과에 유리합니다.",
+    "guidanceFallbackHowToReadTarget": "선택한 타겟 구간(예: 요일/월)에서 성과가 유리한지를 확인합니다.",
+    "guidanceFallbackHowToReadGeneral": "백테스트 결과를 기준으로 임계값을 조정하고, 시장 국면이 바뀌어도 과도하게 흔들리지 않게 유지하세요.",
+    "guidanceFallbackCaution": "단독 사용보다 리스크/추세 조건과 함께 써서 오신호를 줄이는 것을 권장합니다."
   },
   "analysis": {
     "title": "차트 & 분석",
@@ -649,7 +659,10 @@
         "threshold": "RSI 기준값",
         "period": "RSI 기간"
       },
-      "help": "RSI가 낮아 과매도 상태 — 반등 가능성이 있습니다."
+      "help": "RSI가 낮아 과매도 상태 — 반등 가능성이 있습니다.",
+      "whenToUse": "급락 이후 단기 반등(평균회귀) 후보를 찾을 때 사용합니다.",
+      "howToRead": "RSI가 낮을수록 과매도 강도가 큽니다. 보통 30 전후를 참고합니다.",
+      "caution": "강한 하락 추세에서는 RSI 과매도 상태가 오래 지속될 수 있습니다."
     },
     "rsi_overbought": {
       "label": "RSI 과매수",
@@ -658,7 +671,10 @@
         "threshold": "RSI 기준값",
         "period": "RSI 기간"
       },
-      "help": "RSI가 높아 과매수 상태 — 조정 가능성이 있습니다."
+      "help": "RSI가 높아 과매수 상태 — 조정 가능성이 있습니다.",
+      "whenToUse": "단기 과열 점검 또는 조정 가능성 확인에 사용합니다.",
+      "howToRead": "RSI가 높을수록 과매수 강도가 큽니다. 보통 70 전후를 참고합니다.",
+      "caution": "강한 상승 추세에서는 과매수 신호가 오래 유지될 수 있습니다."
     },
     "rsi_range": {
       "label": "RSI 범위",
@@ -668,7 +684,10 @@
         "upper": "상한값",
         "period": "RSI 기간"
       },
-      "help": "RSI가 중립 구간에 있어 안정적인 모멘텀을 보여줍니다."
+      "help": "RSI가 중립 구간에 있어 안정적인 모멘텀을 보여줍니다.",
+      "whenToUse": "과열/과매도 구간을 피하고 중립 모멘텀 구간만 고를 때 사용합니다.",
+      "howToRead": "하한~상한 범위 안에 RSI가 들어오면 통과합니다.",
+      "caution": "범위를 너무 좁게 잡으면 후보가 과도하게 줄어 과최적화 위험이 커집니다."
     },
     "bollinger_width": {
       "label": "볼린저 밴드 폭",
@@ -1290,21 +1309,27 @@
       "help": "Turn Of 월 Effect 기준값을 만족하는 종목만 통과시킵니다."
     },
     "day_of_week_seasonality": {
-      "label": "일 Of 주 Seasonality",
-      "desc": "일 Of 주 Seasonality 조건으로 종목을 필터링합니다.",
+      "label": "요일 계절성",
+      "desc": "선택한 요일에 평균 수익률이 양호했던 종목을 필터링합니다.",
       "params": {
-        "min_avg_return_pct": "최소 avg 수익률 비율 %",
-        "target_weekday": "target weekday"
+        "min_avg_return_pct": "최소 평균 수익률 %",
+        "target_weekday": "대상 요일 (0=월, 4=금)"
       },
-      "help": "일 Of 주 Seasonality 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "요일별 반복 패턴(캘린더 효과)이 있는 종목을 찾습니다.",
+      "whenToUse": "단기 진입 타이밍을 잡을 때, 특정 요일 효과가 있다고 가정하면 유용합니다.",
+      "howToRead": "최소 평균 수익률을 높일수록 더 엄격해집니다. 낮은 값부터 시작해 안정성을 확인하세요.",
+      "caution": "요일 효과는 거래비용/시장 국면 변화에 쉽게 약해질 수 있으므로 기간 분할 검증이 필요합니다."
     },
     "net_share_issuance_filter": {
-      "label": "순 주식 발행 필터",
-      "desc": "순 주식 발행 필터 조건으로 종목을 필터링합니다.",
+      "label": "순주식발행 필터",
+      "desc": "신주 발행으로 인한 주주 희석이 큰 종목을 제외합니다.",
       "params": {
         "max_issuance_pct": "최대 발행 비율 %"
       },
-      "help": "순 주식 발행 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "순주식발행률이 상한 이하인 종목만 통과시킵니다.",
+      "whenToUse": "품질/가치 전략에서 주주가치 희석 리스크를 줄일 때 사용합니다.",
+      "howToRead": "최대값 조건입니다. 값이 낮을수록 일반적으로 희석 부담이 적습니다.",
+      "caution": "증자에는 성장 투자 목적이 있을 수 있으므로 기업 상황을 함께 보세요."
     },
     "insider_net_buying": {
       "label": "Insider 순 Buying",
@@ -1315,28 +1340,37 @@
       "help": "Insider 순 Buying 기준값을 만족하는 종목만 통과시킵니다."
     },
     "short_float_pct_filter": {
-      "label": "Short Float Pct 필터",
-      "desc": "Short Float Pct 필터 조건으로 종목을 필터링합니다.",
+      "label": "공매도 유통주식 비율 필터",
+      "desc": "유통주식 대비 공매도 비율(Short Float)이 낮은 종목을 선별합니다.",
       "params": {
-        "max_short_float_pct": "최대 short float 비율 %"
+        "max_short_float_pct": "최대 공매도 유통주식 비율 %"
       },
-      "help": "Short Float Pct 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "설정한 상한 이하의 공매도 비율을 가진 종목만 통과시킵니다.",
+      "whenToUse": "롱 전략에서 과도한 숏 포지션 종목을 피하고 싶을 때 사용합니다.",
+      "howToRead": "최대값 조건입니다. 값이 낮을수록 일반적으로 숏 압력이 낮고 변동 리스크가 작습니다.",
+      "caution": "공매도 비율이 높다고 항상 악재는 아닙니다. 숏 스퀴즈 가능성도 함께 고려하세요."
     },
     "short_interest_ratio_filter": {
-      "label": "Short 이자 비율 필터",
-      "desc": "Short 이자 비율 필터 조건으로 종목을 필터링합니다.",
+      "label": "공매도 잔고 일수 필터",
+      "desc": "거래량 대비 공매도 잔고(일수)가 과도한 종목을 제외합니다.",
       "params": {
         "max_ratio": "최대 비율"
       },
-      "help": "Short 이자 비율 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "유동성 대비 공매도 쏠림이 큰 종목 노출을 줄입니다.",
+      "whenToUse": "체결 리스크를 줄이고 싶을 때 유동성 조건과 함께 사용합니다.",
+      "howToRead": "최대값 조건입니다. 값이 낮을수록 일반적으로 매매 난도가 낮습니다.",
+      "caution": "거래량 급감 구간에서는 일시적으로 수치가 왜곡될 수 있습니다."
     },
     "earnings_surprise_filter": {
       "label": "실적 서프라이즈 필터",
-      "desc": "실적 서프라이즈 필터 조건으로 종목을 필터링합니다.",
+      "desc": "컨센서스 대비 실적 서프라이즈가 높은 종목을 필터링합니다.",
       "params": {
         "min_surprise_pct": "최소 서프라이즈 비율 %"
       },
-      "help": "실적 서프라이즈 필터 기준값을 만족하는 종목만 통과시킵니다."
+      "help": "설정한 최소 서프라이즈를 넘는 종목만 통과시킵니다.",
+      "whenToUse": "실적 시즌 모멘텀 전략이나 실적 발표 후 드리프트 전략에서 유용합니다.",
+      "howToRead": "최소값 조건입니다. 값을 높일수록 더 강한 서프라이즈만 선택됩니다.",
+      "caution": "일회성 회계 항목으로 서프라이즈가 부풀려질 수 있어 가이던스/추정치 수정을 함께 확인하세요."
     },
     "post_earnings_drift": {
       "label": "사후 실적 Drift",
