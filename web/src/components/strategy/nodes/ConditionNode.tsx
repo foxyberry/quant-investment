@@ -17,6 +17,13 @@ import NodeEditPopup, {
   CategoryBadge,
 } from './NodeEditPopup';
 
+function toTitleCaseFromKey(value: string): string {
+  return value
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function ConditionNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
@@ -27,16 +34,10 @@ function ConditionNode({ data, selected }: NodeProps) {
     : null;
 
   const condKey = nodeData.condition_type || '';
-  let label: string;
-  if (condKey) {
-    try {
-      label = tCond(`${condKey}.label`);
-    } catch {
-      label = meta?.label || nodeData.label || t('condition');
-    }
-  } else {
-    label = nodeData.label || t('condition');
-  }
+  const label =
+    condKey && tCond.has(`${condKey}.label`)
+      ? tCond(`${condKey}.label`)
+      : (meta?.label || nodeData.label || (condKey ? toTitleCaseFromKey(condKey) : t('condition')));
 
   const nodeId = useNodeId()!;
   const { getNode, getEdges, setNodes, updateNodeData, deleteElements } = useReactFlow();
@@ -195,7 +196,7 @@ function ConditionNode({ data, selected }: NodeProps) {
             <option value="">{t('selectCondition')}</option>
             {conditions.map((c) => (
               <option key={c.key} value={c.key}>
-                {tCond(c.key + '.label')}
+                {tCond.has(c.key + '.label') ? tCond(c.key + '.label') : (c.label || toTitleCaseFromKey(c.key))}
               </option>
             ))}
           </SelectInput>
@@ -219,7 +220,9 @@ function ConditionNode({ data, selected }: NodeProps) {
                 )}
 
                 <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  {tCond(currentMeta.key + '.desc')}
+                  {tCond.has(currentMeta.key + '.desc')
+                    ? tCond(currentMeta.key + '.desc')
+                    : (currentMeta.description || '')}
                 </p>
 
                 <div className="space-y-3">
@@ -229,8 +232,12 @@ function ConditionNode({ data, selected }: NodeProps) {
                       <div key={`pair-${suffix}`}>
                         <FieldLabel>
                           {t('range')}:{' '}
-                          {tCond(currentMeta.key + '.params.' + minP.name)} /{' '}
-                          {tCond(currentMeta.key + '.params.' + maxP.name)}
+                          {tCond.has(currentMeta.key + '.params.' + minP.name)
+                            ? tCond(currentMeta.key + '.params.' + minP.name)
+                            : toTitleCaseFromKey(minP.name)} /{' '}
+                          {tCond.has(currentMeta.key + '.params.' + maxP.name)
+                            ? tCond(currentMeta.key + '.params.' + maxP.name)
+                            : toTitleCaseFromKey(maxP.name)}
                         </FieldLabel>
                         <div className="flex items-center gap-2">
                           <InlineNumberInput
@@ -275,7 +282,9 @@ function ConditionNode({ data, selected }: NodeProps) {
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                    {tCond(currentMeta.key + '.help')}
+                    {tCond.has(currentMeta.key + '.help')
+                      ? tCond(currentMeta.key + '.help')
+                      : (currentMeta.description || '')}
                   </p>
                 </div>
               </>
