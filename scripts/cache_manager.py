@@ -9,6 +9,8 @@ Usage:
 
     # KOSPI 전체 종목 프리페치
     python scripts/cache_manager.py prefetch --universe KOSPI
+    python scripts/cache_manager.py prefetch --universe KOSPI,KOSDAQ
+    python scripts/cache_manager.py prefetch --universes KOSPI --universes KOSDAQ
 
     # 특정 종목 갱신
     python scripts/cache_manager.py refresh --ticker 005930.KS
@@ -26,8 +28,56 @@ project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
 import argparse
+from typing import List
 from utils.data_cache import OHLCVCache, get_cache
 from screener.kospi_fetcher import KospiListFetcher
+
+
+def parse_universe_inputs(universe: str, universes: List[str] | None = None) -> List[str]:
+    """Parse single/csv/repeated universe inputs with stable dedupe."""
+    tokens: List[str] = []
+    values = list(universes or [])
+    if universe:
+        values.append(universe)
+    for value in values:
+        for item in value.split(","):
+            token = item.strip().upper()
+            if token:
+                tokens.append(token)
+
+    resolved: List[str] = []
+    seen = set()
+    for token in tokens or ["KOSPI"]:
+        if token not in seen:
+            resolved.append(token)
+            seen.add(token)
+    return resolved
+
+
+def resolve_symbols(fetcher: KospiListFetcher, universe: str, universes: List[str] | None = None):
+    """Resolve multi-universe inputs to merged symbol list."""
+    resolved = parse_universe_inputs(universe, universes)
+    merged = []
+    seen = set()
+
+    for selected in resolved:
+        if selected == "KOSPI":
+            symbols = fetcher.get_kospi_symbols()
+        elif selected == "KOSDAQ":
+            symbols = fetcher.get_kosdaq_symbols()
+        elif selected == "ALL":
+            symbols = fetcher.get_kospi_symbols() + fetcher.get_kosdaq_symbols()
+        else:
+            raise ValueError(f"Unknown universe: {selected}")
+
+        for row in symbols:
+            ticker = row["symbol"]
+            if ticker in seen:
+                continue
+            seen.add(ticker)
+            merged.append(row)
+
+    return resolved, merged
 
 
 def cmd_status(args):
@@ -41,16 +91,10 @@ def cmd_prefetch(args):
     cache = get_cache()
     fetcher = KospiListFetcher()
 
-    # 유니버스 종목 가져오기
-    universe = args.universe.upper()
-    if universe == "KOSPI":
-        symbols = fetcher.get_kospi_symbols()
-    elif universe == "KOSDAQ":
-        symbols = fetcher.get_kosdaq_symbols()
-    elif universe == "ALL":
-        symbols = fetcher.get_kospi_symbols() + fetcher.get_kosdaq_symbols()
-    else:
-        print(f"Unknown universe: {universe}")
+    try:
+        resolved_universes, symbols = resolve_symbols(fetcher, args.universe, args.universes)
+    except ValueError as e:
+        print(str(e))
         return
 
     tickers = [s['symbol'] for s in symbols]
@@ -58,7 +102,7 @@ def cmd_prefetch(args):
     print(f"\n{'='*60}")
     print(f"  OHLCV Data Prefetch")
     print(f"{'='*60}")
-    print(f"  유니버스: {universe}")
+    print(f"  유니버스: {', '.join(resolved_universes)}")
     print(f"  종목 수: {len(tickers)}")
     print(f"  캐시 기간: {args.days}일")
     print(f"{'='*60}\n")
@@ -88,20 +132,18 @@ def cmd_refresh(args):
     else:
         # 전체 갱신
         fetcher = KospiListFetcher()
-        universe = args.universe.upper()
-
-        if universe == "KOSPI":
-            symbols = fetcher.get_kospi_symbols()
-        elif universe == "KOSDAQ":
-            symbols = fetcher.get_kosdaq_symbols()
-        else:
-            symbols = fetcher.get_kospi_symbols() + fetcher.get_kosdaq_symbols()
+        try:
+            resolved_universes, symbols = resolve_symbols(fetcher, args.universe, args.universes)
+        except ValueError as e:
+            print(str(e))
+            return
 
         tickers = [s['symbol'] for s in symbols]
 
         print(f"\n{'='*60}")
         print(f"  캐시 전체 갱신")
         print(f"{'='*60}")
+        print(f"  유니버스: {', '.join(resolved_universes)}")
         print(f"  종목 수: {len(tickers)}")
         print(f"{'='*60}\n")
 
@@ -169,7 +211,11 @@ def main():
     parser_prefetch = subparsers.add_parser('prefetch', help='데이터 프리페치')
     parser_prefetch.add_argument(
         '--universe', type=str, default='KOSPI',
-        help='유니버스 (KOSPI/KOSDAQ/ALL)'
+        help='유니버스 단일/CSV (KOSPI/KOSDAQ/ALL)'
+    )
+    parser_prefetch.add_argument(
+        '--universes', action='append', default=[],
+        help='유니버스 반복 지정 (예: --universes KOSPI --universes KOSDAQ)'
     )
     parser_prefetch.add_argument(
         '--days', type=int, default=365,
@@ -185,7 +231,11 @@ def main():
     )
     parser_refresh.add_argument(
         '--universe', type=str, default='KOSPI',
-        help='전체 갱신 시 유니버스'
+        help='전체 갱신 시 유니버스 단일/CSV'
+    )
+    parser_refresh.add_argument(
+        '--universes', action='append', default=[],
+        help='전체 갱신 시 유니버스 반복 지정'
     )
     parser_refresh.set_defaults(func=cmd_refresh)
 
