@@ -25,6 +25,10 @@ from api.schemas.strategy import (
     StrategySaveRequest,
     StrategyUpdateRequest,
 )
+from api.schemas.screening import (
+    find_invalid_universes,
+    format_invalid_universe_error,
+)
 from api.services.strategy_save_service import get_strategy_save_service
 from api.services.strategy_service import (
     enrich_fundamentals,
@@ -202,12 +206,23 @@ async def list_sectors(market: str = "KOSPI") -> SectorListResponse:
 )
 async def run_strategy(request: StrategyExecuteRequest) -> StrategyExecuteResponse:
     """Execute a visual strategy graph."""
+    candidate_universes = list(request.universe_overrides)
+    if not candidate_universes:
+        for node in request.graph.nodes:
+            if node.data.node_type == "universe":
+                candidate_universes.extend(node.data.universes or ([node.data.universe] if node.data.universe else []))
+                break
+    invalid_universes = find_invalid_universes(candidate_universes)
+    if invalid_universes:
+        raise HTTPException(status_code=400, detail=format_invalid_universe_error(invalid_universes))
+
     try:
         result = execute_strategy(
             graph=request.graph,
             universe_override=request.universe_override,
         )
-        return StrategyExecuteResponse(**result)
+        response_universes = request.universe_overrides or [result["universe"]]
+        return StrategyExecuteResponse(**result, universes=response_universes)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -222,6 +237,16 @@ async def run_strategy(request: StrategyExecuteRequest) -> StrategyExecuteRespon
 )
 async def run_strategy_stream(request: StrategyExecuteRequest):
     """Execute a visual strategy graph with streaming progress events."""
+    candidate_universes = list(request.universe_overrides)
+    if not candidate_universes:
+        for node in request.graph.nodes:
+            if node.data.node_type == "universe":
+                candidate_universes.extend(node.data.universes or ([node.data.universe] if node.data.universe else []))
+                break
+    invalid_universes = find_invalid_universes(candidate_universes)
+    if invalid_universes:
+        raise HTTPException(status_code=400, detail=format_invalid_universe_error(invalid_universes))
+
     progress_queue: queue.Queue = queue.Queue(maxsize=100)
     cancel_event = threading.Event()
 
@@ -255,6 +280,7 @@ async def run_strategy_stream(request: StrategyExecuteRequest):
                 progress_callback=_progress_cb,
                 skip_enrich=True,
             )
+            result["universes"] = request.universe_overrides or [result["universe"]]
             if cancel_event.is_set():
                 return
             screened = result.get("screened_count", result["total_count"])

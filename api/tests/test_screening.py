@@ -114,9 +114,18 @@ class TestRunScreening:
         assert "results" in data
         assert "total_count" in data
         assert "matched_count" in data
+        assert "universe" in data
+        assert "universes" in data
         assert data["matched_count"] == 1
+        assert data["universe"] == "KOSPI"
+        assert data["universes"] == ["KOSPI"]
         assert len(data["results"]) == 1
         assert data["results"][0]["ticker"] == "005930.KS"
+        mock_screening_service.run_screening.assert_called_once_with(
+            preset="accumulation_basic",
+            universe="KOSPI",
+            params=None,
+        )
 
     def test_run_screening_with_invalid_preset_returns_400(
         self, client, mock_screening_service
@@ -162,6 +171,57 @@ class TestRunScreening:
         assert response.status_code == 400
         data = response.json()
         assert "detail" in data
+
+    def test_run_screening_with_multi_universe_keeps_backward_compatibility(
+        self, client, mock_screening_service
+    ):
+        """Multi-universe request should normalize and execute with primary universe."""
+        # Arrange
+        mock_screening_service.run_screening.return_value = {
+            "results": [],
+            "total_count": 1000,
+            "matched_count": 0
+        }
+        request_data = {
+            "preset": "accumulation_basic",
+            "universe": "kospi,kosdaq"
+        }
+
+        # Act
+        response = client.post("/api/screening/run", json=request_data)
+
+        # Assert
+        assert response.status_code == 200
+        data = response.json()
+        assert data["universe"] == "KOSPI"
+        assert data["universes"] == ["KOSPI", "KOSDAQ"]
+        mock_screening_service.run_screening.assert_called_once_with(
+            preset="accumulation_basic",
+            universe="KOSPI",
+            params=None,
+        )
+
+    def test_run_screening_invalid_universe_uses_standard_message(
+        self, client, mock_screening_service
+    ):
+        """Invalid universe should return standard 400 message before service execution."""
+        # Arrange
+        request_data = {
+            "preset": "accumulation_basic",
+            "universes": ["KOSPI", "INVALID"],
+        }
+
+        # Act
+        response = client.post("/api/screening/run", json=request_data)
+
+        # Assert
+        assert response.status_code == 400
+        data = response.json()
+        assert (
+            data["detail"]
+            == "Invalid universe value(s): INVALID. Allowed values: KOSPI, KOSDAQ, SP500, NASDAQ100"
+        )
+        mock_screening_service.run_screening.assert_not_called()
 
     def test_run_screening_with_params(self, client, mock_screening_service):
         """Test POST /api/screening/run with custom parameters."""

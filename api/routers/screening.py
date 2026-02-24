@@ -16,6 +16,8 @@ from api.schemas.screening import (
     PresetInfo,
     UniverseInfo,
     SingleStockRequest,
+    find_invalid_universes,
+    format_invalid_universe_error,
 )
 from api.services.screening_service import get_screening_service
 
@@ -92,6 +94,13 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
     """
     service = get_screening_service()
 
+    invalid_universes = find_invalid_universes(request.universes)
+    if invalid_universes:
+        raise HTTPException(
+            status_code=400,
+            detail=format_invalid_universe_error(invalid_universes),
+        )
+
     try:
         result = service.run_screening(
             preset=request.preset,
@@ -102,7 +111,9 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
         return ScreeningResponse(
             results=result["results"],
             total_count=result["total_count"],
-            matched_count=result["matched_count"]
+            matched_count=result["matched_count"],
+            universe=request.universe,
+            universes=request.universes,
         )
 
     except ValueError as e:

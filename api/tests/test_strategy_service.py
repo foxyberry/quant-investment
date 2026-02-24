@@ -227,6 +227,22 @@ class TestBuildConditionsFromGraph:
         _, universe = build_conditions_from_graph(graph)
         assert universe == "KOSPI"
 
+    def test_universe_node_multi_input_keeps_primary_for_compatibility(self):
+        """Universe node with comma-separated input should normalize to primary universe."""
+        graph = self._make_graph(
+            nodes=[
+                {"id": "u1", "data": {"node_type": "universe", "universe": "kospi,kosdaq"}},
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "min_price", "params": {"min_price": 5000}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[
+                {"id": "e1", "source": "u1", "target": "c1"},
+                {"id": "e2", "source": "c1", "target": "o1"},
+            ],
+        )
+        _, universe = build_conditions_from_graph(graph)
+        assert universe == "KOSPI"
+
     def test_group_and_with_child_node_ids(self):
         """AND group with child_node_ids (new container approach)."""
         graph = self._make_graph(
