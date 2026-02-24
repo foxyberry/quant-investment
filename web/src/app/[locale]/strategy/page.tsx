@@ -25,7 +25,7 @@ import '@xyflow/react/dist/style.css';
 
 import {
   Loader2, Zap, RotateCcw, Save, TestTube, Download, FolderOpen, X,
-  ChevronRight, Home, MoreHorizontal, Calendar, FileSpreadsheet,
+  ChevronRight, Home, Calendar, FileSpreadsheet,
 } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
@@ -171,25 +171,11 @@ function StrategyPageInner() {
   const [strategyDescription, setStrategyDescription] = useState('');
   const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(null);
   const [isSampleStrategy, setIsSampleStrategy] = useState(false);
-  const [showOverflowMenu, setShowOverflowMenu] = useState(false);
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
   const [deployProgress, setDeployProgress] = useState(0);
   const [progressDetail, setProgressDetail] = useState<{ processed: number; total: number; matched: number } | null>(null);
   const [streamStatus, setStreamStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const streamAbortRef = useRef<{ abort: () => void } | null>(null);
-  const overflowRef = useRef<HTMLDivElement>(null);
-
-  // Close overflow menu on outside click
-  useEffect(() => {
-    if (!showOverflowMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (overflowRef.current && !overflowRef.current.contains(e.target as globalThis.Node)) {
-        setShowOverflowMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showOverflowMenu]);
 
   // Restore from sessionStorage after mount (locale-switch persistence)
   // Uses setTimeout guard so the save effect doesn't overwrite sessionStorage
@@ -1035,7 +1021,7 @@ function StrategyPageInner() {
     <div className="flex flex-col h-[calc(100vh-var(--header-height))]">
       <h1 className="sr-only">{t('title')}</h1>
       {/* Toolbar - Stitch-style */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c]">
+      <div className="flex flex-wrap items-center gap-3 px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c]">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm">
           <Home className="h-4 w-4 text-[#1313ec]" />
@@ -1077,40 +1063,24 @@ function StrategyPageInner() {
           </div>
         )}
 
-        {/* Overflow menu (Reset, Load) */}
-        <div className="relative" ref={overflowRef}>
-          <button
-            type="button"
-            onClick={() => setShowOverflowMenu(!showOverflowMenu)}
-            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
-          {showOverflowMenu && (
-            <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] shadow-lg z-50 py-1">
-              <button
-                type="button"
-                onClick={() => { handleClear(); setShowOverflowMenu(false); }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                {t('reset')}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setShowLoadDialog(true); setShowOverflowMenu(false); }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <FolderOpen className="h-3.5 w-3.5" />
-                {t('loadStrategy')}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="h-6 w-px bg-[#e1e3e5] dark:bg-[#2e2e30] mx-1" />
-
         {/* Primary actions */}
+        <button
+          type="button"
+          onClick={handleClear}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          {t('reset')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowLoadDialog(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          <FolderOpen className="h-3.5 w-3.5" />
+          {t('loadStrategy')}
+        </button>
+        <div className="h-6 w-px bg-[#e1e3e5] dark:bg-[#2e2e30] mx-1" />
         <button
           type="button"
           onClick={handleSave}
