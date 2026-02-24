@@ -3,18 +3,25 @@ Tests for strategy service: graph building and condition mapping.
 """
 
 import pytest
+import numpy as np
+import pandas as pd
 
 from api.schemas.strategy import (
+    PortfolioConstructionConfig,
     StrategyGraph,
     StrategyNode,
     StrategyNodeData,
     StrategyEdge,
+    StrategyResultItem,
 )
 from api.services.strategy_service import (
     build_conditions_from_graph,
     get_available_conditions,
     CONDITION_CLASS_MAP,
     CONDITION_METADATA,
+    _build_weighted_portfolio,
+    _compute_inverse_vol_weights,
+    _compute_risk_parity_weights,
     _build_condition,
     execute_strategy,
     execute_strategy_with_progress,
@@ -713,3 +720,58 @@ class TestExecuteStrategySectorPolicy:
                 graph=graph,
                 universe_overrides=["SP500"],
             )
+
+
+class TestPortfolioConstruction:
+    def test_inverse_vol_weights_are_normalized(self):
+        vols = np.array([0.2, 0.4, 0.8], dtype=float)
+        weights = _compute_inverse_vol_weights(vols)
+        assert len(weights) == 3
+        assert abs(float(weights.sum()) - 1.0) < 1e-9
+        assert weights[0] > weights[1] > weights[2]
+
+    def test_risk_parity_weights_are_normalized(self):
+        cov = np.array(
+            [
+                [0.04, 0.01, 0.0],
+                [0.01, 0.09, 0.0],
+                [0.0, 0.0, 0.16],
+            ],
+            dtype=float,
+        )
+        weights = _compute_risk_parity_weights(cov)
+        assert len(weights) == 3
+        assert abs(float(weights.sum()) - 1.0) < 1e-8
+        assert all(w >= 0 for w in weights)
+
+    def test_weighted_portfolio_falls_back_when_history_missing(self, monkeypatch):
+        monkeypatch.setattr(
+            "api.services.strategy_service._estimate_return_matrix",
+            lambda tickers, lookback_days, probe_conditions: pd.DataFrame(),
+        )
+        items = [
+            StrategyResultItem(
+                ticker="AAPL",
+                name="Apple",
+                current_price=100.0,
+                matched=True,
+                conditions=[],
+            ),
+            StrategyResultItem(
+                ticker="MSFT",
+                name="Microsoft",
+                current_price=200.0,
+                matched=True,
+                conditions=[],
+            ),
+        ]
+        weighted, meta = _build_weighted_portfolio(
+            final_items=items,
+            leaf_conditions=[MinPriceCondition(1)],
+            config=PortfolioConstructionConfig(mode="risk_parity", lookback_days=60, max_assets=10),
+        )
+        assert len(weighted) == 2
+        assert abs(sum(w.weight for w in weighted) - 1.0) < 1e-8
+        assert meta is not None
+        assert meta.mode_applied == "equal_weight"
+        assert meta.fallback_reason == "insufficient_return_history"

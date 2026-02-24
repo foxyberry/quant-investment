@@ -12,14 +12,18 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Type
 
 import numpy as np
+import pandas as pd
 
 from api.schemas.strategy import (
     ConditionInfo,
     ConditionParamInfo,
     NodeIntermediateResult,
+    PortfolioConstructionConfig,
+    PortfolioConstructionResult,
     StrategyGraph,
     StrategyNode,
     StrategyResultItem,
+    WeightedPortfolioItem,
 )
 from screener.conditions import BaseCondition, AndCondition, OrCondition, NotCondition
 from screener.conditions.registry import get_condition_class_map, get_condition_metadata
@@ -281,6 +285,198 @@ def _sanitize_value(v: Any) -> Any:
     if isinstance(v, list):
         return [_sanitize_value(item) for item in v]
     return v
+
+
+def _normalize_weights(raw: np.ndarray) -> np.ndarray:
+    clipped = np.clip(raw.astype(float), 0.0, None)
+    total = float(clipped.sum())
+    if not np.isfinite(total) or total <= 0:
+        return np.array([])
+    return clipped / total
+
+
+def _build_equal_weights(asset_count: int) -> np.ndarray:
+    if asset_count <= 0:
+        return np.array([])
+    return np.ones(asset_count, dtype=float) / float(asset_count)
+
+
+def _compute_inverse_vol_weights(vols: np.ndarray) -> np.ndarray:
+    safe_vols = np.where(np.isfinite(vols) & (vols > 1e-9), vols, np.nan)
+    inv = 1.0 / safe_vols
+    inv = np.where(np.isfinite(inv), inv, 0.0)
+    weights = _normalize_weights(inv)
+    if weights.size == 0:
+        return _build_equal_weights(len(vols))
+    return weights
+
+
+def _compute_risk_parity_weights(cov: np.ndarray, max_iter: int = 300, tol: float = 1e-7) -> np.ndarray:
+    n = cov.shape[0]
+    if n == 0:
+        return np.array([])
+    if n == 1:
+        return np.array([1.0])
+
+    w = _build_equal_weights(n)
+    target_budget = np.ones(n, dtype=float) / n
+    cov = np.nan_to_num(cov, nan=0.0, posinf=0.0, neginf=0.0)
+    cov = (cov + cov.T) / 2.0
+
+    for _ in range(max_iter):
+        port_var = float(w @ cov @ w)
+        if not np.isfinite(port_var) or port_var <= 1e-12:
+            return _build_equal_weights(n)
+        mrc = cov @ w
+        rc = (w * mrc) / np.sqrt(port_var)
+        target_rc = target_budget * np.sqrt(port_var)
+        gap = rc - target_rc
+        if float(np.max(np.abs(gap))) < tol:
+            break
+        denom = np.where(np.abs(rc) < 1e-12, 1e-12, rc)
+        w = w * (target_rc / denom)
+        w = _normalize_weights(w)
+        if w.size == 0:
+            return _build_equal_weights(n)
+    return w
+
+
+def _estimate_return_matrix(
+    tickers: List[str],
+    lookback_days: int,
+    probe_conditions: List[BaseCondition],
+) -> pd.DataFrame:
+    if not tickers:
+        return pd.DataFrame()
+
+    screener = StockScreener(
+        conditions=probe_conditions,
+        max_workers=1,
+        use_full_universe=True,
+        use_cache=True,
+    )
+    return_map: Dict[str, pd.Series] = {}
+
+    for ticker in tickers:
+        try:
+            data = screener._fetch_data(ticker, lookback_days + 30)  # type: ignore[attr-defined]
+        except Exception:
+            data = None
+        if data is None or data.empty or "close" not in data.columns:
+            continue
+        series = pd.to_numeric(data["close"], errors="coerce").pct_change().dropna().tail(lookback_days)
+        if len(series) < max(20, lookback_days // 3):
+            continue
+        return_map[ticker] = series
+
+    if not return_map:
+        return pd.DataFrame()
+
+    matrix = pd.DataFrame(return_map).dropna(axis=1, how="all")
+    if matrix.empty:
+        return pd.DataFrame()
+    matrix = matrix.tail(lookback_days).dropna(how="all")
+    return matrix
+
+
+def _build_weighted_portfolio(
+    final_items: List[StrategyResultItem],
+    leaf_conditions: List[BaseCondition],
+    config: Optional[PortfolioConstructionConfig],
+) -> tuple[List[WeightedPortfolioItem], Optional[PortfolioConstructionResult]]:
+    if not config:
+        return [], None
+
+    requested = max(0, int(config.max_assets))
+    candidates = final_items[:requested]
+    if not candidates:
+        return [], PortfolioConstructionResult(
+            mode_requested=config.mode,
+            mode_applied="equal_weight",
+            lookback_days=config.lookback_days,
+            assets_requested=requested,
+            assets_used=0,
+            target_volatility=config.target_volatility,
+            fallback_reason="no_matched_assets",
+        )
+
+    tickers = [item.ticker for item in candidates]
+    returns_matrix = _estimate_return_matrix(tickers, config.lookback_days, leaf_conditions)
+
+    used_tickers: List[str]
+    weights: np.ndarray
+    vols: np.ndarray
+    cov: np.ndarray
+    mode_applied = config.mode
+    fallback_reason: Optional[str] = None
+
+    if returns_matrix.empty or returns_matrix.shape[1] < 2:
+        used_tickers = tickers
+        weights = _build_equal_weights(len(used_tickers))
+        vols = np.zeros(len(used_tickers), dtype=float)
+        cov = np.diag(np.where(vols > 0, vols ** 2, 1e-8))
+        mode_applied = "equal_weight"
+        fallback_reason = "insufficient_return_history"
+    else:
+        used_tickers = list(returns_matrix.columns)
+        vols_series = returns_matrix.std(ddof=1).replace([np.inf, -np.inf], np.nan).fillna(0.0) * np.sqrt(252.0)
+        vols = vols_series.to_numpy(dtype=float)
+        cov_df = returns_matrix.cov(ddof=1).fillna(0.0) * 252.0
+        cov = cov_df.to_numpy(dtype=float)
+        if config.mode == "risk_parity":
+            weights = _compute_risk_parity_weights(cov)
+            if weights.size == 0:
+                weights = _compute_inverse_vol_weights(vols)
+                mode_applied = "inverse_vol"
+                fallback_reason = "risk_parity_solver_failed"
+        else:
+            weights = _compute_inverse_vol_weights(vols)
+
+    if weights.size == 0:
+        used_tickers = tickers
+        weights = _build_equal_weights(len(used_tickers))
+        vols = np.zeros(len(used_tickers), dtype=float)
+        cov = np.diag(np.where(vols > 0, vols ** 2, 1e-8))
+        mode_applied = "equal_weight"
+        fallback_reason = fallback_reason or "weight_normalization_failed"
+
+    item_by_ticker = {item.ticker: item for item in candidates}
+    weighted_items: List[WeightedPortfolioItem] = []
+    for idx, ticker in enumerate(used_tickers):
+        item = item_by_ticker.get(ticker)
+        if item is None:
+            continue
+        vol = float(vols[idx]) if idx < len(vols) and np.isfinite(vols[idx]) else None
+        weighted_items.append(
+            WeightedPortfolioItem(
+                ticker=ticker,
+                name=item.name,
+                weight=float(weights[idx]),
+                current_price=item.current_price,
+                annualized_volatility=vol,
+            )
+        )
+
+    portfolio_vol: Optional[float] = None
+    suggested_leverage: Optional[float] = None
+    if cov.size > 0 and weights.size > 0:
+        est_var = float(weights @ cov @ weights)
+        if np.isfinite(est_var) and est_var > 0:
+            portfolio_vol = float(np.sqrt(est_var))
+            if config.target_volatility:
+                suggested_leverage = float(config.target_volatility / portfolio_vol)
+
+    return weighted_items, PortfolioConstructionResult(
+        mode_requested=config.mode,
+        mode_applied=mode_applied,
+        lookback_days=config.lookback_days,
+        assets_requested=requested,
+        assets_used=len(weighted_items),
+        estimated_portfolio_volatility=portfolio_vol,
+        target_volatility=config.target_volatility,
+        suggested_gross_leverage=suggested_leverage,
+        fallback_reason=fallback_reason,
+    )
 
 
 def get_available_conditions() -> List[ConditionInfo]:
@@ -795,6 +991,7 @@ def execute_strategy_with_progress(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
     universe_overrides: Optional[List[str]] = None,
+    portfolio_construction: Optional[PortfolioConstructionConfig] = None,
     progress_callback: Optional[Callable[[int, int, int], None]] = None,
     skip_enrich: bool = False,
 ) -> Dict[str, Any]:
@@ -807,6 +1004,7 @@ def execute_strategy_with_progress(
         graph=graph,
         universe_override=universe_override,
         universe_overrides=universe_overrides,
+        portfolio_construction=portfolio_construction,
         progress_callback=progress_callback,
         skip_enrich=skip_enrich,
     )
@@ -816,6 +1014,7 @@ def execute_strategy(
     graph: StrategyGraph,
     universe_override: Optional[str] = None,
     universe_overrides: Optional[List[str]] = None,
+    portfolio_construction: Optional[PortfolioConstructionConfig] = None,
     progress_callback: Optional[Callable[[int, int, int], None]] = None,
     skip_enrich: bool = False,
 ) -> Dict[str, Any]:
@@ -828,7 +1027,8 @@ def execute_strategy(
         universe_overrides: Multi-universe overrides (priority over universe_override)
 
     Returns:
-        Dict with results, counts, universe, conditions used, and node_results
+        Dict with results, counts, universe, conditions used, node_results,
+        and optional weighted portfolio output
     """
     started_at = time.perf_counter()
 
@@ -1018,6 +1218,12 @@ def execute_strategy(
     if not skip_enrich:
         enrich_fundamentals(final_items)
 
+    weighted_portfolio, construction_result = _build_weighted_portfolio(
+        final_items=final_items,
+        leaf_conditions=leaf_conditions,
+        config=portfolio_construction,
+    )
+
     conditions_used = [type(c).__name__ for c in leaf_conditions]
 
     total_elapsed_ms = (time.perf_counter() - started_at) * 1000.0
@@ -1047,4 +1253,6 @@ def execute_strategy(
         "universes": resolved_universes,
         "conditions_used": conditions_used,
         "node_results": node_results,
+        "weighted_portfolio": weighted_portfolio,
+        "portfolio_construction_result": construction_result,
     }
