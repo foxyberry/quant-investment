@@ -540,7 +540,10 @@
       "params": {
         "min_price": "Minimum price"
       },
-      "help": "Excludes penny stocks by setting a minimum price floor."
+      "help": "Filters stocks using this rule: Stock price >= threshold.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "max_price": {
       "label": "Max Price",
@@ -548,7 +551,10 @@
       "params": {
         "max_price": "Maximum price"
       },
-      "help": "Focuses on affordable stocks by setting a maximum price ceiling."
+      "help": "Filters stocks using this rule: Stock price <= threshold.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "price_range": {
       "label": "Price Range",
@@ -557,7 +563,10 @@
         "min_price": "Min price",
         "max_price": "Max price"
       },
-      "help": "Finds stocks trading within a specific price band."
+      "help": "Filters stocks using this rule: Stock price within range.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "price_change": {
       "label": "Price Change %",
@@ -567,7 +576,10 @@
         "max_change_pct": "Max change %",
         "days": "Period (days)"
       },
-      "help": "Finds stocks that rose or fell by a certain % over recent days."
+      "help": "Filters stocks using this rule: Price change over N days.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "return_turnaround": {
       "label": "Return Turnaround",
@@ -577,7 +589,10 @@
         "prev_max_return_pct": "Prev max return %",
         "min_return_pct": "Min recent return %"
       },
-      "help": "Finds reversal setups where prior returns were weak, then recent returns turned positive."
+      "help": "Filters stocks using this rule: Previous N-day return <= threshold and recent N-day return >= threshold.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "min_volume": {
       "label": "Min Volume",
@@ -585,7 +600,10 @@
       "params": {
         "min_volume": "Minimum volume"
       },
-      "help": "Ensures enough daily volume so you can buy and sell easily."
+      "help": "Filters stocks using this rule: Volume >= threshold.",
+      "whenToUse": "Use when you need volume/flow confirmation for price action.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Read volume/flow as confirmation or early warning versus price movement.",
+      "caution": "Signal quality degrades in low-liquidity periods."
     },
     "volume_above_avg": {
       "label": "Volume Above Avg",
@@ -594,7 +612,10 @@
         "multiplier": "Avg multiplier",
         "period": "Average period"
       },
-      "help": "Spots stocks with higher-than-usual trading activity — may signal growing interest."
+      "help": "Filters stocks using this rule: Volume above moving average.",
+      "whenToUse": "Use when you need volume/flow confirmation for price action.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Read volume/flow as confirmation or early warning versus price movement.",
+      "caution": "Signal quality degrades in low-liquidity periods."
     },
     "volume_spike": {
       "label": "Volume Spike",
@@ -603,7 +624,10 @@
         "multiplier": "Spike multiplier",
         "period": "Average period"
       },
-      "help": "Detects sudden surges in volume, often preceding big price moves."
+      "help": "Filters stocks using this rule: Sudden volume increase.",
+      "whenToUse": "Use when you need volume/flow confirmation for price action.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Read volume/flow as confirmation or early warning versus price movement.",
+      "caution": "Signal quality degrades in low-liquidity periods."
     },
     "ma_touch": {
       "label": "MA Touch",
@@ -612,7 +636,10 @@
         "period": "MA period",
         "threshold": "Touch threshold (ratio)"
       },
-      "help": "Price is touching a key moving average — a potential support or bounce point."
+      "help": "Filters stocks using this rule: Price near moving average.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "above_ma": {
       "label": "Above MA",
@@ -621,7 +648,10 @@
         "period": "MA period",
         "min_distance_pct": "Min distance %"
       },
-      "help": "Stock is trading above its moving average, suggesting an uptrend."
+      "help": "Filters stocks using this rule: Price above moving average.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "below_ma": {
       "label": "Below MA",
@@ -630,7 +660,10 @@
         "period": "MA period",
         "max_distance_pct": "Max distance %"
       },
-      "help": "Stock is trading below its moving average, suggesting a downtrend or value zone."
+      "help": "Filters stocks using this rule: Price below moving average.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "ma_cross_up": {
       "label": "MA Cross Up",
@@ -640,7 +673,10 @@
         "long_period": "Long MA period",
         "lookback_days": "Lookback days"
       },
-      "help": "Golden Cross: short-term MA crosses above long-term MA — a classic bullish signal."
+      "help": "Filters stocks using this rule: Golden cross (short MA crosses above long MA).",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "ma_cross_down": {
       "label": "MA Cross Down",
@@ -650,7 +686,10 @@
         "long_period": "Long MA period",
         "lookback_days": "Lookback days"
       },
-      "help": "Death Cross: short-term MA crosses below long-term MA — a classic bearish signal."
+      "help": "Filters stocks using this rule: Death cross (short MA crosses below long MA).",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "rsi_oversold": {
       "label": "RSI Oversold",
@@ -659,10 +698,10 @@
         "threshold": "RSI threshold",
         "period": "RSI period"
       },
-      "help": "RSI is low — the stock may be oversold and due for a bounce.",
-      "whenToUse": "Use for mean-reversion setups after sharp pullbacks.",
-      "howToRead": "Lower RSI means stronger oversold signal. Typical references are around 30.",
-      "caution": "In strong downtrends RSI can stay oversold for extended periods."
+      "help": "Filters stocks using this rule: RSI below threshold.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "rsi_overbought": {
       "label": "RSI Overbought",
@@ -671,10 +710,10 @@
         "threshold": "RSI threshold",
         "period": "RSI period"
       },
-      "help": "RSI is high — the stock may be overbought and due for a pullback.",
-      "whenToUse": "Use for pullback-risk checks or short-term contrarian setups.",
-      "howToRead": "Higher RSI means stronger overbought signal. Typical references are around 70.",
-      "caution": "In strong uptrends RSI can stay overbought longer than expected."
+      "help": "Filters stocks using this rule: RSI above threshold.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "rsi_range": {
       "label": "RSI Range",
@@ -684,10 +723,10 @@
         "upper": "Upper bound",
         "period": "RSI period"
       },
-      "help": "RSI is within a neutral zone — useful for finding stable momentum.",
-      "whenToUse": "Use when you want stable momentum names within a controlled RSI band.",
-      "howToRead": "Only stocks inside the lower-upper RSI band pass.",
-      "caution": "Too narrow a range can overfit and reduce candidate diversity."
+      "help": "Filters stocks using this rule: RSI within range.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "bollinger_width": {
       "label": "Bollinger Width",
@@ -697,7 +736,10 @@
         "period": "BB period",
         "std_dev": "Std deviation"
       },
-      "help": "Bollinger Bands are narrow, signaling low volatility — a big move may follow."
+      "help": "Filters stocks using this rule: BB width contraction.",
+      "whenToUse": "Use when you need volume/flow confirmation for price action.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Read volume/flow as confirmation or early warning versus price movement.",
+      "caution": "Signal quality degrades in low-liquidity periods."
     },
     "volume_below_avg": {
       "label": "Volume Below Avg",
@@ -706,7 +748,10 @@
         "multiplier": "Max ratio to avg",
         "period": "Average period"
       },
-      "help": "Volume is unusually low — the stock is in a quiet accumulation phase."
+      "help": "Filters stocks using this rule: Quiet volume zone.",
+      "whenToUse": "Use when you need volume/flow confirmation for price action.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Read volume/flow as confirmation or early warning versus price movement.",
+      "caution": "Signal quality degrades in low-liquidity periods."
     },
     "price_flat": {
       "label": "Price Flat",
@@ -715,7 +760,10 @@
         "max_range_pct": "Max range %",
         "period": "Period"
       },
-      "help": "Price has been moving sideways — consolidation before a potential breakout."
+      "help": "Filters stocks using this rule: Price consolidation (low volatility).",
+      "whenToUse": "Use when you need volume/flow confirmation for price action.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Read volume/flow as confirmation or early warning versus price movement.",
+      "caution": "Signal quality degrades in low-liquidity periods."
     },
     "obv_trend": {
       "label": "OBV Trend",
@@ -724,7 +772,10 @@
         "direction": "Trend direction (up/down)",
         "lookback": "Lookback period"
       },
-      "help": "On-Balance Volume is trending, showing smart money accumulation or distribution."
+      "help": "Filters stocks using this rule: On-Balance Volume trend direction.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Direction/mode filter: align with your long/short strategy intent. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "stochastic_level": {
       "label": "Stochastic Level",
@@ -735,7 +786,10 @@
         "k_period": "%K period",
         "d_period": "%D period"
       },
-      "help": "Stochastic oscillator at extreme levels, suggesting a potential reversal."
+      "help": "Filters stocks using this rule: Stochastic oscillator level.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Start from defaults, then run ±20~30% sensitivity tests. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "vpci_trend": {
       "label": "VPCI Trend",
@@ -746,7 +800,10 @@
         "long_period": "Long period",
         "lookback": "Lookback period"
       },
-      "help": "Volume-Price Confirmation trending — shows whether volume supports the price move."
+      "help": "Filters stocks using this rule: Volume Price Confirmation Indicator trend.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "obv_divergence": {
       "label": "OBV Divergence",
@@ -756,7 +813,10 @@
         "obv_min_change_pct": "OBV change %",
         "period": "Period"
       },
-      "help": "Price is flat but volume is rising — hidden institutional accumulation."
+      "help": "Filters stocks using this rule: Price flat + OBV rising (accumulation signal).",
+      "whenToUse": "Use when you need volume/flow confirmation for price action.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Read volume/flow as confirmation or early warning versus price movement.",
+      "caution": "Signal quality degrades in low-liquidity periods."
     },
     "stochastic_divergence": {
       "label": "Stochastic Divergence",
@@ -767,7 +827,10 @@
         "lookback": "Lookback period",
         "divergence_threshold": "Threshold %"
       },
-      "help": "Price makes new lows but stochastic does not — bullish divergence signal."
+      "help": "Filters stocks using this rule: Price lower low + Stochastic higher low.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Start from defaults, then run ±20~30% sensitivity tests. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "vpci_divergence": {
       "label": "VPCI Divergence",
@@ -778,7 +841,10 @@
         "long_period": "Long period",
         "lookback": "Lookback period"
       },
-      "help": "Price is flat but VPCI is rising — volume confirms hidden buying pressure."
+      "help": "Filters stocks using this rule: Price flat + VPCI rising (quiet accumulation).",
+      "whenToUse": "Use when you need volume/flow confirmation for price action.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Read volume/flow as confirmation or early warning versus price movement.",
+      "caution": "Signal quality degrades in low-liquidity periods."
     },
     "bottom_breakout": {
       "label": "Bottom Breakout",
@@ -787,7 +853,10 @@
         "lookback_days": "Lookback days",
         "breakout_pct": "Breakout %"
       },
-      "help": "Stock breaks above its recent low range — potential trend reversal."
+      "help": "Filters stocks using this rule: N-day low breakout.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "fresh_breakout": {
       "label": "Fresh Breakout",
@@ -796,7 +865,10 @@
         "lookback_days": "Lookback days",
         "breakout_pct": "Breakout %"
       },
-      "help": "First-time breakout above recent highs — strong momentum signal."
+      "help": "Filters stocks using this rule: First-time breakout detection.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "breakout_with_volume": {
       "label": "Breakout + Volume",
@@ -808,7 +880,10 @@
         "volume_avg_days": "Volume avg days",
         "fresh_only": "Fresh breakout only"
       },
-      "help": "Breakout confirmed by high volume — more reliable than price-only breakout."
+      "help": "Filters stocks using this rule: Breakout confirmed by volume spike.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "resistance_breakout": {
       "label": "Resistance Breakout",
@@ -817,7 +892,10 @@
         "lookback_days": "Lookback days",
         "breakout_margin_pct": "Margin above resistance %"
       },
-      "help": "Stock pushes above a key resistance level, suggesting further upside."
+      "help": "Filters stocks using this rule: N-day high resistance breakout.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "pe_ratio": {
       "label": "P/E Ratio",
@@ -826,10 +904,10 @@
         "min_pe": "Min P/E",
         "max_pe": "Max P/E"
       },
-      "help": "Screens stocks using P/E Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Price-to-Earnings ratio filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "pb_ratio": {
       "label": "P/B Ratio",
@@ -839,10 +917,10 @@
         "max_pb": "Max P/B",
         "exclude_negative_bv": "Exclude negative book value"
       },
-      "help": "Screens stocks using P/B Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Price-to-Book ratio filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "ps_ratio": {
       "label": "P/S Ratio",
@@ -851,10 +929,10 @@
         "min_ps": "Min P/S",
         "max_ps": "Max P/S"
       },
-      "help": "Screens stocks using P/S Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Price-to-Sales ratio filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "pcf_ratio": {
       "label": "P/CF Ratio",
@@ -863,10 +941,10 @@
         "min_pcf": "Min P/CF",
         "max_pcf": "Max P/CF"
       },
-      "help": "Screens stocks using P/CF Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Price-to-Cash-Flow ratio filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "dividend_yield": {
       "label": "Dividend Yield",
@@ -875,10 +953,10 @@
         "min_yield": "Min yield %",
         "max_yield": "Max yield %"
       },
-      "help": "Screens stocks using Dividend Yield so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Dividend yield percentage filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "drawdown_from_high": {
       "label": "Drawdown From High",
@@ -888,7 +966,10 @@
         "min_drop_pct": "Min Drop %",
         "price_field": "Price Field"
       },
-      "help": "Identifies stocks that have pulled back a minimum percentage from their recent high, potentially signaling a buying opportunity."
+      "help": "Filters stocks using this rule: Drop % from N-day rolling high.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "earnings_yield": {
       "label": "Earnings Yield",
@@ -897,10 +978,10 @@
         "min_yield": "Min yield %",
         "max_yield": "Max yield %"
       },
-      "help": "Screens stocks using Earnings Yield so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Earnings yield (E/P) percentage filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "ebit_ev": {
       "label": "EBIT/EV",
@@ -909,10 +990,10 @@
         "min_ebit_ev": "Min EBIT/EV %",
         "max_ebit_ev": "Max EBIT/EV %"
       },
-      "help": "Screens stocks using EBIT/EV so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: EBIT / Enterprise Value yield filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "fcf_yield": {
       "label": "FCF Yield",
@@ -921,10 +1002,10 @@
         "min_fcf_yield": "Min FCF yield %",
         "max_fcf_yield": "Max FCF yield %"
       },
-      "help": "Screens stocks using FCF Yield so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Free Cash Flow yield filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "peg_ratio": {
       "label": "PEG Ratio",
@@ -933,10 +1014,10 @@
         "min_peg": "Min PEG",
         "max_peg": "Max PEG"
       },
-      "help": "Screens stocks using PEG Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Price/Earnings-to-Growth ratio filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "debt_to_equity": {
       "label": "D/E Ratio",
@@ -945,10 +1026,10 @@
         "min_de": "Min D/E %",
         "max_de": "Max D/E %"
       },
-      "help": "Screens stocks using D/E Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Debt-to-Equity ratio filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "current_ratio": {
       "label": "Current Ratio",
@@ -957,10 +1038,10 @@
         "min_ratio": "Min ratio",
         "max_ratio": "Max ratio"
       },
-      "help": "Screens stocks using Current Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Current ratio (liquidity) filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "roe": {
       "label": "ROE",
@@ -969,10 +1050,10 @@
         "min_roe": "Min ROE %",
         "max_roe": "Max ROE %"
       },
-      "help": "Screens stocks using ROE so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Return on Equity filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "piotroski_fscore": {
       "label": "Piotroski F-Score",
@@ -981,7 +1062,10 @@
         "min_score": "Min F-Score",
         "max_score": "Max F-Score"
       },
-      "help": "Financial strength score (0-9) — higher indicates healthier company finances."
+      "help": "Filters stocks using this rule: Piotroski F-Score (0-9) financial strength.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "altman_zscore": {
       "label": "Altman Z-Score",
@@ -990,10 +1074,10 @@
         "min_zscore": "Min Z-Score",
         "max_zscore": "Max Z-Score"
       },
-      "help": "Screens stocks using Altman Z-Score so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Altman Z-Score bankruptcy risk filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "avg_trading_value": {
       "label": "Average Trading Value",
@@ -1002,7 +1086,10 @@
         "lookback_days": "Lookback Days",
         "min_value": "Minimum Value"
       },
-      "help": "Filters stocks by minimum average daily trading value to ensure sufficient liquidity."
+      "help": "Filters stocks using this rule: N-day average trading value >= threshold.",
+      "whenToUse": "Use when you need volume/flow confirmation for price action.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Read volume/flow as confirmation or early warning versus price movement.",
+      "caution": "Signal quality degrades in low-liquidity periods."
     },
     "roic": {
       "label": "ROIC",
@@ -1011,10 +1098,10 @@
         "min_roic": "Min ROIC %",
         "max_roic": "Max ROIC %"
       },
-      "help": "Screens stocks using ROIC so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Return on Invested Capital filter.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "analyst_revision_1m": {
       "label": "Analyst Revision 1M",
@@ -1022,10 +1109,10 @@
       "params": {
         "min_revision_pct": "Minimum Revision %"
       },
-      "help": "Screens stocks using Analyst Revision 1M so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use around calendar or earnings windows where event effects can dominate.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Event effects can decay quickly after crowd adoption or regime change."
+      "help": "Filters stocks using this rule: One-month analyst estimate revision.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "analyst_revision_3m": {
       "label": "Analyst Revision 3M",
@@ -1033,10 +1120,10 @@
       "params": {
         "min_revision_pct": "Minimum Revision %"
       },
-      "help": "Screens stocks using Analyst Revision 3M so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use around calendar or earnings windows where event effects can dominate.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Event effects can decay quickly after crowd adoption or regime change."
+      "help": "Filters stocks using this rule: Three-month analyst estimate revision.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "asset_turnover_ratio": {
       "label": "Asset Turnover Ratio",
@@ -1044,10 +1131,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Screens stocks using Asset Turnover Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Revenue to total assets turnover ratio.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "book_to_market_ratio": {
       "label": "Book to Market Ratio",
@@ -1055,10 +1142,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Screens stocks using Book to Market Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Book value divided by market cap.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "buyback_yield_filter": {
       "label": "Buyback Yield Filter",
@@ -1066,10 +1153,10 @@
       "params": {
         "min_yield_pct": "Minimum Yield %"
       },
-      "help": "Screens stocks using Buyback Yield Filter so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Minimum buyback yield.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "cash_conversion_ratio": {
       "label": "Cash Conversion Ratio",
@@ -1077,10 +1164,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Screens stocks using Cash Conversion Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in mean-reversion or timing setups when momentum extremes matter.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Oscillators can stay extreme for long periods in strong trends."
+      "help": "Filters stocks using this rule: Operating cash flow over net income.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "cashflow_to_debt_ratio": {
       "label": "Cashflow to Debt Ratio",
@@ -1088,10 +1175,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Screens stocks using Cashflow to Debt Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Operating cash flow to debt ratio.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "debt_service_coverage_ratio": {
       "label": "Debt Service Coverage Ratio",
@@ -1099,10 +1186,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Screens stocks using Debt Service Coverage Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Operating income over debt service.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "dividend_growth_5y": {
       "label": "Dividend Growth 5Y",
@@ -1110,10 +1197,10 @@
       "params": {
         "min_growth_pct": "Minimum Growth %"
       },
-      "help": "Screens stocks using Dividend Growth 5Y so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: 5-year dividend CAGR.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "earnings_stability_score": {
       "label": "Earnings Stability Score",
@@ -1122,10 +1209,10 @@
         "lookback_years": "Lookback Years",
         "max_cv": "Maximum CV"
       },
-      "help": "Screens stocks using Earnings Stability Score so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Earnings stability based on coefficient of variation.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "eps_cagr_3y": {
       "label": "EPS CAGR 3Y",
@@ -1133,10 +1220,10 @@
       "params": {
         "min_cagr_pct": "Minimum CAGR %"
       },
-      "help": "Screens stocks using EPS CAGR 3Y so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: 3-year EPS CAGR.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "eps_growth_yoy": {
       "label": "EPS Growth YoY",
@@ -1144,10 +1231,10 @@
       "params": {
         "min_growth_pct": "Minimum Growth %"
       },
-      "help": "Screens stocks using EPS Growth YoY so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Year-over-year EPS growth.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "ev_to_ebitda_ratio": {
       "label": "EV to EBITDA Ratio",
@@ -1155,10 +1242,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Screens stocks using EV to EBITDA Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Enterprise value to EBITDA ratio.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "ev_to_sales_ratio": {
       "label": "EV to Sales Ratio",
@@ -1166,10 +1253,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Screens stocks using EV to Sales Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Enterprise value to sales ratio.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "free_cash_flow_margin": {
       "label": "Free Cash Flow Margin",
@@ -1177,10 +1264,10 @@
       "params": {
         "min_margin_pct": "Minimum Margin %"
       },
-      "help": "Screens stocks using Free Cash Flow Margin so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Free cash flow margin.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "gross_margin": {
       "label": "Gross Margin",
@@ -1188,10 +1275,10 @@
       "params": {
         "min_margin_pct": "Minimum Margin %"
       },
-      "help": "Screens stocks using Gross Margin so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Gross profit margin.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "gross_profitability": {
       "label": "Gross Profitability",
@@ -1199,10 +1286,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Screens stocks using Gross Profitability so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: Gross profit to total assets.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "interest_coverage_ratio": {
       "label": "Interest Coverage Ratio",
@@ -1210,10 +1297,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Screens stocks using Interest Coverage Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: EBIT over interest expense.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "inventory_turnover_ratio": {
       "label": "Inventory Turnover Ratio",
@@ -1221,10 +1308,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Screens stocks using Inventory Turnover Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: COGS to inventory turnover ratio.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "net_debt_to_ebitda": {
       "label": "Net Debt to EBITDA",
@@ -1232,10 +1319,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Screens stocks using Net Debt to EBITDA so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Net debt divided by EBITDA.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "net_margin": {
       "label": "Net Margin",
@@ -1243,10 +1330,10 @@
       "params": {
         "min_margin_pct": "Minimum Margin %"
       },
-      "help": "Screens stocks using Net Margin so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Net income margin.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "operating_margin": {
       "label": "Operating Margin",
@@ -1254,10 +1341,10 @@
       "params": {
         "min_margin_pct": "Minimum Margin %"
       },
-      "help": "Screens stocks using Operating Margin so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Operating income margin.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "payout_ratio_filter": {
       "label": "Payout Ratio Filter",
@@ -1265,10 +1352,10 @@
       "params": {
         "max_payout_pct": "Maximum Payout %"
       },
-      "help": "Screens stocks using Payout Ratio Filter so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Dividend payout ratio.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "price_to_tangible_book": {
       "label": "Price to Tangible Book",
@@ -1276,10 +1363,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Screens stocks using Price to Tangible Book so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Market cap to tangible book ratio.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "quality_score": {
       "label": "Quality Score",
@@ -1287,10 +1374,10 @@
       "params": {
         "min_score": "Minimum Score"
       },
-      "help": "Screens stocks using Quality Score so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Composite quality score from ROA, gross profitability and accruals.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "receivables_turnover_ratio": {
       "label": "Receivables Turnover Ratio",
@@ -1298,10 +1385,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Screens stocks using Receivables Turnover Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Revenue to receivables turnover ratio.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "revenue_cagr_3y": {
       "label": "Revenue CAGR 3Y",
@@ -1309,10 +1396,10 @@
       "params": {
         "min_cagr_pct": "Minimum CAGR %"
       },
-      "help": "Screens stocks using Revenue CAGR 3Y so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: 3-year revenue CAGR.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "revenue_growth_yoy": {
       "label": "Revenue Growth YoY",
@@ -1320,10 +1407,10 @@
       "params": {
         "min_growth_pct": "Minimum Growth %"
       },
-      "help": "Screens stocks using Revenue Growth YoY so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Year-over-year revenue growth.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "revenue_stability_score": {
       "label": "Revenue Stability Score",
@@ -1332,10 +1419,10 @@
         "lookback_years": "Lookback Years",
         "max_cv": "Maximum CV"
       },
-      "help": "Screens stocks using Revenue Stability Score so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Revenue stability based on coefficient of variation.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "shareholder_yield_filter": {
       "label": "Shareholder Yield Filter",
@@ -1343,10 +1430,10 @@
       "params": {
         "min_yield_pct": "Minimum Yield %"
       },
-      "help": "Screens stocks using Shareholder Yield Filter so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Dividend + buyback - issuance yield.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "roce_filter": {
       "label": "ROCE Filter",
@@ -1354,10 +1441,10 @@
       "params": {
         "min_roce_pct": "Minimum ROCE %"
       },
-      "help": "Screens stocks using ROCE Filter so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Return on capital employed.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "roa_filter": {
       "label": "ROA Filter",
@@ -1365,10 +1452,10 @@
       "params": {
         "min_roa_pct": "Minimum ROA %"
       },
-      "help": "Screens stocks using ROA Filter so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Return on assets.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "overnight_return_filter": {
       "label": "Overnight Return",
@@ -1376,10 +1463,10 @@
       "params": {
         "min_overnight_return_pct": "Minimum Overnight Return %"
       },
-      "help": "Screens stocks using Overnight Return so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use around calendar or earnings windows where event effects can dominate.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Event effects can decay quickly after crowd adoption or regime change."
+      "help": "Filters stocks using this rule: Previous close to current open return filter.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "distance_from_52w_low": {
       "label": "Distance From 52W Low",
@@ -1388,10 +1475,10 @@
         "lookback_days": "Lookback Days",
         "max_distance_pct": "Maximum Distance %"
       },
-      "help": "Screens stocks using Distance From 52W Low so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: Distance from 252-day low.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "distance_from_200d_high": {
       "label": "Distance From 200D High",
@@ -1400,10 +1487,10 @@
         "lookback_days": "Lookback Days",
         "max_distance_pct": "Maximum Distance %"
       },
-      "help": "Screens stocks using Distance From 200D High so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: Distance below 200-day high.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "gap_up_breakaway": {
       "label": "Gap Up Breakaway",
@@ -1411,10 +1498,10 @@
       "params": {
         "min_gap_pct": "Minimum Gap %"
       },
-      "help": "Screens stocks using Gap Up Breakaway so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use around calendar or earnings windows where event effects can dominate.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Event effects can decay quickly after crowd adoption or regime change."
+      "help": "Filters stocks using this rule: Gap-up breakout using previous high.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "gap_down_exhaustion": {
       "label": "Gap Down Exhaustion",
@@ -1422,10 +1509,10 @@
       "params": {
         "min_gap_down_pct": "Minimum Gap Down %"
       },
-      "help": "Screens stocks using Gap Down Exhaustion so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use around calendar or earnings windows where event effects can dominate.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Event effects can decay quickly after crowd adoption or regime change."
+      "help": "Filters stocks using this rule: Large down-gap exhaustion signal.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "opening_range_breakout": {
       "label": "Opening Range Breakout",
@@ -1433,10 +1520,10 @@
       "params": {
         "direction": "Direction"
       },
-      "help": "Screens stocks using Opening Range Breakout so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Close breaks previous day range.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Direction/mode filter: align with your long/short strategy intent. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "pivot_point_breakout": {
       "label": "Pivot Point Breakout",
@@ -1444,10 +1531,10 @@
       "params": {
         "direction": "Direction"
       },
-      "help": "Screens stocks using Pivot Point Breakout so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Breakout above/below classic pivot.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Direction/mode filter: align with your long/short strategy intent. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "month_of_year_seasonality": {
       "label": "Month Of Year Seasonality",
@@ -1456,10 +1543,10 @@
         "min_avg_return_pct": "Minimum Avg Return %",
         "target_month": "Target Month"
       },
-      "help": "Screens stocks using Month Of Year Seasonality so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use around calendar or earnings windows where event effects can dominate.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Event effects can decay quickly after crowd adoption or regime change."
+      "help": "Filters stocks using this rule: Average return for target month.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "turn_of_month_effect": {
       "label": "Turn Of Month",
@@ -1468,10 +1555,10 @@
         "min_avg_return_pct": "Minimum Avg Return %",
         "window_days": "Window Days"
       },
-      "help": "Screens stocks using Turn Of Month so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use around calendar or earnings windows where event effects can dominate.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Event effects can decay quickly after crowd adoption or regime change."
+      "help": "Filters stocks using this rule: Turn-of-month return effect.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "day_of_week_seasonality": {
       "label": "Day-of-Week Seasonality",
@@ -1480,10 +1567,10 @@
         "min_avg_return_pct": "Minimum Avg Return %",
         "target_weekday": "Target Weekday (0=Mon, 4=Fri)"
       },
-      "help": "Looks for repeatable weekday return patterns in historical data.",
-      "whenToUse": "Use for short-horizon tactical entries when you suspect weekday effects in your market.",
-      "howToRead": "A higher minimum average return is stricter. Start small and verify persistence by period.",
-      "caution": "Weekday effects can disappear after transaction costs or regime shifts; validate out-of-sample."
+      "help": "Filters stocks using this rule: Average weekday return effect.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "net_share_issuance_filter": {
       "label": "Net Share Issuance Filter",
@@ -1491,10 +1578,10 @@
       "params": {
         "max_issuance_pct": "Maximum Issuance %"
       },
-      "help": "Keeps companies with controlled net share issuance.",
-      "whenToUse": "Use in quality/value screens to avoid dilution-heavy names.",
-      "howToRead": "This is a max threshold: lower values imply less shareholder dilution.",
-      "caution": "Temporary issuance can be strategic (M&A/capex); review context before excluding."
+      "help": "Filters stocks using this rule: Limit net share issuance.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "insider_net_buying": {
       "label": "Insider Net Buying",
@@ -1502,10 +1589,10 @@
       "params": {
         "min_net_buying_pct": "Minimum Net Buying %"
       },
-      "help": "Screens stocks using Insider Net Buying so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Insider net buying ratio.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "short_float_pct_filter": {
       "label": "Short Float % Filter",
@@ -1513,10 +1600,10 @@
       "params": {
         "max_short_float_pct": "Maximum Short Float %"
       },
-      "help": "Keeps stocks where short float is below your risk tolerance.",
-      "whenToUse": "Use to avoid crowded short names in long strategies, or invert logic in squeeze-focused setups.",
-      "howToRead": "This is a max threshold: lower values mean lower shorting pressure and usually lower squeeze risk.",
-      "caution": "High short float is not always bearish; it can also fuel sharp squeezes."
+      "help": "Filters stocks using this rule: Short float percentage threshold.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "short_interest_ratio_filter": {
       "label": "Short Interest Ratio Filter",
@@ -1524,10 +1611,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Controls exposure to names with heavy short positioning relative to volume.",
-      "whenToUse": "Use with liquidity filters to avoid hard-to-exit names.",
-      "howToRead": "This is a max threshold: lower is generally safer for execution.",
-      "caution": "Low volume periods can inflate days-to-cover temporarily."
+      "help": "Filters stocks using this rule: Days-to-cover threshold.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "earnings_surprise_filter": {
       "label": "Earnings Surprise Filter",
@@ -1535,10 +1622,10 @@
       "params": {
         "min_surprise_pct": "Minimum Surprise %"
       },
-      "help": "Finds names that beat expectations by at least your threshold.",
-      "whenToUse": "Use around earnings seasons for momentum continuation or post-event drift ideas.",
-      "howToRead": "This is a min threshold: higher values demand stronger positive surprise.",
-      "caution": "One-off accounting effects can distort surprise; confirm with guidance/revision metrics."
+      "help": "Filters stocks using this rule: Quarterly earnings surprise threshold.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "post_earnings_drift": {
       "label": "Post Earnings Drift",
@@ -1546,10 +1633,10 @@
       "params": {
         "min_return_pct": "Minimum Return %"
       },
-      "help": "Screens stocks using Post Earnings Drift so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use around calendar or earnings windows where event effects can dominate.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Event effects can decay quickly after crowd adoption or regime change."
+      "help": "Filters stocks using this rule: Post-earnings drift threshold.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "pre_earnings_drift": {
       "label": "Pre Earnings Drift",
@@ -1557,10 +1644,10 @@
       "params": {
         "min_return_pct": "Minimum Return %"
       },
-      "help": "Screens stocks using Pre Earnings Drift so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use around calendar or earnings windows where event effects can dominate.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Event effects can decay quickly after crowd adoption or regime change."
+      "help": "Filters stocks using this rule: Pre-earnings drift threshold.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "accruals_ratio": {
       "label": "Accruals Ratio",
@@ -1568,10 +1655,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Screens stocks using Accruals Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Accruals ratio from income and cash flow.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "asset_growth_rate": {
       "label": "Asset Growth Rate",
@@ -1579,10 +1666,10 @@
       "params": {
         "max_growth_pct": "Maximum Growth %"
       },
-      "help": "Screens stocks using Asset Growth Rate so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Total asset growth rate.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "momentum_12_1": {
       "label": "Momentum 12-1",
@@ -1592,10 +1679,10 @@
         "min_return_pct": "Minimum Return %",
         "skip_recent_months": "Skip Recent Months"
       },
-      "help": "Screens stocks using Momentum 12-1 so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: 12-month momentum excluding recent 1 month.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "volatility_n_day": {
       "label": "Volatility N Day",
@@ -1604,10 +1691,10 @@
         "lookback_days": "Lookback Days",
         "max_annualized_vol_pct": "Maximum Annualized Vol %"
       },
-      "help": "Screens stocks using Volatility N Day so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Annualized N-day volatility filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "distance_from_52w_high": {
       "label": "Distance From 52W High",
@@ -1616,10 +1703,10 @@
         "lookback_days": "Lookback Days",
         "max_distance_pct": "Maximum Distance %"
       },
-      "help": "Screens stocks using Distance From 52W High so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: Distance below 52-week high.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "relative_strength_vs_benchmark": {
       "label": "Relative Strength Vs Benchmark",
@@ -1628,10 +1715,10 @@
         "lookback_days": "Lookback Days",
         "min_excess_return_pct": "Minimum Excess Return %"
       },
-      "help": "Screens stocks using Relative Strength Vs Benchmark so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Stock return minus benchmark return.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "adx_trend_strength": {
       "label": "ADX Trend Strength",
@@ -1641,10 +1728,10 @@
         "min_adx": "Minimum ADX",
         "period": "Period"
       },
-      "help": "Screens stocks using ADX Trend Strength so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: ADX trend strength filter.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "ma_ribbon_alignment": {
       "label": "MA Ribbon Alignment",
@@ -1654,10 +1741,10 @@
         "mid_period": "Mid Period",
         "short_period": "Short Period"
       },
-      "help": "Screens stocks using MA Ribbon Alignment so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: Short>Mid>Long MA alignment.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "golden_cross_50_200": {
       "label": "Golden Cross 50/200",
@@ -1665,10 +1752,10 @@
       "params": {
         "lookback_days": "Lookback Days"
       },
-      "help": "Screens stocks using Golden Cross 50/200 so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: 50MA crossing above 200MA.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "death_cross_50_200": {
       "label": "Death Cross 50/200",
@@ -1676,10 +1763,10 @@
       "params": {
         "lookback_days": "Lookback Days"
       },
-      "help": "Screens stocks using Death Cross 50/200 so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: 50MA crossing below 200MA.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "donchian_channel_breakout": {
       "label": "Donchian Channel Breakout",
@@ -1687,10 +1774,10 @@
       "params": {
         "lookback_days": "Lookback Days"
       },
-      "help": "Screens stocks using Donchian Channel Breakout so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Breakout above Donchian upper band.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "keltner_channel_breakout": {
       "label": "Keltner Channel Breakout",
@@ -1700,10 +1787,10 @@
         "atr_period": "ATR Period",
         "ema_period": "Ema Period"
       },
-      "help": "Screens stocks using Keltner Channel Breakout so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Breakout above EMA + ATR band.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Start from defaults, then run ±20~30% sensitivity tests. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "parabolic_sar_flip": {
       "label": "Parabolic SAR Flip",
@@ -1713,10 +1800,10 @@
         "af_step": "Af Step",
         "lookback_days": "Lookback Days"
       },
-      "help": "Screens stocks using Parabolic SAR Flip so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: Bullish SAR flip within lookback.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "linear_regression_slope_filter": {
       "label": "Linear Regression Slope",
@@ -1725,10 +1812,10 @@
         "lookback_days": "Lookback Days",
         "min_slope": "Minimum Slope"
       },
-      "help": "Screens stocks using Linear Regression Slope so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Linear regression slope threshold.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "linear_regression_angle_filter": {
       "label": "Linear Regression Angle",
@@ -1737,10 +1824,10 @@
         "lookback_days": "Lookback Days",
         "min_angle_deg": "Minimum Angle Deg"
       },
-      "help": "Screens stocks using Linear Regression Angle so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: Linear regression angle threshold.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "linear_regression_r2_filter": {
       "label": "Linear Regression R2",
@@ -1749,10 +1836,10 @@
         "lookback_days": "Lookback Days",
         "min_r2": "Minimum R2"
       },
-      "help": "Screens stocks using Linear Regression R2 so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: Linear regression R2 threshold.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "beta_to_benchmark": {
       "label": "Beta to Benchmark",
@@ -1761,10 +1848,10 @@
         "lookback_days": "Lookback Days",
         "max_beta": "Maximum Beta"
       },
-      "help": "Screens stocks using Beta to Benchmark so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Rolling beta versus benchmark.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "correlation_to_benchmark": {
       "label": "Correlation to Benchmark",
@@ -1773,10 +1860,10 @@
         "lookback_days": "Lookback Days",
         "max_corr": "Maximum Corr"
       },
-      "help": "Screens stocks using Correlation to Benchmark so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Rolling correlation versus benchmark.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "support_retest_signal": {
       "label": "Support Retest Signal",
@@ -1785,10 +1872,10 @@
         "support_lookback": "Support Lookback",
         "tolerance_pct": "Tolerance %"
       },
-      "help": "Screens stocks using Support Retest Signal so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Price retests support and closes above.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Start from defaults, then run ±20~30% sensitivity tests. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "resistance_retest_signal": {
       "label": "Resistance Retest Signal",
@@ -1797,10 +1884,10 @@
         "resistance_lookback": "Resistance Lookback",
         "tolerance_pct": "Tolerance %"
       },
-      "help": "Screens stocks using Resistance Retest Signal so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: Price retests resistance and closes below.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Start from defaults, then run ±20~30% sensitivity tests. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "downside_volatility_filter": {
       "label": "Downside Volatility",
@@ -1809,10 +1896,10 @@
         "lookback_days": "Lookback Days",
         "max_downside_vol_pct": "Maximum Downside Vol %"
       },
-      "help": "Screens stocks using Downside Volatility so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Annualized downside volatility filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "semivariance_filter": {
       "label": "Semivariance",
@@ -1821,10 +1908,10 @@
         "lookback_days": "Lookback Days",
         "max_semivariance": "Maximum Semivariance"
       },
-      "help": "Screens stocks using Semivariance so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Downside semivariance filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "rolling_sharpe_filter": {
       "label": "Rolling Sharpe",
@@ -1833,10 +1920,10 @@
         "lookback_days": "Lookback Days",
         "min_sharpe": "Minimum Sharpe"
       },
-      "help": "Screens stocks using Rolling Sharpe so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Rolling Sharpe ratio filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "rolling_sortino_filter": {
       "label": "Rolling Sortino",
@@ -1845,10 +1932,10 @@
         "lookback_days": "Lookback Days",
         "min_sortino": "Minimum Sortino"
       },
-      "help": "Screens stocks using Rolling Sortino so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Rolling Sortino ratio filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "ulcer_index_filter": {
       "label": "Ulcer Index",
@@ -1857,10 +1944,10 @@
         "lookback_days": "Lookback Days",
         "max_ulcer_index": "Maximum Ulcer Index"
       },
-      "help": "Screens stocks using Ulcer Index so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Ulcer index filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "calmar_ratio_filter": {
       "label": "Calmar Ratio",
@@ -1869,10 +1956,10 @@
         "lookback_days": "Lookback Days",
         "min_calmar": "Minimum Calmar"
       },
-      "help": "Screens stocks using Calmar Ratio so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Calmar ratio filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "max_drawdown_window_filter": {
       "label": "Max Drawdown Window",
@@ -1881,10 +1968,10 @@
         "lookback_days": "Lookback Days",
         "max_drawdown_pct": "Maximum Drawdown %"
       },
-      "help": "Screens stocks using Max Drawdown Window so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Window max drawdown filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "return_skewness_filter": {
       "label": "Return Skewness",
@@ -1893,10 +1980,10 @@
         "lookback_days": "Lookback Days",
         "min_skewness": "Minimum Skewness"
       },
-      "help": "Screens stocks using Return Skewness so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Return skewness filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "return_kurtosis_filter": {
       "label": "Return Kurtosis",
@@ -1905,10 +1992,10 @@
         "lookback_days": "Lookback Days",
         "max_kurtosis": "Maximum Kurtosis"
       },
-      "help": "Screens stocks using Return Kurtosis so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Return kurtosis filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "intraday_return_filter": {
       "label": "Intraday Return",
@@ -1916,10 +2003,10 @@
       "params": {
         "min_intraday_return_pct": "Minimum Intraday Return %"
       },
-      "help": "Screens stocks using Intraday Return so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use around calendar or earnings windows where event effects can dominate.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Event effects can decay quickly after crowd adoption or regime change."
+      "help": "Filters stocks using this rule: Intraday return filter.",
+      "whenToUse": "Use around earnings or calendar windows where event effects matter.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Event effects are regime-dependent; validate by sub-period.",
+      "caution": "Alpha can decay after costs, slippage, and crowding."
     },
     "dso_trend_filter": {
       "label": "DSO Trend Filter",
@@ -1928,10 +2015,10 @@
         "lookback_years": "Lookback Years",
         "min_dso_increase_pct": "Minimum Dso Increase %"
       },
-      "help": "Screens stocks using DSO Trend Filter so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Days Sales Outstanding deterioration trend filter.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "ema_cross": {
       "label": "EMA Cross",
@@ -1942,10 +2029,10 @@
         "lookback_days": "Lookback Days",
         "slow_period": "Slow Period"
       },
-      "help": "Screens stocks using EMA Cross so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: EMA cross signal.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "ema_slope": {
       "label": "EMA Slope",
@@ -1955,10 +2042,10 @@
         "min_slope_pct": "Minimum Slope %",
         "period": "Period"
       },
-      "help": "Screens stocks using EMA Slope so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: EMA slope over lookback.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "sma_slope": {
       "label": "SMA Slope",
@@ -1968,10 +2055,10 @@
         "min_slope_pct": "Minimum Slope %",
         "period": "Period"
       },
-      "help": "Screens stocks using SMA Slope so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: SMA slope over lookback.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "macd_signal_cross": {
       "label": "MACD Signal Cross",
@@ -1983,10 +2070,10 @@
         "signal_period": "Signal Period",
         "slow_period": "Slow Period"
       },
-      "help": "Screens stocks using MACD Signal Cross so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: MACD line crossing signal line.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "macd_histogram_slope": {
       "label": "MACD Histogram Slope",
@@ -1998,10 +2085,10 @@
         "signal_period": "Signal Period",
         "slow_period": "Slow Period"
       },
-      "help": "Screens stocks using MACD Histogram Slope so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: MACD histogram slope.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "cci_overbought_oversold": {
       "label": "CCI Overbought/Oversold",
@@ -2011,10 +2098,10 @@
         "period": "Period",
         "threshold": "Threshold"
       },
-      "help": "Screens stocks using CCI Overbought/Oversold so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in mean-reversion or timing setups when momentum extremes matter.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Oscillators can stay extreme for long periods in strong trends."
+      "help": "Filters stocks using this rule: CCI threshold filter.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "williams_r_reversal": {
       "label": "Williams %R Reversal",
@@ -2025,10 +2112,10 @@
         "oversold": "Oversold",
         "period": "Period"
       },
-      "help": "Screens stocks using Williams %R Reversal so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in mean-reversion or timing setups when momentum extremes matter.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Oscillators can stay extreme for long periods in strong trends."
+      "help": "Filters stocks using this rule: Williams %R reversal signal.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "trix_cross": {
       "label": "TRIX Cross",
@@ -2039,10 +2126,10 @@
         "period": "Period",
         "signal_period": "Signal Period"
       },
-      "help": "Screens stocks using TRIX Cross so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: TRIX crossing signal line.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "aroon_trend_signal": {
       "label": "Aroon Trend Signal",
@@ -2052,10 +2139,10 @@
         "min_aroon": "Minimum Aroon",
         "period": "Period"
       },
-      "help": "Screens stocks using Aroon Trend Signal so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Aroon trend strength signal.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "money_flow_index_signal": {
       "label": "Money Flow Index",
@@ -2066,10 +2153,10 @@
         "oversold": "Oversold",
         "period": "Period"
       },
-      "help": "Screens stocks using Money Flow Index so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: MFI threshold signal.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "vwap_cross_signal": {
       "label": "VWAP Cross Signal",
@@ -2078,10 +2165,10 @@
         "lookback_days": "Lookback Days",
         "period": "Period"
       },
-      "help": "Screens stocks using VWAP Cross Signal so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Close crossing above VWAP.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "vwap_distance_pct": {
       "label": "VWAP Distance %",
@@ -2090,10 +2177,10 @@
         "max_distance_pct": "Maximum Distance %",
         "period": "Period"
       },
-      "help": "Screens stocks using VWAP Distance % so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Distance between close and VWAP.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "relative_volume_percentile": {
       "label": "Relative Volume Percentile",
@@ -2102,10 +2189,10 @@
         "lookback_days": "Lookback Days",
         "min_percentile": "Minimum Percentile"
       },
-      "help": "Screens stocks using Relative Volume Percentile so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Current volume percentile within lookback.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "turnover_ratio_min": {
       "label": "Turnover Ratio Min",
@@ -2113,10 +2200,10 @@
       "params": {
         "min_turnover_ratio": "Minimum Turnover Ratio"
       },
-      "help": "Screens stocks using Turnover Ratio Min so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Minimum turnover ratio.",
+      "whenToUse": "Use in quality/value screening to improve financial robustness.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Interpret min/max thresholds by valuation or quality direction for each metric.",
+      "caution": "Accounting lags and one-off items can distort signals."
     },
     "atr_percentile_filter": {
       "label": "ATR Percentile",
@@ -2126,10 +2213,10 @@
         "lookback_days": "Lookback Days",
         "max_percentile": "Maximum Percentile"
       },
-      "help": "Screens stocks using ATR Percentile so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: ATR percentile within lookback.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "atr_expansion_breakout": {
       "label": "ATR Expansion Breakout",
@@ -2139,10 +2226,10 @@
         "atr_period": "ATR Period",
         "breakout_lookback": "Breakout Lookback"
       },
-      "help": "Screens stocks using ATR Expansion Breakout so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: ATR expansion and price breakout.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Start from defaults, then run ±20~30% sensitivity tests. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "natr_filter": {
       "label": "NATR Filter",
@@ -2151,10 +2238,10 @@
         "max_natr_pct": "Maximum Natr %",
         "period": "Period"
       },
-      "help": "Screens stocks using NATR Filter so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use as a risk guardrail to control path-dependent drawdown or volatility.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Risk filters can remove high-upside names if set too tight."
+      "help": "Filters stocks using this rule: Normalized ATR filter.",
+      "whenToUse": "Use as a risk guardrail to control volatility and drawdown exposure.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Lower risk metrics generally mean more defensive exposure.",
+      "caution": "Over-tight risk filters can remove too much upside."
     },
     "dmi_directional_cross": {
       "label": "DMI Directional Cross",
@@ -2163,10 +2250,10 @@
         "lookback_days": "Lookback Days",
         "period": "Period"
       },
-      "help": "Screens stocks using DMI Directional Cross so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: +DI crosses above -DI.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "ichimoku_cloud_breakout": {
       "label": "Ichimoku Cloud Breakout",
@@ -2176,10 +2263,10 @@
         "conversion_period": "Conversion Period",
         "span_b_period": "Span B Period"
       },
-      "help": "Screens stocks using Ichimoku Cloud Breakout so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Close above cloud upper.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Start from defaults, then run ±20~30% sensitivity tests. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "ichimoku_tenkan_kijun_cross": {
       "label": "Ichimoku Tenkan/Kijun Cross",
@@ -2189,10 +2276,10 @@
         "conversion_period": "Conversion Period",
         "lookback_days": "Lookback Days"
       },
-      "help": "Screens stocks using Ichimoku Tenkan/Kijun Cross so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Tenkan crosses above Kijun.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "bollinger_squeeze_breakout": {
       "label": "Bollinger Squeeze Breakout",
@@ -2202,10 +2289,10 @@
         "period": "Period",
         "std_mult": "Std Mult"
       },
-      "help": "Screens stocks using Bollinger Squeeze Breakout so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "This is mainly a maximum threshold: lowering it makes the filter stricter.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Low BB width followed by upper band breakout.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Max-threshold filter: lowering the threshold makes selection stricter. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "bollinger_percent_b": {
       "label": "Bollinger Percent B",
@@ -2216,10 +2303,10 @@
         "period": "Period",
         "std_mult": "Std Mult"
       },
-      "help": "Screens stocks using Bollinger Percent B so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in quality/value screens to improve business or balance-sheet robustness.",
-      "howToRead": "Use it as a range filter: candidates must stay between your minimum and maximum settings.",
-      "caution": "Fundamental data updates slowly and can lag price turning points."
+      "help": "Filters stocks using this rule: Price position within Bollinger bands.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Range filter (min/max): start broad, then tighten if candidate count is too high. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "ppo_signal_cross": {
       "label": "PPO Signal Cross",
@@ -2230,10 +2317,10 @@
         "signal_period": "Signal Period",
         "slow_period": "Slow Period"
       },
-      "help": "Screens stocks using PPO Signal Cross so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: PPO line crossing signal line.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     },
     "stochastic_cross_signal": {
       "label": "Stochastic Cross Signal",
@@ -2243,10 +2330,10 @@
         "k_period": "K Period",
         "lookback_days": "Lookback Days"
       },
-      "help": "Screens stocks using Stochastic Cross Signal so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in mean-reversion or timing setups when momentum extremes matter.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Oscillators can stay extreme for long periods in strong trends."
+      "help": "Filters stocks using this rule: %K crossing above %D.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "stochrsi_signal": {
       "label": "StochRSI Signal",
@@ -2256,10 +2343,10 @@
         "rsi_period": "RSI Period",
         "stoch_period": "Stoch Period"
       },
-      "help": "Screens stocks using StochRSI Signal so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in mean-reversion or timing setups when momentum extremes matter.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Oscillators can stay extreme for long periods in strong trends."
+      "help": "Filters stocks using this rule: StochRSI threshold signal.",
+      "whenToUse": "Use with liquidity and trend filters to avoid single-factor bias.",
+      "howToRead": "Direction/mode filter: align with your long/short strategy intent. Prefer combining with liquidity, trend, and risk filters.",
+      "caution": "Do out-of-sample validation before production use."
     },
     "aroon_oscillator_signal": {
       "label": "Aroon Oscillator Signal",
@@ -2268,10 +2355,10 @@
         "min_oscillator": "Minimum Oscillator",
         "period": "Period"
       },
-      "help": "Screens stocks using Aroon Oscillator Signal so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in mean-reversion or timing setups when momentum extremes matter.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Oscillators can stay extreme for long periods in strong trends."
+      "help": "Filters stocks using this rule: Aroon up-down oscillator filter.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "ultimate_oscillator_signal": {
       "label": "Ultimate Oscillator Signal",
@@ -2279,10 +2366,10 @@
       "params": {
         "min_value": "Minimum Value"
       },
-      "help": "Screens stocks using Ultimate Oscillator Signal so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in mean-reversion or timing setups when momentum extremes matter.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Oscillators can stay extreme for long periods in strong trends."
+      "help": "Filters stocks using this rule: Ultimate oscillator threshold.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "chaikin_money_flow_signal": {
       "label": "Chaikin Money Flow",
@@ -2291,10 +2378,10 @@
         "min_cmf": "Minimum Cmf",
         "period": "Period"
       },
-      "help": "Screens stocks using Chaikin Money Flow so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use alongside liquidity and trend checks to avoid one-factor overfitting.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Validate by period split and transaction costs before live use."
+      "help": "Filters stocks using this rule: CMF threshold signal.",
+      "whenToUse": "Use when you need volume/flow confirmation for price action.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. Read volume/flow as confirmation or early warning versus price movement.",
+      "caution": "Signal quality degrades in low-liquidity periods."
     },
     "chaikin_oscillator_signal": {
       "label": "Chaikin Oscillator",
@@ -2304,10 +2391,10 @@
         "min_value": "Minimum Value",
         "slow_period": "Slow Period"
       },
-      "help": "Screens stocks using Chaikin Oscillator so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in mean-reversion or timing setups when momentum extremes matter.",
-      "howToRead": "This is mainly a minimum threshold: raising it makes the filter stricter.",
-      "caution": "Oscillators can stay extreme for long periods in strong trends."
+      "help": "Filters stocks using this rule: Chaikin oscillator above threshold.",
+      "whenToUse": "Use in mean-reversion entries around momentum extremes.",
+      "howToRead": "Min-threshold filter: increasing the threshold makes selection stricter. More extreme oscillator values usually imply stronger reversal pressure.",
+      "caution": "Extremes can persist in strong one-way trends."
     },
     "ad_line_trend": {
       "label": "A/D Line Trend",
@@ -2315,10 +2402,10 @@
       "params": {
         "lookback_days": "Lookback Days"
       },
-      "help": "Screens stocks using A/D Line Trend so beginners can understand what this condition is controlling.",
-      "whenToUse": "Use in trend-following entries or continuation filters.",
-      "howToRead": "Tune the lookback and threshold together; tighter settings reduce candidates but can overfit.",
-      "caution": "Trend signals can whipsaw in sideways markets."
+      "help": "Filters stocks using this rule: Accumulation/distribution line trend.",
+      "whenToUse": "Use in trend-following or continuation setups.",
+      "howToRead": "Period filter: shorter is more sensitive/noisy, longer is smoother/stabler. Breakouts, positive slope, and bullish alignment indicate stronger trend persistence.",
+      "caution": "Whipsaws increase in sideways regimes."
     }
   },
   "settings": {
