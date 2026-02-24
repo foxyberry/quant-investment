@@ -1,5 +1,9 @@
 import type { Node, Edge } from '@xyflow/react';
-import type { StrategyNodeData } from './graphSerializer';
+import {
+  parseUniverseSelection,
+  resolveSectorMarket,
+  type StrategyNodeData,
+} from './graphSerializer';
 
 export interface ValidationResult {
   valid: boolean;
@@ -33,8 +37,15 @@ export function validateGraph(
 
   // Check sector node (max 1, must not be inside group, must have sector selected)
   const sectorNodes = nodes.filter((n) => n.data.node_type === 'sector');
+  const universeNode = universeNodes[0];
+  const selectedUniverses = parseUniverseSelection(universeNode?.data.universe);
   if (sectorNodes.length > 1) {
     errors.push('Only one Sector node is allowed per strategy graph.');
+  }
+  if (sectorNodes.length > 0 && resolveSectorMarket(selectedUniverses) === null) {
+    errors.push(
+      `Sector node requires a single Korean market universe (KOSPI or KOSDAQ). Current selection: ${selectedUniverses.join(', ')}`
+    );
   }
   for (const sn of sectorNodes) {
     if (sn.parentId) {
