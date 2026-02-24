@@ -352,6 +352,8 @@
     "andMore": "+{count} 更多",
     "applyChanges": "应用更改",
     "filterMetrics": "过滤值",
+    "runFirst": "请先运行策略查看结果",
+    "loadingConditions": "正在加载条件...",
     "exportJson": "导出 JSON",
     "lastRunAt": "上次运行: {time}",
     "exportCsv": "导出CSV",
