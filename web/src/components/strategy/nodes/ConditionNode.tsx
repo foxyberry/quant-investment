@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { getDownstreamNodeIds, type StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import type { ConditionParam } from '@/lib/strategy/conditionRegistry';
 import { useConditions } from '@/contexts/ConditionsContext';
+import { useUserSettings } from '@/contexts/UserSettingsContext';
 import NodeEditPopup, {
   FieldLabel,
   SelectInput,
@@ -41,6 +42,7 @@ function ConditionNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
   const { conditions, getConditionMeta } = useConditions();
+  const { settings } = useUserSettings();
   const nodeData = data as unknown as StrategyNodeData;
   const meta = nodeData.condition_type
     ? getConditionMeta(nodeData.condition_type)
@@ -257,6 +259,7 @@ function ConditionNode({ data, selected }: NodeProps) {
                 <div className="space-y-3">
                   {paired.map(([minP, maxP]) => {
                     const suffix = minP.name.replace(/^min_/, '');
+                    const isPriceRange = suffix === 'price';
                     return (
                       <div key={`pair-${suffix}`}>
                         <FieldLabel>
@@ -267,6 +270,7 @@ function ConditionNode({ data, selected }: NodeProps) {
                           {tCond.has(currentMeta.key + '.params.' + maxP.name)
                             ? tCond(currentMeta.key + '.params.' + maxP.name)
                             : toTitleCaseFromKey(maxP.name)}
+                          {isPriceRange ? ` (${settings.baseCurrency})` : ''}
                         </FieldLabel>
                         <div className="flex items-center gap-2">
                           <InlineNumberInput
@@ -287,6 +291,11 @@ function ConditionNode({ data, selected }: NodeProps) {
                             onChange={handleParamChange}
                           />
                         </div>
+                        {isPriceRange && (
+                          <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                            Unit: {settings.baseCurrency}
+                          </p>
+                        )}
                       </div>
                     );
                   })}
