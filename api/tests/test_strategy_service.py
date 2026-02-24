@@ -497,3 +497,88 @@ class TestExecuteStrategyMultiUniverse:
         assert progress_events[-1][1] == 2
         assert result["total_count"] == 2
         assert result["screened_count"] == 2
+
+
+class TestExecuteStrategySectorPolicy:
+    """Test sector behavior under mixed multi-market execution."""
+
+    def _make_graph(self, nodes, edges):
+        return StrategyGraph(
+            nodes=[StrategyNode(id=n["id"], data=StrategyNodeData(**n["data"])) for n in nodes],
+            edges=[StrategyEdge(**e) for e in edges],
+        )
+
+    def test_sector_filters_only_kr_tickers_in_mixed_universes(self, monkeypatch):
+        graph = self._make_graph(
+            nodes=[
+                {"id": "u1", "data": {"node_type": "universe", "universe": "KOSPI"}},
+                {"id": "s1", "data": {"node_type": "sector", "sector": "전기전자"}},
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "min_price", "params": {"min_price": 10}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[
+                {"id": "e1", "source": "u1", "target": "c1"},
+                {"id": "e2", "source": "s1", "target": "c1"},
+                {"id": "e3", "source": "c1", "target": "o1"},
+            ],
+        )
+
+        captured = {"tickers": None}
+
+        def _mock_get_tickers_for_universes(self, universe_input, fail_fast=False):
+            return ["005930.KS", "000660.KS", "AAPL"]
+
+        class _MockSectorFetcher:
+            def get_sector_tickers(self, market: str, sector: str):
+                return ["005930.KS"]
+
+        class _MockScreener:
+            def run(self, tickers, show_progress, return_all, progress_callback=None):
+                captured["tickers"] = tickers
+                return []
+
+        monkeypatch.setattr(
+            "api.services.strategy_service.ScreeningService.get_tickers_for_universes",
+            _mock_get_tickers_for_universes,
+        )
+        monkeypatch.setattr(
+            "api.services.strategy_service.get_sector_fetcher",
+            lambda: _MockSectorFetcher(),
+        )
+        monkeypatch.setattr(
+            "api.services.strategy_service.StockScreener",
+            lambda **kwargs: _MockScreener(),
+        )
+
+        result = execute_strategy(
+            graph=graph,
+            universe_overrides=["KOSPI", "SP500"],
+        )
+
+        assert captured["tickers"] == ["005930.KS", "AAPL"]
+        assert result["total_count"] == 3
+        assert result["screened_count"] == 2
+
+    def test_sector_with_non_kr_universe_fails_fast(self, monkeypatch):
+        graph = self._make_graph(
+            nodes=[
+                {"id": "s1", "data": {"node_type": "sector", "sector": "전기전자"}},
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "min_price", "params": {"min_price": 10}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[
+                {"id": "e1", "source": "s1", "target": "c1"},
+                {"id": "e2", "source": "c1", "target": "o1"},
+            ],
+        )
+
+        monkeypatch.setattr(
+            "api.services.strategy_service.ScreeningService.get_tickers_for_universes",
+            lambda self, universe_input, fail_fast=False: ["AAPL", "MSFT"],
+        )
+
+        with pytest.raises(ValueError, match="Sector filtering is supported only when KR universes"):
+            execute_strategy(
+                graph=graph,
+                universe_overrides=["SP500"],
+            )

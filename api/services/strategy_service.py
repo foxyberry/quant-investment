@@ -874,13 +874,26 @@ def execute_strategy(
     # Apply sector filtering (already validated above)
     if sector_nodes:
         sector_name = (sector_nodes[0].data.sector or "").strip()
+        kr_universes = [u for u in resolved_universes if u in ("KOSPI", "KOSDAQ")]
+        if not kr_universes:
+            raise ValueError(
+                "Sector filtering is supported only when KR universes (KOSPI/KOSDAQ) are included"
+            )
+
         fetcher = get_sector_fetcher()
-        sector_tickers = set(fetcher.get_sector_tickers(primary_universe, sector_name))
-        tickers = [t for t in tickers if t in sector_tickers]
+        sector_tickers: set[str] = set()
+        for market in kr_universes:
+            sector_tickers.update(fetcher.get_sector_tickers(market, sector_name))
+
+        # Policy: apply sector filter only to KR tickers; keep non-KR tickers unchanged.
+        tickers = [
+            ticker for ticker in tickers
+            if (not _is_korean_ticker(ticker)) or (ticker in sector_tickers)
+        ]
         logger.info(
-            "Sector filter '%s' on %s: %d -> %d tickers",
+            "Sector filter '%s' on KR universes %s: %d -> %d tickers",
             sector_name,
-            primary_universe,
+            ",".join(kr_universes),
             total_count,
             len(tickers),
         )
