@@ -498,6 +498,27 @@ class TestExecuteStrategyMultiUniverse:
         assert result["total_count"] == 2
         assert result["screened_count"] == 2
 
+    def test_execute_strategy_guardrail_rejects_oversized_universe(self, monkeypatch):
+        graph = self._make_graph(
+            nodes=[
+                {"id": "c1", "data": {"node_type": "condition", "condition_type": "min_price", "params": {"min_price": 10}}},
+                {"id": "o1", "data": {"node_type": "output"}},
+            ],
+            edges=[{"id": "e1", "source": "c1", "target": "o1"}],
+        )
+
+        oversized = [f"T{i:04d}" for i in range(4001)]
+        monkeypatch.setattr(
+            "api.services.strategy_service.ScreeningService.get_tickers_for_universes",
+            lambda self, universe_input, fail_fast=False: oversized,
+        )
+
+        with pytest.raises(ValueError, match="Target universe too large"):
+            execute_strategy(
+                graph=graph,
+                universe_overrides=["KOSPI", "KOSDAQ"],
+            )
+
 
 class TestExecuteStrategySectorPolicy:
     """Test sector behavior under mixed multi-market execution."""

@@ -124,3 +124,22 @@ class TestRunScreening:
                 universes=["KOSPI"],
                 params=None,
             )
+
+    def test_run_screening_guardrail_rejects_oversized_universe(self, monkeypatch):
+        service = ScreeningService()
+        monkeypatch.setattr(service, "_resolve_conditions", lambda preset, params: [object()])
+
+        oversized_symbols = {f"T{i:04d}": f"Name{i}" for i in range(service.MAX_TICKERS_PER_RUN + 1)}
+        monkeypatch.setattr(
+            service,
+            "_get_symbols_for_universes",
+            lambda universe_input, fail_fast=False: (oversized_symbols, ["KOSPI"], {}),
+        )
+
+        with pytest.raises(ValueError, match="Target universe too large"):
+            service.run_screening(
+                preset="accumulation_basic",
+                universe="KOSPI",
+                universes=["KOSPI"],
+                params=None,
+            )

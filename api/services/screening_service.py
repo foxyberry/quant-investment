@@ -36,6 +36,8 @@ class ScreeningService:
     _universe_count_cache: Dict[str, tuple] = {}
     _universe_combo_count_cache: Dict[str, tuple] = {}
     _UNIVERSE_COUNT_TTL = 3600  # 1 hour
+    WARN_TICKERS_THRESHOLD = 2500
+    MAX_TICKERS_PER_RUN = 4000
 
     # Universe definitions
     UNIVERSES = {
@@ -412,10 +414,12 @@ class ScreeningService:
         Returns:
             Dict with results, total_count, matched_count, and resolved universes
         """
+        started_at = time.perf_counter()
         conditions = self._resolve_conditions(preset, params)
 
         requested_universes: Any = universes if universes is not None else universe
 
+        resolve_started_at = time.perf_counter()
         try:
             symbols_dict, resolved_universes, failed_errors = self._get_symbols_for_universes(
                 universe_input=requested_universes,
@@ -429,8 +433,23 @@ class ScreeningService:
                 details = ", ".join(f"{k}: {v}" for k, v in failed_errors.items())
                 raise ValueError(f"Failed to fetch all universes ({details})")
             raise ValueError("No tickers available for screening")
+        resolve_elapsed_ms = (time.perf_counter() - resolve_started_at) * 1000.0
 
         tickers = list(symbols_dict.keys())
+        total_count = len(tickers)
+        failed_count = len(failed_errors)
+        failure_rate = (failed_count / len(resolved_universes)) if resolved_universes else 0.0
+
+        if total_count > self.WARN_TICKERS_THRESHOLD:
+            logger.warning(
+                "screening.guardrail warning: universe_size=%d exceeds warn threshold=%d",
+                total_count,
+                self.WARN_TICKERS_THRESHOLD,
+            )
+        if total_count > self.MAX_TICKERS_PER_RUN:
+            raise ValueError(
+                f"Target universe too large ({total_count}). Maximum allowed per run is {self.MAX_TICKERS_PER_RUN}"
+            )
 
         # Create screener with pre-fetched stock names
         screener = StockScreener(
@@ -441,12 +460,13 @@ class ScreeningService:
             stock_names=symbols_dict,
         )
 
-        total_count = len(tickers)
-
         # Run screening (show_progress=False for API)
+        run_started_at = time.perf_counter()
         results = screener.run(tickers=tickers, show_progress=False)
+        run_elapsed_ms = (time.perf_counter() - run_started_at) * 1000.0
 
         # Convert to response format
+        convert_started_at = time.perf_counter()
         result_items = []
         for result in results:
             conditions_list = [
@@ -465,6 +485,26 @@ class ScreeningService:
                 matched=result.matched,
                 conditions=conditions_list
             ))
+        convert_elapsed_ms = (time.perf_counter() - convert_started_at) * 1000.0
+        total_elapsed_ms = (time.perf_counter() - started_at) * 1000.0
+
+        eval_throughput = (total_count / run_elapsed_ms * 1000.0) if run_elapsed_ms > 0 else float(total_count)
+        logger.info(
+            (
+                "screening.metrics universes=%s total_tickers=%d matched=%d "
+                "resolve_ms=%.1f run_ms=%.1f convert_ms=%.1f total_ms=%.1f "
+                "eval_tps=%.2f failed_universe_rate=%.2f"
+            ),
+            ",".join(resolved_universes),
+            total_count,
+            len(result_items),
+            resolve_elapsed_ms,
+            run_elapsed_ms,
+            convert_elapsed_ms,
+            total_elapsed_ms,
+            eval_throughput,
+            failure_rate,
+        )
 
         return {
             "results": result_items,

@@ -6,6 +6,7 @@ Converts graph representations into screener conditions and executes them.
 """
 
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Type
@@ -31,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 FUNDAMENTAL_TTL_SECONDS = 24 * 60 * 60
 _fundamental_cache = FundamentalCache()
+WARN_TICKERS_THRESHOLD = 2500
+MAX_TICKERS_PER_RUN = 4000
 
 # Auto-populated from @register_condition decorators
 CONDITION_CLASS_MAP: Dict[str, Type[BaseCondition]] = get_condition_class_map()
@@ -827,6 +830,8 @@ def execute_strategy(
     Returns:
         Dict with results, counts, universe, conditions used, and node_results
     """
+    started_at = time.perf_counter()
+
     # Validate sector nodes early (only 1 allowed, must be connected)
     sector_nodes = [n for n in graph.nodes if n.data.node_type == "sector"]
     if len(sector_nodes) > 1:
@@ -859,17 +864,33 @@ def execute_strategy(
         raise ValueError("No conditions found in graph")
 
     screening_service = ScreeningService()
+    resolve_started_at = time.perf_counter()
     resolved_universes, primary_universe = _resolve_execution_universes(
         graph=graph,
         screening_service=screening_service,
         universe_override=universe_override,
         universe_overrides=universe_overrides,
     )
+    resolve_elapsed_ms = (time.perf_counter() - resolve_started_at) * 1000.0
+
+    fetch_started_at = time.perf_counter()
     tickers = screening_service.get_tickers_for_universes(
         universe_input=resolved_universes,
         fail_fast=False,
     )
+    fetch_elapsed_ms = (time.perf_counter() - fetch_started_at) * 1000.0
     total_count = len(tickers)
+
+    if total_count > WARN_TICKERS_THRESHOLD:
+        logger.warning(
+            "strategy.guardrail warning: universe_size=%d exceeds warn threshold=%d",
+            total_count,
+            WARN_TICKERS_THRESHOLD,
+        )
+    if total_count > MAX_TICKERS_PER_RUN:
+        raise ValueError(
+            f"Target universe too large ({total_count}). Maximum allowed per run is {MAX_TICKERS_PER_RUN}"
+        )
 
     # Apply sector filtering (already validated above)
     if sector_nodes:
@@ -906,12 +927,14 @@ def execute_strategy(
         use_cache=True,
     )
 
+    eval_started_at = time.perf_counter()
     all_results = screener.run(
         tickers=tickers,
         show_progress=False,
         return_all=True,
         progress_callback=progress_callback,
     )
+    eval_elapsed_ms = (time.perf_counter() - eval_started_at) * 1000.0
 
     # Rebuild graph structures for survivor computation
     nodes_by_id: Dict[str, StrategyNode] = {n.id: n for n in graph.nodes}
@@ -996,6 +1019,24 @@ def execute_strategy(
         enrich_fundamentals(final_items)
 
     conditions_used = [type(c).__name__ for c in leaf_conditions]
+
+    total_elapsed_ms = (time.perf_counter() - started_at) * 1000.0
+    eval_throughput = (len(tickers) / eval_elapsed_ms * 1000.0) if eval_elapsed_ms > 0 else float(len(tickers))
+    logger.info(
+        (
+            "strategy.metrics universes=%s total_tickers=%d screened=%d matched=%d "
+            "resolve_ms=%.1f fetch_ms=%.1f eval_ms=%.1f total_ms=%.1f eval_tps=%.2f"
+        ),
+        ",".join(resolved_universes),
+        total_count,
+        len(tickers),
+        len(final_items),
+        resolve_elapsed_ms,
+        fetch_elapsed_ms,
+        eval_elapsed_ms,
+        total_elapsed_ms,
+        eval_throughput,
+    )
 
     return {
         "results": final_items,
