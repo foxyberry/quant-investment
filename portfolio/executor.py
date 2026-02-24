@@ -342,7 +342,12 @@ class KiwoomExecutor(BaseExecutor):
 
     @staticmethod
     def _to_kiwoom_order_type(side: str) -> int:
-        return int(KiwoomOrderType.NEW_BUY) if side.upper() == "BUY" else int(KiwoomOrderType.NEW_SELL)
+        normalized = side.upper()
+        if normalized == "BUY":
+            return int(KiwoomOrderType.NEW_BUY)
+        if normalized == "SELL":
+            return int(KiwoomOrderType.NEW_SELL)
+        raise ValueError(f"unsupported order side: {side}")
 
     @staticmethod
     def _to_kiwoom_hoga(order_type: str) -> str:
@@ -394,11 +399,49 @@ class KiwoomExecutor(BaseExecutor):
     def execute(self, order: Order) -> OrderResult:
         self._orders[order.order_id] = order
         code = self._normalize_code(order.ticker)
-        kiwoom_order_type = self._to_kiwoom_order_type(order.side)
-        hoga_type = self._to_kiwoom_hoga(order.order_type)
-        price = int(order.price or 0) if hoga_type == KiwoomHogaType.LIMIT.value else 0
+        try:
+            kiwoom_order_type = self._to_kiwoom_order_type(order.side)
+        except ValueError as exc:
+            result = OrderResult(
+                order_id=order.order_id,
+                success=False,
+                status=OrderStatus.REJECTED.value,
+                message=str(exc),
+                simulated=False,
+            )
+            self._results[order.order_id] = result
+            return result
 
-        risk_error = self._validate_risk(order, float(price or order.price or 0))
+        hoga_type = self._to_kiwoom_hoga(order.order_type)
+        if hoga_type == KiwoomHogaType.LIMIT.value:
+            if order.price is None or float(order.price) <= 0:
+                result = OrderResult(
+                    order_id=order.order_id,
+                    success=False,
+                    status=OrderStatus.REJECTED.value,
+                    message="LIMIT order requires a positive price",
+                    simulated=False,
+                )
+                self._results[order.order_id] = result
+                return result
+            price = int(order.price)
+            risk_price = float(order.price)
+        else:
+            price = 0
+            # Use provided reference price for risk checks in market orders.
+            risk_price = float(order.price) if order.price is not None else 0.0
+            if risk_price <= 0:
+                result = OrderResult(
+                    order_id=order.order_id,
+                    success=False,
+                    status=OrderStatus.REJECTED.value,
+                    message="MARKET order requires a positive reference price for risk validation",
+                    simulated=False,
+                )
+                self._results[order.order_id] = result
+                return result
+
+        risk_error = self._validate_risk(order, risk_price)
         if risk_error:
             result = OrderResult(
                 order_id=order.order_id,
