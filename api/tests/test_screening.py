@@ -225,6 +225,54 @@ class TestRunScreening:
         )
         mock_screening_service.run_screening.assert_not_called()
 
+    def test_run_screening_with_us_multi_universe(self, client, mock_screening_service):
+        """US multi-universe input should normalize and preserve stable order."""
+        mock_screening_service.run_screening.return_value = {
+            "results": [],
+            "total_count": 600,
+            "matched_count": 0,
+        }
+        request_data = {
+            "preset": "accumulation_basic",
+            "universes": ["sp500", "nasdaq100"],
+        }
+
+        response = client.post("/api/screening/run", json=request_data)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["universe"] == "SP500"
+        assert data["universes"] == ["SP500", "NASDAQ100"]
+        mock_screening_service.run_screening.assert_called_once_with(
+            preset="accumulation_basic",
+            universe="SP500",
+            universes=["SP500", "NASDAQ100"],
+            params=None,
+        )
+
+    def test_run_screening_with_mixed_universe_and_duplicates(self, client, mock_screening_service):
+        """Mixed KR/US inputs should dedupe stably and keep first item as primary."""
+        mock_screening_service.run_screening.return_value = {
+            "results": [],
+            "total_count": 1400,
+            "matched_count": 0,
+        }
+        request_data = {
+            "preset": "accumulation_basic",
+            "universes": ["kospi", "SP500", "KOSPI", "sp500"],
+        }
+
+        response = client.post("/api/screening/run", json=request_data)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["universe"] == "KOSPI"
+        assert data["universes"] == ["KOSPI", "SP500"]
+        mock_screening_service.run_screening.assert_called_once_with(
+            preset="accumulation_basic",
+            universe="KOSPI",
+            universes=["KOSPI", "SP500"],
+            params=None,
+        )
+
     def test_run_screening_with_params(self, client, mock_screening_service):
         """Test POST /api/screening/run with custom parameters."""
         # Arrange
