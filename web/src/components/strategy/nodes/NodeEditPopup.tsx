@@ -6,6 +6,13 @@ import { Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ConditionParam } from '@/lib/strategy/conditionRegistry';
 
+function toTitleCaseFromKey(value: string): string {
+  return value
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 /* ------------------------------------------------------------------ */
 /*  Shared form primitives (extracted from PropertiesPanel)            */
 /* ------------------------------------------------------------------ */
@@ -55,7 +62,8 @@ export function ParamInput({
   const tCond = useTranslations('conditions');
   const tCommon = useTranslations('common');
 
-  const paramLabel = tCond(conditionKey + '.params.' + param.name);
+  const paramKey = conditionKey + '.params.' + param.name;
+  const paramLabel = tCond.has(paramKey) ? tCond(paramKey) : toTitleCaseFromKey(param.name);
 
   if (param.type === 'bool') {
     return (
@@ -258,9 +266,10 @@ export function groupParams(params: ConditionParam[]) {
 
 export function CategoryBadge({ category }: { category: string }) {
   const tCond = useTranslations('conditions');
+  const key = `categories.${category}`;
   return (
     <span className="inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
-      {tCond(`categories.${category}`)}
+      {tCond.has(key) ? tCond(key) : toTitleCaseFromKey(category)}
     </span>
   );
 }
