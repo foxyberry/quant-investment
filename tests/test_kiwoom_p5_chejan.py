@@ -159,3 +159,31 @@ def test_order_event_parses_only_requested_fids() -> None:
     get_calls = [call for call in ocx.calls if "GetChejanData" in call[0]]
     assert len(get_calls) == 3
     assert handler.get_order_status("555") == OrderStatus.CONFIRMED
+
+
+def test_terminal_state_does_not_regress_to_earlier_state() -> None:
+    ocx = _FakeOcx()
+    handler = ChejanHandler(ocx, async_notify=False)
+
+    _set_order_chejan(ocx, order_no="777", code="A005930", status="체결", fill_price=70000, fill_qty=10, unfilled_qty=0)
+    handler.on_receive_chejan_data("0", 0, "")
+    assert handler.get_order_status("777") == OrderStatus.FILLED
+
+    _set_order_chejan(ocx, order_no="777", code="A005930", status="접수", fill_price=0, fill_qty=0, unfilled_qty=10)
+    handler.on_receive_chejan_data("0", 0, "")
+    assert handler.get_order_status("777") == OrderStatus.FILLED
+
+
+def test_order_observer_notified_only_on_status_change() -> None:
+    ocx = _FakeOcx()
+    handler = ChejanHandler(ocx, async_notify=False)
+    events = []
+    handler.add_observer(events.append)
+
+    _set_order_chejan(ocx, order_no="888", code="A005930", status="접수", fill_price=0, fill_qty=0, unfilled_qty=10)
+    handler.on_receive_chejan_data("0", 0, "")
+    _set_order_chejan(ocx, order_no="888", code="A005930", status="접수", fill_price=0, fill_qty=0, unfilled_qty=10)
+    handler.on_receive_chejan_data("0", 0, "")
+
+    order_events = [e for e in events if e.get("type") == "order"]
+    assert len(order_events) == 1
