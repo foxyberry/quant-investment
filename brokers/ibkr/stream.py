@@ -143,8 +143,14 @@ class IBKROrderStream:
 
     def _on_message(self, ws: Any, message: str) -> None:
         """Parse incoming WS messages and dispatch order events."""
+        raw = message
+
+        # IBKR may send "sor+{json}" prefix format — strip it
+        if isinstance(raw, str) and raw.startswith("sor+"):
+            raw = raw[4:]
+
         try:
-            data = json.loads(message)
+            data = json.loads(raw)
         except (json.JSONDecodeError, TypeError):
             return
 
@@ -175,8 +181,8 @@ class IBKROrderStream:
             order_id=order_id,
             ticker=data.get("symbol", data.get("ticker", "")),
             status=status,
-            filled_quantity=int(data.get("filledQuantity", 0)),
-            unfilled_quantity=int(data.get("remainingQuantity", 0)),
+            filled_quantity=self._safe_int(data.get("filledQuantity", 0)),
+            unfilled_quantity=self._safe_int(data.get("remainingQuantity", 0)),
             filled_price=self._safe_float(data.get("avgPrice")),
         )
 
@@ -188,6 +194,13 @@ class IBKROrderStream:
                 cb(event)
             except Exception:
                 logger.exception("Order stream callback raised for order %s", order_id)
+
+    @staticmethod
+    def _safe_int(value: Any) -> int:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 0
 
     @staticmethod
     def _safe_float(value: Any) -> Optional[float]:

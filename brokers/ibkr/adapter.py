@@ -131,6 +131,8 @@ class IBKRBrokerAdapter(BrokerAdapter):
             state = ConnectionState.DISCONNECTED
         elif auth.get("authenticated") and auth.get("connected"):
             state = ConnectionState.CONNECTED
+            # Start keepalive once connected
+            self._session.start_keepalive()
         else:
             state = ConnectionState.DISCONNECTED
 
@@ -353,6 +355,12 @@ class IBKRBrokerAdapter(BrokerAdapter):
         if isinstance(data, list) and data:
             first = data[0]
             if isinstance(first, dict):
+                # Check for error in list response
+                if first.get("error"):
+                    raise BrokerValidationError(
+                        f"Order rejected: {first['error']}"
+                    )
+
                 order_id = str(first.get("order_id", first.get("orderId", "")))
                 status_str = first.get("order_status", "")
                 status = IBKR_STATUS_MAP.get(status_str, OrderStatus.RECEIVED)

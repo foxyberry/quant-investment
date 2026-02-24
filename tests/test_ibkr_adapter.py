@@ -476,6 +476,51 @@ class TestIBKROrderStream:
         stream._on_message(None, "not-json")
         assert len(received) == 0
 
+    def test_on_message_parses_sor_prefix_format(self) -> None:
+        """IBKR may send 'sor+{json}' prefix format."""
+        import json
+
+        stream = self._make_stream()
+        received: list[OrderEvent] = []
+        stream.add_callback(lambda ev: received.append(ev))
+
+        payload = json.dumps(
+            {
+                "topic": "sor",
+                "orderId": "77",
+                "symbol": "NVDA",
+                "status": "Filled",
+                "filledQuantity": 25,
+                "remainingQuantity": 0,
+            }
+        )
+        stream._on_message(None, f"sor+{payload}")
+
+        assert len(received) == 1
+        assert received[0].order_id == "77"
+        assert received[0].ticker == "NVDA"
+
+    def test_dispatch_handles_non_numeric_quantity(self) -> None:
+        """Non-numeric filledQuantity should not crash dispatch."""
+        stream = self._make_stream()
+        received: list[OrderEvent] = []
+        stream.add_callback(lambda ev: received.append(ev))
+
+        stream._dispatch_order_event(
+            {
+                "topic": "sor",
+                "orderId": "88",
+                "symbol": "AMD",
+                "status": "Filled",
+                "filledQuantity": "N/A",
+                "remainingQuantity": None,
+            }
+        )
+
+        assert len(received) == 1
+        assert received[0].filled_quantity == 0
+        assert received[0].unfilled_quantity == 0
+
     def test_callback_exception_does_not_propagate(self) -> None:
         stream = self._make_stream()
 
@@ -707,6 +752,23 @@ class TestIBKRPlaceOrder:
             order_type=OrderType.MARKET,
         )
         with pytest.raises(BrokerValidationError, match="Insufficient funds"):
+            adapter.place_order(request)
+
+    def test_place_order_list_error_response(self, mock_ibkr_components) -> None:
+        """Error in list response format should also raise."""
+        mock_ibkr_components["cache"].resolve.return_value = 265598
+        mock_ibkr_components["client"].post.return_value = [
+            {"error": "Rejected by risk management"}
+        ]
+
+        adapter = _make_ibkr_adapter()
+        request = OrderRequest(
+            ticker="AAPL",
+            side=OrderSide.BUY,
+            quantity=100,
+            order_type=OrderType.MARKET,
+        )
+        with pytest.raises(BrokerValidationError, match="Rejected by risk"):
             adapter.place_order(request)
 
 
