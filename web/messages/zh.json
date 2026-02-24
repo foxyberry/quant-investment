@@ -953,6 +953,264 @@
         "max_roic": "最大 ROIC %"
       },
       "help": "投入资本回报率——衡量公司使用全部资本的效率。"
+    },
+    "analyst_revision_1m": {
+      "label": "分析师预期1个月修正率",
+      "desc": "按分析师预期1个月修正率条件筛选股票。",
+      "params": {
+        "min_revision_pct": "最小修正率 %"
+      },
+      "help": "仅保留满足分析师预期1个月修正率阈值的股票。"
+    },
+    "analyst_revision_3m": {
+      "label": "分析师预期3个月修正率",
+      "desc": "按分析师预期3个月修正率条件筛选股票。",
+      "params": {
+        "min_revision_pct": "最小修正率 %"
+      },
+      "help": "仅保留满足分析师预期3个月修正率阈值的股票。"
+    },
+    "asset_turnover_ratio": {
+      "label": "总资产周转率",
+      "desc": "按总资产周转率条件筛选股票。",
+      "params": {
+        "min_ratio": "最小比率"
+      },
+      "help": "仅保留满足总资产周转率阈值的股票。"
+    },
+    "book_to_market_ratio": {
+      "label": "账面价值比率",
+      "desc": "按账面价值比率条件筛选股票。",
+      "params": {
+        "min_ratio": "最小比率"
+      },
+      "help": "仅保留满足账面价值比率阈值的股票。"
+    },
+    "buyback_yield_filter": {
+      "label": "回购收益率筛选",
+      "desc": "按回购收益率筛选条件筛选股票。",
+      "params": {
+        "min_yield_pct": "最小收益率 %"
+      },
+      "help": "仅保留满足回购收益率筛选阈值的股票。"
+    },
+    "cash_conversion_ratio": {
+      "label": "现金转换比率",
+      "desc": "按现金转换比率条件筛选股票。",
+      "params": {
+        "min_ratio": "最小比率"
+      },
+      "help": "仅保留满足现金转换比率阈值的股票。"
+    },
+    "cashflow_to_debt_ratio": {
+      "label": "现金流负债比",
+      "desc": "按现金流负债比条件筛选股票。",
+      "params": {
+        "min_ratio": "最小比率"
+      },
+      "help": "仅保留满足现金流负债比阈值的股票。"
+    },
+    "debt_service_coverage_ratio": {
+      "label": "偿债覆盖率",
+      "desc": "按偿债覆盖率条件筛选股票。",
+      "params": {
+        "min_ratio": "最小比率"
+      },
+      "help": "仅保留满足偿债覆盖率阈值的股票。"
+    },
+    "dividend_growth_5y": {
+      "label": "5年股息增长率",
+      "desc": "按5年股息增长率条件筛选股票。",
+      "params": {
+        "min_growth_pct": "最小增长率 %"
+      },
+      "help": "仅保留满足5年股息增长率阈值的股票。"
+    },
+    "earnings_stability_score": {
+      "label": "盈利稳定性评分",
+      "desc": "按盈利稳定性评分条件筛选股票。",
+      "params": {
+        "lookback_years": "回溯年数",
+        "max_cv": "最大变异系数"
+      },
+      "help": "仅保留满足盈利稳定性评分阈值的股票。"
+    },
+    "eps_cagr_3y": {
+      "label": "EPS 3年复合增长率",
+      "desc": "按EPS 3年复合增长率条件筛选股票。",
+      "params": {
+        "min_cagr_pct": "最小 CAGR %"
+      },
+      "help": "仅保留满足EPS 3年复合增长率阈值的股票。"
+    },
+    "eps_growth_yoy": {
+      "label": "EPS同比增长率",
+      "desc": "按EPS同比增长率条件筛选股票。",
+      "params": {
+        "min_growth_pct": "最小增长率 %"
+      },
+      "help": "仅保留满足EPS同比增长率阈值的股票。"
+    },
+    "ev_to_ebitda_ratio": {
+      "label": "EV/EBITDA比率",
+      "desc": "按EV/EBITDA比率条件筛选股票。",
+      "params": {
+        "max_ratio": "最大比率"
+      },
+      "help": "仅保留满足EV/EBITDA比率阈值的股票。"
+    },
+    "ev_to_sales_ratio": {
+      "label": "EV/销售比率",
+      "desc": "按EV/销售比率条件筛选股票。",
+      "params": {
+        "max_ratio": "最大比率"
+      },
+      "help": "仅保留满足EV/销售比率阈值的股票。"
+    },
+    "free_cash_flow_margin": {
+      "label": "自由现金流利润率",
+      "desc": "按自由现金流利润率条件筛选股票。",
+      "params": {
+        "min_margin_pct": "最小利润率 %"
+      },
+      "help": "仅保留满足自由现金流利润率阈值的股票。"
+    },
+    "gross_margin": {
+      "label": "毛利率",
+      "desc": "按毛利率条件筛选股票。",
+      "params": {
+        "min_margin_pct": "最小利润率 %"
+      },
+      "help": "仅保留满足毛利率阈值的股票。"
+    },
+    "gross_profitability": {
+      "label": "毛利盈利能力",
+      "desc": "按毛利盈利能力条件筛选股票。",
+      "params": {
+        "min_ratio": "最小比率"
+      },
+      "help": "仅保留满足毛利盈利能力阈值的股票。"
+    },
+    "interest_coverage_ratio": {
+      "label": "利息保障倍数",
+      "desc": "按利息保障倍数条件筛选股票。",
+      "params": {
+        "min_ratio": "最小比率"
+      },
+      "help": "仅保留满足利息保障倍数阈值的股票。"
+    },
+    "inventory_turnover_ratio": {
+      "label": "存货周转率",
+      "desc": "按存货周转率条件筛选股票。",
+      "params": {
+        "min_ratio": "最小比率"
+      },
+      "help": "仅保留满足存货周转率阈值的股票。"
+    },
+    "net_debt_to_ebitda": {
+      "label": "净债务/EBITDA",
+      "desc": "按净债务/EBITDA条件筛选股票。",
+      "params": {
+        "max_ratio": "最大比率"
+      },
+      "help": "仅保留满足净债务/EBITDA阈值的股票。"
+    },
+    "net_margin": {
+      "label": "净利率",
+      "desc": "按净利率条件筛选股票。",
+      "params": {
+        "min_margin_pct": "最小利润率 %"
+      },
+      "help": "仅保留满足净利率阈值的股票。"
+    },
+    "operating_margin": {
+      "label": "营业利润率",
+      "desc": "按营业利润率条件筛选股票。",
+      "params": {
+        "min_margin_pct": "最小利润率 %"
+      },
+      "help": "仅保留满足营业利润率阈值的股票。"
+    },
+    "payout_ratio_filter": {
+      "label": "派息率筛选",
+      "desc": "按派息率筛选条件筛选股票。",
+      "params": {
+        "max_payout_pct": "最大派息率 %"
+      },
+      "help": "仅保留满足派息率筛选阈值的股票。"
+    },
+    "price_to_tangible_book": {
+      "label": "市价/有形账面价值比",
+      "desc": "按市价/有形账面价值比条件筛选股票。",
+      "params": {
+        "max_ratio": "最大比率"
+      },
+      "help": "仅保留满足市价/有形账面价值比阈值的股票。"
+    },
+    "quality_score": {
+      "label": "质量评分",
+      "desc": "按质量评分条件筛选股票。",
+      "params": {
+        "min_score": "最小评分"
+      },
+      "help": "仅保留满足质量评分阈值的股票。"
+    },
+    "receivables_turnover_ratio": {
+      "label": "应收账款周转率",
+      "desc": "按应收账款周转率条件筛选股票。",
+      "params": {
+        "min_ratio": "最小比率"
+      },
+      "help": "仅保留满足应收账款周转率阈值的股票。"
+    },
+    "revenue_cagr_3y": {
+      "label": "营收3年复合增长率",
+      "desc": "按营收3年复合增长率条件筛选股票。",
+      "params": {
+        "min_cagr_pct": "最小 CAGR %"
+      },
+      "help": "仅保留满足营收3年复合增长率阈值的股票。"
+    },
+    "revenue_growth_yoy": {
+      "label": "营收同比增长率",
+      "desc": "按营收同比增长率条件筛选股票。",
+      "params": {
+        "min_growth_pct": "最小增长率 %"
+      },
+      "help": "仅保留满足营收同比增长率阈值的股票。"
+    },
+    "revenue_stability_score": {
+      "label": "营收稳定性评分",
+      "desc": "按营收稳定性评分条件筛选股票。",
+      "params": {
+        "lookback_years": "回溯年数",
+        "max_cv": "最大变异系数"
+      },
+      "help": "仅保留满足营收稳定性评分阈值的股票。"
+    },
+    "shareholder_yield_filter": {
+      "label": "股东收益率筛选",
+      "desc": "按股东收益率筛选条件筛选股票。",
+      "params": {
+        "min_yield_pct": "最小收益率 %"
+      },
+      "help": "仅保留满足股东收益率筛选阈值的股票。"
+    },
+    "roce_filter": {
+      "label": "ROCE筛选",
+      "desc": "按ROCE筛选条件筛选股票。",
+      "params": {
+        "min_roce_pct": "最小 ROCE %"
+      },
+      "help": "仅保留满足ROCE筛选阈值的股票。"
+    },
+    "roa_filter": {
+      "label": "ROA筛选",
+      "desc": "按ROA筛选条件筛选股票。",
+      "params": {
+        "min_roa_pct": "最小 ROA %"
+      },
+      "help": "仅保留满足ROA筛选阈值的股票。"
     }
   },
   "settings": {

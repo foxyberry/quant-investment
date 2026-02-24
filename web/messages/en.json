@@ -954,6 +954,264 @@
         "max_roic": "Max ROIC %"
       },
       "help": "Return on Invested Capital — how well the company uses all its capital."
+    },
+    "analyst_revision_1m": {
+      "label": "Analyst Revision 1M",
+      "desc": "Analyst Revision 1M filter",
+      "params": {
+        "min_revision_pct": "Minimum Revision %"
+      },
+      "help": "Filters stocks based on Analyst Revision 1M threshold settings."
+    },
+    "analyst_revision_3m": {
+      "label": "Analyst Revision 3M",
+      "desc": "Analyst Revision 3M filter",
+      "params": {
+        "min_revision_pct": "Minimum Revision %"
+      },
+      "help": "Filters stocks based on Analyst Revision 3M threshold settings."
+    },
+    "asset_turnover_ratio": {
+      "label": "Asset Turnover Ratio",
+      "desc": "Asset Turnover Ratio filter",
+      "params": {
+        "min_ratio": "Minimum Ratio"
+      },
+      "help": "Filters stocks based on Asset Turnover Ratio threshold settings."
+    },
+    "book_to_market_ratio": {
+      "label": "Book to Market Ratio",
+      "desc": "Book to Market Ratio filter",
+      "params": {
+        "min_ratio": "Minimum Ratio"
+      },
+      "help": "Filters stocks based on Book to Market Ratio threshold settings."
+    },
+    "buyback_yield_filter": {
+      "label": "Buyback Yield Filter",
+      "desc": "Buyback Yield Filter filter",
+      "params": {
+        "min_yield_pct": "Minimum Yield %"
+      },
+      "help": "Filters stocks based on Buyback Yield Filter threshold settings."
+    },
+    "cash_conversion_ratio": {
+      "label": "Cash Conversion Ratio",
+      "desc": "Cash Conversion Ratio filter",
+      "params": {
+        "min_ratio": "Minimum Ratio"
+      },
+      "help": "Filters stocks based on Cash Conversion Ratio threshold settings."
+    },
+    "cashflow_to_debt_ratio": {
+      "label": "Cashflow to Debt Ratio",
+      "desc": "Cashflow to Debt Ratio filter",
+      "params": {
+        "min_ratio": "Minimum Ratio"
+      },
+      "help": "Filters stocks based on Cashflow to Debt Ratio threshold settings."
+    },
+    "debt_service_coverage_ratio": {
+      "label": "Debt Service Coverage Ratio",
+      "desc": "Debt Service Coverage Ratio filter",
+      "params": {
+        "min_ratio": "Minimum Ratio"
+      },
+      "help": "Filters stocks based on Debt Service Coverage Ratio threshold settings."
+    },
+    "dividend_growth_5y": {
+      "label": "Dividend Growth 5Y",
+      "desc": "Dividend Growth 5Y filter",
+      "params": {
+        "min_growth_pct": "Minimum Growth %"
+      },
+      "help": "Filters stocks based on Dividend Growth 5Y threshold settings."
+    },
+    "earnings_stability_score": {
+      "label": "Earnings Stability Score",
+      "desc": "Earnings Stability Score filter",
+      "params": {
+        "lookback_years": "Lookback Years",
+        "max_cv": "Maximum CV"
+      },
+      "help": "Filters stocks based on Earnings Stability Score threshold settings."
+    },
+    "eps_cagr_3y": {
+      "label": "EPS CAGR 3Y",
+      "desc": "EPS CAGR 3Y filter",
+      "params": {
+        "min_cagr_pct": "Minimum CAGR %"
+      },
+      "help": "Filters stocks based on EPS CAGR 3Y threshold settings."
+    },
+    "eps_growth_yoy": {
+      "label": "EPS Growth YoY",
+      "desc": "EPS Growth YoY filter",
+      "params": {
+        "min_growth_pct": "Minimum Growth %"
+      },
+      "help": "Filters stocks based on EPS Growth YoY threshold settings."
+    },
+    "ev_to_ebitda_ratio": {
+      "label": "EV to EBITDA Ratio",
+      "desc": "EV to EBITDA Ratio filter",
+      "params": {
+        "max_ratio": "Maximum Ratio"
+      },
+      "help": "Filters stocks based on EV to EBITDA Ratio threshold settings."
+    },
+    "ev_to_sales_ratio": {
+      "label": "EV to Sales Ratio",
+      "desc": "EV to Sales Ratio filter",
+      "params": {
+        "max_ratio": "Maximum Ratio"
+      },
+      "help": "Filters stocks based on EV to Sales Ratio threshold settings."
+    },
+    "free_cash_flow_margin": {
+      "label": "Free Cash Flow Margin",
+      "desc": "Free Cash Flow Margin filter",
+      "params": {
+        "min_margin_pct": "Minimum Margin %"
+      },
+      "help": "Filters stocks based on Free Cash Flow Margin threshold settings."
+    },
+    "gross_margin": {
+      "label": "Gross Margin",
+      "desc": "Gross Margin filter",
+      "params": {
+        "min_margin_pct": "Minimum Margin %"
+      },
+      "help": "Filters stocks based on Gross Margin threshold settings."
+    },
+    "gross_profitability": {
+      "label": "Gross Profitability",
+      "desc": "Gross Profitability filter",
+      "params": {
+        "min_ratio": "Minimum Ratio"
+      },
+      "help": "Filters stocks based on Gross Profitability threshold settings."
+    },
+    "interest_coverage_ratio": {
+      "label": "Interest Coverage Ratio",
+      "desc": "Interest Coverage Ratio filter",
+      "params": {
+        "min_ratio": "Minimum Ratio"
+      },
+      "help": "Filters stocks based on Interest Coverage Ratio threshold settings."
+    },
+    "inventory_turnover_ratio": {
+      "label": "Inventory Turnover Ratio",
+      "desc": "Inventory Turnover Ratio filter",
+      "params": {
+        "min_ratio": "Minimum Ratio"
+      },
+      "help": "Filters stocks based on Inventory Turnover Ratio threshold settings."
+    },
+    "net_debt_to_ebitda": {
+      "label": "Net Debt to EBITDA",
+      "desc": "Net Debt to EBITDA filter",
+      "params": {
+        "max_ratio": "Maximum Ratio"
+      },
+      "help": "Filters stocks based on Net Debt to EBITDA threshold settings."
+    },
+    "net_margin": {
+      "label": "Net Margin",
+      "desc": "Net Margin filter",
+      "params": {
+        "min_margin_pct": "Minimum Margin %"
+      },
+      "help": "Filters stocks based on Net Margin threshold settings."
+    },
+    "operating_margin": {
+      "label": "Operating Margin",
+      "desc": "Operating Margin filter",
+      "params": {
+        "min_margin_pct": "Minimum Margin %"
+      },
+      "help": "Filters stocks based on Operating Margin threshold settings."
+    },
+    "payout_ratio_filter": {
+      "label": "Payout Ratio Filter",
+      "desc": "Payout Ratio Filter filter",
+      "params": {
+        "max_payout_pct": "Maximum Payout %"
+      },
+      "help": "Filters stocks based on Payout Ratio Filter threshold settings."
+    },
+    "price_to_tangible_book": {
+      "label": "Price to Tangible Book",
+      "desc": "Price to Tangible Book filter",
+      "params": {
+        "max_ratio": "Maximum Ratio"
+      },
+      "help": "Filters stocks based on Price to Tangible Book threshold settings."
+    },
+    "quality_score": {
+      "label": "Quality Score",
+      "desc": "Quality Score filter",
+      "params": {
+        "min_score": "Minimum Score"
+      },
+      "help": "Filters stocks based on Quality Score threshold settings."
+    },
+    "receivables_turnover_ratio": {
+      "label": "Receivables Turnover Ratio",
+      "desc": "Receivables Turnover Ratio filter",
+      "params": {
+        "min_ratio": "Minimum Ratio"
+      },
+      "help": "Filters stocks based on Receivables Turnover Ratio threshold settings."
+    },
+    "revenue_cagr_3y": {
+      "label": "Revenue CAGR 3Y",
+      "desc": "Revenue CAGR 3Y filter",
+      "params": {
+        "min_cagr_pct": "Minimum CAGR %"
+      },
+      "help": "Filters stocks based on Revenue CAGR 3Y threshold settings."
+    },
+    "revenue_growth_yoy": {
+      "label": "Revenue Growth YoY",
+      "desc": "Revenue Growth YoY filter",
+      "params": {
+        "min_growth_pct": "Minimum Growth %"
+      },
+      "help": "Filters stocks based on Revenue Growth YoY threshold settings."
+    },
+    "revenue_stability_score": {
+      "label": "Revenue Stability Score",
+      "desc": "Revenue Stability Score filter",
+      "params": {
+        "lookback_years": "Lookback Years",
+        "max_cv": "Maximum CV"
+      },
+      "help": "Filters stocks based on Revenue Stability Score threshold settings."
+    },
+    "shareholder_yield_filter": {
+      "label": "Shareholder Yield Filter",
+      "desc": "Shareholder Yield Filter filter",
+      "params": {
+        "min_yield_pct": "Minimum Yield %"
+      },
+      "help": "Filters stocks based on Shareholder Yield Filter threshold settings."
+    },
+    "roce_filter": {
+      "label": "ROCE Filter",
+      "desc": "ROCE Filter filter",
+      "params": {
+        "min_roce_pct": "Minimum ROCE %"
+      },
+      "help": "Filters stocks based on ROCE Filter threshold settings."
+    },
+    "roa_filter": {
+      "label": "ROA Filter",
+      "desc": "ROA Filter filter",
+      "params": {
+        "min_roa_pct": "Minimum ROA %"
+      },
+      "help": "Filters stocks based on ROA Filter threshold settings."
     }
   },
   "settings": {
