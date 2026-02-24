@@ -193,6 +193,18 @@ from .quant_shareholder_batch10 import (
     InsiderNetBuyingCondition,
 )
 
+from .quant_special_batch11 import (
+    ShortFloatPctFilterCondition,
+    ShortInterestRatioFilterCondition,
+    EarningsSurpriseFilterCondition,
+    PostEarningsDriftCondition,
+    PreEarningsDriftCondition,
+    AccrualsRatioCondition,
+    AssetGrowthRateCondition,
+    GrossProfitabilityCondition,
+    QualityScoreCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -331,6 +343,13 @@ __all__ = [
     'DividendGrowth5YCondition', 'ShareholderYieldFilterCondition',
     'NetShareIssuanceFilterCondition', 'BuybackYieldFilterCondition',
     'InsiderNetBuyingCondition',
+
+    # Quant Special Batch 11
+    'ShortFloatPctFilterCondition', 'ShortInterestRatioFilterCondition',
+    'EarningsSurpriseFilterCondition', 'PostEarningsDriftCondition',
+    'PreEarningsDriftCondition', 'AccrualsRatioCondition',
+    'AssetGrowthRateCondition', 'GrossProfitabilityCondition',
+    'QualityScoreCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
