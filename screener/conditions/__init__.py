@@ -180,6 +180,19 @@ from .quant_fundamental_batch9 import (
     ROAFilterCondition,
 )
 
+from .quant_shareholder_batch10 import (
+    NetMarginCondition,
+    GrossMarginCondition,
+    OperatingMarginCondition,
+    FreeCashFlowMarginCondition,
+    PayoutRatioFilterCondition,
+    DividendGrowth5YCondition,
+    ShareholderYieldFilterCondition,
+    NetShareIssuanceFilterCondition,
+    BuybackYieldFilterCondition,
+    InsiderNetBuyingCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -311,6 +324,13 @@ __all__ = [
     'DebtServiceCoverageRatioCondition', 'NetDebtToEbitdaCondition',
     'InterestCoverageRatioCondition', 'CashConversionRatioCondition',
     'ROCEFilterCondition', 'ROAFilterCondition',
+
+    # Quant Shareholder Batch 10
+    'NetMarginCondition', 'GrossMarginCondition', 'OperatingMarginCondition',
+    'FreeCashFlowMarginCondition', 'PayoutRatioFilterCondition',
+    'DividendGrowth5YCondition', 'ShareholderYieldFilterCondition',
+    'NetShareIssuanceFilterCondition', 'BuybackYieldFilterCondition',
+    'InsiderNetBuyingCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
