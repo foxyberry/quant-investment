@@ -167,6 +167,19 @@ from .quant_fundamental_batch8 import (
     EPSGrowthYoYCondition,
 )
 
+from .quant_fundamental_batch9 import (
+    RevenueCAGR3YCondition,
+    RevenueGrowthYoYCondition,
+    RevenueStabilityScoreCondition,
+    EarningsStabilityScoreCondition,
+    DebtServiceCoverageRatioCondition,
+    NetDebtToEbitdaCondition,
+    InterestCoverageRatioCondition,
+    CashConversionRatioCondition,
+    ROCEFilterCondition,
+    ROAFilterCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -291,6 +304,13 @@ __all__ = [
     'PriceToTangibleBookCondition', 'EVToSalesRatioCondition',
     'EVToEbitdaRatioCondition', 'BookToMarketRatioCondition',
     'EPSCAGR3YCondition', 'EPSGrowthYoYCondition',
+
+    # Quant Fundamental Batch 9
+    'RevenueCAGR3YCondition', 'RevenueGrowthYoYCondition',
+    'RevenueStabilityScoreCondition', 'EarningsStabilityScoreCondition',
+    'DebtServiceCoverageRatioCondition', 'NetDebtToEbitdaCondition',
+    'InterestCoverageRatioCondition', 'CashConversionRatioCondition',
+    'ROCEFilterCondition', 'ROAFilterCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
