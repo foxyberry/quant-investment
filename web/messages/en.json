@@ -540,10 +540,10 @@
       "params": {
         "min_price": "Minimum price"
       },
-      "help": "Practical summary for `min_price` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (min_price)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `min_price`(float)=5000",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (min_price)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =5000",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "max_price": {
       "label": "Max Price",
@@ -551,10 +551,10 @@
       "params": {
         "max_price": "Maximum price"
       },
-      "help": "Practical summary for `max_price` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (max_price)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `max_price`(float)=100000",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (max_price)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =100000",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "price_range": {
       "label": "Price Range",
@@ -563,10 +563,10 @@
         "min_price": "Min price",
         "max_price": "Max price"
       },
-      "help": "Practical summary for `price_range` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (price_range)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `min_price`(float)=0, `max_price`(float)=999999",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (price_range)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =0, =999999",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "price_change": {
       "label": "Price Change %",
@@ -576,10 +576,10 @@
         "max_change_pct": "Max change %",
         "days": "Period (days)"
       },
-      "help": "Practical summary for `price_change` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (price_change)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `min_change_pct`(float)=None, `max_change_pct`(float)=None, `days`(int)=1",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (price_change)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =None, =None, =1",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "return_turnaround": {
       "label": "Return Turnaround",
@@ -589,10 +589,10 @@
         "prev_max_return_pct": "Prev max return %",
         "min_return_pct": "Min recent return %"
       },
-      "help": "Practical summary for `return_turnaround` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (return_turnaround)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `period_days`(int)=5, `prev_max_return_pct`(float)=-2.0, `min_return_pct`(float)=2.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (return_turnaround)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =5, =-2.0, =2.0",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "min_volume": {
       "label": "Min Volume",
@@ -600,10 +600,10 @@
       "params": {
         "min_volume": "Minimum volume"
       },
-      "help": "Practical summary for `min_volume` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement. (min_volume)",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: `min_volume`(int)=100000",
-      "caution": "Low-liquidity names can produce unstable flow signals. (min_volume)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
+      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =100000",
+      "caution": "Low-liquidity names can produce unstable flow signals."
     },
     "volume_above_avg": {
       "label": "Volume Above Avg",
@@ -612,10 +612,10 @@
         "multiplier": "Avg multiplier",
         "period": "Average period"
       },
-      "help": "Practical summary for `volume_above_avg` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement. (volume_above_avg)",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: `multiplier`(float)=1.0, `period`(int)=20",
-      "caution": "Low-liquidity names can produce unstable flow signals. (volume_above_avg)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
+      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =1.0, =20",
+      "caution": "Low-liquidity names can produce unstable flow signals."
     },
     "volume_spike": {
       "label": "Volume Spike",
@@ -624,10 +624,10 @@
         "multiplier": "Spike multiplier",
         "period": "Average period"
       },
-      "help": "Practical summary for `volume_spike` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement. (volume_spike)",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: `multiplier`(float)=1.5, `period`(int)=20",
-      "caution": "Low-liquidity names can produce unstable flow signals. (volume_spike)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
+      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =1.5, =20",
+      "caution": "Low-liquidity names can produce unstable flow signals."
     },
     "ma_touch": {
       "label": "MA Touch",
@@ -636,10 +636,10 @@
         "period": "MA period",
         "threshold": "Touch threshold (ratio)"
       },
-      "help": "Practical summary for `ma_touch` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (ma_touch)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=120, `threshold`(float)=0.02",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (ma_touch)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =120, =0.02",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "above_ma": {
       "label": "Above MA",
@@ -648,10 +648,10 @@
         "period": "MA period",
         "min_distance_pct": "Min distance %"
       },
-      "help": "Practical summary for `above_ma` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (above_ma)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=20, `min_distance_pct`(float)=0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (above_ma)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "below_ma": {
       "label": "Below MA",
@@ -660,10 +660,10 @@
         "period": "MA period",
         "max_distance_pct": "Max distance %"
       },
-      "help": "Practical summary for `below_ma` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (below_ma)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=20, `max_distance_pct`(float)=0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (below_ma)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "ma_cross_up": {
       "label": "MA Cross Up",
@@ -673,10 +673,10 @@
         "long_period": "Long MA period",
         "lookback_days": "Lookback days"
       },
-      "help": "Practical summary for `ma_cross_up` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (ma_cross_up)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `short_period`(int)=5, `long_period`(int)=20, `lookback_days`(int)=5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (ma_cross_up)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =5, =20, =5",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "ma_cross_down": {
       "label": "MA Cross Down",
@@ -686,10 +686,10 @@
         "long_period": "Long MA period",
         "lookback_days": "Lookback days"
       },
-      "help": "Practical summary for `ma_cross_down` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (ma_cross_down)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `short_period`(int)=20, `long_period`(int)=60, `lookback_days`(int)=5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (ma_cross_down)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =60, =5",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "rsi_oversold": {
       "label": "RSI Oversold",
@@ -698,10 +698,10 @@
         "threshold": "RSI threshold",
         "period": "RSI period"
       },
-      "help": "Practical summary for `rsi_oversold` based on the issue-487 research guide. Sources: `S_RSICORE`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (rsi_oversold)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `threshold`(float)=35, `period`(int)=14",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (rsi_oversold)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =35, =14",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "rsi_overbought": {
       "label": "RSI Overbought",
@@ -710,10 +710,10 @@
         "threshold": "RSI threshold",
         "period": "RSI period"
       },
-      "help": "Practical summary for `rsi_overbought` based on the issue-487 research guide. Sources: `S_RSICORE`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (rsi_overbought)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `threshold`(float)=70, `period`(int)=14",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (rsi_overbought)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =70, =14",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "rsi_range": {
       "label": "RSI Range",
@@ -723,10 +723,10 @@
         "upper": "Upper bound",
         "period": "RSI period"
       },
-      "help": "Practical summary for `rsi_range` based on the issue-487 research guide. Sources: `S_RSICORE`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (rsi_range)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `lower`(float)=50, `upper`(float)=70, `period`(int)=14",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (rsi_range)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =50, =70, =14",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "bollinger_width": {
       "label": "Bollinger Width",
@@ -736,10 +736,10 @@
         "period": "BB period",
         "std_dev": "Std deviation"
       },
-      "help": "Practical summary for `bollinger_width` based on the issue-487 research guide. Sources: `S_BB`",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement. (bollinger_width)",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: `max_width_pct`(float)=15.0, `period`(int)=20, `std_dev`(float)=2.0",
-      "caution": "Low-liquidity names can produce unstable flow signals. (bollinger_width)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
+      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =15.0, =20, =2.0",
+      "caution": "Low-liquidity names can produce unstable flow signals."
     },
     "volume_below_avg": {
       "label": "Volume Below Avg",
@@ -748,10 +748,10 @@
         "multiplier": "Max ratio to avg",
         "period": "Average period"
       },
-      "help": "Practical summary for `volume_below_avg` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement. (volume_below_avg)",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: `multiplier`(float)=1.0, `period`(int)=20",
-      "caution": "Low-liquidity names can produce unstable flow signals. (volume_below_avg)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
+      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =1.0, =20",
+      "caution": "Low-liquidity names can produce unstable flow signals."
     },
     "price_flat": {
       "label": "Price Flat",
@@ -760,10 +760,10 @@
         "max_range_pct": "Max range %",
         "period": "Period"
       },
-      "help": "Practical summary for `price_flat` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement. (price_flat)",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: `max_range_pct`(float)=10.0, `period`(int)=20",
-      "caution": "Low-liquidity names can produce unstable flow signals. (price_flat)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
+      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =10.0, =20",
+      "caution": "Low-liquidity names can produce unstable flow signals."
     },
     "obv_trend": {
       "label": "OBV Trend",
@@ -772,10 +772,10 @@
         "direction": "Trend direction (up/down)",
         "lookback": "Lookback period"
       },
-      "help": "Practical summary for `obv_trend` based on the issue-487 research guide. Sources: `S_OBV`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (obv_trend)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `direction`(str)=up, `lookback`(int)=20",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (obv_trend)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =up, =20",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "stochastic_level": {
       "label": "Stochastic Level",
@@ -786,10 +786,10 @@
         "k_period": "%K period",
         "d_period": "%D period"
       },
-      "help": "Practical summary for `stochastic_level` based on the issue-487 research guide. Sources: `S_STOCH`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (stochastic_level)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `threshold`(float)=20.0, `condition`(str)=below, `k_period`(int)=14, `d_period`(int)=3",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (stochastic_level)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =20.0, =below, =14, =3",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "vpci_trend": {
       "label": "VPCI Trend",
@@ -800,10 +800,10 @@
         "long_period": "Long period",
         "lookback": "Lookback period"
       },
-      "help": "Practical summary for `vpci_trend` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (vpci_trend)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `direction`(str)=up, `short_period`(int)=5, `long_period`(int)=20, `lookback`(int)=10",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (vpci_trend)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =up, =5, =20, =10",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "obv_divergence": {
       "label": "OBV Divergence",
@@ -813,10 +813,10 @@
         "obv_min_change_pct": "OBV change %",
         "period": "Period"
       },
-      "help": "Practical summary for `obv_divergence` based on the issue-487 research guide. Sources: `S_OBV`",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement. (obv_divergence)",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: `price_max_range_pct`(float)=5.0, `obv_min_change_pct`(float)=5.0, `period`(int)=20",
-      "caution": "Low-liquidity names can produce unstable flow signals. (obv_divergence)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
+      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =5.0, =5.0, =20",
+      "caution": "Low-liquidity names can produce unstable flow signals."
     },
     "stochastic_divergence": {
       "label": "Stochastic Divergence",
@@ -827,10 +827,10 @@
         "lookback": "Lookback period",
         "divergence_threshold": "Threshold %"
       },
-      "help": "Practical summary for `stochastic_divergence` based on the issue-487 research guide. Sources: `S_STOCH`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (stochastic_divergence)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `k_period`(int)=14, `d_period`(int)=3, `lookback`(int)=20, `divergence_threshold`(float)=5.0",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (stochastic_divergence)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =14, =3, =20, =5.0",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "vpci_divergence": {
       "label": "VPCI Divergence",
@@ -841,10 +841,10 @@
         "long_period": "Long period",
         "lookback": "Lookback period"
       },
-      "help": "Practical summary for `vpci_divergence` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement. (vpci_divergence)",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: `price_max_range_pct`(float)=5.0, `short_period`(int)=5, `long_period`(int)=20, `lookback`(int)=20",
-      "caution": "Low-liquidity names can produce unstable flow signals. (vpci_divergence)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
+      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =5.0, =5, =20, =20",
+      "caution": "Low-liquidity names can produce unstable flow signals."
     },
     "bottom_breakout": {
       "label": "Bottom Breakout",
@@ -853,10 +853,10 @@
         "lookback_days": "Lookback days",
         "breakout_pct": "Breakout %"
       },
-      "help": "Practical summary for `bottom_breakout` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (bottom_breakout)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=20, `breakout_pct`(float)=5.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (bottom_breakout)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "fresh_breakout": {
       "label": "Fresh Breakout",
@@ -865,10 +865,10 @@
         "lookback_days": "Lookback days",
         "breakout_pct": "Breakout %"
       },
-      "help": "Practical summary for `fresh_breakout` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (fresh_breakout)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=20, `breakout_pct`(float)=5.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (fresh_breakout)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "breakout_with_volume": {
       "label": "Breakout + Volume",
@@ -880,10 +880,10 @@
         "volume_avg_days": "Volume avg days",
         "fresh_only": "Fresh breakout only"
       },
-      "help": "Practical summary for `breakout_with_volume` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (breakout_with_volume)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=20, `breakout_pct`(float)=5.0, `volume_ratio`(float)=1.5, `volume_avg_days`(int)=10, `fresh_only`(bool)=True",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (breakout_with_volume)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5.0, =1.5, =10, =True",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "resistance_breakout": {
       "label": "Resistance Breakout",
@@ -892,10 +892,10 @@
         "lookback_days": "Lookback days",
         "breakout_margin_pct": "Margin above resistance %"
       },
-      "help": "Practical summary for `resistance_breakout` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (resistance_breakout)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=20, `breakout_margin_pct`(float)=0.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (resistance_breakout)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =0.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "pe_ratio": {
       "label": "P/E Ratio",
@@ -904,10 +904,10 @@
         "min_pe": "Min P/E",
         "max_pe": "Max P/E"
       },
-      "help": "Practical summary for `pe_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (pe_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_pe`(float)=None, `max_pe`(float)=15.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (pe_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =15.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "pb_ratio": {
       "label": "P/B Ratio",
@@ -917,10 +917,10 @@
         "max_pb": "Max P/B",
         "exclude_negative_bv": "Exclude negative book value"
       },
-      "help": "Practical summary for `pb_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (pb_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_pb`(float)=None, `max_pb`(float)=1.5, `exclude_negative_bv`(bool)=True",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (pb_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =1.5, =True",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "ps_ratio": {
       "label": "P/S Ratio",
@@ -929,10 +929,10 @@
         "min_ps": "Min P/S",
         "max_ps": "Max P/S"
       },
-      "help": "Practical summary for `ps_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (ps_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ps`(float)=None, `max_ps`(float)=2.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (ps_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =2.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "pcf_ratio": {
       "label": "P/CF Ratio",
@@ -941,10 +941,10 @@
         "min_pcf": "Min P/CF",
         "max_pcf": "Max P/CF"
       },
-      "help": "Practical summary for `pcf_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (pcf_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_pcf`(float)=None, `max_pcf`(float)=10.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (pcf_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =10.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "dividend_yield": {
       "label": "Dividend Yield",
@@ -953,10 +953,10 @@
         "min_yield": "Min yield %",
         "max_yield": "Max yield %"
       },
-      "help": "Practical summary for `dividend_yield` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (dividend_yield)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_yield`(float)=3.0, `max_yield`(float)=None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (dividend_yield)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0, =None",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "drawdown_from_high": {
       "label": "Drawdown From High",
@@ -966,10 +966,10 @@
         "min_drop_pct": "Min Drop %",
         "price_field": "Price Field"
       },
-      "help": "Practical summary for `drawdown_from_high` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (drawdown_from_high)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=120, `min_drop_pct`(float)=20.0, `price_field`(str)=high",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (drawdown_from_high)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =120, =20.0, =high",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "earnings_yield": {
       "label": "Earnings Yield",
@@ -978,10 +978,10 @@
         "min_yield": "Min yield %",
         "max_yield": "Max yield %"
       },
-      "help": "Practical summary for `earnings_yield` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (earnings_yield)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_yield`(float)=8.0, `max_yield`(float)=None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (earnings_yield)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =8.0, =None",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "ebit_ev": {
       "label": "EBIT/EV",
@@ -990,10 +990,10 @@
         "min_ebit_ev": "Min EBIT/EV %",
         "max_ebit_ev": "Max EBIT/EV %"
       },
-      "help": "Practical summary for `ebit_ev` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (ebit_ev)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ebit_ev`(float)=10.0, `max_ebit_ev`(float)=None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (ebit_ev)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =10.0, =None",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "fcf_yield": {
       "label": "FCF Yield",
@@ -1002,10 +1002,10 @@
         "min_fcf_yield": "Min FCF yield %",
         "max_fcf_yield": "Max FCF yield %"
       },
-      "help": "Practical summary for `fcf_yield` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (fcf_yield)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_fcf_yield`(float)=5.0, `max_fcf_yield`(float)=None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (fcf_yield)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0, =None",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "peg_ratio": {
       "label": "PEG Ratio",
@@ -1014,10 +1014,10 @@
         "min_peg": "Min PEG",
         "max_peg": "Max PEG"
       },
-      "help": "Practical summary for `peg_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (peg_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_peg`(float)=None, `max_peg`(float)=1.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (peg_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =1.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "debt_to_equity": {
       "label": "D/E Ratio",
@@ -1026,10 +1026,10 @@
         "min_de": "Min D/E %",
         "max_de": "Max D/E %"
       },
-      "help": "Practical summary for `debt_to_equity` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (debt_to_equity)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_de`(float)=None, `max_de`(float)=100.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (debt_to_equity)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =100.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "current_ratio": {
       "label": "Current Ratio",
@@ -1038,10 +1038,10 @@
         "min_ratio": "Min ratio",
         "max_ratio": "Max ratio"
       },
-      "help": "Practical summary for `current_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (current_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ratio`(float)=1.0, `max_ratio`(float)=3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (current_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =1.0, =3.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "roe": {
       "label": "ROE",
@@ -1050,10 +1050,10 @@
         "min_roe": "Min ROE %",
         "max_roe": "Max ROE %"
       },
-      "help": "Practical summary for `roe` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (roe)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_roe`(float)=15.0, `max_roe`(float)=None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (roe)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =15.0, =None",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "piotroski_fscore": {
       "label": "Piotroski F-Score",
@@ -1062,10 +1062,10 @@
         "min_score": "Min F-Score",
         "max_score": "Max F-Score"
       },
-      "help": "Practical summary for `piotroski_fscore` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (piotroski_fscore)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_score`(int)=7, `max_score`(int)=None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (piotroski_fscore)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =7, =None",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "altman_zscore": {
       "label": "Altman Z-Score",
@@ -1074,10 +1074,10 @@
         "min_zscore": "Min Z-Score",
         "max_zscore": "Max Z-Score"
       },
-      "help": "Practical summary for `altman_zscore` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (altman_zscore)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_zscore`(float)=2.5, `max_zscore`(float)=None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (altman_zscore)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =2.5, =None",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "avg_trading_value": {
       "label": "Average Trading Value",
@@ -1086,10 +1086,10 @@
         "lookback_days": "Lookback Days",
         "min_value": "Minimum Value"
       },
-      "help": "Practical summary for `avg_trading_value` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement. (avg_trading_value)",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: `lookback_days`(int)=20, `min_value`(float)=1500000000",
-      "caution": "Low-liquidity names can produce unstable flow signals. (avg_trading_value)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
+      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =20, =1500000000",
+      "caution": "Low-liquidity names can produce unstable flow signals."
     },
     "roic": {
       "label": "ROIC",
@@ -1098,10 +1098,10 @@
         "min_roic": "Min ROIC %",
         "max_roic": "Max ROIC %"
       },
-      "help": "Practical summary for `roic` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (roic)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_roic`(float)=15.0, `max_roic`(float)=None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (roic)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =15.0, =None",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "analyst_revision_1m": {
       "label": "Analyst Revision 1M",
@@ -1109,10 +1109,10 @@
       "params": {
         "min_revision_pct": "Minimum Revision %"
       },
-      "help": "Practical summary for `analyst_revision_1m` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (analyst_revision_1m)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_revision_pct`(float)=0.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (analyst_revision_1m)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "analyst_revision_3m": {
       "label": "Analyst Revision 3M",
@@ -1120,10 +1120,10 @@
       "params": {
         "min_revision_pct": "Minimum Revision %"
       },
-      "help": "Practical summary for `analyst_revision_3m` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (analyst_revision_3m)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_revision_pct`(float)=0.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (analyst_revision_3m)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "asset_turnover_ratio": {
       "label": "Asset Turnover Ratio",
@@ -1131,10 +1131,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Practical summary for `asset_turnover_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (asset_turnover_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ratio`(float)=0.5",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (asset_turnover_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.5",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "book_to_market_ratio": {
       "label": "Book to Market Ratio",
@@ -1142,10 +1142,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Practical summary for `book_to_market_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (book_to_market_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ratio`(float)=0.3",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (book_to_market_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.3",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "buyback_yield_filter": {
       "label": "Buyback Yield Filter",
@@ -1153,10 +1153,10 @@
       "params": {
         "min_yield_pct": "Minimum Yield %"
       },
-      "help": "Practical summary for `buyback_yield_filter` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (buyback_yield_filter)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_yield_pct`(float)=1.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (buyback_yield_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =1.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "cash_conversion_ratio": {
       "label": "Cash Conversion Ratio",
@@ -1164,10 +1164,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Practical summary for `cash_conversion_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (cash_conversion_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ratio`(float)=0.8",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (cash_conversion_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.8",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "cashflow_to_debt_ratio": {
       "label": "Cashflow to Debt Ratio",
@@ -1175,10 +1175,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Practical summary for `cashflow_to_debt_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (cashflow_to_debt_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ratio`(float)=0.2",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (cashflow_to_debt_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.2",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "debt_service_coverage_ratio": {
       "label": "Debt Service Coverage Ratio",
@@ -1186,10 +1186,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Practical summary for `debt_service_coverage_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (debt_service_coverage_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ratio`(float)=1.2",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (debt_service_coverage_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =1.2",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "dividend_growth_5y": {
       "label": "Dividend Growth 5Y",
@@ -1197,10 +1197,10 @@
       "params": {
         "min_growth_pct": "Minimum Growth %"
       },
-      "help": "Practical summary for `dividend_growth_5y` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (dividend_growth_5y)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_growth_pct`(float)=3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (dividend_growth_5y)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "earnings_stability_score": {
       "label": "Earnings Stability Score",
@@ -1209,10 +1209,10 @@
         "lookback_years": "Lookback Years",
         "max_cv": "Maximum CV"
       },
-      "help": "Practical summary for `earnings_stability_score` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (earnings_stability_score)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `lookback_years`(int)=5, `max_cv`(float)=0.35",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (earnings_stability_score)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5, =0.35",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "eps_cagr_3y": {
       "label": "EPS CAGR 3Y",
@@ -1220,10 +1220,10 @@
       "params": {
         "min_cagr_pct": "Minimum CAGR %"
       },
-      "help": "Practical summary for `eps_cagr_3y` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (eps_cagr_3y)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_cagr_pct`(float)=5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (eps_cagr_3y)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "eps_growth_yoy": {
       "label": "EPS Growth YoY",
@@ -1231,10 +1231,10 @@
       "params": {
         "min_growth_pct": "Minimum Growth %"
       },
-      "help": "Practical summary for `eps_growth_yoy` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (eps_growth_yoy)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_growth_pct`(float)=5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (eps_growth_yoy)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "ev_to_ebitda_ratio": {
       "label": "EV to EBITDA Ratio",
@@ -1242,10 +1242,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Practical summary for `ev_to_ebitda_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (ev_to_ebitda_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `max_ratio`(float)=12.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (ev_to_ebitda_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =12.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "ev_to_sales_ratio": {
       "label": "EV to Sales Ratio",
@@ -1253,10 +1253,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Practical summary for `ev_to_sales_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (ev_to_sales_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `max_ratio`(float)=4.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (ev_to_sales_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =4.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "free_cash_flow_margin": {
       "label": "Free Cash Flow Margin",
@@ -1264,10 +1264,10 @@
       "params": {
         "min_margin_pct": "Minimum Margin %"
       },
-      "help": "Practical summary for `free_cash_flow_margin` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (free_cash_flow_margin)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_margin_pct`(float)=5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (free_cash_flow_margin)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "gross_margin": {
       "label": "Gross Margin",
@@ -1275,10 +1275,10 @@
       "params": {
         "min_margin_pct": "Minimum Margin %"
       },
-      "help": "Practical summary for `gross_margin` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (gross_margin)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_margin_pct`(float)=20.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (gross_margin)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =20.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "gross_profitability": {
       "label": "Gross Profitability",
@@ -1286,10 +1286,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Practical summary for `gross_profitability` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (gross_profitability)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ratio`(float)=0.2",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (gross_profitability)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.2",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "interest_coverage_ratio": {
       "label": "Interest Coverage Ratio",
@@ -1297,10 +1297,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Practical summary for `interest_coverage_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (interest_coverage_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ratio`(float)=3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (interest_coverage_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "inventory_turnover_ratio": {
       "label": "Inventory Turnover Ratio",
@@ -1308,10 +1308,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Practical summary for `inventory_turnover_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (inventory_turnover_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ratio`(float)=3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (inventory_turnover_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "net_debt_to_ebitda": {
       "label": "Net Debt to EBITDA",
@@ -1319,10 +1319,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Practical summary for `net_debt_to_ebitda` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (net_debt_to_ebitda)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `max_ratio`(float)=3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (net_debt_to_ebitda)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "net_margin": {
       "label": "Net Margin",
@@ -1330,10 +1330,10 @@
       "params": {
         "min_margin_pct": "Minimum Margin %"
       },
-      "help": "Practical summary for `net_margin` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (net_margin)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_margin_pct`(float)=5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (net_margin)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "operating_margin": {
       "label": "Operating Margin",
@@ -1341,10 +1341,10 @@
       "params": {
         "min_margin_pct": "Minimum Margin %"
       },
-      "help": "Practical summary for `operating_margin` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (operating_margin)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_margin_pct`(float)=10.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (operating_margin)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =10.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "payout_ratio_filter": {
       "label": "Payout Ratio Filter",
@@ -1352,10 +1352,10 @@
       "params": {
         "max_payout_pct": "Maximum Payout %"
       },
-      "help": "Practical summary for `payout_ratio_filter` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (payout_ratio_filter)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `max_payout_pct`(float)=70.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (payout_ratio_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =70.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "price_to_tangible_book": {
       "label": "Price to Tangible Book",
@@ -1363,10 +1363,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Practical summary for `price_to_tangible_book` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (price_to_tangible_book)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `max_ratio`(float)=3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (price_to_tangible_book)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "quality_score": {
       "label": "Quality Score",
@@ -1374,10 +1374,10 @@
       "params": {
         "min_score": "Minimum Score"
       },
-      "help": "Practical summary for `quality_score` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (quality_score)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_score`(float)=0.5",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (quality_score)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.5",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "receivables_turnover_ratio": {
       "label": "Receivables Turnover Ratio",
@@ -1385,10 +1385,10 @@
       "params": {
         "min_ratio": "Minimum Ratio"
       },
-      "help": "Practical summary for `receivables_turnover_ratio` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (receivables_turnover_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_ratio`(float)=4.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (receivables_turnover_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =4.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "revenue_cagr_3y": {
       "label": "Revenue CAGR 3Y",
@@ -1396,10 +1396,10 @@
       "params": {
         "min_cagr_pct": "Minimum CAGR %"
       },
-      "help": "Practical summary for `revenue_cagr_3y` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (revenue_cagr_3y)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_cagr_pct`(float)=5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (revenue_cagr_3y)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "revenue_growth_yoy": {
       "label": "Revenue Growth YoY",
@@ -1407,10 +1407,10 @@
       "params": {
         "min_growth_pct": "Minimum Growth %"
       },
-      "help": "Practical summary for `revenue_growth_yoy` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (revenue_growth_yoy)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_growth_pct`(float)=5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (revenue_growth_yoy)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "revenue_stability_score": {
       "label": "Revenue Stability Score",
@@ -1419,10 +1419,10 @@
         "lookback_years": "Lookback Years",
         "max_cv": "Maximum CV"
       },
-      "help": "Practical summary for `revenue_stability_score` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (revenue_stability_score)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `lookback_years`(int)=5, `max_cv`(float)=0.25",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (revenue_stability_score)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5, =0.25",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "shareholder_yield_filter": {
       "label": "Shareholder Yield Filter",
@@ -1430,10 +1430,10 @@
       "params": {
         "min_yield_pct": "Minimum Yield %"
       },
-      "help": "Practical summary for `shareholder_yield_filter` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (shareholder_yield_filter)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_yield_pct`(float)=2.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (shareholder_yield_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =2.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "roce_filter": {
       "label": "ROCE Filter",
@@ -1441,10 +1441,10 @@
       "params": {
         "min_roce_pct": "Minimum ROCE %"
       },
-      "help": "Practical summary for `roce_filter` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (roce_filter)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_roce_pct`(float)=10.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (roce_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =10.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "roa_filter": {
       "label": "ROA Filter",
@@ -1452,10 +1452,10 @@
       "params": {
         "min_roa_pct": "Minimum ROA %"
       },
-      "help": "Practical summary for `roa_filter` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (roa_filter)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_roa_pct`(float)=5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (roa_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "overnight_return_filter": {
       "label": "Overnight Return",
@@ -1463,10 +1463,10 @@
       "params": {
         "min_overnight_return_pct": "Minimum Overnight Return %"
       },
-      "help": "Practical summary for `overnight_return_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (overnight_return_filter)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `min_overnight_return_pct`(float)=0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (overnight_return_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "distance_from_52w_low": {
       "label": "Distance From 52W Low",
@@ -1475,10 +1475,10 @@
         "lookback_days": "Lookback Days",
         "max_distance_pct": "Maximum Distance %"
       },
-      "help": "Practical summary for `distance_from_52w_low` based on the issue-487 research guide. Sources: `S_MOM` `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (distance_from_52w_low)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `lookback_days`(int)=252, `max_distance_pct`(float)=30.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (distance_from_52w_low)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =252, =30.0",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "distance_from_200d_high": {
       "label": "Distance From 200D High",
@@ -1487,10 +1487,10 @@
         "lookback_days": "Lookback Days",
         "max_distance_pct": "Maximum Distance %"
       },
-      "help": "Practical summary for `distance_from_200d_high` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (distance_from_200d_high)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `lookback_days`(int)=200, `max_distance_pct`(float)=15.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (distance_from_200d_high)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =200, =15.0",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "gap_up_breakaway": {
       "label": "Gap Up Breakaway",
@@ -1498,10 +1498,10 @@
       "params": {
         "min_gap_pct": "Minimum Gap %"
       },
-      "help": "Practical summary for `gap_up_breakaway` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (gap_up_breakaway)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `min_gap_pct`(float)=1.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (gap_up_breakaway)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =1.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "gap_down_exhaustion": {
       "label": "Gap Down Exhaustion",
@@ -1509,10 +1509,10 @@
       "params": {
         "min_gap_down_pct": "Minimum Gap Down %"
       },
-      "help": "Practical summary for `gap_down_exhaustion` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (gap_down_exhaustion)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `min_gap_down_pct`(float)=2.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (gap_down_exhaustion)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =2.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "opening_range_breakout": {
       "label": "Opening Range Breakout",
@@ -1520,10 +1520,10 @@
       "params": {
         "direction": "Direction"
       },
-      "help": "Practical summary for `opening_range_breakout` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (opening_range_breakout)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `direction`(str)=up",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (opening_range_breakout)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =up",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "pivot_point_breakout": {
       "label": "Pivot Point Breakout",
@@ -1531,10 +1531,10 @@
       "params": {
         "direction": "Direction"
       },
-      "help": "Practical summary for `pivot_point_breakout` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (pivot_point_breakout)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `direction`(str)=up",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (pivot_point_breakout)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =up",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "month_of_year_seasonality": {
       "label": "Month Of Year Seasonality",
@@ -1543,10 +1543,10 @@
         "min_avg_return_pct": "Minimum Avg Return %",
         "target_month": "Target Month"
       },
-      "help": "Practical summary for `month_of_year_seasonality` based on the issue-487 research guide. Sources: `S_SEASONAL`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (month_of_year_seasonality)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `target_month`(int)=1, `min_avg_return_pct`(float)=0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (month_of_year_seasonality)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =1, =0.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "turn_of_month_effect": {
       "label": "Turn Of Month",
@@ -1555,10 +1555,10 @@
         "min_avg_return_pct": "Minimum Avg Return %",
         "window_days": "Window Days"
       },
-      "help": "Practical summary for `turn_of_month_effect` based on the issue-487 research guide. Sources: `S_SEASONAL`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (turn_of_month_effect)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `window_days`(int)=3, `min_avg_return_pct`(float)=0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (turn_of_month_effect)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =3, =0.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "day_of_week_seasonality": {
       "label": "Day-of-Week Seasonality",
@@ -1567,10 +1567,10 @@
         "min_avg_return_pct": "Minimum Avg Return %",
         "target_weekday": "Target Weekday (0=Mon, 4=Fri)"
       },
-      "help": "Practical summary for `day_of_week_seasonality` based on the issue-487 research guide. Sources: `S_SEASONAL`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (day_of_week_seasonality)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `target_weekday`(int)=0, `min_avg_return_pct`(float)=0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (day_of_week_seasonality)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0, =0.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "net_share_issuance_filter": {
       "label": "Net Share Issuance Filter",
@@ -1578,10 +1578,10 @@
       "params": {
         "max_issuance_pct": "Maximum Issuance %"
       },
-      "help": "Practical summary for `net_share_issuance_filter` based on the issue-487 research guide. Sources: `S_VAL` `S_ISSUANCE`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (net_share_issuance_filter)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `max_issuance_pct`(float)=1.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (net_share_issuance_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =1.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "insider_net_buying": {
       "label": "Insider Net Buying",
@@ -1589,10 +1589,10 @@
       "params": {
         "min_net_buying_pct": "Minimum Net Buying %"
       },
-      "help": "Practical summary for `insider_net_buying` based on the issue-487 research guide. Sources: `S_VAL` `S_INSIDER`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (insider_net_buying)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_net_buying_pct`(float)=0.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (insider_net_buying)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "short_float_pct_filter": {
       "label": "Short Float % Filter",
@@ -1600,10 +1600,10 @@
       "params": {
         "max_short_float_pct": "Maximum Short Float %"
       },
-      "help": "Practical summary for `short_float_pct_filter` based on the issue-487 research guide. Sources: `S_SHORT`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (short_float_pct_filter)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `max_short_float_pct`(float)=15.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (short_float_pct_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =15.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "short_interest_ratio_filter": {
       "label": "Short Interest Ratio Filter",
@@ -1611,10 +1611,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Practical summary for `short_interest_ratio_filter` based on the issue-487 research guide. Sources: `S_SHORT`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (short_interest_ratio_filter)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `max_ratio`(float)=5.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (short_interest_ratio_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =5.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "earnings_surprise_filter": {
       "label": "Earnings Surprise Filter",
@@ -1622,10 +1622,10 @@
       "params": {
         "min_surprise_pct": "Minimum Surprise %"
       },
-      "help": "Practical summary for `earnings_surprise_filter` based on the issue-487 research guide. Sources: `S_PEAD`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (earnings_surprise_filter)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `min_surprise_pct`(float)=0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (earnings_surprise_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "post_earnings_drift": {
       "label": "Post Earnings Drift",
@@ -1633,10 +1633,10 @@
       "params": {
         "min_return_pct": "Minimum Return %"
       },
-      "help": "Practical summary for `post_earnings_drift` based on the issue-487 research guide. Sources: `S_PEAD`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (post_earnings_drift)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `min_return_pct`(float)=0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (post_earnings_drift)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "pre_earnings_drift": {
       "label": "Pre Earnings Drift",
@@ -1644,10 +1644,10 @@
       "params": {
         "min_return_pct": "Minimum Return %"
       },
-      "help": "Practical summary for `pre_earnings_drift` based on the issue-487 research guide. Sources: `S_PEAD`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (pre_earnings_drift)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `min_return_pct`(float)=0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (pre_earnings_drift)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "accruals_ratio": {
       "label": "Accruals Ratio",
@@ -1655,10 +1655,10 @@
       "params": {
         "max_ratio": "Maximum Ratio"
       },
-      "help": "Practical summary for `accruals_ratio` based on the issue-487 research guide. Sources: `S_VAL` `S_ACCRUALS`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (accruals_ratio)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `max_ratio`(float)=0.1",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (accruals_ratio)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.1",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "asset_growth_rate": {
       "label": "Asset Growth Rate",
@@ -1666,10 +1666,10 @@
       "params": {
         "max_growth_pct": "Maximum Growth %"
       },
-      "help": "Practical summary for `asset_growth_rate` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (asset_growth_rate)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `max_growth_pct`(float)=15.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (asset_growth_rate)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =15.0",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "momentum_12_1": {
       "label": "Momentum 12-1",
@@ -1679,10 +1679,10 @@
         "min_return_pct": "Minimum Return %",
         "skip_recent_months": "Skip Recent Months"
       },
-      "help": "Practical summary for `momentum_12_1` based on the issue-487 research guide. Sources: `S_MOM` `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (momentum_12_1)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_months`(int)=12, `skip_recent_months`(int)=1, `min_return_pct`(float)=20.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (momentum_12_1)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =12, =1, =20.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "volatility_n_day": {
       "label": "Volatility N Day",
@@ -1691,10 +1691,10 @@
         "lookback_days": "Lookback Days",
         "max_annualized_vol_pct": "Maximum Annualized Vol %"
       },
-      "help": "Practical summary for `volatility_n_day` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (volatility_n_day)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=60, `max_annualized_vol_pct`(float)=25.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (volatility_n_day)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =25.0",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "distance_from_52w_high": {
       "label": "Distance From 52W High",
@@ -1703,10 +1703,10 @@
         "lookback_days": "Lookback Days",
         "max_distance_pct": "Maximum Distance %"
       },
-      "help": "Practical summary for `distance_from_52w_high` based on the issue-487 research guide. Sources: `S_MOM` `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (distance_from_52w_high)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `lookback_days`(int)=252, `max_distance_pct`(float)=10.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (distance_from_52w_high)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =252, =10.0",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "relative_strength_vs_benchmark": {
       "label": "Relative Strength Vs Benchmark",
@@ -1715,10 +1715,10 @@
         "lookback_days": "Lookback Days",
         "min_excess_return_pct": "Minimum Excess Return %"
       },
-      "help": "Practical summary for `relative_strength_vs_benchmark` based on the issue-487 research guide. Sources: `S_MOM` `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (relative_strength_vs_benchmark)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=63, `min_excess_return_pct`(float)=5.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (relative_strength_vs_benchmark)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =63, =5.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "adx_trend_strength": {
       "label": "ADX Trend Strength",
@@ -1728,10 +1728,10 @@
         "min_adx": "Minimum ADX",
         "period": "Period"
       },
-      "help": "Practical summary for `adx_trend_strength` based on the issue-487 research guide. Sources: `S_ADX`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (adx_trend_strength)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=14, `min_adx`(float)=25.0, `di_direction`(str)=any",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (adx_trend_strength)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =14, =25.0, =any",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "ma_ribbon_alignment": {
       "label": "MA Ribbon Alignment",
@@ -1741,10 +1741,10 @@
         "mid_period": "Mid Period",
         "short_period": "Short Period"
       },
-      "help": "Practical summary for `ma_ribbon_alignment` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (ma_ribbon_alignment)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `short_period`(int)=20, `mid_period`(int)=50, `long_period`(int)=200",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (ma_ribbon_alignment)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =50, =200",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "golden_cross_50_200": {
       "label": "Golden Cross 50/200",
@@ -1752,10 +1752,10 @@
       "params": {
         "lookback_days": "Lookback Days"
       },
-      "help": "Practical summary for `golden_cross_50_200` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (golden_cross_50_200)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (golden_cross_50_200)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =5",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "death_cross_50_200": {
       "label": "Death Cross 50/200",
@@ -1763,10 +1763,10 @@
       "params": {
         "lookback_days": "Lookback Days"
       },
-      "help": "Practical summary for `death_cross_50_200` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (death_cross_50_200)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (death_cross_50_200)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =5",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "donchian_channel_breakout": {
       "label": "Donchian Channel Breakout",
@@ -1774,10 +1774,10 @@
       "params": {
         "lookback_days": "Lookback Days"
       },
-      "help": "Practical summary for `donchian_channel_breakout` based on the issue-487 research guide. Sources: `S_DONCHIAN`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (donchian_channel_breakout)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=20",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (donchian_channel_breakout)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "keltner_channel_breakout": {
       "label": "Keltner Channel Breakout",
@@ -1787,10 +1787,10 @@
         "atr_period": "ATR Period",
         "ema_period": "Ema Period"
       },
-      "help": "Practical summary for `keltner_channel_breakout` based on the issue-487 research guide. Sources: `S_KELTNER`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (keltner_channel_breakout)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `ema_period`(int)=20, `atr_period`(int)=20, `atr_multiplier`(float)=2.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (keltner_channel_breakout)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =20, =2.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "parabolic_sar_flip": {
       "label": "Parabolic SAR Flip",
@@ -1800,10 +1800,10 @@
         "af_step": "Af Step",
         "lookback_days": "Lookback Days"
       },
-      "help": "Practical summary for `parabolic_sar_flip` based on the issue-487 research guide. Sources: `S_PARABOLIC`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (parabolic_sar_flip)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `lookback_days`(int)=5, `af_step`(float)=0.02, `af_max`(float)=0.2",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (parabolic_sar_flip)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =5, =0.02, =0.2",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "linear_regression_slope_filter": {
       "label": "Linear Regression Slope",
@@ -1812,10 +1812,10 @@
         "lookback_days": "Lookback Days",
         "min_slope": "Minimum Slope"
       },
-      "help": "Practical summary for `linear_regression_slope_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (linear_regression_slope_filter)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=60, `min_slope`(float)=0.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (linear_regression_slope_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =60, =0.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "linear_regression_angle_filter": {
       "label": "Linear Regression Angle",
@@ -1824,10 +1824,10 @@
         "lookback_days": "Lookback Days",
         "min_angle_deg": "Minimum Angle Deg"
       },
-      "help": "Practical summary for `linear_regression_angle_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (linear_regression_angle_filter)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `lookback_days`(int)=60, `min_angle_deg`(float)=0.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (linear_regression_angle_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =60, =0.0",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "linear_regression_r2_filter": {
       "label": "Linear Regression R2",
@@ -1836,10 +1836,10 @@
         "lookback_days": "Lookback Days",
         "min_r2": "Minimum R2"
       },
-      "help": "Practical summary for `linear_regression_r2_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (linear_regression_r2_filter)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `lookback_days`(int)=60, `min_r2`(float)=0.5",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (linear_regression_r2_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =60, =0.5",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "beta_to_benchmark": {
       "label": "Beta to Benchmark",
@@ -1848,10 +1848,10 @@
         "lookback_days": "Lookback Days",
         "max_beta": "Maximum Beta"
       },
-      "help": "Practical summary for `beta_to_benchmark` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (beta_to_benchmark)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=60, `max_beta`(float)=1.2",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (beta_to_benchmark)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =1.2",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "correlation_to_benchmark": {
       "label": "Correlation to Benchmark",
@@ -1860,10 +1860,10 @@
         "lookback_days": "Lookback Days",
         "max_corr": "Maximum Corr"
       },
-      "help": "Practical summary for `correlation_to_benchmark` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (correlation_to_benchmark)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=60, `max_corr`(float)=0.8",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (correlation_to_benchmark)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =0.8",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "support_retest_signal": {
       "label": "Support Retest Signal",
@@ -1872,10 +1872,10 @@
         "support_lookback": "Support Lookback",
         "tolerance_pct": "Tolerance %"
       },
-      "help": "Practical summary for `support_retest_signal` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (support_retest_signal)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `support_lookback`(int)=40, `tolerance_pct`(float)=1.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (support_retest_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =40, =1.0",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "resistance_retest_signal": {
       "label": "Resistance Retest Signal",
@@ -1884,10 +1884,10 @@
         "resistance_lookback": "Resistance Lookback",
         "tolerance_pct": "Tolerance %"
       },
-      "help": "Practical summary for `resistance_retest_signal` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (resistance_retest_signal)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `resistance_lookback`(int)=40, `tolerance_pct`(float)=1.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (resistance_retest_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =40, =1.0",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "downside_volatility_filter": {
       "label": "Downside Volatility",
@@ -1896,10 +1896,10 @@
         "lookback_days": "Lookback Days",
         "max_downside_vol_pct": "Maximum Downside Vol %"
       },
-      "help": "Practical summary for `downside_volatility_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (downside_volatility_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=60, `max_downside_vol_pct`(float)=20.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (downside_volatility_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =20.0",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "semivariance_filter": {
       "label": "Semivariance",
@@ -1908,10 +1908,10 @@
         "lookback_days": "Lookback Days",
         "max_semivariance": "Maximum Semivariance"
       },
-      "help": "Practical summary for `semivariance_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (semivariance_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=60, `max_semivariance`(float)=0.0004",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (semivariance_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =0.0004",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "rolling_sharpe_filter": {
       "label": "Rolling Sharpe",
@@ -1920,10 +1920,10 @@
         "lookback_days": "Lookback Days",
         "min_sharpe": "Minimum Sharpe"
       },
-      "help": "Practical summary for `rolling_sharpe_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (rolling_sharpe_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=60, `min_sharpe`(float)=1.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (rolling_sharpe_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =1.0",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "rolling_sortino_filter": {
       "label": "Rolling Sortino",
@@ -1932,10 +1932,10 @@
         "lookback_days": "Lookback Days",
         "min_sortino": "Minimum Sortino"
       },
-      "help": "Practical summary for `rolling_sortino_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (rolling_sortino_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=60, `min_sortino`(float)=1.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (rolling_sortino_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =1.0",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "ulcer_index_filter": {
       "label": "Ulcer Index",
@@ -1944,10 +1944,10 @@
         "lookback_days": "Lookback Days",
         "max_ulcer_index": "Maximum Ulcer Index"
       },
-      "help": "Practical summary for `ulcer_index_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (ulcer_index_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=60, `max_ulcer_index`(float)=10.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (ulcer_index_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =10.0",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "calmar_ratio_filter": {
       "label": "Calmar Ratio",
@@ -1956,10 +1956,10 @@
         "lookback_days": "Lookback Days",
         "min_calmar": "Minimum Calmar"
       },
-      "help": "Practical summary for `calmar_ratio_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (calmar_ratio_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=252, `min_calmar`(float)=0.5",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (calmar_ratio_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =252, =0.5",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "max_drawdown_window_filter": {
       "label": "Max Drawdown Window",
@@ -1968,10 +1968,10 @@
         "lookback_days": "Lookback Days",
         "max_drawdown_pct": "Maximum Drawdown %"
       },
-      "help": "Practical summary for `max_drawdown_window_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (max_drawdown_window_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=120, `max_drawdown_pct`(float)=20.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (max_drawdown_window_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =120, =20.0",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "return_skewness_filter": {
       "label": "Return Skewness",
@@ -1980,10 +1980,10 @@
         "lookback_days": "Lookback Days",
         "min_skewness": "Minimum Skewness"
       },
-      "help": "Practical summary for `return_skewness_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (return_skewness_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=60, `min_skewness`(float)=-1.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (return_skewness_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =-1.0",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "return_kurtosis_filter": {
       "label": "Return Kurtosis",
@@ -1992,10 +1992,10 @@
         "lookback_days": "Lookback Days",
         "max_kurtosis": "Maximum Kurtosis"
       },
-      "help": "Practical summary for `return_kurtosis_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (return_kurtosis_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `lookback_days`(int)=60, `max_kurtosis`(float)=10.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (return_kurtosis_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =10.0",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "intraday_return_filter": {
       "label": "Intraday Return",
@@ -2003,10 +2003,10 @@
       "params": {
         "min_intraday_return_pct": "Minimum Intraday Return %"
       },
-      "help": "Practical summary for `intraday_return_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality. (intraday_return_filter)",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: `min_intraday_return_pct`(float)=0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied. (intraday_return_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
+      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0.0",
+      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
     },
     "dso_trend_filter": {
       "label": "DSO Trend Filter",
@@ -2015,10 +2015,10 @@
         "lookback_years": "Lookback Years",
         "min_dso_increase_pct": "Minimum Dso Increase %"
       },
-      "help": "Practical summary for `dso_trend_filter` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (dso_trend_filter)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_years`(int)=1, `min_dso_increase_pct`(float)=5.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (dso_trend_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =1, =5.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "ema_cross": {
       "label": "EMA Cross",
@@ -2029,10 +2029,10 @@
         "lookback_days": "Lookback Days",
         "slow_period": "Slow Period"
       },
-      "help": "Practical summary for `ema_cross` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (ema_cross)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `fast_period`(int)=12, `slow_period`(int)=26, `lookback_days`(int)=5, `direction`(str)=bullish",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (ema_cross)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =12, =26, =5, =bullish",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "ema_slope": {
       "label": "EMA Slope",
@@ -2042,10 +2042,10 @@
         "min_slope_pct": "Minimum Slope %",
         "period": "Period"
       },
-      "help": "Practical summary for `ema_slope` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (ema_slope)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=20, `lookback_days`(int)=5, `min_slope_pct`(float)=0.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (ema_slope)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5, =0.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "sma_slope": {
       "label": "SMA Slope",
@@ -2055,10 +2055,10 @@
         "min_slope_pct": "Minimum Slope %",
         "period": "Period"
       },
-      "help": "Practical summary for `sma_slope` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (sma_slope)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=20, `lookback_days`(int)=5, `min_slope_pct`(float)=0.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (sma_slope)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5, =0.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "macd_signal_cross": {
       "label": "MACD Signal Cross",
@@ -2070,10 +2070,10 @@
         "signal_period": "Signal Period",
         "slow_period": "Slow Period"
       },
-      "help": "Practical summary for `macd_signal_cross` based on the issue-487 research guide. Sources: `S_MACD`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (macd_signal_cross)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `fast_period`(int)=12, `slow_period`(int)=26, `signal_period`(int)=9, `lookback_days`(int)=5, `direction`(str)=bullish",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (macd_signal_cross)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =12, =26, =9, =5, =bullish",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "macd_histogram_slope": {
       "label": "MACD Histogram Slope",
@@ -2085,10 +2085,10 @@
         "signal_period": "Signal Period",
         "slow_period": "Slow Period"
       },
-      "help": "Practical summary for `macd_histogram_slope` based on the issue-487 research guide. Sources: `S_MACD`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (macd_histogram_slope)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `fast_period`(int)=12, `slow_period`(int)=26, `signal_period`(int)=9, `lookback_days`(int)=3, `min_slope`(float)=0.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (macd_histogram_slope)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =12, =26, =9, =3, =0.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "cci_overbought_oversold": {
       "label": "CCI Overbought/Oversold",
@@ -2098,10 +2098,10 @@
         "period": "Period",
         "threshold": "Threshold"
       },
-      "help": "Practical summary for `cci_overbought_oversold` based on the issue-487 research guide. Sources: `S_CCI`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (cci_overbought_oversold)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `period`(int)=20, `mode`(str)=oversold, `threshold`(float)=100",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (cci_overbought_oversold)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =20, =oversold, =100",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "williams_r_reversal": {
       "label": "Williams %R Reversal",
@@ -2112,10 +2112,10 @@
         "oversold": "Oversold",
         "period": "Period"
       },
-      "help": "Practical summary for `williams_r_reversal` based on the issue-487 research guide. Sources: `S_WILLR`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (williams_r_reversal)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `period`(int)=14, `oversold`(float)=-80, `overbought`(float)=-20, `direction`(str)=bullish",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (williams_r_reversal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =14, =-80, =-20, =bullish",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "trix_cross": {
       "label": "TRIX Cross",
@@ -2126,10 +2126,10 @@
         "period": "Period",
         "signal_period": "Signal Period"
       },
-      "help": "Practical summary for `trix_cross` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (trix_cross)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=15, `signal_period`(int)=9, `lookback_days`(int)=5, `direction`(str)=bullish",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (trix_cross)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =15, =9, =5, =bullish",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "aroon_trend_signal": {
       "label": "Aroon Trend Signal",
@@ -2139,10 +2139,10 @@
         "min_aroon": "Minimum Aroon",
         "period": "Period"
       },
-      "help": "Practical summary for `aroon_trend_signal` based on the issue-487 research guide. Sources: `S_AROON`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (aroon_trend_signal)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=25, `min_aroon`(float)=70, `direction`(str)=up",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (aroon_trend_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =25, =70, =up",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "money_flow_index_signal": {
       "label": "Money Flow Index",
@@ -2153,10 +2153,10 @@
         "oversold": "Oversold",
         "period": "Period"
       },
-      "help": "Practical summary for `money_flow_index_signal` based on the issue-487 research guide. Sources: `S_MFI`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (money_flow_index_signal)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `period`(int)=14, `mode`(str)=oversold, `oversold`(float)=20, `overbought`(float)=80",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (money_flow_index_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =14, =oversold, =20, =80",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "vwap_cross_signal": {
       "label": "VWAP Cross Signal",
@@ -2165,10 +2165,10 @@
         "lookback_days": "Lookback Days",
         "period": "Period"
       },
-      "help": "Practical summary for `vwap_cross_signal` based on the issue-487 research guide. Sources: `S_VWAP`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (vwap_cross_signal)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=20, `lookback_days`(int)=3",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (vwap_cross_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =3",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "vwap_distance_pct": {
       "label": "VWAP Distance %",
@@ -2177,10 +2177,10 @@
         "max_distance_pct": "Maximum Distance %",
         "period": "Period"
       },
-      "help": "Practical summary for `vwap_distance_pct` based on the issue-487 research guide. Sources: `S_VWAP`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (vwap_distance_pct)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=20, `max_distance_pct`(float)=5.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (vwap_distance_pct)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "relative_volume_percentile": {
       "label": "Relative Volume Percentile",
@@ -2189,10 +2189,10 @@
         "lookback_days": "Lookback Days",
         "min_percentile": "Minimum Percentile"
       },
-      "help": "Practical summary for `relative_volume_percentile` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (relative_volume_percentile)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=60, `min_percentile`(float)=70.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (relative_volume_percentile)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =60, =70.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "turnover_ratio_min": {
       "label": "Turnover Ratio Min",
@@ -2200,10 +2200,10 @@
       "params": {
         "min_turnover_ratio": "Minimum Turnover Ratio"
       },
-      "help": "Practical summary for `turnover_ratio_min` based on the issue-487 research guide. Sources: `S_VAL`",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum. (turnover_ratio_min)",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: `min_turnover_ratio`(float)=0.01",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items. (turnover_ratio_min)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
+      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.01",
+      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
     },
     "atr_percentile_filter": {
       "label": "ATR Percentile",
@@ -2213,10 +2213,10 @@
         "lookback_days": "Lookback Days",
         "max_percentile": "Maximum Percentile"
       },
-      "help": "Practical summary for `atr_percentile_filter` based on the issue-487 research guide. Sources: `S_ATR`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (atr_percentile_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `atr_period`(int)=14, `lookback_days`(int)=120, `max_percentile`(float)=80.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (atr_percentile_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =14, =120, =80.0",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "atr_expansion_breakout": {
       "label": "ATR Expansion Breakout",
@@ -2226,10 +2226,10 @@
         "atr_period": "ATR Period",
         "breakout_lookback": "Breakout Lookback"
       },
-      "help": "Practical summary for `atr_expansion_breakout` based on the issue-487 research guide. Sources: `S_ATR`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (atr_expansion_breakout)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `atr_period`(int)=14, `atr_multiplier`(float)=1.2, `breakout_lookback`(int)=20",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (atr_expansion_breakout)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =14, =1.2, =20",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "natr_filter": {
       "label": "NATR Filter",
@@ -2238,10 +2238,10 @@
         "max_natr_pct": "Maximum Natr %",
         "period": "Period"
       },
-      "help": "Practical summary for `natr_filter` based on the issue-487 research guide. Sources: `S_ATR`",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return. (natr_filter)",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: `period`(int)=14, `max_natr_pct`(float)=5.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts. (natr_filter)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
+      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =14, =5.0",
+      "caution": "Past risk metrics can fail during sudden regime shifts."
     },
     "dmi_directional_cross": {
       "label": "DMI Directional Cross",
@@ -2250,10 +2250,10 @@
         "lookback_days": "Lookback Days",
         "period": "Period"
       },
-      "help": "Practical summary for `dmi_directional_cross` based on the issue-487 research guide. Sources: `S_ADX`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (dmi_directional_cross)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=14, `lookback_days`(int)=5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (dmi_directional_cross)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =14, =5",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "ichimoku_cloud_breakout": {
       "label": "Ichimoku Cloud Breakout",
@@ -2263,10 +2263,10 @@
         "conversion_period": "Conversion Period",
         "span_b_period": "Span B Period"
       },
-      "help": "Practical summary for `ichimoku_cloud_breakout` based on the issue-487 research guide. Sources: `S_ICHI`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (ichimoku_cloud_breakout)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `conversion_period`(int)=9, `base_period`(int)=26, `span_b_period`(int)=52",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (ichimoku_cloud_breakout)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =9, =26, =52",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "ichimoku_tenkan_kijun_cross": {
       "label": "Ichimoku Tenkan/Kijun Cross",
@@ -2276,10 +2276,10 @@
         "conversion_period": "Conversion Period",
         "lookback_days": "Lookback Days"
       },
-      "help": "Practical summary for `ichimoku_tenkan_kijun_cross` based on the issue-487 research guide. Sources: `S_ICHI`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (ichimoku_tenkan_kijun_cross)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `conversion_period`(int)=9, `base_period`(int)=26, `lookback_days`(int)=5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (ichimoku_tenkan_kijun_cross)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =9, =26, =5",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "bollinger_squeeze_breakout": {
       "label": "Bollinger Squeeze Breakout",
@@ -2289,10 +2289,10 @@
         "period": "Period",
         "std_mult": "Std Mult"
       },
-      "help": "Practical summary for `bollinger_squeeze_breakout` based on the issue-487 research guide. Sources: `S_BB`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (bollinger_squeeze_breakout)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `period`(int)=20, `std_mult`(float)=2.0, `max_width_pct`(float)=10.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (bollinger_squeeze_breakout)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =2.0, =10.0",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "bollinger_percent_b": {
       "label": "Bollinger Percent B",
@@ -2303,10 +2303,10 @@
         "period": "Period",
         "std_mult": "Std Mult"
       },
-      "help": "Practical summary for `bollinger_percent_b` based on the issue-487 research guide. Sources: `S_BB`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (bollinger_percent_b)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `period`(int)=20, `std_mult`(float)=2.0, `min_percent_b`(float)=0.0, `max_percent_b`(float)=1.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (bollinger_percent_b)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =20, =2.0, =0.0, =1.0",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "ppo_signal_cross": {
       "label": "PPO Signal Cross",
@@ -2317,10 +2317,10 @@
         "signal_period": "Signal Period",
         "slow_period": "Slow Period"
       },
-      "help": "Practical summary for `ppo_signal_cross` based on the issue-487 research guide. Sources: `S_MACD`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (ppo_signal_cross)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `fast_period`(int)=12, `slow_period`(int)=26, `signal_period`(int)=9, `lookback_days`(int)=5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (ppo_signal_cross)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =12, =26, =9, =5",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     },
     "stochastic_cross_signal": {
       "label": "Stochastic Cross Signal",
@@ -2330,10 +2330,10 @@
         "k_period": "K Period",
         "lookback_days": "Lookback Days"
       },
-      "help": "Practical summary for `stochastic_cross_signal` based on the issue-487 research guide. Sources: `S_STOCH`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (stochastic_cross_signal)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `k_period`(int)=14, `d_period`(int)=3, `lookback_days`(int)=5",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (stochastic_cross_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =14, =3, =5",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "stochrsi_signal": {
       "label": "StochRSI Signal",
@@ -2343,10 +2343,10 @@
         "rsi_period": "RSI Period",
         "stoch_period": "Stoch Period"
       },
-      "help": "Practical summary for `stochrsi_signal` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls. (stochrsi_signal)",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: `rsi_period`(int)=14, `stoch_period`(int)=14, `mode`(str)=oversold",
-      "caution": "Always confirm with out-of-sample validation before live deployment. (stochrsi_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
+      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =14, =14, =oversold",
+      "caution": "Always confirm with out-of-sample validation before live deployment."
     },
     "aroon_oscillator_signal": {
       "label": "Aroon Oscillator Signal",
@@ -2355,10 +2355,10 @@
         "min_oscillator": "Minimum Oscillator",
         "period": "Period"
       },
-      "help": "Practical summary for `aroon_oscillator_signal` based on the issue-487 research guide. Sources: `S_AROON`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (aroon_oscillator_signal)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `period`(int)=25, `min_oscillator`(float)=30.0",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (aroon_oscillator_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =25, =30.0",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "ultimate_oscillator_signal": {
       "label": "Ultimate Oscillator Signal",
@@ -2366,10 +2366,10 @@
       "params": {
         "min_value": "Minimum Value"
       },
-      "help": "Practical summary for `ultimate_oscillator_signal` based on the issue-487 research guide. Sources: `S_FACTORS`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (ultimate_oscillator_signal)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `min_value`(float)=50.0",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (ultimate_oscillator_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =50.0",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "chaikin_money_flow_signal": {
       "label": "Chaikin Money Flow",
@@ -2378,10 +2378,10 @@
         "min_cmf": "Minimum Cmf",
         "period": "Period"
       },
-      "help": "Practical summary for `chaikin_money_flow_signal` based on the issue-487 research guide. Sources: `S_CHAIKIN`",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement. (chaikin_money_flow_signal)",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: `period`(int)=20, `min_cmf`(float)=0.0",
-      "caution": "Low-liquidity names can produce unstable flow signals. (chaikin_money_flow_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
+      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =20, =0.0",
+      "caution": "Low-liquidity names can produce unstable flow signals."
     },
     "chaikin_oscillator_signal": {
       "label": "Chaikin Oscillator",
@@ -2391,10 +2391,10 @@
         "min_value": "Minimum Value",
         "slow_period": "Slow Period"
       },
-      "help": "Practical summary for `chaikin_oscillator_signal` based on the issue-487 research guide. Sources: `S_CHAIKIN`",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters. (chaikin_oscillator_signal)",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: `fast_period`(int)=3, `slow_period`(int)=10, `min_value`(float)=0.0",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets. (chaikin_oscillator_signal)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
+      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =3, =10, =0.0",
+      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
     },
     "ad_line_trend": {
       "label": "A/D Line Trend",
@@ -2402,10 +2402,10 @@
       "params": {
         "lookback_days": "Lookback Days"
       },
-      "help": "Practical summary for `ad_line_trend` based on the issue-487 research guide. Sources: `S_OBV`",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it. (ad_line_trend)",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: `lookback_days`(int)=20",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters. (ad_line_trend)"
+      "help": "Practical summary for based on the issue-487 research guide. Sources:",
+      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
+      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20",
+      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
     }
   },
   "settings": {
