@@ -77,17 +77,22 @@ class KiwoomOrderManager:
         self,
         ocx: Any,
         throttle_seconds: float = 1.0,
+        max_history_size: int = 2000,
+        history_ttl_seconds: Optional[float] = 86400.0,
         sleep_fn: Callable[[float], None] = time.sleep,
         time_fn: Callable[[], float] = time.monotonic,
     ) -> None:
         self._ocx = ocx
         self._throttle_seconds = throttle_seconds
+        self._max_history_size = max_history_size
+        self._history_ttl_seconds = history_ttl_seconds
         self._sleep = sleep_fn
         self._time = time_fn
 
         self.order_history: Dict[str, Order] = {}
         self._order_by_rq_name: Dict[str, str] = {}
         self._queue: "queue.Queue[_OrderTask]" = queue.Queue()
+        self._lock = threading.RLock()
         self._last_sent_at: float = 0.0
         self._counter = 0
         self._rq_counter = 0
@@ -168,26 +173,66 @@ class KiwoomOrderManager:
         """Handle OnReceiveMsg and update tracked order status/message."""
         _ = screen_no
         _ = tr_code
-        order_no = self._order_by_rq_name.get(rq_name)
-        if not order_no:
-            return
-        order = self.order_history.get(order_no)
-        if not order:
-            return
+        with self._lock:
+            order_no = self._order_by_rq_name.get(rq_name)
+            if not order_no:
+                return
+            order = self.order_history.get(order_no)
+            if not order:
+                return
 
-        order.message = msg or ""
-        if any(token in (msg or "") for token in ["실패", "거부", "오류", "error", "Error"]):
-            order.status = "rejected"
-        else:
-            order.status = "accepted"
+            order.message = msg or ""
+            if any(token in (msg or "") for token in ["실패", "거부", "오류", "error", "Error"]):
+                order.status = "rejected"
+            else:
+                order.status = "accepted"
 
     def _next_order_no(self) -> str:
-        self._counter += 1
-        return f"mock-{self._counter:08d}"
+        with self._lock:
+            self._counter += 1
+            return f"mock-{self._counter:08d}"
 
     def _next_api_rq_name(self, rq_name: str) -> str:
-        self._rq_counter += 1
-        return f"{rq_name}#{self._rq_counter}"
+        with self._lock:
+            self._rq_counter += 1
+            return f"{rq_name}#{self._rq_counter}"
+
+    def _cleanup_history(self) -> None:
+        if not self.order_history:
+            return
+
+        now_wall = time.time()
+        stale_order_nos = set()
+
+        if self._history_ttl_seconds is not None and self._history_ttl_seconds > 0:
+            for order_no, order in self.order_history.items():
+                ref_ts = order.sent_at or order.created_at
+                if now_wall - ref_ts >= self._history_ttl_seconds:
+                    stale_order_nos.add(order_no)
+
+        if (
+            self._max_history_size > 0
+            and len(self.order_history) - len(stale_order_nos) > self._max_history_size
+        ):
+            survivors = [
+                (order_no, order)
+                for order_no, order in self.order_history.items()
+                if order_no not in stale_order_nos
+            ]
+            survivors.sort(key=lambda item: item[1].sent_at or item[1].created_at)
+            overflow = len(survivors) - self._max_history_size
+            if overflow > 0:
+                stale_order_nos.update(order_no for order_no, _ in survivors[:overflow])
+
+        if not stale_order_nos:
+            return
+
+        for order_no in stale_order_nos:
+            self.order_history.pop(order_no, None)
+
+        stale_rq_names = [rq_name for rq_name, order_no in self._order_by_rq_name.items() if order_no in stale_order_nos]
+        for rq_name in stale_rq_names:
+            self._order_by_rq_name.pop(rq_name, None)
 
     def _worker_loop(self) -> None:
         while True:
@@ -239,8 +284,10 @@ class KiwoomOrderManager:
                     status="sent",
                     sent_at=time.time(),
                 )
-                self.order_history[order_no] = order
-                self._order_by_rq_name[task.api_rq_name] = order_no
+                with self._lock:
+                    self.order_history[order_no] = order
+                    self._order_by_rq_name[task.api_rq_name] = order_no
+                    self._cleanup_history()
                 task.result_holder["order_no"] = order_no
                 task.done_event.set()
             except Exception as exc:  # pragma: no cover

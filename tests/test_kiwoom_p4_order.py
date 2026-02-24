@@ -213,3 +213,52 @@ def test_duplicate_base_rq_name_is_uniquified_for_api_calls() -> None:
     manager.on_receive_msg("1001", second_api_rq, "SendOrder", "정상처리")
     assert manager.order_history[second_no].status == "accepted"
     assert manager.order_history[first_no].status == "sent"
+
+
+def test_order_history_retention_by_max_size() -> None:
+    ocx = _FakeOcx(return_value=0)
+    manager = KiwoomOrderManager(
+        ocx,
+        throttle_seconds=0.0,
+        max_history_size=2,
+        history_ttl_seconds=None,
+    )
+
+    first_no = manager.send_order(
+        rq_name="retention_1",
+        screen_no="1001",
+        acc_no="8123456789",
+        order_type=int(OrderType.NEW_BUY),
+        code="005930",
+        qty=1,
+        price=1000,
+        hoga_type=HogaType.LIMIT.value,
+        org_order_no="",
+    )
+    second_no = manager.send_order(
+        rq_name="retention_2",
+        screen_no="1001",
+        acc_no="8123456789",
+        order_type=int(OrderType.NEW_BUY),
+        code="005930",
+        qty=1,
+        price=1000,
+        hoga_type=HogaType.LIMIT.value,
+        org_order_no="",
+    )
+    third_no = manager.send_order(
+        rq_name="retention_3",
+        screen_no="1001",
+        acc_no="8123456789",
+        order_type=int(OrderType.NEW_BUY),
+        code="005930",
+        qty=1,
+        price=1000,
+        hoga_type=HogaType.LIMIT.value,
+        org_order_no="",
+    )
+
+    assert len(manager.order_history) == 2
+    assert first_no not in manager.order_history
+    assert second_no in manager.order_history
+    assert third_no in manager.order_history
