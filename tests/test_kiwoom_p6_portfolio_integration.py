@@ -109,6 +109,40 @@ def test_kiwoom_executor_risk_block() -> None:
     assert "Risk blocked" in result.message
 
 
+def test_kiwoom_executor_rejects_invalid_side() -> None:
+    ocx = _FakeOcx(return_value=0)
+    manager = KiwoomOrderManager(ocx, throttle_seconds=0.0)
+    chejan = ChejanHandler(ocx, order_manager=manager, async_notify=False)
+    executor = KiwoomExecutor(
+        order_manager=manager,
+        chejan_handler=chejan,
+        account_no="8123456789",
+    )
+
+    order = Order(ticker="005930.KS", side="HOLD", quantity=1, price=70000, order_type="LIMIT")
+    result = executor.execute(order)
+    assert not result.success
+    assert result.status == OrderStatus.REJECTED.value
+    assert "unsupported order side" in result.message
+
+
+def test_kiwoom_executor_market_order_requires_reference_price() -> None:
+    ocx = _FakeOcx(return_value=0)
+    manager = KiwoomOrderManager(ocx, throttle_seconds=0.0)
+    chejan = ChejanHandler(ocx, order_manager=manager, async_notify=False)
+    executor = KiwoomExecutor(
+        order_manager=manager,
+        chejan_handler=chejan,
+        account_no="8123456789",
+    )
+
+    order = Order(ticker="005930.KS", side="BUY", quantity=1, price=None, order_type="MARKET")
+    result = executor.execute(order)
+    assert not result.success
+    assert result.status == OrderStatus.REJECTED.value
+    assert "reference price" in result.message
+
+
 def test_portfolio_balance_sync_and_tr_request(tmp_path: Path) -> None:
     filepath = tmp_path / "portfolio.yaml"
     portfolio = Portfolio(filepath=str(filepath))
