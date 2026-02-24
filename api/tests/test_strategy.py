@@ -214,3 +214,77 @@ class TestRunStrategyEndpoint:
         data = response.json()
         assert data["universe"] == "KOSPI"
         assert data["universes"] == ["KOSPI", "KOSDAQ"]
+
+    def test_portfolio_construction_request_is_passed_and_response_contains_weights(self, monkeypatch):
+        captured = {"portfolio_construction": None}
+
+        def _mock_execute_strategy(*args, **kwargs):
+            captured["portfolio_construction"] = kwargs.get("portfolio_construction")
+            return {
+                "results": [],
+                "total_count": 10,
+                "matched_count": 2,
+                "universe": "SP500",
+                "conditions_used": [],
+                "node_results": {},
+                "weighted_portfolio": [
+                    {
+                        "ticker": "AAPL",
+                        "name": "Apple",
+                        "weight": 0.5,
+                        "current_price": 100.0,
+                        "annualized_volatility": 0.2,
+                    },
+                    {
+                        "ticker": "MSFT",
+                        "name": "Microsoft",
+                        "weight": 0.5,
+                        "current_price": 200.0,
+                        "annualized_volatility": 0.2,
+                    },
+                ],
+                "portfolio_construction_result": {
+                    "mode_requested": "risk_parity",
+                    "mode_applied": "risk_parity",
+                    "lookback_days": 60,
+                    "assets_requested": 10,
+                    "assets_used": 2,
+                    "estimated_portfolio_volatility": 0.15,
+                    "target_volatility": 0.12,
+                    "suggested_gross_leverage": 0.8,
+                    "fallback_reason": None,
+                },
+            }
+
+        monkeypatch.setattr("api.routers.strategy.execute_strategy", _mock_execute_strategy)
+
+        response = client.post(
+            "/api/strategy/run",
+            json={
+                "graph": {
+                    "nodes": [
+                        {
+                            "id": "c1",
+                            "data": {
+                                "node_type": "condition",
+                                "condition_type": "min_price",
+                                "params": {"min_price": 5000},
+                            },
+                        },
+                        {"id": "o1", "data": {"node_type": "output"}},
+                    ],
+                    "edges": [{"id": "e1", "source": "c1", "target": "o1"}],
+                },
+                "portfolio_construction": {
+                    "mode": "risk_parity",
+                    "lookback_days": 60,
+                    "max_assets": 10,
+                    "target_volatility": 0.12,
+                },
+            },
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert captured["portfolio_construction"].mode == "risk_parity"
+        assert len(data["weighted_portfolio"]) == 2
+        assert data["portfolio_construction_result"]["mode_applied"] == "risk_parity"

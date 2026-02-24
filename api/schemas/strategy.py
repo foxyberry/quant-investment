@@ -91,6 +91,10 @@ class StrategyExecuteRequest(BaseModel):
         default_factory=list,
         description="Normalized multi-market universe overrides",
     )
+    portfolio_construction: Optional["PortfolioConstructionConfig"] = Field(
+        default=None,
+        description="Optional post-screening portfolio construction configuration",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -195,6 +199,59 @@ class StrategyExecuteResponse(BaseModel):
     universes: List[str] = Field(default_factory=list)
     conditions_used: List[str] = Field(default_factory=list)
     node_results: Dict[str, NodeIntermediateResult] = Field(default_factory=dict)
+    weighted_portfolio: List["WeightedPortfolioItem"] = Field(default_factory=list)
+    portfolio_construction_result: Optional["PortfolioConstructionResult"] = None
+
+
+class PortfolioConstructionConfig(BaseModel):
+    """Optional portfolio construction settings after screening."""
+
+    mode: Literal["inverse_vol", "risk_parity"] = Field(
+        default="inverse_vol",
+        description="Weight construction mode",
+    )
+    lookback_days: int = Field(
+        default=60,
+        ge=20,
+        le=252,
+        description="Lookback window used for return volatility/covariance estimation",
+    )
+    max_assets: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of matched assets to include in weight optimization",
+    )
+    target_volatility: Optional[float] = Field(
+        default=None,
+        gt=0,
+        le=2.0,
+        description="Optional annualized target volatility (e.g. 0.12 = 12%)",
+    )
+
+
+class WeightedPortfolioItem(BaseModel):
+    """Single weighted allocation entry from strategy output."""
+
+    ticker: str
+    name: str
+    weight: float = Field(ge=0.0, le=1.0)
+    current_price: Optional[float] = None
+    annualized_volatility: Optional[float] = None
+
+
+class PortfolioConstructionResult(BaseModel):
+    """Metadata from portfolio construction stage."""
+
+    mode_requested: str
+    mode_applied: str
+    lookback_days: int
+    assets_requested: int
+    assets_used: int
+    estimated_portfolio_volatility: Optional[float] = None
+    target_volatility: Optional[float] = None
+    suggested_gross_leverage: Optional[float] = None
+    fallback_reason: Optional[str] = None
 
 
 class ConditionParamInfo(BaseModel):
@@ -283,3 +340,7 @@ class SectorListResponse(BaseModel):
     market: str
     sectors: List[SectorInfo]
     total_sectors: int
+
+
+StrategyExecuteRequest.model_rebuild()
+StrategyExecuteResponse.model_rebuild()
