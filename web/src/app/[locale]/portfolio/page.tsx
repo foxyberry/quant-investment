@@ -12,6 +12,7 @@ import {
   SellSignalBanner,
   CsvImportModal,
   OrderDesk,
+  BrokerOrderDesk,
 } from '@/components/portfolio';
 import {
   getHoldings,
@@ -128,6 +129,7 @@ export default function PortfolioPage() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [orderDeskPrefill, setOrderDeskPrefill] = useState<OrderDeskPrefill | null>(null);
+  const [orderDeskTab, setOrderDeskTab] = useState<'kiwoom' | 'unified'>('unified');
   const orderDeskRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const pollingIntervalRef = useRef<number | null>(null);
@@ -744,7 +746,35 @@ export default function PortfolioPage() {
       </Card>
 
       <div ref={orderDeskRef}>
-        <OrderDesk prefill={orderDeskPrefill} />
+        <div className="flex gap-1 rounded-lg bg-[var(--background)] p-1 mb-4 w-fit">
+          <button
+            type="button"
+            onClick={() => setOrderDeskTab('unified')}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              orderDeskTab === 'unified'
+                ? 'bg-[var(--background-secondary)] text-[var(--foreground)] shadow-sm'
+                : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+            }`}
+          >
+            {t('tabUnifiedBroker')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setOrderDeskTab('kiwoom')}
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              orderDeskTab === 'kiwoom'
+                ? 'bg-[var(--background-secondary)] text-[var(--foreground)] shadow-sm'
+                : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+            }`}
+          >
+            {t('tabKiwoom')}
+          </button>
+        </div>
+        {orderDeskTab === 'kiwoom' ? (
+          <OrderDesk prefill={orderDeskPrefill} />
+        ) : (
+          <BrokerOrderDesk />
+        )}
       </div>
 
       {/* Add Holding Modal */}

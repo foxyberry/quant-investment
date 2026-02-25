@@ -261,7 +261,28 @@
     "orderAmendFailed": "改单失败。",
     "orderTickerRequired": "请输入代码。",
     "orderQuantityInvalid": "数量必须大于 0。",
-    "orderPriceInvalid": "限价单价格必须大于 0。"
+    "orderPriceInvalid": "限价单价格必须大于 0。",
+    "tabKiwoom": "Kiwoom",
+    "tabUnifiedBroker": "统一经纪商"
+  },
+  "brokerOrderDesk": {
+    "title": "统一下单台",
+    "selectBroker": "选择经纪商",
+    "connectionStatus": "连接状态",
+    "placeOrder": "提交订单",
+    "orderList": "订单列表",
+    "killSwitch": "紧急停止",
+    "killSwitchConfirm": "取消所有未成交订单？此操作无法撤销。",
+    "noOrders": "暂无订单",
+    "noBrokers": "未注册经纪商。请配置经纪商适配器。",
+    "orderPlaced": "订单已提交",
+    "orderCancelled": "订单已取消",
+    "orderAmended": "订单已修改",
+    "orderLoadFailed": "加载订单失败",
+    "connected": "已连接",
+    "disconnected": "已断开",
+    "connecting": "连接中",
+    "unavailable": "不可用"
   },
   "strategy": {
     "title": "QuantCanvas",
