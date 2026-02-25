@@ -35,6 +35,7 @@ import SectorNode from '@/components/strategy/nodes/SectorNode';
 import LabeledEdge from '@/components/strategy/edges/LabeledEdge';
 import NodePalette from '@/components/strategy/NodePalette';
 import IntermediateResultsPanel from '@/components/strategy/IntermediateResultsPanel';
+import SideInspectionPanel from '@/components/strategy/SideInspectionPanel';
 
 import BacktestPanel from '@/components/backtest/BacktestPanel';
 import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
@@ -155,6 +156,7 @@ function StrategyPageInner() {
   const [nodeResults, setNodeResults] = useState<Record<string, NodeIntermediateResult> | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [showBacktest, setShowBacktest] = useState(false);
+  const [showInspection, setShowInspection] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const reconnectingEdgeId = useRef<string | null>(null);
@@ -365,6 +367,16 @@ function StrategyPageInner() {
       setSelectedNodeId(node.id);
     },
     []
+  );
+
+  const onNodeDoubleClick = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      setSelectedNodeId(node.id);
+      if (nodeResults && nodeResults[node.id]) {
+        setShowInspection(true);
+      }
+    },
+    [nodeResults]
   );
 
   const onPaneClick = useCallback(() => {
@@ -1131,6 +1143,7 @@ function StrategyPageInner() {
             onReconnectEnd={onReconnectEnd}
             edgesReconnectable
             onNodeClick={onNodeClick}
+            onNodeDoubleClick={onNodeDoubleClick}
             onPaneClick={onPaneClick}
             onInit={setReactFlowInstance}
             onDragOver={onDragOver}
@@ -1351,6 +1364,25 @@ function StrategyPageInner() {
           </div>
         </div>
       )}
+
+      {/* Side inspection panel (double-click a node) */}
+      <SideInspectionPanel
+        nodeResult={
+          selectedNodeId && nodeResults
+            ? nodeResults[selectedNodeId] ?? null
+            : null
+        }
+        totalStocks={
+          nodeResults
+            ? Math.max(
+                ...Object.values(nodeResults).map((nr) => nr.stock_count),
+                0
+              )
+            : null
+        }
+        isOpen={showInspection}
+        onClose={() => setShowInspection(false)}
+      />
 
       {/* Backtest slide-over panel */}
       <BacktestPanel
