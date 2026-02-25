@@ -20,6 +20,10 @@ import type {
   KiwoomConditionMatch,
   KiwoomOrder,
   KiwoomOrderRequest,
+  BrokerConnectionStatus,
+  BrokerKillSwitchResult,
+  BrokerOrder,
+  BrokerOrderRequest,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -517,6 +521,73 @@ export async function triggerKiwoomKillSwitch(): Promise<void> {
   await fetchApi<void>('/api/kiwoom/orders/kill-switch', {
     method: 'POST',
   });
+}
+
+// Unified Broker API functions
+
+export async function listBrokers(): Promise<string[]> {
+  const data = await fetchApi<{ brokers: string[] }>('/api/brokers/');
+  return data.brokers;
+}
+
+export async function getBrokerConnectionStatus(
+  broker: string
+): Promise<BrokerConnectionStatus> {
+  return fetchApi<BrokerConnectionStatus>(
+    `/api/brokers/${encodeURIComponent(broker)}/status`
+  );
+}
+
+export async function placeBrokerOrder(
+  broker: string,
+  order: BrokerOrderRequest
+): Promise<BrokerOrder> {
+  return fetchApi<BrokerOrder>(
+    `/api/brokers/${encodeURIComponent(broker)}/orders`,
+    {
+      method: 'POST',
+      body: JSON.stringify(order),
+    }
+  );
+}
+
+export async function getBrokerOrders(broker: string): Promise<BrokerOrder[]> {
+  return fetchApi<BrokerOrder[]>(
+    `/api/brokers/${encodeURIComponent(broker)}/orders`
+  );
+}
+
+export async function cancelBrokerOrder(
+  broker: string,
+  orderId: string
+): Promise<void> {
+  await fetchApi<void>(
+    `/api/brokers/${encodeURIComponent(broker)}/orders/${encodeURIComponent(orderId)}`,
+    { method: 'DELETE' }
+  );
+}
+
+export async function amendBrokerOrder(
+  broker: string,
+  orderId: string,
+  amend: { quantity?: number; price?: number | null }
+): Promise<void> {
+  await fetchApi<void>(
+    `/api/brokers/${encodeURIComponent(broker)}/orders/${encodeURIComponent(orderId)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(amend),
+    }
+  );
+}
+
+export async function triggerBrokerKillSwitch(
+  broker: string
+): Promise<BrokerKillSwitchResult> {
+  return fetchApi<BrokerKillSwitchResult>(
+    `/api/brokers/${encodeURIComponent(broker)}/kill-switch`,
+    { method: 'POST' }
+  );
 }
 
 // Strategy API functions

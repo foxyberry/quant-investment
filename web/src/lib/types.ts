@@ -270,3 +270,57 @@ export interface AnalysisStatus {
   };
   data_dir: string | null;
 }
+
+// Broker-agnostic types (unified broker router)
+export type BrokerOrderSide = 'BUY' | 'SELL';
+export type BrokerOrderType = 'MARKET' | 'LIMIT';
+export type BrokerOrderStatus =
+  | 'RECEIVED'
+  | 'CONFIRMED'
+  | 'PARTIAL'
+  | 'FILLED'
+  | 'CANCELED'
+  | 'REJECTED';
+export type BrokerConnectionState =
+  | 'connected'
+  | 'disconnected'
+  | 'connecting'
+  | 'unavailable';
+
+export interface BrokerOrderRequest {
+  ticker: string;
+  side: BrokerOrderSide;
+  quantity: number;
+  order_type: BrokerOrderType;
+  price?: number | null;
+  account_id?: string | null;
+}
+
+export interface BrokerOrder {
+  order_id: string;
+  broker: string;
+  ticker: string;
+  side: BrokerOrderSide;
+  quantity: number;
+  filled_quantity: number;
+  unfilled_quantity: number;
+  order_type: BrokerOrderType;
+  price: number | null;
+  filled_price: number | null;
+  status: BrokerOrderStatus;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface BrokerConnectionStatus {
+  broker: string;
+  status: BrokerConnectionState;
+  is_paper_trading: boolean | null;
+  accounts: string[];
+  updated_at: string | null;
+}
+
+export interface BrokerKillSwitchResult {
+  activated: boolean;
+  cancelled_orders: number;
+}

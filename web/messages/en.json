@@ -261,7 +261,28 @@
     "orderAmendFailed": "Failed to amend order.",
     "orderTickerRequired": "Ticker is required.",
     "orderQuantityInvalid": "Quantity must be a positive number.",
-    "orderPriceInvalid": "Price must be a positive number for limit orders."
+    "orderPriceInvalid": "Price must be a positive number for limit orders.",
+    "tabKiwoom": "Kiwoom",
+    "tabUnifiedBroker": "Unified Broker"
+  },
+  "brokerOrderDesk": {
+    "title": "Broker Order Desk",
+    "selectBroker": "Select Broker",
+    "connectionStatus": "Connection Status",
+    "placeOrder": "Place Order",
+    "orderList": "Orders",
+    "killSwitch": "Emergency Kill Switch",
+    "killSwitchConfirm": "Cancel ALL open orders? This cannot be undone.",
+    "noOrders": "No orders found",
+    "noBrokers": "No brokers registered. Please configure a broker adapter.",
+    "orderPlaced": "Order placed successfully",
+    "orderCancelled": "Order cancelled",
+    "orderAmended": "Order amended",
+    "orderLoadFailed": "Failed to load orders",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "connecting": "Connecting",
+    "unavailable": "Unavailable"
   },
   "strategy": {
     "title": "QuantCanvas",
