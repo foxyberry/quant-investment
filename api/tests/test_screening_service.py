@@ -75,6 +75,7 @@ class TestRunScreening:
                 {"005930.KS": "Samsung", "AAPL": "Apple"},
                 ["KOSPI", "SP500"],
                 {},
+                {"005930.KS": "KOSPI", "AAPL": "SP500"},
             ),
         )
 
@@ -85,6 +86,8 @@ class TestRunScreening:
                 self.current_price = 100.0
                 self.matched = True
                 self.condition_results = []
+                self.volume = 1000
+                self.change_pct = 1.5
 
         mock_screener = MagicMock()
         mock_screener.run.return_value = [_Result("005930.KS", "Samsung")]
@@ -106,6 +109,13 @@ class TestRunScreening:
         assert result["matched_count"] == 1
         assert result["resolved_universes"] == ["KOSPI", "SP500"]
         assert result["failed_universe_errors"] == {}
+        assert result["elapsed_ms"] is not None
+        # Verify new fields on result items
+        item = result["results"][0]
+        assert item.market == "KOSPI"
+        assert item.volume == 1000
+        assert item.change_pct == 1.5
+        assert item.score == 0.0  # 0 matched out of 1 condition (object())
 
     def test_run_screening_raises_when_all_universe_fetches_fail(self, monkeypatch):
         service = ScreeningService()
@@ -114,7 +124,7 @@ class TestRunScreening:
         monkeypatch.setattr(
             service,
             "_get_symbols_for_universes",
-            lambda universe_input, fail_fast=False: ({}, ["KOSPI"], {"KOSPI": "fetch failed"}),
+            lambda universe_input, fail_fast=False: ({}, ["KOSPI"], {"KOSPI": "fetch failed"}, {}),
         )
 
         with pytest.raises(ValueError, match="Failed to fetch all universes"):
@@ -130,10 +140,11 @@ class TestRunScreening:
         monkeypatch.setattr(service, "_resolve_conditions", lambda preset, params: [object()])
 
         oversized_symbols = {f"T{i:04d}": f"Name{i}" for i in range(service.MAX_TICKERS_PER_RUN + 1)}
+        ticker_to_market = {f"T{i:04d}": "KOSPI" for i in range(service.MAX_TICKERS_PER_RUN + 1)}
         monkeypatch.setattr(
             service,
             "_get_symbols_for_universes",
-            lambda universe_input, fail_fast=False: (oversized_symbols, ["KOSPI"], {}),
+            lambda universe_input, fail_fast=False: (oversized_symbols, ["KOSPI"], {}, ticker_to_market),
         )
 
         with pytest.raises(ValueError, match="Target universe too large"):

@@ -2,14 +2,11 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Clock } from 'lucide-react';
 import { ConditionMonitorPanel, FilterPanel, ResultTable } from '@/components/screening';
 import { runScreening } from '@/lib/api';
 import type { ScreeningResult } from '@/lib/types';
 
-/**
- * Screening page for running stock screening presets
- */
 export default function ScreeningPage() {
   const t = useTranslations('screening');
   const [activeMode, setActiveMode] = useState<'preset' | 'condition'>('preset');
@@ -19,11 +16,13 @@ export default function ScreeningPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<ScreeningResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [hasRun, setHasRun] = useState(false);
   const [stats, setStats] = useState<{
     total: number;
     matched: number;
     universes: string[];
     referenceDate: string | null;
+    elapsedMs: number | null;
   } | null>(null);
 
   const handleRunScreening = async () => {
@@ -40,14 +39,17 @@ export default function ScreeningPage() {
     try {
       const response = await runScreening(selectedPreset, selectedUniverses, referenceDate);
       setResults(response.results);
+      setHasRun(true);
       setStats({
         total: response.total_count,
         matched: response.matched_count,
         universes: response.universes ?? selectedUniverses,
         referenceDate: response.reference_date ?? referenceDate,
+        elapsedMs: response.elapsed_ms ?? null,
       });
     } catch (err) {
       console.error('Screening failed:', err);
+      setHasRun(true);
       setError(
         err instanceof Error
           ? err.message
@@ -123,7 +125,7 @@ export default function ScreeningPage() {
                 </div>
               )}
 
-              {/* Stats Bar with Universe/Date Badges */}
+              {/* Stats Bar */}
               {stats && (
                 <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3">
                   {/* Universe badges */}
@@ -171,11 +173,33 @@ export default function ScreeningPage() {
                       %
                     </span>
                   </div>
+                  {/* Execution time */}
+                  {stats.elapsedMs != null && (
+                    <>
+                      <div className="h-4 w-px bg-[var(--border)]" />
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-[var(--foreground-muted)]" />
+                        <span className="text-sm text-[var(--foreground-muted)]">
+                          {t('executionTime')}
+                        </span>
+                        <span className="font-semibold text-[var(--foreground)]">
+                          {stats.elapsedMs >= 1000
+                            ? `${(stats.elapsedMs / 1000).toFixed(1)}s`
+                            : `${Math.round(stats.elapsedMs)}ms`}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Results Table */}
-              <ResultTable results={results} isLoading={isLoading} />
+              <ResultTable
+                results={results}
+                isLoading={isLoading}
+                hasRun={hasRun}
+                onRunScreening={handleRunScreening}
+              />
             </div>
           </div>
         ) : (
