@@ -4,6 +4,7 @@ Screening API schemas.
 Pydantic models for stock screening request/response validation.
 """
 
+from datetime import date
 from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel, Field, model_validator
@@ -81,14 +82,22 @@ class ScreeningResultItem(BaseModel):
     Attributes:
         ticker: Stock ticker symbol
         name: Stock name
+        market: Market/universe the stock belongs to
         current_price: Current stock price
+        change_pct: Price change percentage (vs previous close)
+        volume: Trading volume
+        score: Condition match score (0-100)
         matched: Whether all conditions were satisfied
         conditions: List of individual condition results
     """
 
     ticker: str = Field(..., description="Stock ticker symbol")
     name: str = Field(..., description="Stock name")
+    market: Optional[str] = Field(None, description="Market/universe the stock belongs to")
     current_price: Optional[float] = Field(None, description="Current stock price")
+    change_pct: Optional[float] = Field(None, description="Price change percentage")
+    volume: Optional[int] = Field(None, description="Trading volume")
+    score: Optional[float] = Field(None, description="Condition match score (0-100)")
     matched: bool = Field(..., description="Whether all conditions were satisfied")
     conditions: List[ConditionResultItem] = Field(
         default_factory=list,
@@ -117,6 +126,10 @@ class ScreeningRequest(BaseModel):
     universes: List[str] = Field(
         default_factory=list,
         description="Multi-market universes (backward-compatible with `universe`)",
+    )
+    reference_date: Optional[date] = Field(
+        default=None,
+        description="Reference date for screening (defaults to today). Data is truncated at this date.",
     )
     params: Optional[Dict[str, Any]] = Field(
         default=None,
@@ -171,6 +184,7 @@ class ScreeningResponse(BaseModel):
         results: List of screening results for matched stocks
         total_count: Total number of stocks screened
         matched_count: Number of stocks that matched all conditions
+        elapsed_ms: Total screening execution time in milliseconds
     """
 
     results: List[ScreeningResultItem] = Field(
@@ -183,6 +197,14 @@ class ScreeningResponse(BaseModel):
     universes: List[str] = Field(
         default_factory=list,
         description="Normalized universe list used by the request",
+    )
+    reference_date: Optional[date] = Field(
+        default=None,
+        description="Reference date used for screening",
+    )
+    elapsed_ms: Optional[float] = Field(
+        None,
+        description="Total screening execution time in milliseconds",
     )
 
 

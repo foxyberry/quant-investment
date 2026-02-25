@@ -2,30 +2,32 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Clock } from 'lucide-react';
 import { ConditionMonitorPanel, FilterPanel, ResultTable } from '@/components/screening';
 import { runScreeningStream } from '@/lib/api';
 import type { ScreeningProgressEvent, ScreeningResult } from '@/lib/types';
 
-/**
- * Screening page for running stock screening presets
- */
 export default function ScreeningPage() {
   const t = useTranslations('screening');
   const [activeMode, setActiveMode] = useState<'preset' | 'condition'>('preset');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
-  const [selectedUniverse, setSelectedUniverse] = useState<string>('');
+  const [selectedUniverses, setSelectedUniverses] = useState<string[]>(['KOSPI']);
+  const [referenceDate, setReferenceDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<ScreeningResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [hasRun, setHasRun] = useState(false);
   const [progress, setProgress] = useState<ScreeningProgressEvent | null>(null);
   const [stats, setStats] = useState<{
     total: number;
     matched: number;
+    universes: string[];
+    referenceDate: string | null;
+    elapsedMs: number | null;
   } | null>(null);
 
   const handleRunScreening = async () => {
-    if (!selectedPreset || !selectedUniverse) {
+    if (!selectedPreset || selectedUniverses.length === 0) {
       setError(t('selectPresetAndUniverse'));
       return;
     }
@@ -42,19 +44,24 @@ export default function ScreeningPage() {
       status: 'running',
     });
 
-    runScreeningStream(selectedPreset, selectedUniverse, undefined, {
+    runScreeningStream(selectedPreset, selectedUniverses, referenceDate, undefined, {
       onProgress: (event) => {
         setProgress(event);
         if (event.status === 'error') {
+          setHasRun(true);
           setError(event.message || t('failedToRun'));
           setIsLoading(false);
         }
       },
       onResult: (response) => {
         setResults(response.results);
+        setHasRun(true);
         setStats({
           total: response.total_count,
           matched: response.matched_count,
+          universes: response.universes ?? selectedUniverses,
+          referenceDate: response.reference_date ?? referenceDate,
+          elapsedMs: response.elapsed_ms ?? null,
         });
         setProgress({
           processed_tickers: response.total_count,
@@ -67,6 +74,7 @@ export default function ScreeningPage() {
       },
       onError: (message) => {
         console.error('Screening failed:', message);
+        setHasRun(true);
         setError(message || t('failedToRun'));
         setIsLoading(false);
         setProgress((prev) =>
@@ -130,10 +138,12 @@ export default function ScreeningPage() {
             <div className="lg:sticky lg:top-6 lg:self-start">
               <FilterPanel
                 selectedPreset={selectedPreset}
-                selectedUniverse={selectedUniverse}
+                selectedUniverses={selectedUniverses}
+                referenceDate={referenceDate}
                 isLoading={isLoading}
                 onPresetChange={setSelectedPreset}
-                onUniverseChange={setSelectedUniverse}
+                onUniverseChange={setSelectedUniverses}
+                onReferenceDateChange={setReferenceDate}
                 onRun={handleRunScreening}
               />
             </div>
@@ -148,7 +158,6 @@ export default function ScreeningPage() {
                 </div>
               )}
 
-              {/* Progress Bar */}
               {progress && (
                 <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-4">
                   <div className="mb-2 flex items-center justify-between text-sm">
@@ -175,7 +184,23 @@ export default function ScreeningPage() {
 
               {/* Stats Bar */}
               {stats && (
-                <div className="flex flex-wrap items-center gap-4 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3">
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3">
+                  {/* Universe badges */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {stats.universes.map((universe) => (
+                      <span
+                        key={universe}
+                        className="inline-flex items-center rounded-full bg-[var(--color-primary)]/10 px-2.5 py-0.5 text-xs font-medium text-[var(--color-primary)]"
+                      >
+                        {universe}
+                      </span>
+                    ))}
+                  </div>
+                  {/* Reference date badge */}
+                  <span className="inline-flex items-center rounded-full bg-[var(--background)] border border-[var(--border)] px-2.5 py-0.5 text-xs text-[var(--foreground-muted)]">
+                    {stats.referenceDate ?? t('latestData')}
+                  </span>
+                  <div className="h-4 w-px bg-[var(--border)]" />
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-[var(--foreground-muted)]">
                       {t('totalScreened')}
@@ -205,11 +230,33 @@ export default function ScreeningPage() {
                       %
                     </span>
                   </div>
+                  {/* Execution time */}
+                  {stats.elapsedMs != null && (
+                    <>
+                      <div className="h-4 w-px bg-[var(--border)]" />
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-[var(--foreground-muted)]" />
+                        <span className="text-sm text-[var(--foreground-muted)]">
+                          {t('executionTime')}
+                        </span>
+                        <span className="font-semibold text-[var(--foreground)]">
+                          {stats.elapsedMs >= 1000
+                            ? `${(stats.elapsedMs / 1000).toFixed(1)}s`
+                            : `${Math.round(stats.elapsedMs)}ms`}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Results Table */}
-              <ResultTable results={results} isLoading={isLoading} />
+              <ResultTable
+                results={results}
+                isLoading={isLoading}
+                hasRun={hasRun}
+                onRunScreening={handleRunScreening}
+              />
             </div>
           </div>
         ) : (

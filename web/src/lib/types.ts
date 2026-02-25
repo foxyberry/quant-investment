@@ -50,6 +50,10 @@ export interface ScreeningResult {
   ticker: string;
   name: string;
   current_price: number | null;
+  market?: string | null;
+  change_pct?: number | null;
+  volume?: number | null;
+  score?: number | null;
   matched: boolean;
   conditions: ConditionResult[];
 }
@@ -58,6 +62,9 @@ export interface ScreeningResponse {
   results: ScreeningResult[];
   total_count: number;
   matched_count: number;
+  universes?: string[];
+  reference_date?: string | null;
+  elapsed_ms?: number | null;
 }
 
 export interface ScreeningProgressEvent {

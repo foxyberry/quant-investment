@@ -112,7 +112,8 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
             preset=request.preset,
             universe=request.universe,
             universes=request.universes,
-            params=request.params
+            params=request.params,
+            reference_date=request.reference_date,
         )
 
         return ScreeningResponse(
@@ -121,6 +122,8 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
             matched_count=result["matched_count"],
             universe=request.universe,
             universes=request.universes,
+            reference_date=request.reference_date,
+            elapsed_ms=result.get("elapsed_ms"),
         )
 
     except ValueError as e:
@@ -179,6 +182,7 @@ def run_screening_stream(request: ScreeningRequest):
                 universe=request.universe,
                 universes=request.universes,
                 params=request.params,
+                reference_date=request.reference_date,
                 progress_callback=_progress_cb,
             )
             if cancel_event.is_set():
@@ -263,6 +267,8 @@ def run_screening_stream(request: ScreeningRequest):
                                     matched_count=final_result["matched_count"],
                                     universe=request.universe,
                                     universes=request.universes,
+                                    reference_date=request.reference_date,
+                                    elapsed_ms=final_result.get("elapsed_ms"),
                                 )
                                 yield f"event: result\ndata: {response.model_dump_json()}\n\n"
                         break
@@ -273,6 +279,8 @@ def run_screening_stream(request: ScreeningRequest):
                         matched_count=item["matched_count"],
                         universe=request.universe,
                         universes=request.universes,
+                        reference_date=request.reference_date,
+                        elapsed_ms=item.get("elapsed_ms"),
                     )
                     yield f"event: result\ndata: {response.model_dump_json()}\n\n"
                     break
