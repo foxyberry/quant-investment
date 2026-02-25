@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, ChevronUp, CheckCircle, XCircle, Search, ArrowUpDown } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle, XCircle, ArrowUpDown, Lightbulb, Globe, Play } from 'lucide-react';
 import type { ScreeningResult } from '@/lib/types';
 import ConditionDetails from './ConditionDetails';
 
@@ -117,18 +117,30 @@ export default function ResultTable({ results, isLoading }: ResultTableProps) {
     );
   }
 
-  // Empty state
+  // Empty state — quick-guide cards
   if (results.length === 0) {
     return (
-      <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)]">
-        <div className="flex h-64 flex-col items-center justify-center gap-4">
-          <Search className="h-12 w-12 text-[var(--foreground-muted)]" />
-          <div className="text-center">
-            <p className="font-medium text-[var(--foreground)]">{t('noResults')}</p>
-            <p className="mt-1 text-sm text-[var(--foreground-muted)]">
-              {t('noResultsDesc')}
-            </p>
-          </div>
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-6">
+        <p className="mb-4 text-center text-lg font-semibold text-[var(--foreground)]">
+          {t('emptyGuideTitle')}
+        </p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <GuideCard
+            icon={<Lightbulb className="h-6 w-6 text-amber-500" />}
+            title={t('guideCreateStrategy')}
+            description={t('guideCreateStrategyDesc')}
+            href="/strategy"
+          />
+          <GuideCard
+            icon={<Globe className="h-6 w-6 text-blue-500" />}
+            title={t('guideSelectUniverse')}
+            description={t('guideSelectUniverseDesc')}
+          />
+          <GuideCard
+            icon={<Play className="h-6 w-6 text-green-500" />}
+            title={t('guideRunScreening')}
+            description={t('guideRunScreeningDesc')}
+          />
         </div>
       </div>
     );
@@ -189,6 +201,31 @@ export default function ResultTable({ results, isLoading }: ResultTableProps) {
         ))}
       </div>
     </div>
+  );
+}
+
+interface GuideCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  href?: string;
+}
+
+function GuideCard({ icon, title, description, href }: GuideCardProps) {
+  const Wrapper = href ? 'a' : 'div';
+  return (
+    <Wrapper
+      {...(href ? { href } : {})}
+      className={`flex flex-col items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-5 text-center transition-colors ${
+        href ? 'hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/5 cursor-pointer' : ''
+      }`}
+    >
+      {icon}
+      <div>
+        <p className="font-medium text-[var(--foreground)]">{title}</p>
+        <p className="mt-1 text-xs text-[var(--foreground-muted)]">{description}</p>
+      </div>
+    </Wrapper>
   );
 }
 

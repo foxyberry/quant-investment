@@ -140,6 +140,18 @@
     "noConditions": "No conditions to display",
     "yes": "Yes",
     "no": "No",
+    "stocks": "stocks",
+    "referenceDate": "Reference Date",
+    "resetToToday": "Reset to today",
+    "usingLatestData": "Using latest available data",
+    "latestData": "Latest",
+    "emptyGuideTitle": "Get started with stock screening",
+    "guideCreateStrategy": "Create a Strategy",
+    "guideCreateStrategyDesc": "Build custom screening conditions in the Strategy Builder, then run them here.",
+    "guideSelectUniverse": "Select Universes",
+    "guideSelectUniverseDesc": "Choose one or more markets — KOSPI, KOSDAQ, S&P 500, or NASDAQ 100.",
+    "guideRunScreening": "Run Screening",
+    "guideRunScreeningDesc": "Pick a preset or your saved strategy, then hit Run to find matching stocks.",
     "presetNames": {
       "deep_value_accumulation": "Deep Value Accumulation",
       "deep_value_accumulation_divergence": "Deep Value + Divergence"

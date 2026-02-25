@@ -58,6 +58,8 @@ export interface ScreeningResponse {
   results: ScreeningResult[];
   total_count: number;
   matched_count: number;
+  universes?: string[];
+  reference_date?: string | null;
 }
 
 export interface KiwoomCondition {

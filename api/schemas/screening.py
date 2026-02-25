@@ -4,6 +4,7 @@ Screening API schemas.
 Pydantic models for stock screening request/response validation.
 """
 
+from datetime import date
 from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel, Field, model_validator
@@ -118,6 +119,10 @@ class ScreeningRequest(BaseModel):
         default_factory=list,
         description="Multi-market universes (backward-compatible with `universe`)",
     )
+    reference_date: Optional[date] = Field(
+        default=None,
+        description="Reference date for screening (defaults to today). Data is truncated at this date.",
+    )
     params: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Optional parameters to override preset defaults"
@@ -183,6 +188,10 @@ class ScreeningResponse(BaseModel):
     universes: List[str] = Field(
         default_factory=list,
         description="Normalized universe list used by the request",
+    )
+    reference_date: Optional[date] = Field(
+        default=None,
+        description="Reference date used for screening",
     )
 
 

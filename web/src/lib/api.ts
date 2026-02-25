@@ -57,18 +57,20 @@ export async function getUniverses(): Promise<UniverseInfo[]> {
 }
 
 /**
- * Run screening with specified preset and universe
+ * Run screening with specified preset and universes
  */
 export async function runScreening(
   preset: string,
-  universe: string,
+  universes: string[],
+  referenceDate?: string | null,
   params?: Record<string, unknown>
 ): Promise<ScreeningResponse> {
   return fetchApi<ScreeningResponse>('/api/screening/run', {
     method: 'POST',
     body: JSON.stringify({
       preset,
-      universe,
+      universes,
+      reference_date: referenceDate ?? null,
       params,
     }),
   });

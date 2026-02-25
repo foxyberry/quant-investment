@@ -14,17 +14,20 @@ export default function ScreeningPage() {
   const t = useTranslations('screening');
   const [activeMode, setActiveMode] = useState<'preset' | 'condition'>('preset');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
-  const [selectedUniverse, setSelectedUniverse] = useState<string>('');
+  const [selectedUniverses, setSelectedUniverses] = useState<string[]>(['KOSPI']);
+  const [referenceDate, setReferenceDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<ScreeningResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<{
     total: number;
     matched: number;
+    universes: string[];
+    referenceDate: string | null;
   } | null>(null);
 
   const handleRunScreening = async () => {
-    if (!selectedPreset || !selectedUniverse) {
+    if (!selectedPreset || selectedUniverses.length === 0) {
       setError(t('selectPresetAndUniverse'));
       return;
     }
@@ -35,11 +38,13 @@ export default function ScreeningPage() {
     setStats(null);
 
     try {
-      const response = await runScreening(selectedPreset, selectedUniverse);
+      const response = await runScreening(selectedPreset, selectedUniverses, referenceDate);
       setResults(response.results);
       setStats({
         total: response.total_count,
         matched: response.matched_count,
+        universes: response.universes ?? selectedUniverses,
+        referenceDate: response.reference_date ?? referenceDate,
       });
     } catch (err) {
       console.error('Screening failed:', err);
@@ -98,10 +103,12 @@ export default function ScreeningPage() {
             <div className="lg:sticky lg:top-6 lg:self-start">
               <FilterPanel
                 selectedPreset={selectedPreset}
-                selectedUniverse={selectedUniverse}
+                selectedUniverses={selectedUniverses}
+                referenceDate={referenceDate}
                 isLoading={isLoading}
                 onPresetChange={setSelectedPreset}
-                onUniverseChange={setSelectedUniverse}
+                onUniverseChange={setSelectedUniverses}
+                onReferenceDateChange={setReferenceDate}
                 onRun={handleRunScreening}
               />
             </div>
@@ -116,9 +123,25 @@ export default function ScreeningPage() {
                 </div>
               )}
 
-              {/* Stats Bar */}
+              {/* Stats Bar with Universe/Date Badges */}
               {stats && (
-                <div className="flex flex-wrap items-center gap-4 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3">
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3">
+                  {/* Universe badges */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {stats.universes.map((universe) => (
+                      <span
+                        key={universe}
+                        className="inline-flex items-center rounded-full bg-[var(--color-primary)]/10 px-2.5 py-0.5 text-xs font-medium text-[var(--color-primary)]"
+                      >
+                        {universe}
+                      </span>
+                    ))}
+                  </div>
+                  {/* Reference date badge */}
+                  <span className="inline-flex items-center rounded-full bg-[var(--background)] border border-[var(--border)] px-2.5 py-0.5 text-xs text-[var(--foreground-muted)]">
+                    {stats.referenceDate ?? t('latestData')}
+                  </span>
+                  <div className="h-4 w-px bg-[var(--border)]" />
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-[var(--foreground-muted)]">
                       {t('totalScreened')}

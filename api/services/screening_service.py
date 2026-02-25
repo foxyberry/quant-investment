@@ -7,6 +7,7 @@ Bridges the API layer with the screener module.
 
 import logging
 import time
+from datetime import date
 from typing import List, Dict, Any, Optional
 
 from api.schemas.screening import (
@@ -401,6 +402,7 @@ class ScreeningService:
         universe: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
         universes: Optional[List[str]] = None,
+        reference_date: Optional[date] = None,
     ) -> Dict[str, Any]:
         """
         Run stock screening with the given preset and universe.
@@ -410,6 +412,7 @@ class ScreeningService:
             universe: Universe name (backward-compatible single value)
             params: Optional parameters to override preset defaults
             universes: Universe list (preferred for multi-market)
+            reference_date: Reference date for screening (defaults to today)
 
         Returns:
             Dict with results, total_count, matched_count, and resolved universes
@@ -458,6 +461,7 @@ class ScreeningService:
             use_full_universe=False,
             use_cache=True,
             stock_names=symbols_dict,
+            reference_date=reference_date,
         )
 
         # Run screening (show_progress=False for API)
