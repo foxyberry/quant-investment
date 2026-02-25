@@ -253,6 +253,9 @@ from .fundamental import (
     clear_info_cache,
 )
 
+# Register bulk basic lag/ratio/range conditions.
+from . import basic_catalog  # noqa: F401
+
 # Registry accessors (populated by @register_condition decorators above)
 from .registry import get_condition_class_map, get_condition_metadata
 
