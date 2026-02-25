@@ -445,7 +445,17 @@
     "guidanceFallbackHowToReadMax": "Lower values (below the maximum) are favored by this filter.",
     "guidanceFallbackHowToReadTarget": "This checks whether performance is favorable on the selected target bucket (e.g., weekday/month).",
     "guidanceFallbackHowToReadGeneral": "Tune the threshold using backtest results and keep it stable across market regimes.",
-    "guidanceFallbackCaution": "Avoid using this alone. Combine with risk and trend conditions to reduce false signals."
+    "guidanceFallbackCaution": "Avoid using this alone. Combine with risk and trend conditions to reduce false signals.",
+    "stocksRemaining": "{count} stocks",
+    "allConditionsMustMatch": "ALL CONDITIONS MUST MATCH (AND)",
+    "anyConditionMustMatch": "ANY CONDITION MUST MATCH (OR)",
+    "invertFirstCondition": "INVERT FIRST CONDITION (NOT)",
+    "inspectionOf": "Inspection of step: {label}",
+    "stocksPassingFilter": "{passed} / {total} stocks remaining",
+    "passRate": "{rate}%",
+    "openFullDataset": "Open Full Dataset View",
+    "inspectNode": "Click a node to inspect its results",
+    "topResultsPreview": "Top Results Preview"
   },
   "analysis": {
     "title": "Charts & Analysis",

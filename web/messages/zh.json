@@ -445,7 +445,17 @@
     "guidanceFallbackHowToReadMax": "这是最大值门槛条件，数值越低通常越容易通过。",
     "guidanceFallbackHowToReadTarget": "该条件用于检查所选目标桶（如星期/月）是否更有利。",
     "guidanceFallbackHowToReadGeneral": "请基于回测调参，并保证在不同市场阶段下参数稳定。",
-    "guidanceFallbackCaution": "不建议单独使用，最好与风险/趋势条件组合以减少误判。"
+    "guidanceFallbackCaution": "不建议单独使用，最好与风险/趋势条件组合以减少误判。",
+    "stocksRemaining": "{count}只股票",
+    "allConditionsMustMatch": "所有条件必须匹配 (AND)",
+    "anyConditionMustMatch": "任一条件匹配即可 (OR)",
+    "invertFirstCondition": "反转首个条件 (NOT)",
+    "inspectionOf": "步骤检查: {label}",
+    "stocksPassingFilter": "{passed} / {total} 只股票通过",
+    "passRate": "{rate}%",
+    "openFullDataset": "查看完整数据",
+    "inspectNode": "点击节点查看结果",
+    "topResultsPreview": "头部结果预览"
   },
   "analysis": {
     "title": "图表与分析",

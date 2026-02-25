@@ -445,7 +445,17 @@
     "guidanceFallbackHowToReadMax": "최대값 기준 조건이므로 값이 낮을수록 통과에 유리합니다.",
     "guidanceFallbackHowToReadTarget": "선택한 타겟 구간(예: 요일/월)에서 성과가 유리한지를 확인합니다.",
     "guidanceFallbackHowToReadGeneral": "백테스트 결과를 기준으로 임계값을 조정하고, 시장 국면이 바뀌어도 과도하게 흔들리지 않게 유지하세요.",
-    "guidanceFallbackCaution": "단독 사용보다 리스크/추세 조건과 함께 써서 오신호를 줄이는 것을 권장합니다."
+    "guidanceFallbackCaution": "단독 사용보다 리스크/추세 조건과 함께 써서 오신호를 줄이는 것을 권장합니다.",
+    "stocksRemaining": "{count}개 종목",
+    "allConditionsMustMatch": "모든 조건 충족 필수 (AND)",
+    "anyConditionMustMatch": "하나 이상 충족 (OR)",
+    "invertFirstCondition": "첫 번째 조건 반전 (NOT)",
+    "inspectionOf": "단계 검사: {label}",
+    "stocksPassingFilter": "{passed} / {total} 종목 통과",
+    "passRate": "{rate}%",
+    "openFullDataset": "전체 데이터 보기",
+    "inspectNode": "노드를 클릭하면 결과를 확인할 수 있습니다",
+    "topResultsPreview": "상위 결과 미리보기"
   },
   "analysis": {
     "title": "차트 & 분석",

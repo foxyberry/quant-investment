@@ -3,7 +3,7 @@
 import { memo, useCallback } from 'react';
 import { Handle, Position, useNodeId, useReactFlow } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import { Globe } from 'lucide-react';
+import { Globe, Eye } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   SUPPORTED_UNIVERSES,
@@ -67,6 +67,17 @@ function UniverseNode({ data, selected }: NodeProps) {
           {t('composite', { universe: selectedUniverses.join(' + ') })}
         </div>
       </div>
+
+      {/* Stock count funnel badge */}
+      {nodeData.intermediateResult && nodeData.intermediateResult.stock_count != null && (
+        <div className="px-3 pb-2 flex items-center gap-1.5 animate-in fade-in duration-300">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+            <Eye className="h-3 w-3" />
+            {t('stocksRemaining', { count: nodeData.intermediateResult.stock_count.toLocaleString() })}
+          </span>
+        </div>
+      )}
+
       <Handle
         type="source"
         position={Position.Right}
