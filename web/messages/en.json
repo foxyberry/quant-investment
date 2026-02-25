@@ -5078,6 +5078,20 @@
       "whenToUse": "Is recent performance within a tradable range? Useful for mean-reversion selection and risk-bucket construction.",
       "howToRead": "Example: lookback_days=20, min_return_pct=-3, max_return_pct=5 keeps names with 20-day return between -3% and +5%. Widening bounds increases candidates.",
       "caution": "Return alone is regime-sensitive and may overfit. Combine with trend/volume or quality filters and account for earnings/event gaps."
+    },
+    "supertrend_signal": {
+      "label": "Supertrend Signal",
+      "desc": "Detect a bullish or bearish price crossover against the Supertrend line within recent days.",
+      "help": "Uses ATR-based dynamic bands. Match when close crosses the Supertrend line in the selected direction during the lookback window.",
+      "whenToUse": "Is the trend truly turning up or down now? Use this for trend-following entries, pullback re-entry filters, and risk-control exits. Supertrend is a practical ATR trend tool widely used by discretionary and systematic traders in momentum and risk-management strategies.",
+      "howToRead": "Example: period=10, multiplier=3.0, lookback_days=3, direction=bullish means \"pass if price crossed above Supertrend within the last 3 bars.\" Increasing period or multiplier smooths signals and reduces noise but gives later entries; decreasing them reacts faster but increases whipsaws. Fast-moving growth/IT names often need a wider multiplier (for example 3.0-4.0), while lower-volatility defensive sectors may work with tighter settings (for example 2.0-3.0). As a reference, many charting defaults use period 10 and multiplier 3.0.",
+      "caution": "A crossover is not a guaranteed reversal; sideways markets can cause repeated false flips. Combine with volume/trend confirmation (for example relative volume or MA alignment) to reduce whipsaw risk. Sector volatility regimes differ, so one parameter set should not be reused blindly across all industries. Data quality matters: bad OHLC candles, split adjustment errors, or missing bars can distort ATR and produce incorrect signals.",
+      "params": {
+        "period": "ATR period",
+        "multiplier": "ATR multiplier",
+        "direction": "Signal direction (bullish/bearish)",
+        "lookback_days": "Lookback days"
+      }
     }
   },
   "settings": {
