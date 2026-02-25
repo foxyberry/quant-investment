@@ -1,42 +1,38 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 const repoRoot = path.resolve(process.cwd(), '..');
-const conditionsDir = path.join(repoRoot, 'screener', 'conditions');
 const messagePaths = {
   en: path.join(process.cwd(), 'messages', 'en.json'),
   ko: path.join(process.cwd(), 'messages', 'ko.json'),
   zh: path.join(process.cwd(), 'messages', 'zh.json'),
 };
 
-const registerPattern = /@register_condition\((.*?)\)\s*class\s/gs;
-const keyPattern = /key\s*=\s*"([a-z0-9_]+)"/;
-const paramPattern = /"name"\s*:\s*"([a-z0-9_]+)"/g;
 const metaKeys = new Set(['recommended', 'categories']);
 
 function parseRegistry() {
-  const files = fs.readdirSync(conditionsDir).filter((name) => name.endsWith('.py'));
-  const registry = new Map();
+  const script = [
+    'import json',
+    'import screener.conditions',
+    'from screener.conditions.registry import get_condition_metadata',
+    'meta = get_condition_metadata()',
+    'result = {k: sorted([p.get("name") for p in v.get("params", []) if isinstance(p, dict) and p.get("name")]) for k, v in meta.items()}',
+    'print(json.dumps(result))',
+  ].join('; ');
 
-  for (const file of files) {
-    const fullPath = path.join(conditionsDir, file);
-    const text = fs.readFileSync(fullPath, 'utf8');
+  const pythonBin = process.env.PYTHON_BIN || path.join(repoRoot, 'venv', 'bin', 'python');
+  const proc = spawnSync(pythonBin, ['-c', script], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  });
 
-    for (const match of text.matchAll(registerPattern)) {
-      const block = match[1];
-      const keyMatch = block.match(keyPattern);
-      if (!keyMatch) continue;
-
-      const key = keyMatch[1];
-      const params = new Set();
-      for (const pm of block.matchAll(paramPattern)) {
-        params.add(pm[1]);
-      }
-      registry.set(key, Array.from(params).sort());
-    }
+  if (proc.status !== 0) {
+    throw new Error(`Failed to load condition registry: ${proc.stderr || proc.stdout}`);
   }
 
-  return registry;
+  const parsed = JSON.parse(proc.stdout.trim() || '{}');
+  return new Map(Object.entries(parsed));
 }
 
 function loadConditions(locale) {
