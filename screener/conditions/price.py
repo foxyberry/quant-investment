@@ -233,6 +233,84 @@ class PriceChangeCondition(BaseCondition):
 
 
 @register_condition(
+    key="close_lag_1_lt_3",
+    label="Close t-1 < t-3",
+    description="Close price at t-1 is lower than close price at t-3",
+    category="price",
+    params=[
+        {"name": "left_lag", "type": "int", "default": 1, "description": "Left lag day"},
+        {"name": "right_lag", "type": "int", "default": 3, "description": "Right lag day"},
+        {"name": "operator", "type": "str", "default": "lt", "description": "Comparison operator"},
+    ],
+)
+class CloseLag1Lt3Condition(BaseCondition):
+    """종가 지연 비교 조건 (기본: t-1 < t-3)."""
+
+    def __init__(self, left_lag: int = 1, right_lag: int = 3, operator: str = "lt"):
+        self.left_lag = max(1, int(left_lag))
+        self.right_lag = max(1, int(right_lag))
+        self.operator = operator if operator in {"lt", "gt"} else "lt"
+
+    @property
+    def name(self) -> str:
+        return f"close_lag_compare_{self.left_lag}_{self.operator}_{self.right_lag}"
+
+    @property
+    def required_days(self) -> int:
+        return max(self.left_lag, self.right_lag) + 2
+
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        if "close" not in data.columns:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Missing close column"},
+            )
+
+        if len(data) < self.required_days:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Insufficient data"},
+            )
+
+        left_idx = -(self.left_lag + 1)
+        right_idx = -(self.right_lag + 1)
+        left_value = data["close"].iloc[left_idx]
+        right_value = data["close"].iloc[right_idx]
+
+        if pd.isna(left_value) or pd.isna(right_value):
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "NaN in close data"},
+            )
+
+        if self.operator == "lt":
+            matched = bool(left_value < right_value)
+        else:
+            matched = bool(left_value > right_value)
+
+        return ConditionResult(
+            matched=matched,
+            condition_name=self.name,
+            details={
+                "left_lag": self.left_lag,
+                "right_lag": self.right_lag,
+                "operator": self.operator,
+                "left_value": float(left_value),
+                "right_value": float(right_value),
+            },
+        )
+
+    def __repr__(self) -> str:
+        return (
+            "CloseLag1Lt3Condition("
+            f"left_lag={self.left_lag}, right_lag={self.right_lag}, operator='{self.operator}')"
+        )
+
+
+@register_condition(
     key="return_turnaround",
     label="Return Turnaround",
     description="Previous N-day return <= threshold and recent N-day return >= threshold",

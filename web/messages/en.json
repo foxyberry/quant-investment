@@ -585,6 +585,19 @@
       "howToRead": "days=1 checks one-day change. min=3, max=10 captures stocks up 3-10%. min=-5 finds stocks down 5%+. Combine days and thresholds freely to target any price-action pattern.",
       "caution": "Raw price change reveals nothing about the cause — earnings, news, sector rotation, and market beta all blend together. Always combine with volume or fundamental filters to separate signal from noise."
     },
+    "close_lag_1_lt_3": {
+      "label": "Close t-1 < t-3",
+      "desc": "Checks whether close price at t-1 is lower than at t-3",
+      "params": {
+        "left_lag": "Left lag day",
+        "right_lag": "Right lag day",
+        "operator": "Comparison operator (lt/gt)"
+      },
+      "help": "A basic lag comparison filter: compare two past close points without using moving averages.",
+      "whenToUse": "Is short-term price momentum weakening? Use this for momentum slowdown or pullback setups; in practice it is often paired with trend-following filters similar to post-momentum checks discussed in momentum literature.",
+      "howToRead": "Example: left_lag=1, right_lag=3, operator=lt means yesterday's close must be below the close three sessions ago. Increasing right_lag compares against older history (more structural), while decreasing it makes the signal more reactive. In fast-growth sectors this can trigger frequently, while defensives may show slower transitions.",
+      "caution": "A single lag comparison can create many false signals in choppy markets. Combine with volume/trend filters (e.g., volume above average, MA alignment). Sector behavior differs, and corporate events or delayed/adjusted price data can distort isolated comparisons."
+    },
     "return_turnaround": {
       "label": "Return Turnaround",
       "desc": "Prev N-day return <= threshold and recent N-day return >= threshold",
