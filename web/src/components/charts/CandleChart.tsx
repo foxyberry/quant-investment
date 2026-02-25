@@ -8,6 +8,7 @@ import {
   ColorType,
 } from 'lightweight-charts';
 import type { IChartApi, ISeriesApi, CandlestickData, HistogramData, Time } from 'lightweight-charts';
+import { useTranslations } from 'next-intl';
 import type { OHLCVData } from '@/lib/types';
 
 interface CandleChartProps {
@@ -30,6 +31,7 @@ export default function CandleChart({
   showVolume = true,
   className = '',
 }: CandleChartProps) {
+  const t = useTranslations('stockDetail');
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -50,46 +52,29 @@ export default function CandleChart({
     return () => mediaQuery.removeEventListener('change', checkDarkMode);
   }, []);
 
-  // Initialize chart
+  // Initialize chart (dark mode is handled separately via applyOptions)
   useEffect(() => {
     if (!containerRef.current) return;
-
-    const chartOptions = {
-      layout: {
-        background: {
-          type: ColorType.Solid,
-          color: isDarkMode ? '#1e293b' : '#ffffff',
-        },
-        textColor: isDarkMode ? '#94a3b8' : '#64748b',
-      },
-      grid: {
-        vertLines: {
-          color: isDarkMode ? '#334155' : '#e2e8f0',
-        },
-        horzLines: {
-          color: isDarkMode ? '#334155' : '#e2e8f0',
-        },
-      },
-      crosshair: {
-        mode: 1,
-      },
-      rightPriceScale: {
-        borderColor: isDarkMode ? '#334155' : '#e2e8f0',
-      },
-      timeScale: {
-        borderColor: isDarkMode ? '#334155' : '#e2e8f0',
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      handleScroll: {
-        vertTouchDrag: false,
-      },
-    };
 
     const initialWidth = containerRef.current.clientWidth || containerRef.current.offsetWidth || 300;
 
     const chart = createChart(containerRef.current, {
-      ...chartOptions,
+      layout: {
+        background: { type: ColorType.Solid, color: '#ffffff' },
+        textColor: '#64748b',
+      },
+      grid: {
+        vertLines: { color: '#e2e8f0' },
+        horzLines: { color: '#e2e8f0' },
+      },
+      crosshair: { mode: 1 },
+      rightPriceScale: { borderColor: '#e2e8f0' },
+      timeScale: {
+        borderColor: '#e2e8f0',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      handleScroll: { vertTouchDrag: false },
       width: initialWidth,
       height: height,
     });
@@ -147,7 +132,7 @@ export default function CandleChart({
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
     };
-  }, [height, showVolume, isDarkMode]);
+  }, [height, showVolume]);
 
   // Update data
   useEffect(() => {
@@ -216,7 +201,7 @@ export default function CandleChart({
         className={`flex items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] ${className}`}
         style={{ height }}
       >
-        <p className="text-[var(--foreground-muted)]">No chart data available</p>
+        <p className="text-[var(--foreground-muted)]">{t('noChartData')}</p>
       </div>
     );
   }

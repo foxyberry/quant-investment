@@ -525,6 +525,7 @@
     "ofRange": "区间的",
     "loadingData": "正在加载 {ticker} 数据...",
     "loadFailed": "数据加载失败",
+    "noChartData": "没有图表数据",
     "retry": "重试",
     "loadingConditions": "正在加载条件...",
     "aiDescription": "基于 AI 的分析，包含估值评分、风险评估和入场建议。",
