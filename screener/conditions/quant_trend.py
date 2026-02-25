@@ -51,6 +51,65 @@ def _atr(data: pd.DataFrame, period: int) -> pd.Series:
     return tr.rolling(period).mean()
 
 
+def _supertrend(data: pd.DataFrame, period: int, multiplier: float) -> pd.Series:
+    hl2 = (data["high"] + data["low"]) / 2.0
+    atr = _atr(data, period)
+    upper_basic = hl2 + (multiplier * atr)
+    lower_basic = hl2 - (multiplier * atr)
+
+    final_upper = upper_basic.copy()
+    final_lower = lower_basic.copy()
+
+    for i in range(1, len(data)):
+        prev_upper = final_upper.iloc[i - 1]
+        prev_lower = final_lower.iloc[i - 1]
+        prev_close = data["close"].iloc[i - 1]
+        curr_upper = upper_basic.iloc[i]
+        curr_lower = lower_basic.iloc[i]
+
+        if any(pd.isna(v) for v in [prev_upper, prev_lower, prev_close, curr_upper, curr_lower]):
+            continue
+
+        if curr_upper < prev_upper or prev_close > prev_upper:
+            final_upper.iloc[i] = curr_upper
+        else:
+            final_upper.iloc[i] = prev_upper
+
+        if curr_lower > prev_lower or prev_close < prev_lower:
+            final_lower.iloc[i] = curr_lower
+        else:
+            final_lower.iloc[i] = prev_lower
+
+    supertrend = pd.Series(np.nan, index=data.index, dtype=float)
+    for i in range(1, len(data)):
+        prev_st = supertrend.iloc[i - 1]
+        prev_upper = final_upper.iloc[i - 1]
+        prev_lower = final_lower.iloc[i - 1]
+        curr_close = data["close"].iloc[i]
+        curr_upper = final_upper.iloc[i]
+        curr_lower = final_lower.iloc[i]
+
+        if any(pd.isna(v) for v in [curr_close, curr_upper, curr_lower]):
+            continue
+
+        # Initialize to upper band when prior state is unknown.
+        if pd.isna(prev_st):
+            supertrend.iloc[i] = curr_upper
+            continue
+
+        if not pd.isna(prev_upper) and prev_st == prev_upper:
+            supertrend.iloc[i] = curr_upper if curr_close <= curr_upper else curr_lower
+            continue
+
+        if not pd.isna(prev_lower) and prev_st == prev_lower:
+            supertrend.iloc[i] = curr_lower if curr_close >= curr_lower else curr_upper
+            continue
+
+        supertrend.iloc[i] = curr_upper
+
+    return supertrend
+
+
 def _adx(data: pd.DataFrame, period: int = 14):
     high = data["high"]
     low = data["low"]
@@ -421,3 +480,83 @@ class KeltnerChannelBreakoutCondition(BaseCondition):
             return _insufficient(self.name)
         upper = float(mid + (self.atr_multiplier * atr))
         return ConditionResult(matched=bool(close > upper), condition_name=self.name, details={"upper": upper, "close": float(close)})
+
+
+@register_condition(
+    key="supertrend_signal",
+    label="Supertrend Signal",
+    description="Price crossing Supertrend band within lookback",
+    category="trend",
+    params=[
+        {"name": "period", "type": "int", "default": 10, "description": "ATR period"},
+        {"name": "multiplier", "type": "float", "default": 3.0, "description": "ATR multiplier"},
+        {"name": "direction", "type": "str", "default": "bullish", "description": "bullish|bearish"},
+        {"name": "lookback_days", "type": "int", "default": 3, "description": "Lookback days"},
+    ],
+)
+class SupertrendSignalCondition(BaseCondition):
+    def __init__(
+        self,
+        period: int = 10,
+        multiplier: float = 3.0,
+        direction: str = "bullish",
+        lookback_days: int = 3,
+    ):
+        self.period = max(2, int(period))
+        self.multiplier = max(0.1, float(multiplier))
+        self.direction = direction if direction in {"bullish", "bearish"} else "bullish"
+        self.lookback_days = max(1, int(lookback_days))
+
+    @property
+    def name(self) -> str:
+        return "supertrend_signal"
+
+    @property
+    def required_days(self) -> int:
+        return self.period + self.lookback_days + 10
+
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        required_cols = {"high", "low", "close"}
+        if not required_cols.issubset(data.columns):
+            return _insufficient(self.name)
+        if len(data) < self.required_days:
+            return _insufficient(self.name)
+
+        st = _supertrend(data, self.period, self.multiplier)
+        close = data["close"]
+
+        cross_day = None
+        for i in range(1, self.lookback_days + 1):
+            prev_close = close.iloc[-(i + 1)]
+            curr_close = close.iloc[-i]
+            prev_st = st.iloc[-(i + 1)]
+            curr_st = st.iloc[-i]
+            if any(pd.isna(v) for v in [prev_close, curr_close, prev_st, curr_st]):
+                continue
+
+            if self.direction == "bullish":
+                if prev_close <= prev_st and curr_close > curr_st:
+                    cross_day = i
+                    break
+            else:
+                if prev_close >= prev_st and curr_close < curr_st:
+                    cross_day = i
+                    break
+
+        latest_st = st.iloc[-1]
+        latest_close = close.iloc[-1]
+        if pd.isna(latest_st) or pd.isna(latest_close):
+            return _insufficient(self.name)
+
+        return ConditionResult(
+            matched=cross_day is not None,
+            condition_name=self.name,
+            details={
+                "cross_day": cross_day,
+                "direction": self.direction,
+                "period": self.period,
+                "multiplier": self.multiplier,
+                "latest_close": float(latest_close),
+                "latest_supertrend": float(latest_st),
+            },
+        )

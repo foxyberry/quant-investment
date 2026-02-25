@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+import screener.conditions.quant_trend as quant_trend
 from screener.conditions.quant_trend import (
     Momentum121Condition,
     VolatilityNDayCondition,
@@ -12,6 +13,7 @@ from screener.conditions.quant_trend import (
     DeathCross50200Condition,
     DonchianChannelBreakoutCondition,
     KeltnerChannelBreakoutCondition,
+    SupertrendSignalCondition,
 )
 from screener.conditions.registry import get_condition_metadata
 
@@ -40,6 +42,7 @@ def test_quant_trend_keys_registered():
         "death_cross_50_200",
         "donchian_channel_breakout",
         "keltner_channel_breakout",
+        "supertrend_signal",
     }
     assert expected.issubset(keys)
 
@@ -56,6 +59,7 @@ def test_quant_trend_conditions_compute():
     assert "cross_day" in DeathCross50200Condition(lookback_days=20).evaluate("T", data).details
     assert "upper_prev" in DonchianChannelBreakoutCondition(lookback_days=20).evaluate("T", data).details
     assert "upper" in KeltnerChannelBreakoutCondition().evaluate("T", data).details
+    assert "direction" in SupertrendSignalCondition().evaluate("T", data).details
 
 
 def test_relative_strength_without_benchmark_failsafe():
@@ -63,3 +67,37 @@ def test_relative_strength_without_benchmark_failsafe():
     result = RelativeStrengthVsBenchmarkCondition().evaluate("T", data)
     assert result.matched is False
     assert result.details.get("error") == "Insufficient data"
+
+
+def test_supertrend_signal_bullish_and_bearish_cross(monkeypatch):
+    data = _df(80)
+    close = data["close"]
+
+    bullish_st = close + 10.0
+    bullish_st.iloc[-2] = close.iloc[-2] + 1.0
+    bullish_st.iloc[-1] = close.iloc[-1] - 1.0
+    monkeypatch.setattr(quant_trend, "_supertrend", lambda d, p, m: bullish_st)
+    bullish = SupertrendSignalCondition(direction="bullish", lookback_days=3).evaluate("T", data)
+    assert bullish.matched is True
+    assert bullish.details["cross_day"] == 1
+
+    bearish_st = close - 10.0
+    bearish_st.iloc[-2] = close.iloc[-2] - 1.0
+    bearish_st.iloc[-1] = close.iloc[-1] + 1.0
+    monkeypatch.setattr(quant_trend, "_supertrend", lambda d, p, m: bearish_st)
+    bearish = SupertrendSignalCondition(direction="bearish", lookback_days=3).evaluate("T", data)
+    assert bearish.matched is True
+    assert bearish.details["cross_day"] == 1
+
+
+def test_supertrend_signal_insufficient_and_nan_guard(monkeypatch):
+    short = _df(8)
+    insufficient = SupertrendSignalCondition(period=10, lookback_days=3).evaluate("T", short)
+    assert insufficient.matched is False
+    assert insufficient.details.get("error") == "Insufficient data"
+
+    data = _df(80)
+    monkeypatch.setattr(quant_trend, "_supertrend", lambda d, p, m: pd.Series(np.nan, index=d.index))
+    nan_case = SupertrendSignalCondition(direction="bullish").evaluate("T", data)
+    assert nan_case.matched is False
+    assert nan_case.details.get("error") == "Insufficient data"

@@ -5057,6 +5057,20 @@
       "whenToUse": "近期涨跌幅是否处于可交易区间？适合均值回归候选筛选或风险分层。",
       "howToRead": "示例：lookback_days=20、min=-3、max=5，表示仅保留20日收益率在-3%到+5%的标的。放宽区间会增加候选。",
       "caution": "收益率单因子易受行情阶段影响。建议叠加趋势、成交量或基本面条件。"
+    },
+    "supertrend_signal": {
+      "label": "Supertrend 信号",
+      "desc": "检测最近区间内价格对 Supertrend 线的看涨/看跌穿越。",
+      "help": "基于 ATR 动态通道。若在 lookback 窗口内出现指定方向的穿越则通过。",
+      "whenToUse": "现在趋势是否真的转强或转弱？适合用于趋势跟随入场、回调再入场过滤和风控离场。Supertrend 是交易中常见的 ATR 趋势工具，常用于动量与风险管理策略。",
+      "howToRead": "示例：period=10、multiplier=3.0、lookback_days=3、direction=bullish，表示“最近 3 根K线内，收盘价向上穿越 Supertrend 才通过”。提高 period 或 multiplier 会减少噪音但信号更晚；降低则更灵敏但假信号更多。高波动行业（如成长/科技）通常需要更宽参数（如 3.0-4.0），低波动行业可用更紧参数（如 2.0-3.0）。常见图表默认值是 period 10、multiplier 3.0。",
+      "caution": "穿越不等于趋势必然反转；震荡市中容易反复打脸。建议与成交量或趋势确认条件（如相对成交量、均线排列）组合使用。行业波动结构差异大，不能把同一参数机械套用到所有标的。数据质量同样关键：错误的 OHLC、复权问题或缺失K线会扭曲 ATR 并导致误判。",
+      "params": {
+        "period": "ATR 周期",
+        "multiplier": "ATR 倍数",
+        "direction": "信号方向 (bullish/bearish)",
+        "lookback_days": "回看天数"
+      }
     }
   },
   "settings": {

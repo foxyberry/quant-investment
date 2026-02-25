@@ -114,6 +114,7 @@ from .quant_trend import (
     DeathCross50200Condition,
     DonchianChannelBreakoutCondition,
     KeltnerChannelBreakoutCondition,
+    SupertrendSignalCondition,
 )
 
 from .quant_oscillators import (
@@ -306,6 +307,7 @@ __all__ = [
     'ADXTrendStrengthCondition', 'MARibbonAlignmentCondition',
     'GoldenCross50200Condition', 'DeathCross50200Condition',
     'DonchianChannelBreakoutCondition', 'KeltnerChannelBreakoutCondition',
+    'SupertrendSignalCondition',
 
     # Quant Oscillator Batch 5
     'BollingerSqueezeBreakoutCondition', 'BollingerPercentBCondition',
