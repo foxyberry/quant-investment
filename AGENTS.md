@@ -23,6 +23,14 @@ Execution workflow is documented in:
   - auto-approval candidates,
   - next-run defaults.
 
+## GitHub Safety Guardrails (Codex + Claude Common)
+1. Repeat `code -> PR -> revise` until LGTM, but do not commit intermediate steps.
+   - Leave one final consolidated PR comment summarizing all review rounds and fixes.
+2. If a request can cause high-volume actions in a short time (e.g., \"create 100 issues\"), do not create 100 issues directly.
+   - Group and process in batches.
+3. Keep at least 2 minutes between each issue creation.
+4. During issue execution, keep at least 2 minutes between each PR merge operation.
+
 ## Issue Lock Rule (Mandatory for Codex)
 - Goal: prevent duplicate agent work on the same issue.
 - On issue start, Codex must immediately:
