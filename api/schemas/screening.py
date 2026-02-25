@@ -186,6 +186,17 @@ class ScreeningResponse(BaseModel):
     )
 
 
+class ScreeningProgressEvent(BaseModel):
+    """Streaming progress payload for screening execution."""
+
+    processed_tickers: int = Field(default=0, description="Number of processed tickers")
+    total_tickers: int = Field(default=0, description="Total tickers to process")
+    matched_count: int = Field(default=0, description="Current matched count")
+    progress_pct: float = Field(default=0.0, description="Progress percentage")
+    status: str = Field(default="running", description="running | done | error")
+    message: Optional[str] = Field(default=None, description="Optional status message")
+
+
 class PresetInfo(BaseModel):
     """
     Information about a screening preset.

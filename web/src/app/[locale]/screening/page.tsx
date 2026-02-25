@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle } from 'lucide-react';
 import { ConditionMonitorPanel, FilterPanel, ResultTable } from '@/components/screening';
-import { runScreening } from '@/lib/api';
-import type { ScreeningResult } from '@/lib/types';
+import { runScreeningStream } from '@/lib/api';
+import type { ScreeningProgressEvent, ScreeningResult } from '@/lib/types';
 
 /**
  * Screening page for running stock screening presets
@@ -18,6 +18,7 @@ export default function ScreeningPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<ScreeningResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<ScreeningProgressEvent | null>(null);
   const [stats, setStats] = useState<{
     total: number;
     matched: number;
@@ -33,24 +34,55 @@ export default function ScreeningPage() {
     setError(null);
     setResults([]);
     setStats(null);
+    setProgress({
+      processed_tickers: 0,
+      total_tickers: 0,
+      matched_count: 0,
+      progress_pct: 0,
+      status: 'running',
+    });
 
-    try {
-      const response = await runScreening(selectedPreset, selectedUniverse);
-      setResults(response.results);
-      setStats({
-        total: response.total_count,
-        matched: response.matched_count,
-      });
-    } catch (err) {
-      console.error('Screening failed:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('failedToRun')
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    runScreeningStream(selectedPreset, selectedUniverse, undefined, {
+      onProgress: (event) => {
+        setProgress(event);
+        if (event.status === 'error') {
+          setError(event.message || t('failedToRun'));
+          setIsLoading(false);
+        }
+      },
+      onResult: (response) => {
+        setResults(response.results);
+        setStats({
+          total: response.total_count,
+          matched: response.matched_count,
+        });
+        setProgress({
+          processed_tickers: response.total_count,
+          total_tickers: response.total_count,
+          matched_count: response.matched_count,
+          progress_pct: 100,
+          status: 'done',
+        });
+        setIsLoading(false);
+      },
+      onError: (message) => {
+        console.error('Screening failed:', message);
+        setError(message || t('failedToRun'));
+        setIsLoading(false);
+        setProgress((prev) =>
+          prev
+            ? { ...prev, status: 'error', message }
+            : {
+                processed_tickers: 0,
+                total_tickers: 0,
+                matched_count: 0,
+                progress_pct: 0,
+                status: 'error',
+                message,
+              }
+        );
+      },
+    });
   };
 
   return (
@@ -113,6 +145,31 @@ export default function ScreeningPage() {
                 <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
                   <AlertCircle className="h-5 w-5 flex-shrink-0" />
                   <span>{error}</span>
+                </div>
+              )}
+
+              {/* Progress Bar */}
+              {progress && (
+                <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-4">
+                  <div className="mb-2 flex items-center justify-between text-sm">
+                    <span className="text-[var(--foreground-muted)]">{t('runningScreening')}</span>
+                    <span className="font-semibold text-[var(--foreground)]">
+                      {progress.progress_pct.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--background)]">
+                    <div
+                      className="h-full bg-[var(--color-primary)] transition-all duration-300"
+                      style={{ width: `${Math.max(0, Math.min(100, progress.progress_pct))}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-4 text-xs text-[var(--foreground-muted)]">
+                    <span>
+                      {progress.processed_tickers.toLocaleString()} / {progress.total_tickers.toLocaleString()}
+                    </span>
+                    <span>matched: {progress.matched_count.toLocaleString()}</span>
+                    <span>status: {progress.status}</span>
+                  </div>
                 </div>
               )}
 

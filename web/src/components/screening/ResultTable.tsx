@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, ChevronUp, CheckCircle, XCircle, Search, ArrowUpDown } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle, XCircle, Search, ArrowUpDown, X } from 'lucide-react';
 import type { ScreeningResult } from '@/lib/types';
 import ConditionDetails from './ConditionDetails';
 
@@ -62,6 +62,7 @@ function formatPrice(price: number | null): string {
 export default function ResultTable({ results, isLoading }: ResultTableProps) {
   const t = useTranslations('screening');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [selectedResult, setSelectedResult] = useState<ScreeningResult | null>(null);
   const [sortField, setSortField] = useState<SortField>('ticker');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -101,6 +102,14 @@ export default function ResultTable({ results, isLoading }: ResultTableProps) {
 
   const toggleRow = useCallback((ticker: string) => {
     setExpandedRow((prev) => (prev === ticker ? null : ticker));
+  }, []);
+
+  const openResultModal = useCallback((result: ScreeningResult) => {
+    setSelectedResult(result);
+  }, []);
+
+  const closeResultModal = useCallback(() => {
+    setSelectedResult(null);
   }, []);
 
   // Loading state
@@ -171,6 +180,7 @@ export default function ResultTable({ results, isLoading }: ResultTableProps) {
                 result={result}
                 isExpanded={expandedRow === result.ticker}
                 onToggle={toggleRow}
+                onOpen={openResultModal}
               />
             ))}
           </tbody>
@@ -185,9 +195,14 @@ export default function ResultTable({ results, isLoading }: ResultTableProps) {
             result={result}
             isExpanded={expandedRow === result.ticker}
             onToggle={toggleRow}
+            onOpen={openResultModal}
           />
         ))}
       </div>
+
+      {selectedResult && (
+        <ResultDetailModal result={selectedResult} onClose={closeResultModal} />
+      )}
     </div>
   );
 }
@@ -196,19 +211,21 @@ interface RowProps {
   result: ScreeningResult;
   isExpanded: boolean;
   onToggle: (ticker: string) => void;
+  onOpen: (result: ScreeningResult) => void;
 }
 
 /**
  * Desktop table row component
  */
-function TableRow({ result, isExpanded, onToggle }: RowProps) {
+function TableRow({ result, isExpanded, onToggle, onOpen }: RowProps) {
   const t = useTranslations('screening');
   return (
     <>
       <tr
+        onClick={() => onOpen(result)}
         className={`border-b border-[var(--border)] transition-colors ${
           isExpanded ? 'bg-[var(--background)]' : 'hover:bg-[var(--background)]'
-        }`}
+        } cursor-pointer`}
       >
         <td className="px-4 py-3">
           <span className="font-mono font-medium text-[var(--color-primary)]">
@@ -229,7 +246,10 @@ function TableRow({ result, isExpanded, onToggle }: RowProps) {
         <td className="px-4 py-3 text-center">
           <button
             type="button"
-            onClick={() => onToggle(result.ticker)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle(result.ticker);
+            }}
             className="rounded p-1 text-[var(--foreground-muted)] hover:bg-[var(--border)] hover:text-[var(--foreground)] transition-colors"
             aria-label={isExpanded ? t('hideDetails') : t('showDetails')}
             aria-expanded={isExpanded}
@@ -259,11 +279,15 @@ function TableRow({ result, isExpanded, onToggle }: RowProps) {
 /**
  * Mobile card component for responsive display
  */
-function MobileCard({ result, isExpanded, onToggle }: RowProps) {
+function MobileCard({ result, isExpanded, onToggle, onOpen }: RowProps) {
   const t = useTranslations('screening');
   return (
     <div className="p-4">
-      <div className="flex items-start justify-between">
+      <button
+        type="button"
+        onClick={() => onOpen(result)}
+        className="flex w-full items-start justify-between text-left"
+      >
         <div>
           <div className="flex items-center gap-2">
             <span className="font-mono font-medium text-[var(--color-primary)]">
@@ -282,7 +306,7 @@ function MobileCard({ result, isExpanded, onToggle }: RowProps) {
             {formatPrice(result.current_price)}
           </p>
         </div>
-      </div>
+      </button>
 
       <button
         type="button"
@@ -308,6 +332,54 @@ function MobileCard({ result, isExpanded, onToggle }: RowProps) {
           <ConditionDetails conditions={result.conditions} />
         </div>
       )}
+    </div>
+  );
+}
+
+interface ResultDetailModalProps {
+  result: ScreeningResult;
+  onClose: () => void;
+}
+
+function ResultDetailModal({ result, onClose }: ResultDetailModalProps) {
+  const t = useTranslations('screening');
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <button type="button" className="absolute inset-0" onClick={onClose} aria-label="Close" />
+      <div className="relative z-10 max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+          <div>
+            <p className="font-mono text-sm font-semibold text-[var(--color-primary)]">{result.ticker}</p>
+            <p className="text-sm text-[var(--foreground)]">{result.name}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded p-1 text-[var(--foreground-muted)] hover:bg-[var(--background)] hover:text-[var(--foreground)]"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="space-y-3 overflow-y-auto p-4">
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <span className="font-mono text-[var(--foreground)]">{formatPrice(result.current_price)}</span>
+            {result.matched ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-950 dark:text-green-300">
+                <CheckCircle className="h-3.5 w-3.5" />
+                {t('match')}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs text-red-700 dark:bg-red-950 dark:text-red-300">
+                <XCircle className="h-3.5 w-3.5" />
+                Not matched
+              </span>
+            )}
+          </div>
+          <ConditionDetails conditions={result.conditions} />
+        </div>
+      </div>
     </div>
   );
 }
