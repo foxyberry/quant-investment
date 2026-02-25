@@ -67,6 +67,15 @@ export interface ScreeningResponse {
   elapsed_ms?: number | null;
 }
 
+export interface ScreeningProgressEvent {
+  processed_tickers: number;
+  total_tickers: number;
+  matched_count: number;
+  progress_pct: number;
+  status: 'running' | 'done' | 'error';
+  message?: string;
+}
+
 export interface KiwoomCondition {
   index: number;
   name: string;

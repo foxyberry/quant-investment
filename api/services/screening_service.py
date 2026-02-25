@@ -8,7 +8,7 @@ Bridges the API layer with the screener module.
 import logging
 import time
 from datetime import date
-from typing import List, Dict, Any, Optional
+from typing import Callable, List, Dict, Any, Optional
 
 from api.schemas.screening import (
     ScreeningResultItem,
@@ -406,6 +406,7 @@ class ScreeningService:
         params: Optional[Dict[str, Any]] = None,
         universes: Optional[List[str]] = None,
         reference_date: Optional[date] = None,
+        progress_callback: Optional[Callable[[int, int, int], None]] = None,
     ) -> Dict[str, Any]:
         """
         Run stock screening with the given preset and universe.
@@ -469,7 +470,11 @@ class ScreeningService:
 
         # Run screening (show_progress=False for API)
         run_started_at = time.perf_counter()
-        results = screener.run(tickers=tickers, show_progress=False)
+        results = screener.run(
+            tickers=tickers,
+            show_progress=False,
+            progress_callback=progress_callback,
+        )
         run_elapsed_ms = (time.perf_counter() - run_started_at) * 1000.0
 
         # Convert to response format
