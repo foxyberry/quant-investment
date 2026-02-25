@@ -106,7 +106,8 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
             preset=request.preset,
             universe=request.universe,
             universes=request.universes,
-            params=request.params
+            params=request.params,
+            reference_date=request.reference_date,
         )
 
         return ScreeningResponse(
@@ -115,6 +116,7 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
             matched_count=result["matched_count"],
             universe=request.universe,
             universes=request.universes,
+            reference_date=request.reference_date,
         )
 
     except ValueError as e:

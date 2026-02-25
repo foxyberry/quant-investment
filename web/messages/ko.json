@@ -140,6 +140,18 @@
     "noConditions": "표시할 조건이 없습니다",
     "yes": "예",
     "no": "아니오",
+    "stocks": "종목",
+    "referenceDate": "기준일",
+    "resetToToday": "오늘로 초기화",
+    "usingLatestData": "최신 데이터를 사용합니다",
+    "latestData": "최신",
+    "emptyGuideTitle": "종목 스크리닝 시작하기",
+    "guideCreateStrategy": "전략 만들기",
+    "guideCreateStrategyDesc": "전략 빌더에서 나만의 스크리닝 조건을 만들고 여기서 실행하세요.",
+    "guideSelectUniverse": "유니버스 선택",
+    "guideSelectUniverseDesc": "KOSPI, KOSDAQ, S&P 500, NASDAQ 100 중 하나 이상의 시장을 선택하세요.",
+    "guideRunScreening": "스크리닝 실행",
+    "guideRunScreeningDesc": "프리셋이나 저장된 전략을 선택한 후 실행 버튼을 눌러 조건에 맞는 종목을 찾으세요.",
     "presetNames": {
       "deep_value_accumulation": "딥 밸류 매집",
       "deep_value_accumulation_divergence": "딥 밸류 + 다이버전스"

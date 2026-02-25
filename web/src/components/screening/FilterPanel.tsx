@@ -6,22 +6,28 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import { getPresets, getUniverses } from '@/lib/api';
 import type { PresetInfo, UniverseInfo } from '@/lib/types';
+import UniverseCheckboxGroup from './UniverseCheckboxGroup';
+import DateSelector from './DateSelector';
 
 interface FilterPanelProps {
   selectedPreset: string;
-  selectedUniverse: string;
+  selectedUniverses: string[];
+  referenceDate: string | null;
   isLoading: boolean;
   onPresetChange: (preset: string) => void;
-  onUniverseChange: (universe: string) => void;
+  onUniverseChange: (universes: string[]) => void;
+  onReferenceDateChange: (date: string | null) => void;
   onRun: () => void;
 }
 
 export default function FilterPanel({
   selectedPreset,
-  selectedUniverse,
+  selectedUniverses,
+  referenceDate,
   isLoading,
   onPresetChange,
   onUniverseChange,
+  onReferenceDateChange,
   onRun,
 }: FilterPanelProps) {
   const t = useTranslations('screening');
@@ -53,9 +59,6 @@ export default function FilterPanel({
         setLoadingUniverses(true);
         const data = await getUniverses();
         setUniverses(data);
-        if (data.length > 0 && !selectedUniverse) {
-          onUniverseChange(data[0].name);
-        }
       } catch (err) {
         console.error('Failed to load universes:', err);
         setError(t('failedToLoadUniverses'));
@@ -66,7 +69,7 @@ export default function FilterPanel({
 
     loadPresets();
     loadUniverses();
-  }, [onPresetChange, onUniverseChange, selectedPreset, selectedUniverse, t]);
+  }, [onPresetChange, selectedPreset, t]);
 
   const { staticPresets, customPresets } = useMemo(() => {
     const staticGroup = presets.filter((p) => p.source === 'static');
@@ -74,8 +77,16 @@ export default function FilterPanel({
     return { staticPresets: staticGroup, customPresets: customGroup };
   }, [presets]);
 
+  const stockCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const u of universes) {
+      counts[u.name] = u.stock_count;
+    }
+    return counts;
+  }, [universes]);
+
   const selectedPresetInfo = presets.find((p) => p.name === selectedPreset);
-  const canRun = selectedPreset && selectedUniverse && !isLoading;
+  const canRun = selectedPreset && selectedUniverses.length > 0 && !isLoading;
 
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-6">
@@ -140,33 +151,33 @@ export default function FilterPanel({
           )}
         </div>
 
-        {/* Universe Selector */}
+        {/* Universe Multi-Select */}
         <div>
-          <label
-            htmlFor="universe-select"
-            className="mb-1.5 block text-sm font-medium text-[var(--foreground)]"
-          >
+          <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">
             {t('universe')}
           </label>
-          <select
-            id="universe-select"
-            value={selectedUniverse}
-            onChange={(e) => onUniverseChange(e.target.value)}
-            disabled={loadingUniverses || isLoading}
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[var(--foreground)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-opacity-20 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loadingUniverses ? (
-              <option value="">{t('loadingUniverses')}</option>
-            ) : universes.length === 0 ? (
-              <option value="">{t('noUniverses')}</option>
-            ) : (
-              universes.map((universe) => (
-                <option key={universe.name} value={universe.name}>
-                  {universe.name} ({universe.stock_count.toLocaleString()} stocks)
-                </option>
-              ))
-            )}
-          </select>
+          {loadingUniverses ? (
+            <p className="text-sm text-[var(--foreground-muted)]">{t('loadingUniverses')}</p>
+          ) : (
+            <UniverseCheckboxGroup
+              selectedUniverses={selectedUniverses}
+              onChange={onUniverseChange}
+              stockCounts={stockCounts}
+              disabled={isLoading}
+            />
+          )}
+        </div>
+
+        {/* Reference Date Selector */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">
+            {t('referenceDate')}
+          </label>
+          <DateSelector
+            value={referenceDate}
+            onChange={onReferenceDateChange}
+            disabled={isLoading}
+          />
         </div>
 
         {/* Conditions Preview */}

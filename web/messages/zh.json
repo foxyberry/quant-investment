@@ -140,6 +140,18 @@
     "noConditions": "无条件可显示",
     "yes": "是",
     "no": "否",
+    "stocks": "只股票",
+    "referenceDate": "基准日期",
+    "resetToToday": "重置为今天",
+    "usingLatestData": "使用最新可用数据",
+    "latestData": "最新",
+    "emptyGuideTitle": "开始股票筛选",
+    "guideCreateStrategy": "创建策略",
+    "guideCreateStrategyDesc": "在策略构建器中创建自定义筛选条件，然后在此运行。",
+    "guideSelectUniverse": "选择股票池",
+    "guideSelectUniverseDesc": "选择一个或多个市场——KOSPI、KOSDAQ、标普500或纳斯达克100。",
+    "guideRunScreening": "运行筛选",
+    "guideRunScreeningDesc": "选择一个预设或已保存的策略，然后点击运行以查找匹配的股票。",
     "presetNames": {
       "deep_value_accumulation": "深度价值吸筹",
       "deep_value_accumulation_divergence": "深度价值 + 背离"
