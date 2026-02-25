@@ -511,7 +511,7 @@ export default function TickerAnalysisPage() {
                 onClick={() => fetchData(selectedPeriod)}
               >
                 <RefreshCw className="h-4 w-4 mr-1.5" />
-                {t('refresh')}
+                {tCommon('refresh')}
               </Button>
               <Button
                 variant="outline"

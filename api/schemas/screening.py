@@ -68,6 +68,7 @@ class ConditionResultItem(BaseModel):
     """
 
     condition_name: str = Field(..., description="Name of the condition")
+    condition_key: str = Field(default="", description="Registry key for i18n lookup")
     matched: bool = Field(..., description="Whether the condition was satisfied")
     details: Dict[str, Any] = Field(
         default_factory=dict,

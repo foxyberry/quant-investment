@@ -90,7 +90,7 @@ class ScreeningService:
                 description = (preset_func.__doc__ or "").strip()
                 try:
                     condition_instances = preset_func()
-                    conditions = [c.name for c in condition_instances]
+                    conditions = [c.registry_key for c in condition_instances]
                 except Exception as e:
                     logger.warning(f"Failed to get conditions for preset {name}: {e}")
 
@@ -476,6 +476,7 @@ class ScreeningService:
             conditions_list = [
                 ConditionResultItem(
                     condition_name=cr.condition_name,
+                    condition_key=cr.condition_key,
                     matched=cr.matched,
                     details=cr.details
                 )
@@ -555,6 +556,7 @@ class ScreeningService:
         conditions_list = [
             ConditionResultItem(
                 condition_name=cr.condition_name,
+                condition_key=cr.condition_key,
                 matched=cr.matched,
                 details=cr.details
             )

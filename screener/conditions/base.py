@@ -19,6 +19,7 @@ class ConditionResult:
     """조건 평가 결과"""
     matched: bool
     condition_name: str
+    condition_key: str = ""
     details: Dict[str, Any] = field(default_factory=dict)
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
@@ -38,6 +39,11 @@ class BaseCondition(ABC):
     def name(self) -> str:
         """조건 이름"""
         pass
+
+    @property
+    def registry_key(self) -> str:
+        """Registry key for i18n lookup. Set by @register_condition decorator."""
+        return getattr(self.__class__, '_registry_key', self.name)
 
     @property
     @abstractmethod

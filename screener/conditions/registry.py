@@ -35,6 +35,7 @@ def register_condition(
     """Decorator to register a condition class with its metadata."""
 
     def decorator(cls: Type) -> Type:
+        cls._registry_key = key
         _CLASS_MAP[key] = cls
         _METADATA[key] = {
             "label": label,

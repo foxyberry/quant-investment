@@ -14,6 +14,7 @@ interface ConditionDetailsProps {
  */
 export default function ConditionDetails({ conditions }: ConditionDetailsProps) {
   const t = useTranslations('screening');
+  const tConditions = useTranslations('conditions');
 
   if (conditions.length === 0) {
     return (
@@ -50,7 +51,7 @@ export default function ConditionDetails({ conditions }: ConditionDetailsProps) 
                   : 'text-red-800 dark:text-red-200'
               }`}
             >
-              {condition.condition_name}
+              {condition.condition_key && tConditions.has(`${condition.condition_key}.label`) ? tConditions(`${condition.condition_key}.label`) : condition.condition_name}
             </span>
           </div>
 

@@ -154,11 +154,39 @@
     "guideRunScreeningDesc": "选择一个预设或已保存的策略，然后点击运行以查找匹配的股票。",
     "presetNames": {
       "deep_value_accumulation": "深度价值吸筹",
-      "deep_value_accumulation_divergence": "深度价值 + 背离"
+      "deep_value_accumulation_divergence": "深度价值 + 背离",
+      "ma_touch_160": "160日均线触碰",
+      "ma_touch_120": "120日均线触碰",
+      "ma_touch_200": "200日均线触碰",
+      "oversold_bounce": "超卖反弹",
+      "golden_cross": "金叉",
+      "dead_cross": "死叉",
+      "volume_breakout": "放量突破",
+      "ma_touch_with_oversold": "均线触碰 + RSI超卖",
+      "trend_following": "趋势跟踪",
+      "value_dip": "价值低吸",
+      "momentum_breakout": "动量突破",
+      "accumulation_basic": "吸筹区间 (基础)",
+      "accumulation_obv": "吸筹区间 (OBV)",
+      "accumulation_full": "吸筹区间 (综合)"
     },
     "presetDescriptions": {
       "deep_value_accumulation": "从高点下跌50%以上并显示吸筹信号（布林带收窄、成交量萎缩、价格横盘）",
-      "deep_value_accumulation_divergence": "深度价值吸筹 + OBV/随机指标/VPCI背离确认"
+      "deep_value_accumulation_divergence": "深度价值吸筹 + OBV/随机指标/VPCI背离确认",
+      "ma_touch_160": "触碰160日均线支撑的股票",
+      "ma_touch_120": "触碰120日均线支撑的股票",
+      "ma_touch_200": "触碰200日均线（长期趋势线）的股票",
+      "oversold_bounce": "RSI超卖反弹策略",
+      "golden_cross": "短期均线上穿长期均线",
+      "dead_cross": "短期均线下穿长期均线（做空/平仓用）",
+      "volume_breakout": "放量突破策略",
+      "ma_touch_with_oversold": "均线触碰 + RSI超卖复合信号",
+      "trend_following": "均线多头排列 + 动量趋势跟踪",
+      "value_dip": "价值投资低吸策略",
+      "momentum_breakout": "成交量确认的动量突破",
+      "accumulation_basic": "安静吸筹区间 — 基础（布林带收缩 + 低成交量）",
+      "accumulation_obv": "安静吸筹区间 — OBV背离确认",
+      "accumulation_full": "安静吸筹区间 — 综合（布林带 + OBV + 背离）"
     }
   },
   "portfolio": {

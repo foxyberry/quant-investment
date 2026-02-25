@@ -154,11 +154,39 @@
     "guideRunScreeningDesc": "Pick a preset or your saved strategy, then hit Run to find matching stocks.",
     "presetNames": {
       "deep_value_accumulation": "Deep Value Accumulation",
-      "deep_value_accumulation_divergence": "Deep Value + Divergence"
+      "deep_value_accumulation_divergence": "Deep Value + Divergence",
+      "ma_touch_160": "MA Touch 160D",
+      "ma_touch_120": "MA Touch 120D",
+      "ma_touch_200": "MA Touch 200D",
+      "oversold_bounce": "Oversold Bounce",
+      "golden_cross": "Golden Cross",
+      "dead_cross": "Dead Cross",
+      "volume_breakout": "Volume Breakout",
+      "ma_touch_with_oversold": "MA Touch + RSI Oversold",
+      "trend_following": "Trend Following",
+      "value_dip": "Value Dip",
+      "momentum_breakout": "Momentum Breakout",
+      "accumulation_basic": "Accumulation (Basic)",
+      "accumulation_obv": "Accumulation (OBV)",
+      "accumulation_full": "Accumulation (Full)"
     },
     "presetDescriptions": {
       "deep_value_accumulation": "Stocks down 50%+ from highs with accumulation signals (BB squeeze, low volume, price consolidation)",
-      "deep_value_accumulation_divergence": "Deep value accumulation with OBV/Stochastic/VPCI divergence confirmation"
+      "deep_value_accumulation_divergence": "Deep value accumulation with OBV/Stochastic/VPCI divergence confirmation",
+      "ma_touch_160": "Stocks touching 160-day moving average support",
+      "ma_touch_120": "Stocks touching 120-day moving average support",
+      "ma_touch_200": "Stocks touching 200-day moving average (long-term trend line)",
+      "oversold_bounce": "RSI oversold bounce strategy",
+      "golden_cross": "Short-term MA crossing above long-term MA",
+      "dead_cross": "Short-term MA crossing below long-term MA (short/liquidation)",
+      "volume_breakout": "Volume surge breakout strategy",
+      "ma_touch_with_oversold": "MA touch combined with RSI oversold signal",
+      "trend_following": "Trend following with MA alignment and momentum",
+      "value_dip": "Value investing dip buying strategy",
+      "momentum_breakout": "Momentum breakout with volume confirmation",
+      "accumulation_basic": "Quiet accumulation zone - basic (BB squeeze + low volume)",
+      "accumulation_obv": "Quiet accumulation zone with OBV divergence",
+      "accumulation_full": "Quiet accumulation zone - comprehensive (BB + OBV + divergence)"
     }
   },
   "portfolio": {

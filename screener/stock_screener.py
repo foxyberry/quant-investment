@@ -75,6 +75,7 @@ class ScreeningResult:
             "conditions": [
                 {
                     "name": r.condition_name,
+                    "condition_key": r.condition_key,
                     "matched": r.matched,
                     "details": r.details
                 }
@@ -364,6 +365,8 @@ class StockScreener:
 
         for condition in self.conditions:
             result = condition.evaluate(ticker, data)
+            if not result.condition_key:
+                result.condition_key = condition.registry_key
             results.append(result)
             if not result.matched:
                 all_matched = False

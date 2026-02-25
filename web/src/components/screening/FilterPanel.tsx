@@ -31,6 +31,7 @@ export default function FilterPanel({
   onRun,
 }: FilterPanelProps) {
   const t = useTranslations('screening');
+  const tConditions = useTranslations('conditions');
   const [presets, setPresets] = useState<PresetInfo[]>([]);
   const [universes, setUniverses] = useState<UniverseInfo[]>([]);
   const [loadingPresets, setLoadingPresets] = useState(true);
@@ -127,7 +128,7 @@ export default function FilterPanel({
                   <optgroup label={t('builtInPresets')}>
                     {staticPresets.map((preset) => (
                       <option key={preset.name} value={preset.name}>
-                        {preset.name}
+                        {t.has(`presetNames.${preset.name}`) ? t(`presetNames.${preset.name}`) : preset.description || preset.name}
                       </option>
                     ))}
                   </optgroup>
@@ -146,7 +147,7 @@ export default function FilterPanel({
           </select>
           {selectedPresetInfo && (
             <p className="mt-1.5 text-sm text-[var(--foreground-muted)]">
-              {selectedPresetInfo.description}
+              {t.has(`presetDescriptions.${selectedPresetInfo.name}`) ? t(`presetDescriptions.${selectedPresetInfo.name}`) : selectedPresetInfo.description}
             </p>
           )}
         </div>
@@ -190,7 +191,7 @@ export default function FilterPanel({
               {selectedPresetInfo.conditions.map((condition, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <span className="text-[var(--color-primary)]">-</span>
-                  <span>{condition}</span>
+                  <span>{tConditions.has(`${condition}.label`) ? tConditions(`${condition}.label`) : condition}</span>
                 </li>
               ))}
             </ul>

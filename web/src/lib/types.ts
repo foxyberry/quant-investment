@@ -42,6 +42,7 @@ export interface UniverseInfo {
 
 export interface ConditionResult {
   condition_name: string;
+  condition_key: string;
   matched: boolean;
   details: Record<string, unknown>;
 }

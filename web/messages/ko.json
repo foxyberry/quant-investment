@@ -154,11 +154,39 @@
     "guideRunScreeningDesc": "프리셋이나 저장된 전략을 선택한 후 실행 버튼을 눌러 조건에 맞는 종목을 찾으세요.",
     "presetNames": {
       "deep_value_accumulation": "딥 밸류 매집",
-      "deep_value_accumulation_divergence": "딥 밸류 + 다이버전스"
+      "deep_value_accumulation_divergence": "딥 밸류 + 다이버전스",
+      "ma_touch_160": "160일선 터치",
+      "ma_touch_120": "120일선 터치",
+      "ma_touch_200": "200일선 터치",
+      "oversold_bounce": "과매도 반등",
+      "golden_cross": "골든크로스",
+      "dead_cross": "데드크로스",
+      "volume_breakout": "거래량 돌파",
+      "ma_touch_with_oversold": "이평선 터치 + RSI 과매도",
+      "trend_following": "추세 추종",
+      "value_dip": "가치 저점 매수",
+      "momentum_breakout": "모멘텀 돌파",
+      "accumulation_basic": "매집 구간 (기본)",
+      "accumulation_obv": "매집 구간 (OBV)",
+      "accumulation_full": "매집 구간 (종합)"
     },
     "presetDescriptions": {
       "deep_value_accumulation": "고점 대비 50% 이상 하락 후 매집 신호 (BB 수축, 거래량 감소, 가격 횡보)",
-      "deep_value_accumulation_divergence": "딥 밸류 매집 + OBV/Stochastic/VPCI 다이버전스 확인"
+      "deep_value_accumulation_divergence": "딥 밸류 매집 + OBV/Stochastic/VPCI 다이버전스 확인",
+      "ma_touch_160": "160일 이동평균선 지지 터치 종목",
+      "ma_touch_120": "120일 이동평균선 지지 터치 종목",
+      "ma_touch_200": "200일 이동평균선 (장기 추세선) 터치 종목",
+      "oversold_bounce": "RSI 과매도 반등 전략",
+      "golden_cross": "단기 이평선이 장기 이평선 상향 돌파",
+      "dead_cross": "단기 이평선이 장기 이평선 하향 돌파 (공매도/청산용)",
+      "volume_breakout": "거래량 급증 돌파 전략",
+      "ma_touch_with_oversold": "이평선 터치 + RSI 과매도 복합 신호",
+      "trend_following": "이평선 정배열 + 모멘텀 추세 추종",
+      "value_dip": "가치 투자 저점 매수 전략",
+      "momentum_breakout": "거래량 확인된 모멘텀 돌파",
+      "accumulation_basic": "조용한 매집 구간 — 기본 (볼린저 스퀴즈 + 저거래량)",
+      "accumulation_obv": "조용한 매집 구간 — OBV 다이버전스 확인",
+      "accumulation_full": "조용한 매집 구간 — 종합 (볼린저 + OBV + 다이버전스)"
     }
   },
   "portfolio": {
