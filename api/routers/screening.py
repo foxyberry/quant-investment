@@ -117,6 +117,7 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
             universe=request.universe,
             universes=request.universes,
             reference_date=request.reference_date,
+            elapsed_ms=result.get("elapsed_ms"),
         )
 
     except ValueError as e:

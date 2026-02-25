@@ -57,6 +57,7 @@ class ScreeningResult:
     condition_results: List[ConditionResult]
     current_price: Optional[float] = None
     volume: Optional[int] = None
+    change_pct: Optional[float] = None
     timestamp: datetime = field(default_factory=datetime.now)
 
     @property
@@ -72,6 +73,7 @@ class ScreeningResult:
             "matched": self.matched,
             "current_price": self.current_price,
             "volume": self.volume,
+            "change_pct": self.change_pct,
             "conditions": [
                 {
                     "name": r.condition_name,
@@ -370,6 +372,13 @@ class StockScreener:
 
         current_price = float(data['close'].iloc[-1]) if not data.empty else None
         volume = int(data['volume'].iloc[-1]) if not data.empty else None
+
+        change_pct: Optional[float] = None
+        if len(data) >= 2:
+            prev_close = float(data['close'].iloc[-2])
+            if prev_close > 0:
+                change_pct = ((current_price - prev_close) / prev_close) * 100
+
         name = self._get_stock_name(ticker)
 
         return ScreeningResult(
@@ -378,7 +387,8 @@ class StockScreener:
             matched=all_matched,
             condition_results=results,
             current_price=current_price,
-            volume=volume
+            volume=volume,
+            change_pct=change_pct,
         )
 
     def run(
