@@ -564,7 +564,7 @@ function TableRow({ result, rank, colCount = 9, isExpanded, onToggle, onOpen }: 
             colSpan={colCount}
             className="border-b border-[var(--border)] bg-[var(--background)] px-4 py-4"
           >
-            <ConditionDetails conditions={result.conditions} />
+            <ConditionDetails conditions={result.conditions} ticker={result.ticker} />
           </td>
         </tr>
       )}
@@ -635,7 +635,7 @@ function MobileCard({ result, rank, isExpanded, onToggle, onOpen }: RowProps) {
 
       {isExpanded && (
         <div className="mt-3">
-          <ConditionDetails conditions={result.conditions} />
+          <ConditionDetails conditions={result.conditions} ticker={result.ticker} />
         </div>
       )}
     </div>
@@ -674,7 +674,7 @@ function ResultDetailModal({ result, onClose }: ResultDetailModalProps) {
             </span>
             <ScoreBadge score={result.score} />
           </div>
-          <ConditionDetails conditions={result.conditions} />
+          <ConditionDetails conditions={result.conditions} ticker={result.ticker} />
         </div>
       </div>
     </div>

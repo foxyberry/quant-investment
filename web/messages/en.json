@@ -184,7 +184,14 @@
     "presetDescriptions": {
       "deep_value_accumulation": "Stocks down 50%+ from highs with accumulation signals (BB squeeze, low volume, price consolidation)",
       "deep_value_accumulation_divergence": "Deep value accumulation with OBV/Stochastic/VPCI divergence confirmation"
-    }
+    },
+    "conditionMatchSummary": "Match: {passed}/{total} ({rate}%)",
+    "actualValue": "Actual",
+    "targetValue": "Target",
+    "viewFullDetail": "View Full Detail",
+    "addToWatchlist": "Add to Watchlist",
+    "passLabel": "PASS",
+    "failLabel": "FAIL"
   },
   "portfolio": {
     "title": "Portfolio",
