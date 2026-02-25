@@ -91,6 +91,14 @@ class StrategyExecuteRequest(BaseModel):
         default_factory=list,
         description="Normalized multi-market universe overrides",
     )
+    portfolio_construction: Optional["PortfolioConstructionConfig"] = Field(
+        default=None,
+        description="Optional post-screening portfolio construction configuration",
+    )
+    ranking_config: Optional["RankingConfig"] = Field(
+        default=None,
+        description="Optional cross-sectional ranking and long-short basket settings",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -195,6 +203,124 @@ class StrategyExecuteResponse(BaseModel):
     universes: List[str] = Field(default_factory=list)
     conditions_used: List[str] = Field(default_factory=list)
     node_results: Dict[str, NodeIntermediateResult] = Field(default_factory=dict)
+    weighted_portfolio: List["WeightedPortfolioItem"] = Field(default_factory=list)
+    portfolio_construction_result: Optional["PortfolioConstructionResult"] = None
+    ranked_results: List["RankedResultItem"] = Field(default_factory=list)
+    long_short_baskets: Optional["LongShortBaskets"] = None
+
+
+class PortfolioConstructionConfig(BaseModel):
+    """Optional portfolio construction settings after screening."""
+
+    mode: Literal["inverse_vol", "risk_parity"] = Field(
+        default="inverse_vol",
+        description="Weight construction mode",
+    )
+    lookback_days: int = Field(
+        default=60,
+        ge=20,
+        le=252,
+        description="Lookback window used for return volatility/covariance estimation",
+    )
+    max_assets: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of matched assets to include in weight optimization",
+    )
+    target_volatility: Optional[float] = Field(
+        default=None,
+        gt=0,
+        le=2.0,
+        description="Optional annualized target volatility (e.g. 0.12 = 12%)",
+    )
+
+
+class WeightedPortfolioItem(BaseModel):
+    """Single weighted allocation entry from strategy output."""
+
+    ticker: str
+    name: str
+    weight: float = Field(ge=0.0, le=1.0)
+    current_price: Optional[float] = None
+    annualized_volatility: Optional[float] = None
+
+
+class PortfolioConstructionResult(BaseModel):
+    """Metadata from portfolio construction stage."""
+
+    mode_requested: str
+    mode_applied: str
+    lookback_days: int
+    assets_requested: int
+    assets_used: int
+    estimated_portfolio_volatility: Optional[float] = None
+    target_volatility: Optional[float] = None
+    suggested_gross_leverage: Optional[float] = None
+    fallback_reason: Optional[str] = None
+
+
+class RankingConfig(BaseModel):
+    """Cross-sectional ranking configuration."""
+
+    metric_key: str = Field(
+        default="current_price",
+        description="Metric key to rank by (e.g., current_price, per, pbr, dividend_yield, or condition detail key)",
+    )
+    direction: Literal["asc", "desc"] = Field(
+        default="desc",
+        description="Sort direction for ranking metric",
+    )
+    top_percent: float = Field(
+        default=10.0,
+        gt=0,
+        le=50.0,
+        description="Top bucket percentage for long basket",
+    )
+    bottom_percent: float = Field(
+        default=10.0,
+        ge=0,
+        le=50.0,
+        description="Bottom bucket percentage for short basket",
+    )
+    max_assets: int = Field(
+        default=100,
+        ge=1,
+        le=500,
+        description="Maximum ranked assets to consider",
+    )
+    long_short: bool = Field(
+        default=True,
+        description="Whether to emit both long and short baskets",
+    )
+
+
+class RankedResultItem(BaseModel):
+    """Single ranked item output."""
+
+    ticker: str
+    name: str
+    score: float
+    rank: int = Field(ge=1)
+
+
+class LongShortBasketItem(BaseModel):
+    """Single long/short basket position."""
+
+    ticker: str
+    name: str
+    score: float
+    side: Literal["long", "short"]
+    weight: float = Field(ge=0.0, le=1.0)
+
+
+class LongShortBaskets(BaseModel):
+    """Long and short decile-style baskets."""
+
+    metric_key: str
+    direction: str
+    long: List[LongShortBasketItem] = Field(default_factory=list)
+    short: List[LongShortBasketItem] = Field(default_factory=list)
 
 
 class ConditionParamInfo(BaseModel):
@@ -283,3 +409,7 @@ class SectorListResponse(BaseModel):
     market: str
     sectors: List[SectorInfo]
     total_sectors: int
+
+
+StrategyExecuteRequest.model_rebuild()
+StrategyExecuteResponse.model_rebuild()

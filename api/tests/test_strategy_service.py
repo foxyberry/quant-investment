@@ -3,18 +3,27 @@ Tests for strategy service: graph building and condition mapping.
 """
 
 import pytest
+import numpy as np
+import pandas as pd
 
 from api.schemas.strategy import (
+    PortfolioConstructionConfig,
+    RankingConfig,
     StrategyGraph,
     StrategyNode,
     StrategyNodeData,
     StrategyEdge,
+    StrategyResultItem,
 )
 from api.services.strategy_service import (
+    _build_ranking_outputs,
     build_conditions_from_graph,
     get_available_conditions,
     CONDITION_CLASS_MAP,
     CONDITION_METADATA,
+    _build_weighted_portfolio,
+    _compute_inverse_vol_weights,
+    _compute_risk_parity_weights,
     _build_condition,
     execute_strategy,
     execute_strategy_with_progress,
@@ -713,3 +722,113 @@ class TestExecuteStrategySectorPolicy:
                 graph=graph,
                 universe_overrides=["SP500"],
             )
+
+
+class TestPortfolioConstruction:
+    def test_inverse_vol_weights_are_normalized(self):
+        vols = np.array([0.2, 0.4, 0.8], dtype=float)
+        weights = _compute_inverse_vol_weights(vols)
+        assert len(weights) == 3
+        assert abs(float(weights.sum()) - 1.0) < 1e-9
+        assert weights[0] > weights[1] > weights[2]
+
+    def test_risk_parity_weights_are_normalized(self):
+        cov = np.array(
+            [
+                [0.04, 0.01, 0.0],
+                [0.01, 0.09, 0.0],
+                [0.0, 0.0, 0.16],
+            ],
+            dtype=float,
+        )
+        weights = _compute_risk_parity_weights(cov)
+        assert len(weights) == 3
+        assert abs(float(weights.sum()) - 1.0) < 1e-8
+        assert all(w >= 0 for w in weights)
+
+    def test_weighted_portfolio_falls_back_when_history_missing(self, monkeypatch):
+        monkeypatch.setattr(
+            "api.services.strategy_service._estimate_return_matrix",
+            lambda tickers, lookback_days, probe_conditions: pd.DataFrame(),
+        )
+        items = [
+            StrategyResultItem(
+                ticker="AAPL",
+                name="Apple",
+                current_price=100.0,
+                matched=True,
+                conditions=[],
+            ),
+            StrategyResultItem(
+                ticker="MSFT",
+                name="Microsoft",
+                current_price=200.0,
+                matched=True,
+                conditions=[],
+            ),
+        ]
+        weighted, meta = _build_weighted_portfolio(
+            final_items=items,
+            leaf_conditions=[MinPriceCondition(1)],
+            config=PortfolioConstructionConfig(mode="risk_parity", lookback_days=60, max_assets=10),
+        )
+        assert len(weighted) == 2
+        assert abs(sum(w.weight for w in weighted) - 1.0) < 1e-8
+        assert meta is not None
+        assert meta.mode_applied == "equal_weight"
+        assert meta.fallback_reason == "insufficient_return_history"
+
+
+class TestRankingOutputs:
+    def test_build_ranking_outputs_generates_rank_and_long_short_baskets(self):
+        items = [
+            StrategyResultItem(ticker="AAPL", name="Apple", current_price=180.0, matched=True, conditions=[]),
+            StrategyResultItem(ticker="MSFT", name="Microsoft", current_price=420.0, matched=True, conditions=[]),
+            StrategyResultItem(ticker="TSLA", name="Tesla", current_price=220.0, matched=True, conditions=[]),
+            StrategyResultItem(ticker="INTC", name="Intel", current_price=35.0, matched=True, conditions=[]),
+        ]
+        ranked, baskets = _build_ranking_outputs(
+            final_items=items,
+            ranking_config=RankingConfig(
+                metric_key="current_price",
+                direction="desc",
+                top_percent=25,
+                bottom_percent=25,
+                max_assets=10,
+                long_short=True,
+            ),
+        )
+        assert len(ranked) == 4
+        assert ranked[0].ticker == "MSFT"
+        assert baskets is not None
+        assert len(baskets.long) == 1
+        assert len(baskets.short) == 1
+        assert baskets.long[0].ticker == "MSFT"
+        assert baskets.short[0].ticker == "INTC"
+
+    def test_build_ranking_outputs_can_rank_by_condition_detail_key(self):
+        items = [
+            StrategyResultItem(
+                ticker="AAA",
+                name="AAA",
+                current_price=10.0,
+                matched=True,
+                conditions=[{"details": {"quality_score": 80}}],
+            ),
+            StrategyResultItem(
+                ticker="BBB",
+                name="BBB",
+                current_price=10.0,
+                matched=True,
+                conditions=[{"details": {"quality_score": 60}}],
+            ),
+        ]
+        ranked, baskets = _build_ranking_outputs(
+            final_items=items,
+            ranking_config=RankingConfig(metric_key="quality_score", direction="desc", top_percent=50, bottom_percent=0, long_short=False),
+        )
+        assert len(ranked) == 2
+        assert ranked[0].ticker == "AAA"
+        assert baskets is not None
+        assert len(baskets.long) == 1
+        assert len(baskets.short) == 0

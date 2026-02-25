@@ -353,6 +353,7 @@
     "andMore": "+{count}개 더",
     "filterMetrics": "필터 값",
     "runFirst": "전략을 먼저 실행하세요",
+    "loadingConditions": "조건 로딩 중...",
     "exportJson": "JSON 내보내기",
     "lastRunAt": "마지막 실행: {time}",
     "exportCsv": "CSV 내보내기",
@@ -368,6 +369,9 @@
     "saveFailed": "전략 저장에 실패했습니다",
     "loadStrategy": "전략 불러오기",
     "noSavedStrategies": "저장된 전략이 없습니다",
+    "sampleStrategies": "샘플 전략",
+    "builtInSample": "기본 제공",
+    "sampleStrategyLoaded": "샘플 전략을 불러왔습니다. 저장하면 내 전략으로 복사됩니다.",
     "savedStrategies": "저장된 전략",
     "loadSelected": "불러오기",
     "deleteConfirm": "이 전략을 삭제할까요?",
@@ -2430,7 +2434,8 @@
     "user": "사용자",
     "account": "계좌",
     "noAccount": "계좌 없음",
-    "disconnectedToast": "키움 연결이 끊어졌습니다."
+    "disconnectedToast": "키움 연결이 끊어졌습니다.",
+    "reconnected": "키움 연결이 복구되었습니다"
   },
   "markets": {
     "us": "미국 시장",

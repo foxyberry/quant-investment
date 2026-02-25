@@ -25,7 +25,7 @@ import '@xyflow/react/dist/style.css';
 
 import {
   Loader2, Zap, RotateCcw, Save, TestTube, Download, FolderOpen, X,
-  ChevronRight, Home, MoreHorizontal, Calendar, FileSpreadsheet,
+  ChevronRight, Home, Calendar, FileSpreadsheet,
 } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
@@ -41,6 +41,7 @@ import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph, getDownstreamNodeIds } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
+import { SAMPLE_STRATEGY_PRESETS, type SampleStrategyPreset } from '@/lib/strategy/sampleStrategies';
 import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
 import { useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
 import type { StrategyResultItem, SavedStrategy, NodeIntermediateResult } from '@/lib/api';
@@ -169,25 +170,12 @@ function StrategyPageInner() {
   const [strategyName, setStrategyName] = useState('');
   const [strategyDescription, setStrategyDescription] = useState('');
   const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(null);
-  const [showOverflowMenu, setShowOverflowMenu] = useState(false);
+  const [isSampleStrategy, setIsSampleStrategy] = useState(false);
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
   const [deployProgress, setDeployProgress] = useState(0);
   const [progressDetail, setProgressDetail] = useState<{ processed: number; total: number; matched: number } | null>(null);
   const [streamStatus, setStreamStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const streamAbortRef = useRef<{ abort: () => void } | null>(null);
-  const overflowRef = useRef<HTMLDivElement>(null);
-
-  // Close overflow menu on outside click
-  useEffect(() => {
-    if (!showOverflowMenu) return;
-    const handler = (e: MouseEvent) => {
-      if (overflowRef.current && !overflowRef.current.contains(e.target as globalThis.Node)) {
-        setShowOverflowMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showOverflowMenu]);
 
   // Restore from sessionStorage after mount (locale-switch persistence)
   // Uses setTimeout guard so the save effect doesn't overwrite sessionStorage
@@ -840,6 +828,7 @@ function StrategyPageInner() {
     setStrategyName('');
     setStrategyDescription('');
     setCurrentStrategyId(null);
+    setIsSampleStrategy(false);
   }, [setNodes, setEdges]);
 
   const handleExportJson = useCallback(() => {
@@ -893,6 +882,7 @@ function StrategyPageInner() {
         {
           onSuccess: (saved) => {
             setCurrentStrategyId(saved.id);
+            setIsSampleStrategy(false);
             setShowSaveDialog(false);
             showToast(t('strategySaved'), 'info');
           },
@@ -910,10 +900,22 @@ function StrategyPageInner() {
     handleSave();
   }, [strategyName, handleSave, showToast, t]);
 
-  const handleLoadStrategy = useCallback(
-    (saved: SavedStrategy) => {
+  const loadGraphIntoCanvas = useCallback(
+    ({
+      graph,
+      name,
+      description,
+      strategyId,
+      sample,
+    }: {
+      graph: SavedStrategy['graph'];
+      name: string;
+      description: string | null;
+      strategyId: string | null;
+      sample: boolean;
+    }) => {
       // Reconstruct nodes and edges from saved graph
-      const loadedNodes: Node[] = saved.graph.nodes.map((n) => {
+      const loadedNodes: Node[] = graph.nodes.map((n) => {
         const isGroup = n.data.node_type === 'logic';
         return {
           id: n.id,
@@ -934,7 +936,7 @@ function StrategyPageInner() {
       });
 
       // Restore parent-child relationships from child_node_ids
-      for (const n of saved.graph.nodes) {
+      for (const n of graph.nodes) {
         if (n.data.child_node_ids && n.data.child_node_ids.length > 0) {
           for (const childId of n.data.child_node_ids) {
             const childNode = loadedNodes.find((ln) => ln.id === childId);
@@ -946,7 +948,7 @@ function StrategyPageInner() {
         }
       }
 
-      const loadedEdges: Edge[] = saved.graph.edges.map((e) => ({
+      const loadedEdges: Edge[] = graph.edges.map((e) => ({
         id: e.id,
         source: e.source,
         target: e.target,
@@ -957,9 +959,10 @@ function StrategyPageInner() {
 
       setNodes(loadedNodes);
       setEdges(loadedEdges);
-      setStrategyName(saved.name);
-      setStrategyDescription(saved.description || '');
-      setCurrentStrategyId(saved.id);
+      setStrategyName(name);
+      setStrategyDescription(description || '');
+      setCurrentStrategyId(strategyId);
+      setIsSampleStrategy(sample);
       setShowLoadDialog(false);
       setResults(null);
       setNodeResults(null);
@@ -971,6 +974,33 @@ function StrategyPageInner() {
       setSelectedNodeId(null);
     },
     [setNodes, setEdges]
+  );
+
+  const handleLoadStrategy = useCallback(
+    (saved: SavedStrategy) => {
+      loadGraphIntoCanvas({
+        graph: saved.graph,
+        name: saved.name,
+        description: saved.description,
+        strategyId: saved.id,
+        sample: false,
+      });
+    },
+    [loadGraphIntoCanvas]
+  );
+
+  const handleLoadSampleStrategy = useCallback(
+    (sample: SampleStrategyPreset) => {
+      loadGraphIntoCanvas({
+        graph: sample.graph,
+        name: sample.name,
+        description: sample.description,
+        strategyId: null,
+        sample: true,
+      });
+      showToast(t('sampleStrategyLoaded'), 'info');
+    },
+    [loadGraphIntoCanvas, showToast, t]
   );
 
   // Count nodes by type
@@ -991,7 +1021,7 @@ function StrategyPageInner() {
     <div className="flex flex-col h-[calc(100vh-var(--header-height))]">
       <h1 className="sr-only">{t('title')}</h1>
       {/* Toolbar - Stitch-style */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c]">
+      <div className="flex flex-wrap items-center gap-3 px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c]">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm">
           <Home className="h-4 w-4 text-[#1313ec]" />
@@ -1003,8 +1033,13 @@ function StrategyPageInner() {
             {t('myStrategies')}
           </span>
           <ChevronRight className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
-          <span className="font-medium text-gray-900 dark:text-gray-100">
+          <span className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
             {strategyName || t('untitled')}
+            {isSampleStrategy && (
+              <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded border border-[#1313ec]/30 text-[#1313ec] bg-[#1313ec]/5">
+                {t('builtInSample')}
+              </span>
+            )}
           </span>
         </div>
 
@@ -1028,40 +1063,24 @@ function StrategyPageInner() {
           </div>
         )}
 
-        {/* Overflow menu (Reset, Load) */}
-        <div className="relative" ref={overflowRef}>
-          <button
-            type="button"
-            onClick={() => setShowOverflowMenu(!showOverflowMenu)}
-            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
-          {showOverflowMenu && (
-            <div className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#1e1e1f] shadow-lg z-50 py-1">
-              <button
-                type="button"
-                onClick={() => { handleClear(); setShowOverflowMenu(false); }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                {t('reset')}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setShowLoadDialog(true); setShowOverflowMenu(false); }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <FolderOpen className="h-3.5 w-3.5" />
-                {t('loadStrategy')}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="h-6 w-px bg-[#e1e3e5] dark:bg-[#2e2e30] mx-1" />
-
         {/* Primary actions */}
+        <button
+          type="button"
+          onClick={handleClear}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          {t('reset')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowLoadDialog(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          <FolderOpen className="h-3.5 w-3.5" />
+          {t('loadStrategy')}
+        </button>
+        <div className="h-6 w-px bg-[#e1e3e5] dark:bg-[#2e2e30] mx-1" />
         <button
           type="button"
           onClick={handleSave}
@@ -1277,6 +1296,31 @@ function StrategyPageInner() {
               </button>
             </div>
             <div className="px-5 py-4 max-h-80 overflow-y-auto">
+              <div className="mb-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                  {t('sampleStrategies')}
+                </h4>
+                {SAMPLE_STRATEGY_PRESETS.map((sample) => (
+                  <button
+                    key={sample.key}
+                    type="button"
+                    onClick={() => handleLoadSampleStrategy(sample)}
+                    className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors mb-1"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{sample.name}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded border border-[#1313ec]/30 text-[#1313ec] bg-[#1313ec]/5">
+                        {t('builtInSample')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{sample.description}</p>
+                  </button>
+                ))}
+              </div>
+              <div className="h-px bg-[#e1e3e5] dark:bg-[#2e2e30] mb-3" />
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                {t('savedStrategies')}
+              </h4>
               {savedStrategies.isLoading && (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-gray-400" />

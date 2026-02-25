@@ -7,6 +7,7 @@ Export all routers for registration in the main application.
 from api.routers.analysis import router as analysis_router
 from api.routers.exchange_rates import router as exchange_rates_router
 from api.routers.health import router as health_router
+from api.routers.kiwoom import router as kiwoom_router
 from api.routers.market import router as market_router
 from api.routers.portfolio import router as portfolio_router
 from api.routers.screening import router as screening_router
@@ -19,6 +20,7 @@ __all__ = [
     "backtest_router",
     "exchange_rates_router",
     "health_router",
+    "kiwoom_router",
     "market_router",
     "portfolio_router",
     "screening_router",

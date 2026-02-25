@@ -353,6 +353,7 @@
     "andMore": "+{count} more",
     "filterMetrics": "Filter Values",
     "runFirst": "Run strategy to see results",
+    "loadingConditions": "Loading conditions...",
     "exportJson": "Export JSON",
     "lastRunAt": "Last run: {time}",
     "exportCsv": "Export CSV",
@@ -368,6 +369,9 @@
     "saveFailed": "Failed to save strategy",
     "loadStrategy": "Load Strategy",
     "noSavedStrategies": "No saved strategies yet",
+    "sampleStrategies": "Sample Strategies",
+    "builtInSample": "Built-in",
+    "sampleStrategyLoaded": "Sample strategy loaded. Save it to copy into your own strategies.",
     "savedStrategies": "Saved Strategies",
     "loadSelected": "Load",
     "deleteConfirm": "Delete this strategy?",
@@ -2430,7 +2434,8 @@
     "user": "User",
     "account": "Account",
     "noAccount": "No account",
-    "disconnectedToast": "Kiwoom connection was lost."
+    "disconnectedToast": "Kiwoom connection was lost.",
+    "reconnected": "Kiwoom connection restored"
   },
   "markets": {
     "us": "US Market",
