@@ -23,6 +23,34 @@ gh issue comment <number> --body "done: files=<...>, verify=<...>"
 gh issue edit <number> --remove-label in-progress
 ```
 
+## 0-1. GitHub 대량 작업 안전 규칙 (Mandatory for Claude/Codex)
+
+계정 제한/가시성 이슈를 방지하기 위해 이 규칙을 우선 적용한다.
+
+1. 대량 이슈 쓰기 작업은 사용자 명시 승인 없이는 금지
+- 기준: 이슈 생성/코멘트/라벨 변경/클로즈를 한 번에 10건 이상 수행
+
+2. 기본 쓰기 속도 제한
+- 15분당 최대 20건 이슈 mutation
+- 동시 GitHub write 요청 최대 5개
+
+3. 동일 사유의 반복 코멘트 금지
+- 같은 내용은 PR/마스터 이슈 1회 요약 코멘트 우선
+- 개별 이슈 코멘트는 꼭 필요한 경우만 남김
+
+4. 배치 처리 단위 강제
+- 일괄 close/relabel은 20~30건 단위로 나누어 처리
+- 배치 사이마다 `gh api rate_limit` 확인
+
+5. 이상 징후 발생 시 즉시 중단
+- abuse detection / rate-limit 초과 / 비정상 404(가시성) 발생 시
+- 자동 쓰기 작업 전면 중단 후 read-only 진단으로 전환
+- 사용자에게 상황 보고 후 재개 지시를 받아야 함
+
+6. 백그라운드 무한 write 워커 금지
+- 장시간 issue write 작업은 단발 배치로 실행
+- 중복 배치 실행 금지
+
 ## 1. 필수 문서 읽기 순서
 
 ### 1단계: 프로젝트 개요 파악

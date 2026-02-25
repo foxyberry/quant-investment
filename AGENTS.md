@@ -23,6 +23,25 @@ Execution workflow is documented in:
   - auto-approval candidates,
   - next-run defaults.
 
+## GitHub Safety Guardrails (Codex + Claude Common)
+- Goal: prevent account restrictions caused by bursty issue automation.
+- Never perform bulk issue mutations without explicit user confirmation in the same turn.
+  - Bulk mutation means 10+ create/comment/edit/close actions in one run.
+- Default pacing limits (hard cap unless user overrides):
+  - max 20 issue mutations per 15 minutes,
+  - max 5 concurrent GitHub write requests.
+- Always prefer one tracking issue/summary comment over mass per-issue comments when the same reason applies.
+- Before any mass close operation:
+  - post one summary comment in the source PR or master issue,
+  - process in small batches (20-30),
+  - re-check API rate limit and repository visibility between batches.
+- If GitHub API returns abuse/rate-limit warnings or 404 visibility anomalies:
+  - stop all automated issue writes immediately,
+  - switch to read-only diagnostics,
+  - notify the user and wait for explicit continue instruction.
+- Do not run repeated background workers that write to GitHub issues/PRs.
+- Prefer `gh api rate_limit` checks before and during long-running GitHub operations.
+
 ## Issue Lock Rule (Mandatory for Codex)
 - Goal: prevent duplicate agent work on the same issue.
 - On issue start, Codex must immediately:
