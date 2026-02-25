@@ -184,7 +184,14 @@
     "presetDescriptions": {
       "deep_value_accumulation": "고점 대비 50% 이상 하락 후 매집 신호 (BB 수축, 거래량 감소, 가격 횡보)",
       "deep_value_accumulation_divergence": "딥 밸류 매집 + OBV/Stochastic/VPCI 다이버전스 확인"
-    }
+    },
+    "conditionMatchSummary": "매칭: {passed}/{total} ({rate}%)",
+    "actualValue": "실제값",
+    "targetValue": "기준값",
+    "viewFullDetail": "상세 분석 보기",
+    "addToWatchlist": "관심종목 추가",
+    "passLabel": "통과",
+    "failLabel": "미달"
   },
   "portfolio": {
     "title": "포트폴리오",

@@ -184,7 +184,14 @@
     "presetDescriptions": {
       "deep_value_accumulation": "从高点下跌50%以上并显示吸筹信号（布林带收窄、成交量萎缩、价格横盘）",
       "deep_value_accumulation_divergence": "深度价值吸筹 + OBV/随机指标/VPCI背离确认"
-    }
+    },
+    "conditionMatchSummary": "匹配: {passed}/{total} ({rate}%)",
+    "actualValue": "实际值",
+    "targetValue": "目标值",
+    "viewFullDetail": "查看详细分析",
+    "addToWatchlist": "添加自选股",
+    "passLabel": "通过",
+    "failLabel": "未通过"
   },
   "portfolio": {
     "title": "投资组合",
