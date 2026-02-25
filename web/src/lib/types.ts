@@ -250,6 +250,8 @@ export interface TickerAnalysis {
     dividend_yield: number | null;
     eps: number | null;
     sector: string;
+    week52_high?: number | null;
+    week52_low?: number | null;
   };
 }
 

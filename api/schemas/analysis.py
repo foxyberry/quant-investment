@@ -235,6 +235,8 @@ class TickerFundamental(BaseModel):
     dividend_yield: Optional[float] = Field(None, description="Dividend yield")
     eps: Optional[float] = Field(None, description="Earnings per share (trailing)")
     sector: Optional[str] = Field(None, description="Industry sector")
+    week52_high: Optional[float] = Field(None, description="52-week high price")
+    week52_low: Optional[float] = Field(None, description="52-week low price")
 
 
 class TickerAnalysisResponse(BaseModel):

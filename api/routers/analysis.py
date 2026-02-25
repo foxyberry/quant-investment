@@ -451,6 +451,8 @@ def get_ticker_analysis(
                 dividend_yield=info.get("dividendYield"),
                 eps=info.get("trailingEps"),
                 sector=info.get("sector"),
+                week52_high=info.get("fiftyTwoWeekHigh"),
+                week52_low=info.get("fiftyTwoWeekLow"),
             )
     except Exception as e:
         logger.warning(f"Failed to get fundamental data for {ticker}: {e}")
