@@ -541,9 +541,9 @@
         "min_price": "Minimum price"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =5000",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"Do I want to exclude penny stocks and micro-cap junk?\" Extremely low-priced stocks are prone to manipulation, extreme volatility, and poor liquidity. The SEC classifies sub-$5 stocks as penny stocks for a reason.",
+      "howToRead": "min_price=5000 passes stocks at 5,000 KRW or above. For US markets, $5 is the standard penny stock threshold. Most institutional investors exclude stocks below $10.",
+      "caution": "Legitimate companies can temporarily trade at low prices due to bad news. Combine with market cap filters for more meaningful size screening. Price alone is not a quality indicator."
     },
     "max_price": {
       "label": "Max Price",
@@ -552,9 +552,9 @@
         "max_price": "Maximum price"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =100000",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"Do I want to exclude stocks above a certain absolute price?\" A practical filter for investors with lot-size constraints or those targeting a specific price tier for portfolio construction.",
+      "howToRead": "max_price=100000 passes stocks priced at 100,000 KRW or below. For US markets, set appropriately (e.g., 500 USD). Absolute price is mainly a liquidity/accessibility criterion, not a valuation metric.",
+      "caution": "Absolute stock price is unrelated to company value — it depends entirely on share count and stock splits. Market cap or PE are far more meaningful for valuation. Use price filters only for practical access reasons."
     },
     "price_range": {
       "label": "Price Range",
@@ -564,9 +564,9 @@
         "max_price": "Max price"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =0, =999999",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"I want stocks within a specific price band.\" Combines min_price and max_price into a single filter — useful for targeting specific tiers (mid-caps by price, options-friendly names, etc.).",
+      "howToRead": "min=10000, max=50000 passes stocks priced 10,000-50,000 KRW. For US: min=10, max=200 is a common institutional range. Essentially a convenience wrapper around the separate min/max price filters.",
+      "caution": "Price bands don't map to company size or quality — stock splits change price without changing value. Market cap filters are almost always more meaningful for actual portfolio construction."
     },
     "price_change": {
       "label": "Price Change %",
@@ -577,9 +577,9 @@
         "days": "Period (days)"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =None, =None, =1",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"How much has the stock moved over N days?\" The most general-purpose price filter — set min/max to capture any range of gains or losses. Use for finding surging stocks, avoiding crashers, or any directional screen.",
+      "howToRead": "days=1 checks one-day change. min=3, max=10 captures stocks up 3-10%. min=-5 finds stocks down 5%+. Combine days and thresholds freely to target any price-action pattern.",
+      "caution": "Raw price change reveals nothing about the cause — earnings, news, sector rotation, and market beta all blend together. Always combine with volume or fundamental filters to separate signal from noise."
     },
     "return_turnaround": {
       "label": "Return Turnaround",
@@ -590,9 +590,9 @@
         "min_return_pct": "Min recent return %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =5, =-2.0, =2.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"A V-shaped reversal pattern — has the stock bounced sharply after a decline?\" Automated detection of the decline-then-rally pattern favored by mean-reversion traders seeking oversold bounces.",
+      "howToRead": "prev_max_return_pct=-2 and min_return_pct=2 passes stocks that fell 2%+ over 5 days and then rallied 2%+ over the next 5 days. Raising thresholds to 5% captures only dramatic turnarounds.",
+      "caution": "A simple V-bounce can be a dead-cat bounce — a brief rebound before continuation of the decline. Check whether the catalyst for the decline has been resolved. Rising volume on the bounce side adds credibility."
     },
     "min_volume": {
       "label": "Min Volume",
@@ -601,9 +601,9 @@
         "min_volume": "Minimum volume"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =100000",
-      "caution": "Low-liquidity names can produce unstable flow signals."
+      "whenToUse": "\"Can I actually execute trades in this stock without excessive slippage?\" Minimum daily volume is the most basic liquidity gate. Without sufficient volume, backtest results are fiction and real-world execution is painful.",
+      "howToRead": "min_volume=100000 passes stocks trading 100,000+ shares daily. Adjust by market: Korean small-caps at 50K, US large-caps at 500K. Dollar volume (avg_trading_value) is a more precise liquidity measure.",
+      "caution": "Volume alone can't distinguish low-price high-volume from high-price low-volume stocks — dollar volume is better. Also beware theme-driven temporary volume spikes that revert once hype fades."
     },
     "volume_above_avg": {
       "label": "Volume Above Avg",
@@ -613,9 +613,9 @@
         "period": "Average period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =1.0, =20",
-      "caution": "Low-liquidity names can produce unstable flow signals."
+      "whenToUse": "\"Is today's volume elevated above its recent average?\" Above-average volume confirms that price moves are backed by participation. The fundamental principle: volume validates direction.",
+      "howToRead": "multiplier=1.0 passes stocks at or above their 20-day average volume. At 1.5 (150%), conviction is higher; 2.0 is a clear surge. Price up + volume up = bullish confirmation. Price down + volume up = bearish capitulation.",
+      "caution": "Volume can surge on selling just as easily as buying — always pair with price direction. Index rebalancing, options expiration, and block trades create mechanical volume spikes that carry no directional information."
     },
     "volume_spike": {
       "label": "Volume Spike",
@@ -625,9 +625,9 @@
         "period": "Average period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =1.5, =20",
-      "caution": "Low-liquidity names can produce unstable flow signals."
+      "whenToUse": "\"Has volume suddenly exploded — something is happening?\" A volume spike is the market screaming that attention has arrived. The starting gun for breakouts, reversals, or news-driven moves.",
+      "howToRead": "multiplier=1.5 passes stocks at 150%+ of 20-day average volume. At 2.0 it is a significant spike; 3.0 is dramatic. Combine with price direction: up + spike = bullish conviction; down + spike = panic selling.",
+      "caution": "A volume spike alone is directionless — it could be buying or selling. Check the cause: earnings, M&A rumor, theme momentum, or a large block trade. Single block trades may not reflect organic interest."
     },
     "ma_touch": {
       "label": "MA Touch",
@@ -637,9 +637,9 @@
         "threshold": "Touch threshold (ratio)"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =120, =0.02",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is price pulling back to touch a long-term MA — a dip-buy opportunity in an uptrend?\" A 120-day MA touch during an established uptrend represents a healthy correction and potential re-entry point, not a trend reversal.",
+      "howToRead": "threshold=0.02 passes stocks within 2% of the 120-day MA. At 1%, only stocks nearly touching the MA qualify. At 5%, the band is wider. The MA acts as a dynamic support level.",
+      "caution": "If the MA is broken to the downside, \"support\" fails — what looked like a buy-the-dip turns into a breakdown. Confirm with RSI approaching oversold or declining volume (seller fatigue) before entering. Always combine with above_ma."
     },
     "above_ma": {
       "label": "Above MA",
@@ -649,9 +649,9 @@
         "min_distance_pct": "Min distance %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is this stock in an uptrend?\" Being above the moving average means buying pressure exceeds selling. The most fundamental first filter for trend-following strategies.",
+      "howToRead": "period=20 passes stocks above the 20-day MA. Raise min_distance_pct to 2 for stocks \"firmly\" above it. Use period=50 or 200 for medium/long-term trend confirmation.",
+      "caution": "Stocks barely above the MA can slip below the next day. In sideways markets, prices whipsaw above/below the MA constantly. Pair with ADX or volume filters for reliability."
     },
     "below_ma": {
       "label": "Below MA",
@@ -661,9 +661,9 @@
         "max_distance_pct": "Max distance %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Looking for stocks in a downtrend or oversold bounce candidates.\" Filters stocks below their MA — for short strategies or contrarian \"fallen angel\" plays.",
+      "howToRead": "period=20 passes stocks below the 20-day MA. max_distance_pct=-10 = stocks more than 10% below MA (deep selloff). period=200 for long-term downtrend.",
+      "caution": "Classic \"catching a falling knife\" trap. Below MA doesn't mean cheap — further decline is possible. Always pair with volume surge, RSI reversal or other bottom confirmation signals."
     },
     "ma_cross_up": {
       "label": "MA Cross Up",
@@ -674,9 +674,9 @@
         "lookback_days": "Lookback days"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =5, =20, =5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has the very short-term MA crossed above the short-term — signaling fresh buying momentum?\" A 5/20 golden cross is a fast-reacting swing-trading entry signal for capturing the start of short-term rallies.",
+      "howToRead": "lookback_days=5 passes stocks with a 5/20 golden cross in the last 5 days. This signal fires much more frequently than 50/200 crosses, making it suited to active traders.",
+      "caution": "The 5/20 cross is so short-term that whipsaw reversals within a week are common. Never trade this signal alone — require accompanying volume expansion or ADX confirmation to filter noise."
     },
     "ma_cross_down": {
       "label": "MA Cross Down",
@@ -687,9 +687,9 @@
         "lookback_days": "Lookback days"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =60, =5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has the medium-term MA crossed below the longer-term — a bearish trend shift?\" A 20/60 dead cross signals deteriorating medium-term momentum. Useful as a sell trigger or risk-warning filter.",
+      "howToRead": "lookback_days=5 passes stocks where the 20-day MA crossed below the 60-day MA in the last 5 days. Reacts faster than the 50/200 death cross, serving as an early warning for position exits.",
+      "caution": "Short/medium-period crosses generate far more false signals than long-period crosses. Especially meaningless when ADX is below 20. Waiting 1-2 days after the cross to confirm improves accuracy."
     },
     "rsi_oversold": {
       "label": "RSI Oversold",
@@ -699,9 +699,9 @@
         "period": "RSI period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =35, =14",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"Has selling been extreme enough that a bounce is likely?\" RSI below 30-35 signals potential seller exhaustion — a core entry condition for mean-reversion strategies. The most popular oscillator-based buy signal.",
+      "howToRead": "threshold=35 passes stocks with RSI at or below 35 (moderately oversold). At 30, it is textbook oversold; at 20, it is extreme. Mean-reversion strategies rely heavily on this zone for entry.",
+      "caution": "Oversold does not guarantee a bounce — the most common beginner mistake. In strong downtrends, RSI can stay below 20 for weeks. Always confirm the broader trend (MA, ADX) is not firmly bearish before buying oversold stocks."
     },
     "rsi_overbought": {
       "label": "RSI Overbought",
@@ -711,9 +711,9 @@
         "period": "RSI period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =70, =14",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"Is this stock overheated and due for a breather?\" RSI above 70 is the textbook overbought zone — selling pressure tends to build as short-term traders take profits. Flag for caution, not necessarily immediate sale.",
+      "howToRead": "threshold=70 passes stocks with RSI 70+. At 80, the condition is extreme. Use for profit-taking timing on existing positions, or for identifying short candidates when confirmed by other bearish signals.",
+      "caution": "In strong uptrends, RSI can sustain above 80 for weeks — overbought does not mean over. Selling solely because RSI is 70+ will cause you to exit big winners prematurely. Judge alongside trend strength."
     },
     "rsi_range": {
       "label": "RSI Range",
@@ -724,9 +724,9 @@
         "period": "RSI period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =50, =70, =14",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"Is RSI in the healthy trending zone — not overbought, not oversold?\" RSI 50-70 characterizes a stock in an active uptrend's cruising altitude — momentum is alive but not overextended. Ideal for trend-following filters.",
+      "howToRead": "lower=50, upper=70 passes stocks with RSI between 50 and 70 — the sweet spot for healthy uptrends. 40-60 filters for neutral-zone stocks. Narrower ranges reduce the pass rate significantly.",
+      "caution": "Too-narrow RSI windows yield very few matches. RSI converges to 50 in sideways markets even without price change, so a stock at RSI 55 could be trending or flat. Always verify with price trend indicators."
     },
     "bollinger_width": {
       "label": "Bollinger Width",
@@ -737,9 +737,9 @@
         "std_dev": "Std deviation"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =15.0, =20, =2.0",
-      "caution": "Low-liquidity names can produce unstable flow signals."
+      "whenToUse": "\"Is volatility extremely low, signaling an imminent big move?\" Narrow bands = market undecided, accumulating energy. Used to detect accumulation phases before breakouts.",
+      "howToRead": "max_width_pct=15 passes stocks with band width under 15% of price. Under 10% is notably narrow; under 5% is historic squeeze level. Breakout direction needs a separate filter.",
+      "caution": "Band width alone can't predict direction. Squeeze states can persist for weeks or months — timing is uncertain. Rising OBV during squeeze suggests accumulation; falling OBV suggests distribution."
     },
     "volume_below_avg": {
       "label": "Volume Below Avg",
@@ -749,9 +749,9 @@
         "period": "Average period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =1.0, =20",
-      "caution": "Low-liquidity names can produce unstable flow signals."
+      "whenToUse": "\"Is volume drying up — signaling either stealth accumulation or total disinterest?\" Below-average volume paired with narrowing price range may indicate quiet accumulation; with declining price, it suggests selling fatigue.",
+      "howToRead": "multiplier=1.0 passes stocks below their 20-day average volume. At 0.5, volume is less than half the norm — extreme quietness. Combine with Bollinger width for squeeze detection and OBV direction for accumulation hints.",
+      "caution": "The critical distinction is accumulation vs indifference. If OBV and CMF are simultaneously rising, quiet accumulation is likely. If both are flat or declining, the stock is simply being ignored."
     },
     "price_flat": {
       "label": "Price Flat",
@@ -761,9 +761,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =10.0, =20",
-      "caution": "Low-liquidity names can produce unstable flow signals."
+      "whenToUse": "\"Is the stock trading in a tight range — a coiled spring before a big move?\" Flat price within a narrow band signals energy accumulation. Can indicate stealth accumulation (if OBV rises) or distribution (if OBV falls).",
+      "howToRead": "max_range_pct=10 passes stocks with less than 10% high-low range over 20 days. At 5%, the stock is in extreme consolidation. Combine with OBV direction to infer whether accumulation or distribution is occurring.",
+      "caution": "Consolidation can last weeks to months with no resolution — tying up capital with no return. Always pair with a breakout signal to time exits from the range. Without a catalyst, flat stocks may stay flat."
     },
     "obv_trend": {
       "label": "OBV Trend",
@@ -773,9 +773,9 @@
         "lookback": "Lookback period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =up, =20",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is volume flow consistently favoring buyers?\" An upward OBV trend means up-days consistently attract more volume than down-days — the most intuitive measure of money flowing in.",
+      "howToRead": "direction=up passes stocks where OBV has been rising over 20 days. lookback=10 for short-term, 40 for medium-term flow. Price and OBV rising together confirms a healthy trend.",
+      "caution": "OBV treats any positive close day equally — a 0.01% gain adds the full day's volume to the up side. This can overstate accumulation in choppy markets. Cross-verify with CMF which weights by closing position within the range."
     },
     "stochastic_level": {
       "label": "Stochastic Level",
@@ -787,9 +787,9 @@
         "d_period": "%D period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =20.0, =below, =14, =3",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"Is Stochastic in the oversold zone — is price near the bottom of its recent range?\" %K below 20 means the current close is near the lowest point in the lookback period. Used for accumulation-zone detection and contrarian entries.",
+      "howToRead": "threshold=20, condition=below passes stocks with %K under 20. At 10, the condition is extreme. Switch to condition=above with threshold=80 for overbought detection. Effective as an accumulation-phase filter.",
+      "caution": "Stochastic can become stuck below 20 in strong downtrends, printing oversold for weeks without a bounce. Oversold does not equal reversal. Watch for declining volume (selling exhaustion) and price stabilization before entering."
     },
     "vpci_trend": {
       "label": "VPCI Trend",
@@ -801,9 +801,9 @@
         "lookback": "Lookback period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =up, =5, =20, =10",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is volume genuinely confirming the price trend?\" A rising VPCI means volume is flowing in the direction of price — the trend is backed up by real participation, not just thin-air drift.",
+      "howToRead": "direction=up passes stocks with rising VPCI over 10 days. VPCI up + price up = confirmed healthy rally. Price up + VPCI down = hollow rally, warning of potential reversal.",
+      "caution": "VPCI, OBV, and CMF all measure similar things — using all three creates redundant filtering. Pick 1-2 based on backtest performance. Overlapping volume indicators can over-filter your universe without adding new information."
     },
     "obv_divergence": {
       "label": "OBV Divergence",
@@ -814,9 +814,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =5.0, =5.0, =20",
-      "caution": "Low-liquidity names can produce unstable flow signals."
+      "whenToUse": "\"Is price flat while volume is quietly accumulating in one direction?\" OBV divergence — price sideways but OBV rising — is a classic signal of stealth accumulation before a major move.",
+      "howToRead": "price_max_range_pct=5 with obv_min_change_pct=5 passes stocks whose price stayed within 5% over 20 days while OBV moved 5%+. Rising OBV = accumulation; falling OBV = quiet distribution.",
+      "caution": "Divergence timing is notoriously uncertain — accumulation can last weeks or months before price reacts. Combine with a breakout trigger (breakout_with_volume) to get actionable entry signals rather than just early warnings."
     },
     "stochastic_divergence": {
       "label": "Stochastic Divergence",
@@ -828,9 +828,9 @@
         "divergence_threshold": "Threshold %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =14, =3, =20, =5.0",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"Price is making new lows but Stochastic is making higher lows — hidden buying?\" Bullish divergence signals that downward momentum is fading even as price declines. A reversal early-warning pattern near market bottoms.",
+      "howToRead": "lookback=20 scans for divergence over 20 days. divergence_threshold=5 requires %K to be at least 5 points higher than the prior swing low while price is lower. Higher thresholds mean fewer but more reliable signals.",
+      "caution": "Divergence timing is notoriously imprecise — price can keep falling for weeks after the divergence appears. Treat as a warning flag, not an entry trigger. Wait for actual price reversal (bullish candle, support hold) before entering."
     },
     "vpci_divergence": {
       "label": "VPCI Divergence",
@@ -842,9 +842,9 @@
         "lookback": "Lookback period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =5.0, =5, =20, =20",
-      "caution": "Low-liquidity names can produce unstable flow signals."
+      "whenToUse": "\"Price is flat but the volume-price relationship is shifting — invisible accumulation?\" VPCI divergence is a more refined version of OBV divergence, measuring whether volume confirms or denies price moves with greater precision.",
+      "howToRead": "price_max_range_pct=5 passes stocks flat within 5% over 20 days where VPCI direction has changed. Compared to OBV divergence, VPCI gives more weight to the location of the close within the day's range.",
+      "caution": "VPCI is a less commonly used indicator, so fewer traders watch it and the self-fulfilling effect is weaker. Cross-verify with OBV or CMF. As with all divergence signals, timing remains the key uncertainty."
     },
     "bottom_breakout": {
       "label": "Bottom Breakout",
@@ -854,9 +854,9 @@
         "breakout_pct": "Breakout %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Catch stocks breaking below their low — for shorting or risk management.\" Filters stocks that breach their period low. Used for short strategies or \"avoid this stock\" screening.",
+      "howToRead": "lookback_days=20, breakout_pct=5 passes stocks that fell 5%+ below their 20-day low. Can also find extreme oversold candidates for contrarian plays (high risk).",
+      "caution": "Hard to tell if a bottom break is a trend change or temporary panic. High volume = panic selling possibility. Check if post-earnings gap-down. Always set stop-losses for contrarian entries."
     },
     "fresh_breakout": {
       "label": "Fresh Breakout",
@@ -866,9 +866,9 @@
         "breakout_pct": "Breakout %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is this the first breakout, or has the stock been above the breakout level for days already?\" Captures only the initial breakout to avoid chasing a move that's already extended.",
+      "howToRead": "breakout_pct=5 passes stocks breaking 5%+ above their 20-day high for the first time. Stocks already 3 days into a breakout are excluded. Extracts the freshest momentum signals only.",
+      "caution": "Even a first-day breakout can fail the next day (fake breakout). Volume confirmation is essential. Closing-price breakouts are more reliable than intraday wicks that revert by close."
     },
     "breakout_with_volume": {
       "label": "Breakout + Volume",
@@ -881,9 +881,9 @@
         "fresh_only": "Fresh breakout only"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5.0, =1.5, =10, =True",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is this a real breakout backed by volume?\" Price breakout + volume surge confirmed simultaneously. The foundational technical analysis principle: breakouts without volume are likely false.",
+      "howToRead": "breakout_pct=5 + volume_ratio=1.5 = 5% above 20-day high with 1.5x average volume. fresh_only=True catches only the first breakout (prevents chasing repeated signals).",
+      "caution": "Setting volume_ratio too high (3.0+) catches only earnings/news events, missing technical breakouts. fresh_only=True is essential — stocks already days into a breakout carry chase risk."
     },
     "resistance_breakout": {
       "label": "Resistance Breakout",
@@ -893,9 +893,9 @@
         "breakout_margin_pct": "Margin above resistance %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =0.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has price broken above the recent high — a classic buy signal?\" Breaking past a resistance level (prior high) means the selling wall has been absorbed. The most fundamental technical buy trigger.",
+      "howToRead": "lookback_days=20 captures breakouts above the 20-day high. breakout_margin_pct=1 adds a 1% buffer to filter noise. At 60 days, you're testing medium-term resistance. Multi-tested resistance breaks carry more significance.",
+      "caution": "Profit-taking just above resistance is extremely common — price may reverse right after breaking out. Volume confirmation is essential. Resistance that has been tested 2-3 times before breaking is more meaningful."
     },
     "pe_ratio": {
       "label": "P/E Ratio",
@@ -905,9 +905,9 @@
         "max_pe": "Max P/E"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =15.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How many years of current earnings does the stock price represent?\" The most universally used valuation metric. At PE 15, you're paying 15 years' worth of current earnings for the stock.",
+      "howToRead": "max_pe=15 passes stocks at 15x earnings or below. S&P 500 historical average: 15-17x; KOSPI average: 10-12x. Growth stocks trade at 30-50x while deep-value names sit below 10x.",
+      "caution": "Loss-making companies have negative PE (meaningless) — always filter for positive earnings first. One-time gains can artificially depress PE. Forward PE (based on estimated future earnings) is more useful but harder to obtain reliably."
     },
     "pb_ratio": {
       "label": "P/B Ratio",
@@ -918,9 +918,9 @@
         "exclude_negative_bv": "Exclude negative book value"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =1.5, =True",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How much am I paying relative to the company's net assets?\" PBR below 1.0 means the market values the firm below its liquidation value — the classic Graham-Buffett deep-value signal.",
+      "howToRead": "max_pb=1.5 passes stocks at 1.5x book value or less. Below 1.0 is cheaper than breakup value. Banks: 0.5-1.0, tech: 3-10. exclude_negative_bv=True removes equity-negative firms (capital erosion).",
+      "caution": "Intangible-heavy businesses (software, brands, pharma IP) have book values that dramatically understate real worth — high PBR is normal, not overvalued. PBR is most meaningful for tangible-asset sectors (banks, REITs, construction)."
     },
     "ps_ratio": {
       "label": "P/S Ratio",
@@ -930,9 +930,9 @@
         "max_ps": "Max P/S"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =2.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is this stock cheap relative to its revenue?\" P/S works even for unprofitable companies since revenue is harder to manipulate than earnings. Popularized by Ken Fisher as a valuation safety net.",
+      "howToRead": "max_ps=2 passes stocks trading below 2x sales. Manufacturing: 0.5-1.5x, SaaS: 5-15x, biotech: 50x+ is not unusual. Sector context is absolutely mandatory when interpreting P/S.",
+      "caution": "Low P/S on a permanently unprofitable company is a trap — cheap but worthless. Combine with operating margin or FCF margin. High revenue growth can justify higher P/S multiples (growth premium)."
     },
     "pcf_ratio": {
       "label": "P/CF Ratio",
@@ -942,9 +942,9 @@
         "max_pcf": "Max P/CF"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =10.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is this stock cheap relative to its operating cash flow?\" P/CF uses cash flow instead of earnings, making it immune to depreciation policy differences across companies. More stable than PE for cross-company comparison.",
+      "howToRead": "max_pcf=10 passes stocks at 10x operating cash flow or below. Under 7 is notably cheap. Because depreciation doesn't affect OCF, asset-heavy companies with differing depreciation schedules can be compared fairly.",
+      "caution": "Operating cash flow swings with working capital changes (receivables, inventory), creating quarter-to-quarter noise. Use annual figures. Since OCF excludes capex, capital-intensive firms may look cheap here but expensive on FCF yield."
     },
     "dividend_yield": {
       "label": "Dividend Yield",
@@ -954,9 +954,9 @@
         "max_yield": "Max yield %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0, =None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Do I want steady cash income from my holdings?\" Dividend yield measures annual dividends relative to price — the foundation of income and retirement portfolios.",
+      "howToRead": "min_yield=3 passes stocks paying 3%+ annually. Set max_yield to 8-10 to exclude distressed names with unsustainable payouts. S&P 500 averages 1.5-2%.",
+      "caution": "A high yield caused by a collapsing stock price is a yield trap, not a bargain. Also watch for special one-time dividends inflating the figure. Use regular dividends only."
     },
     "drawdown_from_high": {
       "label": "Drawdown From High",
@@ -967,9 +967,9 @@
         "price_field": "Price Field"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =120, =20.0, =high",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"How far has this stock fallen from its recent peak?\" A drawdown filter for contrarian buy-the-dip strategies or, inversely, for excluding stocks with large recent losses.",
+      "howToRead": "min_drop_pct=20 passes stocks that have fallen 20%+ from their 120-day high. For risk management (exclusion), use as a negative filter. At 10%, it catches early warning-level pullbacks.",
+      "caution": "A 20% drop may be a buying opportunity or the start of a deeper decline — impossible to know in advance. If caused by deteriorating earnings or structural industry shifts, it is a value trap. Always verify positive FCF and manageable debt first."
     },
     "earnings_yield": {
       "label": "Earnings Yield",
@@ -979,9 +979,9 @@
         "max_yield": "Max yield %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =8.0, =None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is this stock a better deal than bonds?\" Earnings Yield (=1/PE) converts equity valuation into a yield directly comparable to bond rates. A core variable in Greenblatt's Magic Formula.",
+      "howToRead": "min_yield=8 passes stocks earning 8%+ on their price (roughly PE 12.5x or lower). Compare against the risk-free rate — if treasuries pay 4%, an 8% EY implies a 4% equity risk premium.",
+      "caution": "One-time gains (asset sales, currency windfalls) inflate EPS and thus EY. Verify earnings are normalized and recurring. Negative earnings make the metric meaningless."
     },
     "ebit_ev": {
       "label": "EBIT/EV",
@@ -991,9 +991,9 @@
         "max_ebit_ev": "Max EBIT/EV %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =10.0, =None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"What is the operating yield on this enterprise?\" Greenblatt's Magic Formula core metric. EBIT/EV strips out tax regimes and capital structure to reveal pure business profitability relative to total acquisition cost.",
+      "howToRead": "min_ebit_ev=10 passes stocks with EBIT/EV above 10%. At 15%+, the business is notably cheap. In the Magic Formula, stocks are ranked by this ratio combined with ROIC.",
+      "caution": "Cash-rich companies have lower EV, boosting the ratio — that's a genuine positive. But if EBIT includes non-recurring operating items, it overstates real yield. Verify operating income continuity."
     },
     "fcf_yield": {
       "label": "FCF Yield",
@@ -1003,9 +1003,9 @@
         "max_fcf_yield": "Max FCF yield %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0, =None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"What real cash return does this stock generate relative to its market cap?\" FCF Yield is the closest proxy to a stock's true earnings power — the cash available for dividends, buybacks, and debt reduction.",
+      "howToRead": "min_fcf_yield=5 passes stocks generating free cash flow equal to 5%+ of market cap. At 8%+ the name is highly attractive. Compare against bond yields: a higher FCF yield signals equities are cheap relative to fixed income.",
+      "caution": "A single year of heavy capex can temporarily crush FCF — use a 3-year average for stability. Working capital swings also distort quarterly figures. Always use annual data."
     },
     "peg_ratio": {
       "label": "PEG Ratio",
@@ -1015,9 +1015,9 @@
         "max_peg": "Max PEG"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =1.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is the PE justified by the growth rate?\" PEG = PE / EPS growth rate. Popularized by Peter Lynch. Below 1.0 means you're paying less than one times growth — the gold standard for GARP investing.",
+      "howToRead": "max_peg=1.0 passes stocks with PEG at or below 1.0 — growth-adjusted fair value. At 0.5, the stock is significantly underpriced relative to growth. Complements PE by accounting for earnings trajectory.",
+      "caution": "Negative EPS growth makes PEG negative (meaningless). The result depends entirely on which growth rate is used (trailing vs forward consensus), and forward estimates carry analyst bias. Specify the growth-rate source clearly."
     },
     "debt_to_equity": {
       "label": "D/E Ratio",
@@ -1027,9 +1027,9 @@
         "max_de": "Max D/E %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =None, =100.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How much borrowed money vs. own money?\" High D/E = high leverage — magnifies both gains and losses, with higher bankruptcy risk.",
+      "howToRead": "max_de=100 passes firms with debt ratio under 100% (debt = equity). Below 50 is conservative; above 200 is high leverage. IT 30-50% is already high; utilities 100-200% is normal.",
+      "caution": "Financials/utilities/telecoms are structurally high-debt by business model — never apply blanket thresholds. Negative equity (capital erosion) makes D/E negative, potentially passing the filter erroneously."
     },
     "current_ratio": {
       "label": "Current Ratio",
@@ -1039,9 +1039,9 @@
         "max_ratio": "Max ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =1.0, =3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Can this company pay its bills due within one year?\" Current Ratio = Current Assets / Current Liabilities. Below 1.0 = potential short-term liquidity crisis. The most basic survival metric.",
+      "howToRead": "min=1.0 passes firms with more current assets than liabilities. 1.5-2.0 is healthy. max=3.0 excludes inefficiently high ratios. Manufacturing ~1.5+; IT ~2.0+ is typical.",
+      "caution": "Too high may indicate cash hoarding without reinvestment. High inventory inflates the ratio but isn't easily liquidated. Check quick ratio alongside for accuracy."
     },
     "roe": {
       "label": "ROE",
@@ -1051,9 +1051,9 @@
         "max_roe": "Max ROE %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =15.0, =None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How much profit does this company earn on shareholders' equity?\" Buffett's signature metric — sustained ROE above 15% signals a competitive moat. DuPont decomposition reveals whether high ROE comes from margins, turnover, or leverage.",
+      "howToRead": "min_roe=15 passes firms earning 15%+ on equity. At 20%+, the company likely has superior economics. But always diagnose the source: high margin (good), high turnover (good), or high leverage (dangerous).",
+      "caution": "Excessive debt shrinks equity, artificially inflating ROE — the fake high-ROE trap. Always verify with debt-to-equity. Capital-eroded firms (negative equity) can show positive ROE from dividing two negatives, which is meaningless."
     },
     "piotroski_fscore": {
       "label": "Piotroski F-Score",
@@ -1063,9 +1063,9 @@
         "max_score": "Max F-Score"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =7, =None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is this company's financial health improving across the board?\" Piotroski's F-Score (2000) scores 9 binary financial criteria (profitability, leverage, operating efficiency). The definitive quality filter for value-stock screens.",
+      "howToRead": "min_score=7 passes firms scoring 7+ out of 9. Scores 0-3 indicate financial deterioration; 4-6 are neutral; 7-9 confirm broad-based improvement. Academically proven to boost returns when applied within low-PB stocks.",
+      "caution": "F-Score is based on annual financial statements, so it's inherently backward-looking and may lag by months. All 9 criteria carry equal weight, though in practice some (like ROA trend) matter more than others."
     },
     "altman_zscore": {
       "label": "Altman Z-Score",
@@ -1075,9 +1075,9 @@
         "max_zscore": "Max Z-Score"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =2.5, =None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Could this company go bankrupt within 2 years?\" Altman Z-Score (1968) predicts insolvency. Summarizes financial safety in one number — a minimum safety net for value investing.",
+      "howToRead": "min_zscore=2.5 passes near-safe-zone firms (3.0+). Below 1.8 is distress zone; 1.8-3.0 is grey zone. Set 3.0+ for conservative screening.",
+      "caution": "Financial and service firms score structurally low — the model was designed for manufacturing. Non-manufacturers should use the modified Z''-Score, but this filter uses the original formula."
     },
     "avg_trading_value": {
       "label": "Average Trading Value",
@@ -1087,9 +1087,9 @@
         "min_value": "Minimum Value"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =20, =1500000000",
-      "caution": "Low-liquidity names can produce unstable flow signals."
+      "whenToUse": "\"Can you actually buy and sell this stock?\" Average daily trading value — the liquidity benchmark. Without sufficient liquidity, slippage destroys backtested returns. Every strategy's first gate.",
+      "howToRead": "min_value=1.5B (KRW) passes stocks with 20-day average trading value above 1.5 billion won. For US markets, adjust to $1M-$5M. Low liquidity = backtest lies.",
+      "caution": "Earnings or thematic spikes cause temporary volume surges — use lookback=20+ days. Liquidity standards differ vastly by market (KOSDAQ small-cap 500M vs NASDAQ large-cap $100M)."
     },
     "roic": {
       "label": "ROIC",
@@ -1099,9 +1099,9 @@
         "max_roic": "Max ROIC %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =15.0, =None",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"What after-tax operating return does the business generate on invested capital?\" ROIC = NOPAT / Invested Capital. Greenblatt's Magic Formula core variable. Eliminates leverage effects to reveal true business economics.",
+      "howToRead": "min_roic=15 passes firms generating 15%+ after-tax operating return on invested capital. Must exceed WACC (typically 8-12%) to create shareholder value. At 20%+, strong competitive advantages are implied.",
+      "caution": "Invested capital calculation varies by analyst (goodwill inclusion, operating lease capitalization). Frequent acquirers get penalized by large goodwill balances. Standardize the calculation before comparing across firms."
     },
     "analyst_revision_1m": {
       "label": "Analyst Revision 1M",
@@ -1110,9 +1110,9 @@
         "min_revision_pct": "Minimum Revision %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Are analysts upgrading their view on this company?\" One-month EPS revision rate. Often leads earnings surprises — a favorite tool of momentum investors.",
+      "howToRead": "min_revision_pct=0 passes stocks with net upward revisions. Raise to 5 for clear upgrade trends. Higher values = rapidly improving Wall Street consensus.",
+      "caution": "Small-cap stocks with 1-2 analyst coverage see extreme swings from a single opinion change. Post-upgrade price may already be priced in. Pair with PEG."
     },
     "analyst_revision_3m": {
       "label": "Analyst Revision 3M",
@@ -1121,9 +1121,9 @@
         "min_revision_pct": "Minimum Revision %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is the consensus upgrade sustained, not just a one-month blip?\" Three-month revision rate has less noise than 1-month, verifying trend persistence.",
+      "howToRead": "min_revision_pct=0 passes stocks with positive 3-month net revisions. Combine with 1m revision to check if upgrades are \"accelerating.\"",
+      "caution": "Distorted right after earnings releases. Some quarters, forward guidance matters more. Exclude stocks with fewer than 3 analysts covering."
     },
     "asset_turnover_ratio": {
       "label": "Asset Turnover Ratio",
@@ -1132,9 +1132,9 @@
         "min_ratio": "Minimum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.5",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How efficiently does this company use its assets to generate revenue?\" A key DuPont component — dissects ROE into margin, turnover, and leverage.",
+      "howToRead": "min_ratio=0.5 passes firms generating at least $0.50 revenue per $1 of assets. Retail often exceeds 2.0; utilities and financials are normally 0.1-0.3. Always compare within sector.",
+      "caution": "Asset-heavy firms (real estate, financials) are structurally low — never compare across sectors. Asset divestiture temporarily inflates the ratio."
     },
     "book_to_market_ratio": {
       "label": "Book to Market Ratio",
@@ -1143,9 +1143,9 @@
         "min_ratio": "Minimum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.3",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How much is the market discounting this company vs. book value?\" B/M ratio is the core Fama-French 3-factor variable. Higher = value stock; lower = growth premium.",
+      "howToRead": "min_ratio=0.3 passes stocks where book value is at least 30% of market cap. Above 1.0 = \"trading below book value\" — classic value stock. 0.5-1.0 is mid-value zone.",
+      "caution": "Inverse of PB ratio — may feel unfamiliar. IT/pharma with heavy intangibles (brands, patents) have low book values that understate true worth. Most reliable for financials and tangible-asset sectors."
     },
     "buyback_yield_filter": {
       "label": "Buyback Yield Filter",
@@ -1154,9 +1154,9 @@
         "min_yield_pct": "Minimum Yield %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =1.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is the company buying back its own stock?\" Buyback yield signals management believes shares are undervalued. A key shareholder return metric alongside dividends.",
+      "howToRead": "min_yield_pct=1.0 passes firms buying back at least 1% of market cap. Above 3% is very aggressive. Add to dividend yield for Total Shareholder Yield.",
+      "caution": "Announcement vs. execution differ — many announce but don't follow through. \"Defensive buybacks\" that merely offset stock option dilution aren't real shareholder returns. Check net_share_issuance."
     },
     "cash_conversion_ratio": {
       "label": "Cash Conversion Ratio",
@@ -1165,9 +1165,9 @@
         "min_ratio": "Minimum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.8",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is the company actually collecting cash from its profits?\" Operating Cash Flow / Net Income. 1.0 = full cash collection; 0.5 = only half is cash. Directly measures earnings quality.",
+      "howToRead": "min_ratio=0.8 passes firms converting 80%+ of net income to cash. Above 1.0 is healthy; below 0.5 = \"profits exist but cash doesn't\" — a danger signal.",
+      "caution": "High-growth companies temporarily show low ratios due to working capital buildup. Also dips during heavy CAPEX periods. Use 3-5 year averages. Negative denominator (losses) distorts the ratio."
     },
     "cashflow_to_debt_ratio": {
       "label": "Cashflow to Debt Ratio",
@@ -1176,9 +1176,9 @@
         "min_ratio": "Minimum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.2",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Can operating cash flow service the debt?\" OCF / Total Debt. At 0.2, the company can repay all debt in 5 years at current pace. A core financial safety metric.",
+      "howToRead": "min_ratio=0.2 passes firms covering 20%+ of total debt with annual OCF. Above 0.4 is solid; below 0.1 means heavy debt burden.",
+      "caution": "Financials are structurally debt-heavy, so ratios are very low — apply different thresholds by sector. One-time cash inflows (asset sales) can temporarily inflate the ratio."
     },
     "debt_service_coverage_ratio": {
       "label": "Debt Service Coverage Ratio",
@@ -1187,9 +1187,9 @@
         "min_ratio": "Minimum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =1.2",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Can operating income cover interest and principal payments?\" DSCR = EBIT / Total Debt Service. Banks use this as a core lending criterion. Below 1.0 = can't even cover interest.",
+      "howToRead": "min_ratio=1.2 passes firms with EBIT covering 1.2x their debt service. Above 1.5 is comfortable; 2.0+ is very strong. Banks typically require 1.25+.",
+      "caution": "EBIT can be inflated by one-time items. Short-term debt maturity concentration (refinancing risk) isn't captured. Check debt maturity structure alongside."
     },
     "dividend_growth_5y": {
       "label": "Dividend Growth 5Y",
@@ -1198,9 +1198,9 @@
         "min_growth_pct": "Minimum Growth %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Has this company consistently raised dividends?\" The 5-year dividend growth rate is the backbone of Dividend Aristocrat strategies — sustained increases signal stable, predictable earnings.",
+      "howToRead": "min_growth_pct=3 passes firms growing dividends at 3%+ annually. 7%+ beats inflation meaningfully; 10%+ marks aggressive dividend growers.",
+      "caution": "Past growth doesn't guarantee future increases, especially in recessions. If payout ratio is already above 70%, growth headroom is exhausted. Pair with a payout ratio filter."
     },
     "earnings_stability_score": {
       "label": "Earnings Stability Score",
@@ -1210,9 +1210,9 @@
         "max_cv": "Maximum CV"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5, =0.35",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Are earnings predictable, or do they swing wildly?\" The coefficient of variation (CV) of 5-year EPS. Low CV means stable, forecastable profits — a key criterion Benjamin Graham emphasized.",
+      "howToRead": "max_cv=0.35 passes firms with EPS variability under 35%. Below 0.2 is very stable (think utilities). Above 0.5 means erratic earnings typical of semiconductors or commodity producers.",
+      "caution": "Past stability doesn't immunize against disruption (regulation changes, new technology). Companies that swung from loss to profit will show extreme CV due to base effects. Check whether loss periods skew the calculation."
     },
     "eps_cagr_3y": {
       "label": "EPS CAGR 3Y",
@@ -1221,9 +1221,9 @@
         "min_cagr_pct": "Minimum CAGR %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Has this company grown earnings steadily over three years?\" The 3-year EPS CAGR filters out one-year flukes and confirms sustained growth — essential for GARP (Growth at a Reasonable Price) screens.",
+      "howToRead": "min_cagr_pct=5 passes firms with 5%+ annualized EPS growth. 10% is solid; 20%+ is high-growth territory. Pair with PEG to ensure you're not overpaying for that growth.",
+      "caution": "Base effects are treacherous — a loss three years ago that flipped to profit creates astronomical CAGR. Always verify the starting EPS wasn't negative or abnormally depressed. Cross-check with revenue CAGR to confirm the growth source."
     },
     "eps_growth_yoy": {
       "label": "EPS Growth YoY",
@@ -1232,9 +1232,9 @@
         "min_growth_pct": "Minimum Growth %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Are this year's earnings higher than last year's?\" Year-over-year EPS growth is the most intuitive growth metric and typically the first filter in earnings-momentum strategies.",
+      "howToRead": "min_growth_pct=5 passes stocks with EPS up 5%+ YoY. At 20%, you're firmly in high-growth territory. Setting to 0 simply excludes companies with declining earnings.",
+      "caution": "Single-year comparison is extremely vulnerable to base effects. A prior-year loss flipping to profit can show 1000%+ growth. Always combine with 3-year CAGR and check for one-time items (asset sales, tax refunds)."
     },
     "ev_to_ebitda_ratio": {
       "label": "EV to EBITDA Ratio",
@@ -1243,9 +1243,9 @@
         "max_ratio": "Maximum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =12.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"If I bought this entire company, how many years until the cash flow pays me back?\" EV/EBITDA is the standard M&A valuation multiple. Unlike PE, it neutralizes debt structure and depreciation differences across industries.",
+      "howToRead": "max_ratio=12 passes stocks trading at 12x EBITDA or below. KOSPI averages 8-10x; S&P 500 runs 12-15x. Sector norms vary widely — IT 20x+, utilities 8x, energy 5x.",
+      "caution": "EBITDA ignores capex, so capital-intensive sectors (telecom, energy) look cheaper than they are on a free-cash-flow basis. Lease liabilities under IFRS 16 also shift the EV calculation significantly."
     },
     "ev_to_sales_ratio": {
       "label": "EV to Sales Ratio",
@@ -1254,9 +1254,9 @@
         "max_ratio": "Maximum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =4.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How do I value a company that doesn't yet have profits?\" EV/Sales is the only usable valuation metric for pre-profit companies — essential for biotech, early-stage tech, and hypergrowth names.",
+      "howToRead": "max_ratio=4 passes companies priced at 4x sales or less. Traditional manufacturing sits at 0.5-1.5x; SaaS companies can justify 5-15x if growth is strong. Always interpret alongside revenue growth rate.",
+      "caution": "Low EV/Sales on a perpetually unprofitable company is not cheap — it may be \"cheap for a reason.\" Pair with operating margin or FCF margin to filter out revenue-heavy, profit-absent businesses."
     },
     "free_cash_flow_margin": {
       "label": "Free Cash Flow Margin",
@@ -1265,9 +1265,9 @@
         "min_margin_pct": "Minimum Margin %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"After all spending, how much real cash is left from each dollar of revenue?\" FCF margin reveals profitability that accounting earnings can obscure. Cash flow doesn't lie — net income can.",
+      "howToRead": "min_margin_pct=5 passes firms converting 5%+ of revenue into free cash. IT/SaaS often exceeds 20%; manufacturing at 5% is respectable. Sector benchmarks vary widely.",
+      "caution": "Heavy capex periods (factory expansion, data-center buildout) temporarily depress FCF margin — that's investment, not weakness. Look at the 3-5 year trend. Filings may lag 1-2 months per quarter."
     },
     "gross_margin": {
       "label": "Gross Margin",
@@ -1276,9 +1276,9 @@
         "min_margin_pct": "Minimum Margin %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =20.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How much is left after subtracting cost of goods?\" Gross margin is the most fundamental measure of a business's pricing power and competitive moat. One of Buffett's first-look metrics.",
+      "howToRead": "min_margin_pct=20 passes companies retaining 20%+ of revenue after COGS. Software: 60-80%, pharma: 60-70%, retail: 25-35%, food processing: 20-30%. Always compare within the same sector.",
+      "caution": "Cross-sector absolute comparisons are meaningless due to structural differences. Even within an industry, cost classification (COGS vs SGA) varies by company. Use peer-relative analysis."
     },
     "gross_profitability": {
       "label": "Gross Profitability",
@@ -1287,9 +1287,9 @@
         "min_ratio": "Minimum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.2",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How efficiently does this company turn its assets into gross profit?\" Novy-Marx (2013) found that GP/Assets is a powerful quality factor — high-GP/A stocks outperform. The premier quality metric in academic factor models.",
+      "howToRead": "min_ratio=0.2 passes firms generating gross profit equal to 20%+ of total assets. Above 0.3 is very efficient. Used within value screens, it isolates \"cheap and good\" stocks.",
+      "caution": "Asset-light industries (tech, services) naturally score high while capital-heavy sectors (utilities, manufacturing) score low — not because they're worse businesses. For sector-neutral use, convert to within-sector percentile ranks."
     },
     "interest_coverage_ratio": {
       "label": "Interest Coverage Ratio",
@@ -1298,9 +1298,9 @@
         "min_ratio": "Minimum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Can this company cover its interest payments from operating profit?\" ICR = EBIT / Interest Expense. Below 1.0 means the company can't even pay interest from operations. One of the most important metrics credit agencies examine.",
+      "howToRead": "min_ratio=3 passes firms earning 3x their interest costs. Above 5 is comfortable; below 1.5 is a warning. This is the financial safety net for any leveraged company.",
+      "caution": "In rising-rate environments, floating-rate debt can cause interest expense to spike, rapidly eroding ICR. Also verify that EBIT isn't inflated by one-time items. Check the debt maturity schedule for refinancing risk."
     },
     "inventory_turnover_ratio": {
       "label": "Inventory Turnover Ratio",
@@ -1309,9 +1309,9 @@
         "min_ratio": "Minimum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is inventory selling quickly, or piling up in the warehouse?\" High turnover means products are moving; declining turnover warns of demand weakness or overproduction — an early warning of margin compression.",
+      "howToRead": "min_ratio=3 passes firms turning over inventory 3+ times per year. Retail: 8-12x, manufacturing: 4-8x, food: 12-20x. Norms vary enormously by industry.",
+      "caution": "Service and software companies carry no inventory, making this metric irrelevant. Lean (just-in-time) inventory can inflate turnover while increasing supply-chain fragility. Focus on trend changes within the same sector."
     },
     "net_debt_to_ebitda": {
       "label": "Net Debt to EBITDA",
@@ -1320,9 +1320,9 @@
         "max_ratio": "Maximum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How many years would it take to pay off all net debt from current cash earnings?\" Net Debt/EBITDA is the standard leverage metric in credit analysis and M&A. It accounts for cash on hand, making it more realistic than gross debt ratios.",
+      "howToRead": "max_ratio=3 passes firms that could pay off net debt in 3 years or less. Under 2x is healthy; above 5x is concerning. A negative ratio means cash exceeds debt (very strong balance sheet).",
+      "caution": "EBITDA swells in boom times and shrinks in downturns, so cyclical firms look deceptively safe at peak earnings. Also check whether lease liabilities (IFRS 16) are included — they significantly change the numerator."
     },
     "net_margin": {
       "label": "Net Margin",
@@ -1331,9 +1331,9 @@
         "min_margin_pct": "Minimum Margin %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"After everything — taxes, interest, all costs — what percentage of revenue remains as profit?\" Net margin is the ultimate bottom-line profitability metric showing what shareholders truly earn per dollar of sales.",
+      "howToRead": "min_margin_pct=5 passes firms keeping 5%+ of revenue as net income. IT/SW: 20-30%, financials: 15-25%, retail: 2-5%, airlines: 3-8%. Norms are entirely sector-dependent.",
+      "caution": "Net income is the most susceptible to one-time items (asset sales, lawsuit settlements, tax windfalls). If operating margin is healthy but net margin is low, investigate non-operating charges (interest, FX losses). Use multi-year averages."
     },
     "operating_margin": {
       "label": "Operating Margin",
@@ -1342,9 +1342,9 @@
         "min_margin_pct": "Minimum Margin %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =10.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How profitable is the core business before financing and taxes?\" Operating margin isolates the business's own efficiency, independent of capital structure. The key metric for comparing competitive positioning within an industry.",
+      "howToRead": "min_margin_pct=10 passes firms retaining 10%+ of revenue as operating profit. IT/SW: 20-40%, pharma: 15-25%, retail: 3-8%, construction: 5-10%. Always benchmark against sector peers.",
+      "caution": "Restructuring charges and asset impairments can distort operating income. Even within the same industry, different business models (own-brand vs contract manufacturing) create structural margin differences. Watch the trend — is it improving or deteriorating?"
     },
     "payout_ratio_filter": {
       "label": "Payout Ratio Filter",
@@ -1353,9 +1353,9 @@
         "max_payout_pct": "Maximum Payout %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =70.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is the company paying out a sustainable share of earnings as dividends?\" Payout ratio gauges dividend sustainability — too high means no reinvestment capacity; too low suggests weak shareholder return commitment.",
+      "howToRead": "max_payout_pct=70 passes firms distributing 70% or less of net income. 40-60% is a balanced range. Over 100% means dividends exceed earnings — unsustainable without external financing. REITs legally require 90%+.",
+      "caution": "A temporary earnings dip inflates payout ratio mechanically (denominator shrinks). Also, companies doing heavy buybacks may have low payout ratios but high total shareholder yield. Check shareholder_yield alongside."
     },
     "price_to_tangible_book": {
       "label": "Price to Tangible Book",
@@ -1364,9 +1364,9 @@
         "max_ratio": "Maximum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =3.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"What am I paying relative to hard, tangible assets — excluding goodwill and intangibles?\" P/TBV strips out acquisition-inflated goodwill, giving a cleaner view of asset-based value. The most honest book-value metric for serial acquirers.",
+      "howToRead": "max_ratio=3 passes stocks at 3x tangible book or below. Under 1.0 means the stock trades below its tangible liquidation value. P/TBV is the most relevant valuation metric for banks and financials.",
+      "caution": "Companies whose core value is intangible (software, brands, patents) have minimal tangible book, making P/TBV meaninglessly high. This metric is powerful for asset-heavy sectors but misleading for asset-light businesses."
     },
     "quality_score": {
       "label": "Quality Score",
@@ -1375,9 +1375,9 @@
         "min_score": "Minimum Score"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.5",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"One composite score covering ROE, earnings stability, leverage, and more.\" A multi-factor quality score provides a single-number quality check when individually filtering on each metric is impractical.",
+      "howToRead": "min_score=0.5 passes the top half by quality. At 0.7, only the top 30%; at 0.9, top 10%. Represents the quality dimension in multi-factor models as a single summary value.",
+      "caution": "The components and weights inside any quality score vary by implementation — always understand the recipe before trusting the output. For full transparency, consider building your own from ROE, FCF margin, and F-Score."
     },
     "receivables_turnover_ratio": {
       "label": "Receivables Turnover Ratio",
@@ -1386,9 +1386,9 @@
         "min_ratio": "Minimum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =4.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How fast does this company collect what it's owed?\" High receivables turnover means cash is coming in quickly. A declining ratio warns that revenue may be booked on paper but not actually collected — a credit-risk signal.",
+      "howToRead": "min_ratio=4 passes firms collecting receivables 4+ times per year (~90-day cycle). Above 8 means sub-45-day collection. Retail and cash-based businesses are naturally very high; B2B and construction run low.",
+      "caution": "Normal ranges are entirely sector-specific — absolute comparison across industries is invalid. Payment terms (Net 30, Net 60) create structural differences. Focus on changes in the trend, not the level."
     },
     "revenue_cagr_3y": {
       "label": "Revenue CAGR 3Y",
@@ -1397,9 +1397,9 @@
         "min_cagr_pct": "Minimum CAGR %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Has revenue grown steadily over three years?\" Revenue CAGR is harder to manipulate than EPS and less prone to base-effect distortions. The most reliable proof that the business is genuinely expanding.",
+      "howToRead": "min_cagr_pct=5 passes firms growing revenue at 5%+ annually. 10% is solid; 20%+ is high growth. Pair with EPS CAGR to verify whether revenue growth is translating to profit growth.",
+      "caution": "M&A-driven revenue jumps inflate CAGR without representing organic growth. Check if acquisitions distort the number. Also compare against asset growth to detect dilutive expansion."
     },
     "revenue_growth_yoy": {
       "label": "Revenue Growth YoY",
@@ -1408,9 +1408,9 @@
         "min_growth_pct": "Minimum Growth %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Did revenue increase this year versus last?\" Year-over-year revenue growth is the simplest growth indicator. Revenue is harder to fabricate than earnings, making it the most trustworthy first evidence of real growth.",
+      "howToRead": "min_growth_pct=5 passes stocks with 5%+ YoY revenue growth. Setting to 0 merely excludes shrinking businesses. At 20%+ you are in high-growth territory. Compare against sector average for relative positioning.",
+      "caution": "Single-year comparisons are vulnerable to base effects — a COVID-depressed prior year inflates this year's growth. Cross-reference with 3-year CAGR. FX fluctuations also affect revenue for multinational companies."
     },
     "revenue_stability_score": {
       "label": "Revenue Stability Score",
@@ -1420,9 +1420,9 @@
         "max_cv": "Maximum CV"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5, =0.25",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is revenue predictable year to year, or does it swing with the cycle?\" Low revenue CV indicates stable, recession-resistant business models like subscriptions, utilities, and consumer staples.",
+      "howToRead": "max_cv=0.25 passes firms with revenue variability under 25% over 5 years. Below 0.1 is extremely stable (utilities, telecom). Above 0.5 indicates highly cyclical exposure (semiconductors, commodities).",
+      "caution": "Stable revenue doesn't guarantee growth — it can mean stagnation. If you are seeking growth stocks, this filter works against you. Also, business-model pivots (entering new markets) invalidate historical stability patterns."
     },
     "shareholder_yield_filter": {
       "label": "Shareholder Yield Filter",
@@ -1431,9 +1431,9 @@
         "min_yield_pct": "Minimum Yield %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =2.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"What is the total cash return to shareholders — dividends, buybacks, and debt paydown combined?\" Mebane Faber's Shareholder Yield captures the full picture of capital return that dividend yield alone misses.",
+      "howToRead": "min_yield_pct=2 passes firms returning 2%+ of market cap to shareholders annually. At 5%+, the return is very aggressive. Catches buyback-heavy, low-dividend companies that dividend screens miss.",
+      "caution": "Treasury stock (buybacks held, not cancelled) is not true return. Debt paydown inclusion is debatable — routine refinancing counts as shareholder yield under some definitions. Decompose the components to verify real return."
     },
     "roce_filter": {
       "label": "ROCE Filter",
@@ -1442,9 +1442,9 @@
         "min_roce_pct": "Minimum ROCE %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =10.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"What return is the business generating on all invested capital — both equity and debt?\" ROCE = EBIT / Capital Employed. Measures how efficiently a firm deploys the total capital entrusted to it. A Buffett favorite.",
+      "howToRead": "min_roce_pct=10 passes firms earning 10%+ on capital employed. Above 15% is strong; 20%+ suggests durable competitive advantage (moat). Must exceed WACC (typically 8-12%) to be value-creative.",
+      "caution": "Capital employed definitions vary among analysts (include goodwill or not, capitalize leases or not). Serial acquirers accumulate goodwill that bloats capital and depresses ROCE. Calculate organic ROCE separately for clarity."
     },
     "roa_filter": {
       "label": "ROA Filter",
@@ -1453,9 +1453,9 @@
         "min_roa_pct": "Minimum ROA %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =5.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"How efficiently does this company generate profit from its total asset base?\" ROA strips out leverage effects, showing pure asset-utilization efficiency. More useful than ROE for cross-industry comparison.",
+      "howToRead": "min_roa_pct=5 passes firms earning 5%+ on total assets. IT/SW: 10-20%, retail: 5-10%, banking: 0.5-1.5%, utilities: 2-5%. The huge variation makes sector benchmarking essential.",
+      "caution": "Asset-heavy industries (banking, insurance) have structurally low ROA (0.5-1.5%) by design, not incompetence. Apply sector-specific thresholds. A large gap between ROE and ROA signals heavy reliance on leverage."
     },
     "overnight_return_filter": {
       "label": "Overnight Return",
@@ -1464,9 +1464,9 @@
         "min_overnight_return_pct": "Minimum Overnight Return %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"Was the overnight gap positive?\" The prior close to current open return reflects after-hours news, earnings, and foreign market movements. Some research suggests a significant portion of equity returns occurs overnight rather than intraday.",
+      "howToRead": "min_overnight_return_pct=0 passes stocks that gapped up at the open. At 1% the overnight move is meaningful. Negative values filter for gap-downs, useful for overnight risk analysis.",
+      "caution": "Overnight returns are extremely noisy day-to-day and driven by US futures/Asian market spillover. Predicting next-day gaps is nearly impossible. More useful for portfolio overnight-risk profiling than for screening."
     },
     "distance_from_52w_low": {
       "label": "Distance From 52W Low",
@@ -1476,9 +1476,9 @@
         "max_distance_pct": "Maximum Distance %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =252, =30.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"How far has this stock bounced from its 52-week low?\" Measures recovery from the bottom. Used for oversold-bounce or \"confirmed bottom\" entry strategies.",
+      "howToRead": "max_distance_pct=30 passes stocks still within 30% of their 52-week low — still beaten down. Raise to 100 to include stocks that already doubled. Adjust range by strategy purpose.",
+      "caution": "Stocks near the 52-week low are usually cheap for a reason (problems), not because they're bargains. Value trap risk is high. Always pair with fundamental filters (FCF, debt)."
     },
     "distance_from_200d_high": {
       "label": "Distance From 200D High",
@@ -1488,9 +1488,9 @@
         "max_distance_pct": "Maximum Distance %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =200, =15.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"How far has this stock fallen from its 200-day high?\" Filters out stocks that dropped too far, or conversely keeps only momentum stocks near their highs.",
+      "howToRead": "max_distance_pct=15 passes stocks within 15% of their 200-day high. Lower to 5 for near-highs only; raise to 30 to include significantly pulled-back stocks.",
+      "caution": "Near the high doesn't always mean good — could be overbought. Far from the high could mean further decline ahead. Set direction based on strategy purpose (momentum vs. contrarian)."
     },
     "gap_up_breakaway": {
       "label": "Gap Up Breakaway",
@@ -1499,9 +1499,9 @@
         "min_gap_pct": "Minimum Gap %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =1.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"Did price gap up and hold — signaling the start of a new uptrend?\" A breakaway gap marks the beginning of a fresh trend, especially when accompanied by heavy volume. Connects with PEAD after earnings surprises.",
+      "howToRead": "min_gap_pct=1 passes stocks opening 1%+ above the prior close. At 3%, the gap is decisive. Post-earnings surprise gaps tied to PEAD often carry momentum for weeks.",
+      "caution": "Not every gap-up is breakaway — exhaustion gaps near tops look identical. Declining volume after the gap signals insufficient follow-through buying. Confirm the gap holds (isn't filled) over 1-2 days."
     },
     "gap_down_exhaustion": {
       "label": "Gap Down Exhaustion",
@@ -1510,9 +1510,9 @@
         "min_gap_down_pct": "Minimum Gap Down %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =2.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"After a panic gap-down, did the stock recover to close higher — signaling selling exhaustion?\" A large gap-down followed by a bullish close suggests panic sellers are depleted. A short-term contrarian reversal pattern.",
+      "howToRead": "min_gap_down_pct=2 passes stocks that opened 2%+ below the prior close but finished the day positive. At 5%, you're filtering for extreme panic-recovery events only.",
+      "caution": "This is a \"catching falling knives\" pattern — inherently dangerous. Verify whether the gap-down cause (earnings miss, bad news) is temporary or structural. Structural bad news leads to continued decline after any dead-cat bounce."
     },
     "opening_range_breakout": {
       "label": "Opening Range Breakout",
@@ -1521,9 +1521,9 @@
         "direction": "Direction"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =up",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Did price break above the early-session range?\" Opening Range Breakout is a classic day-trading strategy where breaking the initial price range signals momentum continuation in that direction.",
+      "howToRead": "direction=up passes stocks that broke above their opening range. On daily bars, this approximates breaking the prior day's high. True intraday ORB (15-30 min range) requires tick data.",
+      "caution": "Volatile stocks routinely break the opening range in both directions during a single session. Daily-bar screening can only approximate this inherently intraday signal. Precision is limited outside real-time data."
     },
     "pivot_point_breakout": {
       "label": "Pivot Point Breakout",
@@ -1532,9 +1532,9 @@
         "direction": "Direction"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =up",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has price moved above yesterday's pivot point?\" Pivot points (average of prior high, low, close) are a self-fulfilling day-trading reference that many floor traders and algorithms use for intraday support/resistance.",
+      "howToRead": "direction=up passes stocks trading above their pivot point. R1 and R2 levels represent increasing resistance zones above the pivot. Widely watched enough to create real supply/demand at these calculated levels.",
+      "caution": "Because so many traders use pivots, reversals at pivot levels are common — the signal both attracts and repels price. On daily-bar screening, intraday pivot precision is lost. Best suited for real-time trading."
     },
     "month_of_year_seasonality": {
       "label": "Month Of Year Seasonality",
@@ -1544,9 +1544,9 @@
         "target_month": "Target Month"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =1, =0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"Does this stock show a repeating pattern of strong performance in a specific month?\" Tests calendar anomalies like the January Effect and Sell in May. Based on decades of academic seasonal-pattern research.",
+      "howToRead": "target_month=1 with min_avg_return_pct=0 passes stocks whose average January return is positive. Change the month number to test any month. For Sell in May, examine months 5-10.",
+      "caution": "Monthly seasonality has very small sample sizes (12 data points per year) and most effects disappear after transaction costs. Extremely high over-optimization risk. Use only as a secondary reference, never as a primary strategy driver."
     },
     "turn_of_month_effect": {
       "label": "Turn Of Month",
@@ -1556,9 +1556,9 @@
         "window_days": "Window Days"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =3, =0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"Does this stock benefit from the well-documented end-of-month/start-of-month seasonal pattern?\" The Turn-of-Month effect (last 3 + first 3 days) is among the most statistically robust calendar anomalies, linked to payroll and pension fund inflows.",
+      "howToRead": "window_days=3 passes stocks with positive average returns in the turn-of-month window. This effect has stronger academic support than day-of-week effects and appears across many global markets.",
+      "caution": "Even if the effect is real, it is a market-wide phenomenon — using it to select individual stocks adds limited value. Transaction costs erode the already-thin alpha for individual investors. Useful only as a market-timing reference."
     },
     "day_of_week_seasonality": {
       "label": "Day-of-Week Seasonality",
@@ -1568,9 +1568,9 @@
         "target_weekday": "Target Weekday (0=Mon, 4=Fri)"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0, =0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"Do certain stocks consistently perform better on specific weekdays?\" Tests the Day-of-Week Effect — the classic calendar anomaly of weak Mondays and strong Fridays.",
+      "howToRead": "target_weekday=0 (Monday), min_avg_return_pct=0 passes stocks with positive Monday average returns. For Friday test: target_weekday=4. Academically, this effect is weakening.",
+      "caution": "Transaction costs and slippage eliminate most day-of-week alpha. High overfitting risk — a specific day's outperformance may be pure chance. Use as reference only, never as primary strategy."
     },
     "net_share_issuance_filter": {
       "label": "Net Share Issuance Filter",
@@ -1579,9 +1579,9 @@
         "max_issuance_pct": "Maximum Issuance %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =1.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is this company diluting shareholders by issuing new stock?\" Pontiff & Woodgate (2008) confirmed that high net share issuance predicts poor future returns. A quality/governance filter against equity dilution.",
+      "howToRead": "max_issuance_pct=1 passes firms with net issuance under 1% of shares outstanding. Negative values indicate net buybacks (positive signal). Above 5% suggests significant dilution from secondary offerings or convertible bonds.",
+      "caution": "Stock-based compensation in tech companies counts as issuance, making blanket cutoffs tricky. Distinguish between dilutive issuance (secondaries) and defensive buybacks that merely offset options dilution. Check net issuance vs. buyback_yield together."
     },
     "insider_net_buying": {
       "label": "Insider Net Buying",
@@ -1590,9 +1590,9 @@
         "min_net_buying_pct": "Minimum Net Buying %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Are executives buying their own company's stock with personal money?\" Insiders know the business best — when they buy, it's a bullish signal. SEC mandates public disclosure of insider transactions.",
+      "howToRead": "min_net_buying_pct=0 passes stocks with more insider buying than selling. Above 1% of float is meaningful. There's only one reason insiders buy (they think it's undervalued); there are many reasons they sell (taxes, diversification).",
+      "caution": "\"Insider buying has one reason; selling has a hundred\" — never interpret selling alone as bearish. Most insider sales are mechanical (tax payments on exercised options). Focus exclusively on insider purchases."
     },
     "short_float_pct_filter": {
       "label": "Short Float % Filter",
@@ -1601,9 +1601,9 @@
         "max_short_float_pct": "Maximum Short Float %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =15.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"What fraction of tradable shares are currently shorted?\" High short interest signals bearish consensus but also short-squeeze potential. A sentiment indicator that cuts both ways.",
+      "howToRead": "max_short_float_pct=15 excludes stocks with more than 15% of float shorted. Inversely, setting a min threshold finds squeeze candidates. Above 20% is unusually high short interest.",
+      "caution": "Short interest data is published biweekly (US) and is already stale on release. High short interest can be non-directional (hedging, pairs trading, market-making). Context matters — don't assume all shorts are bearish bets."
     },
     "short_interest_ratio_filter": {
       "label": "Short Interest Ratio Filter",
@@ -1612,9 +1612,9 @@
         "max_ratio": "Maximum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =5.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"How many days would it take for shorts to cover at average volume?\" Days-to-cover combines short interest with liquidity — high values mean shorts are trapped if the stock rallies, amplifying squeeze dynamics.",
+      "howToRead": "max_ratio=5 passes stocks where shorts can cover in 5 days or less. Above 10 days, a squeeze is structurally plausible. Setting a min threshold specifically hunts for squeeze setups.",
+      "caution": "High days-to-cover does not guarantee a squeeze — a catalyst is required to force covering. Data is biweekly and potentially stale. Shorts may have already begun covering by the time you see the report."
     },
     "earnings_surprise_filter": {
       "label": "Earnings Surprise Filter",
@@ -1623,9 +1623,9 @@
         "min_surprise_pct": "Minimum Surprise %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"Did the latest quarter beat expectations?\" Earnings surprises drive the Post-Earnings-Announcement Drift (PEAD) — one of the most robust anomalies in academic finance (Bernard & Thomas, 1989).",
+      "howToRead": "min_surprise_pct=0 passes stocks that beat consensus. At 5, only 5%+ beats qualify. PEAD suggests price continues drifting in the surprise direction for 60-90 days post-announcement.",
+      "caution": "Stocks often gap up immediately on surprise, making entry timing tricky. A \"sell the news\" reaction can also occur. Combining with post-announcement price action (gap_up) improves signal quality."
     },
     "post_earnings_drift": {
       "label": "Post Earnings Drift",
@@ -1634,9 +1634,9 @@
         "min_return_pct": "Minimum Return %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"Does price keep drifting in the direction of a positive earnings surprise?\" PEAD (Bernard & Thomas, 1989) is one of the most robust market anomalies — the market digests earnings news slowly, creating exploitable drift for 60-90 days.",
+      "howToRead": "min_return_pct=0 passes stocks with positive post-announcement returns. PEAD is stronger for larger surprises and persists longer in small-caps with lower analyst coverage.",
+      "caution": "Institutional awareness of PEAD has grown, weakening the effect. Large post-earnings gaps may already price in most of the drift. The highest-probability entries are within 2-3 days of the announcement."
     },
     "pre_earnings_drift": {
       "label": "Pre Earnings Drift",
@@ -1645,9 +1645,9 @@
         "min_return_pct": "Minimum Return %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"Is the stock rising ahead of its earnings announcement — suggesting the market anticipates a beat?\" Pre-announcement drift can reflect informed expectations or, in some cases, information leakage.",
+      "howToRead": "min_return_pct=0 passes stocks with positive returns in the pre-announcement window. Strong pre-earnings momentum often indicates the market is pricing in a positive surprise.",
+      "caution": "\"Buy the rumor, sell the news\" — stocks that rally into earnings often sell off on the actual report even if results are good. Also, abnormal pre-earnings moves may attract regulatory scrutiny. Don't over-rely on this pattern."
     },
     "accruals_ratio": {
       "label": "Accruals Ratio",
@@ -1656,9 +1656,9 @@
         "max_ratio": "Maximum Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.1",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Are these profits real, or just accounting entries?\" Sloan(1996) discovered the accrual anomaly — high accrual firms underperform. A quality filter that verifies earnings authenticity.",
+      "howToRead": "max_ratio=0.1 passes firms with accruals below 10% of total assets. Lower values mean more cash-based earnings. Near zero means \"genuinely making money.\"",
+      "caution": "High accruals aren't always bad — fast-growing companies naturally see rising receivables/inventory. Consider industry norms. Cross-check with FCF margin."
     },
     "asset_growth_rate": {
       "label": "Asset Growth Rate",
@@ -1667,9 +1667,9 @@
         "max_growth_pct": "Maximum Growth %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =15.0",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is this company growing its assets too fast?\" Cooper et al. (2008) found high asset-growth firms underperform. A quality filter catching overinvestment and reckless acquisitions.",
+      "howToRead": "max_growth_pct=15 passes firms with YoY total asset growth under 15%. 0-10% is healthy; 30%+ raises red flags for large acquisitions or equity offerings.",
+      "caution": "High asset growth from R&D or capacity expansion can be positive. Don't apply a blanket cutoff — consider industry CAPEX cycles. Semiconductors and biotech fluctuate heavily."
     },
     "momentum_12_1": {
       "label": "Momentum 12-1",
@@ -1680,9 +1680,9 @@
         "skip_recent_months": "Skip Recent Months"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =12, =1, =20.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"The academically most-validated momentum factor.\" Returns over months 2-12 (skipping the most recent month to avoid short-term reversal). Jegadeesh & Titman (1993) established this as the gold standard of momentum measurement.",
+      "howToRead": "min_return_pct=20 passes stocks up 20%+ over the 11-month window (12 months minus the most recent 1). The skip_recent=1 is critical — including the last month degrades performance due to the mean-reversion effect.",
+      "caution": "Momentum crashes are real — in 2009's sharp rebound, momentum stocks collapsed simultaneously. Past 12-month winners may be overbought. Always pair with volatility or MDD risk filters to manage crash exposure."
     },
     "volatility_n_day": {
       "label": "Volatility N Day",
@@ -1692,9 +1692,9 @@
         "max_annualized_vol_pct": "Maximum Annualized Vol %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =25.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"Is this stock's total volatility within my risk budget?\" Annualized N-day volatility is the most fundamental risk metric and the primary input for position sizing. Every portfolio management framework starts here.",
+      "howToRead": "max_annualized_vol_pct=25 passes stocks with annualized volatility under 25%. S&P 500 long-term average is 15-18%. Under 20% is low-vol; above 40% is high-vol. Use inversely for position sizing (higher vol = smaller position).",
+      "caution": "Historical volatility does not predict future volatility — the 2018 vol shock proved that calm periods can end abruptly. Total vol counts up-moves as risk; for a loss-only measure, use downside volatility instead."
     },
     "distance_from_52w_high": {
       "label": "Distance From 52W High",
@@ -1704,9 +1704,9 @@
         "max_distance_pct": "Maximum Distance %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =252, =10.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"How close is this stock to its 52-week high?\" Near-52w-high stocks carry strong momentum. George & Hwang (2004) showed this strategy is more stable than traditional momentum.",
+      "howToRead": "max_distance_pct=10 passes stocks within 10% of their 52-week high. At 5%, stocks are near new highs. One of the simplest and most intuitive momentum filters.",
+      "caution": "If the 52-week high was months ago and the stock is flat since, it's stalled — not momentum. Check recency of the high. Post-spike stocks near their high may already be too late."
     },
     "relative_strength_vs_benchmark": {
       "label": "Relative Strength Vs Benchmark",
@@ -1716,9 +1716,9 @@
         "min_excess_return_pct": "Minimum Excess Return %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =63, =5.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is this stock outperforming the market?\" Relative strength measures excess returns over a benchmark. Stocks beating the index show alpha — the market is falling but this stock is holding or rising.",
+      "howToRead": "min_excess_return_pct=5 passes stocks outperforming the benchmark by 5%+ over 63 days (3 months). At 10%, only clear winners qualify. This is relative, not absolute — even in a down market, leaders are identified.",
+      "caution": "High relative strength stocks may already be extended — chasing them risks buying the top. In market sell-offs, defensive sectors (utilities, staples) naturally rank first, creating sector concentration bias."
     },
     "adx_trend_strength": {
       "label": "ADX Trend Strength",
@@ -1729,9 +1729,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =14, =25.0, =any",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is there actually a trend, or is it sideways?\" ADX measures trend strength — not direction. Essential pre-check: \"Is a trend-following strategy even viable right now?\"",
+      "howToRead": "min_adx=25 passes stocks with clear trends. Below 15 = sideways; 25-50 = moderate to strong; 50+ = extremely strong. Set di_direction=up to filter for uptrends only.",
+      "caution": "ADX is lagging — it stays high even after trends reverse. High ADX doesn't reveal direction. Always pair with DI+/DI- directional filters."
     },
     "ma_ribbon_alignment": {
       "label": "MA Ribbon Alignment",
@@ -1742,9 +1742,9 @@
         "short_period": "Short Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =50, =200",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Are all timeframes — short, medium, and long — aligned in the same direction?\" When 20 > 50 > 200 MA, every timeframe confirms bullish consensus. Maximum trend confidence comes from full ribbon alignment.",
+      "howToRead": "Passes when 20MA > 50MA > 200MA (perfect bullish order). The reverse (20<50<200) is full bearish alignment. MAs converging signals an impending trend change. Breakdown of alignment is an exit signal.",
+      "caution": "Full alignment is achieved only after significant price appreciation — entries may be late. Once established, alignment persists for long stretches, yielding few new signals. Catching the moment alignment first completes is the key."
     },
     "golden_cross_50_200": {
       "label": "Golden Cross 50/200",
@@ -1753,9 +1753,9 @@
         "lookback_days": "Lookback Days"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is a long-term trend reversal underway?\" The 50-day MA crossing above the 200-day MA — the golden cross — is the single most widely watched trend-transition signal by institutions and financial media.",
+      "howToRead": "lookback_days=5 passes stocks where the golden cross occurred within 5 days. These events are rare; widening to 10-20 days increases matches. The self-fulfilling attention the signal attracts can add short-term momentum.",
+      "caution": "The golden cross is a lagging signal — by the time it forms, price has typically recovered 30-40% from its bottom (as in the 2020 V-shaped recovery). Entry prices may already be elevated."
     },
     "death_cross_50_200": {
       "label": "Death Cross 50/200",
@@ -1764,9 +1764,9 @@
         "lookback_days": "Lookback Days"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is a long-term downtrend beginning?\" The 50-day MA crossing below the 200-day MA — a widely watched warning of trend deterioration. Used for risk management or short entry timing.",
+      "howToRead": "lookback_days=5 passes stocks where death cross occurred within 5 days. Rare signal, so results may be thin. Extend to 10-20 for wider capture.",
+      "caution": "Classic lagging signal — the actual decline is largely over by the time it appears. In V-shaped recoveries (like 2020 COVID), it triggers sells at the bottom. Always pair with other confirmation."
     },
     "donchian_channel_breakout": {
       "label": "Donchian Channel Breakout",
@@ -1775,9 +1775,9 @@
         "lookback_days": "Lookback Days"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has price broken the N-day high — the classic Turtle Trading signal?\" Richard Dennis's legendary system used 20-day channel breakouts as the primary trend-following entry rule.",
+      "howToRead": "lookback_days=20 passes stocks breaking above their 20-day high. The original Turtle system used 20 (short-term) and 55 (long-term). Longer periods yield fewer but higher-conviction signals.",
+      "caution": "In range-bound markets, price grazes the upper channel and reverts — false breakouts are common. The Turtle system's win rate was below 40%; profits came from riding large trends. A disciplined stop-loss is essential."
     },
     "keltner_channel_breakout": {
       "label": "Keltner Channel Breakout",
@@ -1788,9 +1788,9 @@
         "ema_period": "Ema Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =20, =2.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has price broken above the ATR-based volatility channel?\" The Keltner Channel (EMA +/- ATR multiple) reacts more uniformly to spikes than Bollinger Bands. A breakout above the upper channel signals strong directional momentum.",
+      "howToRead": "atr_multiplier=2 passes stocks breaking above EMA + 2x ATR. At 1.5, signals are more frequent; at 3.0, only extreme breakouts qualify. Combining with BB creates the well-known TTM Squeeze confirmation.",
+      "caution": "Like Bollinger breakouts, false signals are common without volume confirmation. The Keltner + BB squeeze combo (price exits Keltner while BB is inside it) is popular but still needs directional validation."
     },
     "parabolic_sar_flip": {
       "label": "Parabolic SAR Flip",
@@ -1801,9 +1801,9 @@
         "lookback_days": "Lookback Days"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =5, =0.02, =0.2",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"Has the Parabolic SAR flipped to below price, signaling a shift from downtrend to uptrend?\" Developed by Welles Wilder, SAR serves as both a trend-following entry and a trailing stop-loss system.",
+      "howToRead": "lookback_days=5 passes stocks where SAR flipped below price (bullish) within 5 days. af_step=0.02 is standard; af_max=0.2 caps acceleration. Higher af_max makes SAR cling tighter to price.",
+      "caution": "SAR excels in trending markets but produces rapid flip-flops in sideways conditions. Restrict usage to ADX 25+ environments. Since SAR provides only a single value, always cross-reference with at least one other indicator."
     },
     "linear_regression_slope_filter": {
       "label": "Linear Regression Slope",
@@ -1813,9 +1813,9 @@
         "min_slope": "Minimum Slope"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =60, =0.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is the statistical price trend genuinely upward?\" The regression slope in price units is positive when the trend is rising. Less ambiguous than moving average direction and more comparable across stocks when normalized.",
+      "howToRead": "min_slope=0 passes stocks with a positive 60-day regression slope. Because the unit is in price (dollars or won), direct cross-stock comparison requires normalization to percentage terms.",
+      "caution": "Absolute slope scales with price level — a $100 stock and a $10 stock with identical percentage trends have 10x different slopes. Use return-based slope or pair with R-squared and angle for proper context."
     },
     "linear_regression_angle_filter": {
       "label": "Linear Regression Angle",
@@ -1825,9 +1825,9 @@
         "min_angle_deg": "Minimum Angle Deg"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =60, =0.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"Is the price trend line sloping upward, and how steeply?\" Linear regression angle provides a mathematically precise trend direction measure — more rigorous than eyeballing moving averages.",
+      "howToRead": "min_angle_deg=0 passes stocks with a positive (upward-sloping) 60-day regression line. 30 degrees is a brisk rise; 45 degrees is very steep. The angle is intuitive but depends on the Y-axis scale.",
+      "caution": "Angle values depend on price units, so the same return can produce different angles for a $10 stock vs a $500 stock. Prefer relative comparison over absolute thresholds. Always combine with R-squared to avoid noisy trends."
     },
     "linear_regression_r2_filter": {
       "label": "Linear Regression R2",
@@ -1837,9 +1837,9 @@
         "min_r2": "Minimum R2"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =60, =0.5",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"How cleanly is price following a straight-line trend?\" High R-squared means price moves are largely explained by a linear trend (low noise). This measures trend quality — essential before trusting slope or angle signals.",
+      "howToRead": "min_r2=0.5 passes stocks where 50%+ of price movement is explained by the trend. Above 0.7 is a very clean trend. Below 0.3 means noise dominates over trend.",
+      "caution": "High R-squared with a negative slope means the stock is declining cleanly — always pair with slope or angle direction. Sudden large moves can artificially inflate R-squared, so ensure the lookback period (60+ days) is long enough."
     },
     "beta_to_benchmark": {
       "label": "Beta to Benchmark",
@@ -1849,9 +1849,9 @@
         "max_beta": "Maximum Beta"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =1.2",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"How much does this stock drop when the market drops 1%?\" Beta measures market sensitivity. Core tool for adjusting portfolio market risk — low beta for defense, high for offense.",
+      "howToRead": "max_beta=1.2 excludes stocks that swing more than 1.2x the market. Lower to 0.8 for defensive-only stocks. lookback=252 (1 year) gives more stable estimates.",
+      "caution": "Beta is backward-looking and changes completely during regime shifts (rate hikes, wars). Low beta doesn't always win — it means lower returns in bull markets too. Adjust by market phase."
     },
     "correlation_to_benchmark": {
       "label": "Correlation to Benchmark",
@@ -1861,9 +1861,9 @@
         "max_corr": "Maximum Corr"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =0.8",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"How much does this stock move with the market?\" Low correlation maximizes portfolio diversification. The core of defending against market-wide crashes.",
+      "howToRead": "max_corr=0.8 passes stocks with correlation below 0.8 to benchmark. Lower to 0.5 for significantly independent stocks. Longer lookback = more stable but may miss recent changes.",
+      "caution": "Correlations converge toward 1.0 during market crises (correlation breakdown). Stocks that seem uncorrelated in normal times may all crash together when it matters most. Stress-test separately."
     },
     "support_retest_signal": {
       "label": "Support Retest Signal",
@@ -1873,9 +1873,9 @@
         "tolerance_pct": "Tolerance %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =40, =1.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"Is price bouncing off a previous low — confirming support?\" A price revisiting a prior low and holding it suggests a double-bottom pattern, one of the most trusted reversal signals in classical chart analysis.",
+      "howToRead": "support_lookback=40 with tolerance_pct=1 passes stocks that touched within 1% of a 40-day low and bounced. When the same level holds 2-3 times, it becomes strong confirmed support.",
+      "caution": "If the support level breaks, losses accelerate — always set a stop just below the tested support. What appears as support may simply be a temporary pause in a downtrend. Combine with trend-direction filters."
     },
     "resistance_retest_signal": {
       "label": "Resistance Retest Signal",
@@ -1885,9 +1885,9 @@
         "tolerance_pct": "Tolerance %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =40, =1.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"Has former resistance flipped to support — confirming the breakout was genuine?\" When price pulls back to an old resistance level and bounces, it is the classic role-reversal pattern — one of the highest-confidence technical entries.",
+      "howToRead": "resistance_lookback=40 with tolerance_pct=1 passes stocks that broke out above 40-day resistance, pulled back to within 1% of that level, and held. This is a textbook pullback-entry setup.",
+      "caution": "If the pullback breaks through the old resistance, the breakout has failed — the most dangerous setup to be caught in. Always set a stop-loss just below the retest level. Thicker former resistance zones make more reliable support."
     },
     "downside_volatility_filter": {
       "label": "Downside Volatility",
@@ -1897,9 +1897,9 @@
         "max_downside_vol_pct": "Maximum Downside Vol %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =20.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"How badly does this stock fall when it drops?\" Downside volatility isolates negative moves only. Standard volatility includes rallies, but investors really only worry about losses. This is the denominator of the Sortino ratio.",
+      "howToRead": "max_downside_vol_pct=20 passes stocks with annualized downside vol under 20%. Lowering to 15 keeps only the most stable names. More precise than total volatility for loss-averse investors.",
+      "caution": "Low past downside vol can't predict structural shocks (lawsuits, regulatory changes). In bull markets, downside vol is naturally compressed, inflating its apparent safety. Include bear-market data for a realistic picture."
     },
     "semivariance_filter": {
       "label": "Semivariance",
@@ -1909,9 +1909,9 @@
         "max_semivariance": "Maximum Semivariance"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =0.0004",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"How severe is the downside dispersion in this stock's returns?\" Semivariance measures variance on loss days only — the purest statistical quantification of downside risk and the denominator of the Sortino ratio.",
+      "howToRead": "max_semivariance=0.0004 passes stocks with daily downside variance under 0.0004 (~10% annualized downside vol). At 0.0001, only very stable names pass (~5% annualized). At 0.001, risk tolerance is high.",
+      "caution": "The raw number is not intuitive — convert to annualized downside volatility (sqrt(semivariance x 252)) for readability. If downside_volatility_filter gives the same information more clearly, prefer that one."
     },
     "rolling_sharpe_filter": {
       "label": "Rolling Sharpe",
@@ -1921,9 +1921,9 @@
         "min_sharpe": "Minimum Sharpe"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =1.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"How much return am I getting per unit of risk?\" The Sharpe ratio is the universal risk-adjusted performance metric. Above 1.0 is respectable; above 2.0 is excellent. Below 0 means worse than holding risk-free assets.",
+      "howToRead": "min_sharpe=1.0 passes stocks with 60-day rolling Sharpe at or above 1.0 (annualized: 1% excess return per 1% volatility). Higher is better. The go-to metric for comparing risk-efficiency across assets.",
+      "caution": "Sharpe penalizes upside volatility equally to downside — a stock that rockets upward gets no credit. For asymmetric return profiles, Sortino is superior. Also, in sustained bull markets, nearly everything scores well."
     },
     "rolling_sortino_filter": {
       "label": "Rolling Sortino",
@@ -1933,9 +1933,9 @@
         "min_sortino": "Minimum Sortino"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =1.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"How much return am I getting per unit of downside risk only?\" Sortino is Sharpe with a fairer denominator — only harmful (downside) volatility is penalized. More aligned with what investors actually worry about.",
+      "howToRead": "min_sortino=1.0 passes stocks with 60-day rolling Sortino at 1.0+. Always higher than Sharpe (smaller denominator). Above 2.0 means excellent downside-adjusted performance.",
+      "caution": "Same bull-market inflation problem as Sharpe — use a lookback that includes at least one drawdown period (120+ days). The result also depends on the MAR (minimum acceptable return) — 0% or the risk-free rate — so confirm the calculation basis."
     },
     "ulcer_index_filter": {
       "label": "Ulcer Index",
@@ -1945,9 +1945,9 @@
         "max_ulcer_index": "Maximum Ulcer Index"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =10.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"How painful have recent drawdowns been — in both depth and duration?\" The Ulcer Index captures what MDD misses: the duration of underwater periods. Named for the stress investors feel during prolonged losses.",
+      "howToRead": "max_ulcer_index=10 passes stocks with UI under 10. Below 5 is very smooth; above 20 means the stock has experienced deep, prolonged recent drawdowns. Unlike MDD, it penalizes slow recoveries.",
+      "caution": "A 60-day window may miss earlier large drawdowns. In bull markets, nearly everything has low UI, reducing its discriminative power. Use 252-day lookback for a more realistic risk assessment through full market cycles."
     },
     "calmar_ratio_filter": {
       "label": "Calmar Ratio",
@@ -1957,9 +1957,9 @@
         "min_calmar": "Minimum Calmar"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =252, =0.5",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"Is the return worth the worst drawdown?\" Calmar = Annual Return / MDD. Same return with smaller MDD = better investment. Measures risk-adjusted efficiency.",
+      "howToRead": "min_calmar=0.5 passes stocks where annual return is at least 0.5x their MDD. Above 1.0 is good; 2.0+ is excellent. lookback=252 (1 year) is standard.",
+      "caution": "Past MDD doesn't guarantee future — a stock with no prior drawdown can suddenly drop 40%. In bull markets, nearly every stock shows high Calmar. Factor in market regime."
     },
     "max_drawdown_window_filter": {
       "label": "Max Drawdown Window",
@@ -1969,9 +1969,9 @@
         "max_drawdown_pct": "Maximum Drawdown %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =120, =20.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"Has this stock experienced a severe drop at any point recently?\" Maximum drawdown over the lookback window filters out stocks with a history of large losses, regardless of current price recovery.",
+      "howToRead": "max_drawdown_pct=20 passes stocks whose worst peak-to-trough loss within 120 days is under 20%. At 10%, only stocks with minimal recent pullbacks qualify. At 252 days, it covers a full year.",
+      "caution": "Absence of past drawdown does not predict future safety — long-calm stocks can suddenly crash (tail risk). Use as a supplementary risk filter, never as the sole measure. A stock that hasn't dropped may simply be overdue."
     },
     "return_skewness_filter": {
       "label": "Return Skewness",
@@ -1981,9 +1981,9 @@
         "min_skewness": "Minimum Skewness"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =-1.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"Are returns skewed toward large losses?\" Negative skewness means big drops occur more frequently than big gains. Investors naturally dislike negative skew — it is the return profile that blindsides portfolios.",
+      "howToRead": "min_skewness=-1 passes stocks with skewness above -1 (excludes severe negative skew). Near 0 is symmetric; above +0.5 means positive surprises dominate. Lottery-type stocks show high positive skew.",
+      "caution": "Skewness is highly sensitive to sample size — 60 days is statistically fragile. Use 120+ days. Paradoxically, positively skewed stocks (big upside potential) often have lower expected returns in academic research."
     },
     "return_kurtosis_filter": {
       "label": "Return Kurtosis",
@@ -1993,9 +1993,9 @@
         "max_kurtosis": "Maximum Kurtosis"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =60, =10.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"Does this stock's return distribution have fat tails — meaning extreme moves happen more often than normal?\" High kurtosis indicates a leptokurtic distribution prone to sudden large gains or losses. Measures black-swan sensitivity.",
+      "howToRead": "max_kurtosis=10 passes stocks with kurtosis under 10 (normal distribution is 3). Below 5 is relatively well-behaved. Above 20, extreme events are common. Check whether the value uses excess kurtosis (K-3) or raw kurtosis.",
+      "caution": "Low past kurtosis doesn't prevent future tail events — it only describes what has already happened. With only 60 days of data, kurtosis estimates are statistically unstable. Use 120+ day windows for more reliable estimates."
     },
     "intraday_return_filter": {
       "label": "Intraday Return",
@@ -2004,9 +2004,9 @@
         "min_intraday_return_pct": "Minimum Intraday Return %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when returns are driven by earnings dates or calendar seasonality.",
-      "howToRead": "Event thresholds are regime-sensitive; validate by period and after transaction costs. Key params: =0.0",
-      "caution": "Edge can disappear once costs, slippage, and crowding are applied."
+      "whenToUse": "\"Did the stock close higher than it opened today?\" A positive intraday return (open-to-close) indicates buying pressure dominated the session — a short-term bullish signal equivalent to a bullish candle.",
+      "howToRead": "min_intraday_return_pct=0 passes stocks that closed above their open price. At 1.0, only stocks up 1%+ intraday qualify. Equivalent to filtering for bullish candlestick bodies.",
+      "caution": "Single-day signals are extremely noisy. End-of-day institutional basket trades can distort the close. Better used as a confirmation layer on already-screened stocks rather than as a primary filter."
     },
     "dso_trend_filter": {
       "label": "DSO Trend Filter",
@@ -2016,9 +2016,9 @@
         "min_dso_increase_pct": "Minimum Dso Increase %"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =1, =5.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is the company collecting receivables more slowly — an early warning of revenue quality decay?\" Rising DSO (Days Sales Outstanding) can signal channel stuffing or deteriorating credit quality, often preceding earnings restatements.",
+      "howToRead": "min_dso_increase_pct=5 flags (and excludes) stocks where DSO rose 5%+ over the past year. Rising DSO while revenue grows is a red flag — sales may be booked but cash isn't arriving.",
+      "caution": "Normal DSO ranges vary dramatically by sector — construction can exceed 90 days while SaaS averages under 30. Focus on the rate of change, not the absolute level. Seasonal patterns within fiscal quarters can also distort readings."
     },
     "ema_cross": {
       "label": "EMA Cross",
@@ -2030,9 +2030,9 @@
         "slow_period": "Slow Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =12, =26, =5, =bullish",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has the fast EMA crossed above the slow — signaling a momentum shift?\" The EMA crossover is a classic trend-reversal signal. Unlike SMA, EMA weights recent prices more heavily, yielding faster reaction times.",
+      "howToRead": "fast=12, slow=26 mirrors the MACD periods. direction=bullish passes stocks where the fast EMA crossed above slow within lookback_days=5. A cross above the zero line confirms established strength.",
+      "caution": "Sideways markets generate constant crossovers that eat into trading costs (whipsaw). Use only when ADX is above 25, or add a 1-2 day confirmation hold. Frequent crosses with no follow-through are the hallmark of trendless markets."
     },
     "ema_slope": {
       "label": "EMA Slope",
@@ -2043,9 +2043,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5, =0.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is the moving average itself pointing upward?\" A positive EMA slope means price is trending up. Less trigger-happy than crossover signals, it directly measures the direction and velocity of the trend.",
+      "howToRead": "min_slope_pct=0 passes stocks where the EMA is flat or rising. At 0.5 the trend is brisk; at 1.0 it is steep. period=20 for monthly trend, 50 for quarterly, 200 for secular direction.",
+      "caution": "Slope is sensitive to a single day's spike — one gap-up can flip it positive. Use lookback_days=5+ to smooth daily noise. Combining with above_ma creates a more robust trend-confirmation setup."
     },
     "sma_slope": {
       "label": "SMA Slope",
@@ -2056,9 +2056,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5, =0.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is the simple moving average pointing upward?\" SMA slope measures trend direction using equally-weighted historical prices. Less reactive than EMA slope, producing fewer false signals but slower trend-change detection.",
+      "howToRead": "min_slope_pct=0 passes stocks with a rising SMA. EMA slope reacts faster but generates more noise; SMA slope is more stable. period=50 for medium-term, 200 for long-term secular trend.",
+      "caution": "The SMA equal-weighting means that when an extreme historical data point drops out of the window, the slope can shift abruptly (the drop-off effect). A spike from 20 days ago leaving the window can suddenly flatten the slope."
     },
     "macd_signal_cross": {
       "label": "MACD Signal Cross",
@@ -2071,9 +2071,9 @@
         "slow_period": "Slow Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =12, =26, =9, =5, =bullish",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has the MACD line crossed above its signal line?\" The most famous technical trading signal. Developed by Gerald Appel in the 1970s, a bullish cross signals the start of upward momentum.",
+      "howToRead": "direction=bullish passes stocks where MACD crossed above the signal line within 5 days. A cross above the zero line confirms strength; below zero suggests an early bottoming reversal.",
+      "caution": "Sideways markets generate endless crosses near the zero line — each one costing commissions with no follow-through. The 12/26/9 parameters date from the 1970s and may not be optimal for modern markets. Pair with ADX or volume."
     },
     "macd_histogram_slope": {
       "label": "MACD Histogram Slope",
@@ -2086,9 +2086,9 @@
         "slow_period": "Slow Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =12, =26, =9, =3, =0.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is MACD momentum accelerating?\" An increasing histogram means the gap between MACD and its signal line is widening — momentum is building, not just present. Catches trend acceleration before the MACD line itself crosses.",
+      "howToRead": "min_slope=0 passes stocks where the histogram is growing. lookback=3 measures the 3-day gradient. The transition from negative to positive histogram is the earliest MACD-family buy timing.",
+      "caution": "Histogram slope is essentially a third derivative of price, making it extremely noise-sensitive. A 3-day lookback produces many false signals — use 5+ days. Always confirm with MACD line direction."
     },
     "cci_overbought_oversold": {
       "label": "CCI Overbought/Oversold",
@@ -2099,9 +2099,9 @@
         "threshold": "Threshold"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =20, =oversold, =100",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"How far has price deviated from its statistical mean?\" CCI measures deviation from average. Above +100 = overbought; below -100 = oversold. Useful for mean-reversion strategies.",
+      "howToRead": "mode=oversold, threshold=100 passes stocks with CCI below -100 (oversold). Switch to mode=overbought for +100+. Shorter period = more sensitive.",
+      "caution": "CCI can stay below -100 in strong downtrends (oversold gets more oversold). Counter-trend entries during strong trends are dangerous. Use only in low-ADX (sideways) markets or with RSI confirmation."
     },
     "williams_r_reversal": {
       "label": "Williams %R Reversal",
@@ -2113,9 +2113,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =14, =-80, =-20, =bullish",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"Is Williams %R turning up from oversold — an early reversal signal?\" %R is mathematically nearly identical to Stochastic %K but on an inverted 0 to -100 scale. Larry Williams designed it for short-term mean-reversion timing.",
+      "howToRead": "direction=bullish passes stocks where %R rises from below -80 (oversold). Above -20 is overbought. Period=14 is standard. Interpretation mirrors Stochastic signals — only the scale convention differs.",
+      "caution": "Same limitations as Stochastic — %R gets stuck below -80 in strong downtrends. An oversold reading does not guarantee reversal. Always pair with a trend filter (MA direction, ADX strength) to confirm the broader context."
     },
     "trix_cross": {
       "label": "TRIX Cross",
@@ -2127,9 +2127,9 @@
         "signal_period": "Signal Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =15, =9, =5, =bullish",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"A triple-smoothed momentum signal for filtering out all short-term noise.\" TRIX applies EMA three times and then measures the rate of change — extreme noise reduction for identifying only genuine, sustained trend changes.",
+      "howToRead": "direction=bullish passes stocks where TRIX crossed above its signal line within 5 days. The triple EMA smoothing makes signals very rare but highly filtered. Best for weekly/monthly timeframe strategies.",
+      "caution": "Triple smoothing means signals arrive very late — the trend may be well underway before TRIX confirms it. Unsuitable for short-term trading. Use a faster indicator (EMA cross) for timing within the TRIX-confirmed trend direction."
     },
     "aroon_trend_signal": {
       "label": "Aroon Trend Signal",
@@ -2140,9 +2140,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =25, =70, =up",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"How recently did this stock hit a new high?\" High Aroon Up means a recent peak — upward momentum is alive. Filters for stocks with fresh upside momentum.",
+      "howToRead": "min_aroon=70 means the high occurred within the last 7-8 days of a 25-day period. 100 = today's price is the period high. direction=down for downtrend filtering.",
+      "caution": "Aroon only tracks the timing of extremes, so a stock that spiked then flatlined stays high for a while. Pair with EMA slope for actual price trajectory."
     },
     "money_flow_index_signal": {
       "label": "Money Flow Index",
@@ -2154,9 +2154,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =14, =oversold, =20, =80",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"Is this stock oversold on a volume-weighted basis?\" MFI is \"RSI with volume\" — it weights price movements by volume, distinguishing between genuine oversold conditions backed by actual capital flow versus price-only signals.",
+      "howToRead": "mode=oversold at 20 passes stocks with MFI below 20 (oversold). At 80, overbought zones are flagged. Because volume is incorporated, MFI signals tend to be more reliable than RSI alone.",
+      "caution": "Like RSI, MFI can stay below 20 in strong downtrends indefinitely. Low-liquidity stocks produce distorted volume data, undermining MFI reliability. Apply a liquidity filter before using this signal."
     },
     "vwap_cross_signal": {
       "label": "VWAP Cross Signal",
@@ -2166,9 +2166,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =3",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has price crossed above the volume-weighted average price?\" Above VWAP means the average buyer is profitable — bullish sentiment. VWAP is the benchmark institutional traders use to evaluate execution quality.",
+      "howToRead": "lookback_days=3 passes stocks that crossed above the 20-day VWAP within 3 days. Above VWAP = majority of recent traders in profit (bullish); below = most underwater (bearish). A key institutional reference.",
+      "caution": "Daily-bar VWAP is an approximation of the true intraday VWAP, which requires tick data. For daily screening, treat it as a 20-day volume-weighted average price reference. Precision is inherently limited."
     },
     "vwap_distance_pct": {
       "label": "VWAP Distance %",
@@ -2178,9 +2178,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =5.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"How far is price from its VWAP — is it stretched or near fair value?\" Distance from VWAP measures whether the stock is trading at, above, or below the average cost basis of recent volume. Institutional traders anchor decisions here.",
+      "howToRead": "max_distance_pct=5 passes stocks within 5% of VWAP. Above VWAP by 5%+ suggests short-term overextension; below by 5%+ may attract institutional buying at perceived value.",
+      "caution": "Same daily-bar VWAP caveat as vwap_cross. Volatile stocks naturally drift farther from VWAP, so normalize by ATR or NATR for meaningful cross-stock comparison."
     },
     "relative_volume_percentile": {
       "label": "Relative Volume Percentile",
@@ -2190,9 +2190,9 @@
         "min_percentile": "Minimum Percentile"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =60, =70.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is today's volume unusually high relative to this stock's own history?\" A percentile-based approach to volume analysis — more robust to outliers than simple average ratios. Tells you where today's volume ranks within its own distribution.",
+      "howToRead": "min_percentile=70 passes stocks in the top 30% of their own 60-day volume range. At 90, only top-10% volume days qualify — clear spikes. Self-referencing, so each stock is judged against its own norm.",
+      "caution": "Volume surges can be buying or selling panic — direction is ambiguous without price context. Options expiry, index rebalancing, and block trades create mechanical volume spikes that have no directional meaning."
     },
     "turnover_ratio_min": {
       "label": "Turnover Ratio Min",
@@ -2201,9 +2201,9 @@
         "min_turnover_ratio": "Minimum Turnover Ratio"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you need to validate business quality and valuation, not just price momentum.",
-      "howToRead": "Read thresholds in valuation/quality direction; stricter bounds reduce candidate count but usually improve accounting quality. Key params: =0.01",
-      "caution": "Sector structure differs materially; compare mostly within peer groups and watch one-off accounting items."
+      "whenToUse": "\"Is there sufficient trading relative to shares outstanding?\" Turnover ratio (daily volume / float) normalizes liquidity by float size, enabling fair comparison between a mega-cap and a micro-cap stock.",
+      "howToRead": "min_turnover_ratio=0.01 passes stocks where 1%+ of float trades daily. Large-caps typically run 0.5-2%; speculative small-caps can hit 5-10%. This is more equitable than raw volume for cross-cap screening.",
+      "caution": "Very high turnover can signal speculative excess rather than healthy liquidity — consider adding a max threshold. Float calculations may exclude or include treasury shares and major-holder blocks, affecting the ratio."
     },
     "atr_percentile_filter": {
       "label": "ATR Percentile",
@@ -2214,9 +2214,9 @@
         "max_percentile": "Maximum Percentile"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =14, =120, =80.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"Is this stock's volatility abnormally high compared to its own history?\" Uses percentile rank instead of absolute ATR — filtering out stocks in unusually volatile periods.",
+      "howToRead": "max_percentile=80 excludes stocks in the top 20% of their 120-day ATR history. Lower to 50 for stocks in below-average volatility (calm) periods only.",
+      "caution": "\"Low volatility\" isn't always safe — it could be the calm before a storm (squeeze). Too strict excludes pre-breakout opportunities. Use as position-sizing input, not primary filter."
     },
     "atr_expansion_breakout": {
       "label": "ATR Expansion Breakout",
@@ -2227,9 +2227,9 @@
         "breakout_lookback": "Breakout Lookback"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =14, =1.2, =20",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is volatility expanding with the breakout?\" Rising ATR during a price move signals a \"real\" move. A volatility confirmation filter that separates genuine from fake breakouts.",
+      "howToRead": "atr_multiplier=1.2 passes stocks where current ATR exceeds recent average by 1.2x. Raise to 1.5 for volatility explosions only. breakout_lookback=20 sets the reference period.",
+      "caution": "ATR expansion can happen downward too — always pair with directional filters (above_ma, EMA slope). Earnings/news events cause one-off volatility spikes. Check the event calendar."
     },
     "natr_filter": {
       "label": "NATR Filter",
@@ -2239,9 +2239,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when controlling downside risk is more important than maximizing raw return.",
-      "howToRead": "Tighter risk caps usually reduce drawdown exposure and also reduce upside participation. Key params: =14, =5.0",
-      "caution": "Past risk metrics can fail during sudden regime shifts."
+      "whenToUse": "\"What is this stock's daily volatility as a percentage of its price?\" NATR normalizes ATR by closing price, making volatility directly comparable across stocks of any price level — a $5 stock and a $500 stock on equal footing.",
+      "howToRead": "max_natr_pct=5 passes stocks with average daily range under 5% of price. At 3% it's stable; 8%+ is highly volatile. Unlike raw ATR, NATR is a percentage, enabling apples-to-apples cross-stock comparison.",
+      "caution": "Low-priced stocks tend to have structurally high NATR even if dollar moves are small. Combine with min_price to double-filter cheap, volatile names."
     },
     "dmi_directional_cross": {
       "label": "DMI Directional Cross",
@@ -2251,9 +2251,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =14, =5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has bullish momentum just overtaken bearish momentum?\" A DI+ crossing above DI- signals buying pressure winning over selling. Combined with ADX, this is the core entry trigger for directional trend systems.",
+      "howToRead": "lookback_days=5 passes stocks where DI+ crossed above DI- within the last 5 days. Standard period is 14. Signal reliability jumps significantly when ADX is simultaneously above 25.",
+      "caution": "Whipsaw crossovers are frequent when ADX is below 20 (no trend). Always use an ADX threshold alongside this filter. Waiting 2-3 days after the cross for confirmation reduces false entries."
     },
     "ichimoku_cloud_breakout": {
       "label": "Ichimoku Cloud Breakout",
@@ -2264,9 +2264,9 @@
         "span_b_period": "Span B Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =9, =26, =52",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has price broken above the Ichimoku Cloud?\" Being above the cloud signals a strong uptrend in this comprehensive Japanese technical system that simultaneously shows trend, support/resistance, and momentum.",
+      "howToRead": "Default parameters (9/26/52) are Ichimoku Hosoda's original settings. Price above the cloud passes. A thicker cloud implies stronger support. Tenkan > Kijun adds short-term momentum confirmation.",
+      "caution": "Three parameters invite over-optimization risk. The 26-day lagging span makes signals inherently delayed. Original parameters were calibrated to Japanese trading weeks (6-day weeks) and may need adjustment for Western markets."
     },
     "ichimoku_tenkan_kijun_cross": {
       "label": "Ichimoku Tenkan/Kijun Cross",
@@ -2277,9 +2277,9 @@
         "lookback_days": "Lookback Days"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =9, =26, =5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Has the Ichimoku conversion line crossed above the base line?\" A bullish Tenkan/Kijun cross above the cloud is a strong signal; below the cloud, it is weak. The ideal three-line turn requires price, Tenkan, and lagging span all aligned bullishly.",
+      "howToRead": "lookback_days=5 passes stocks with a cross in the last 5 days. The strongest setup requires price above the cloud, Tenkan above Kijun, and the lagging span above price — all three simultaneously.",
+      "caution": "Fundamentally similar to EMA crossovers with the same whipsaw weakness in range-bound markets. Crosses inside the cloud have low reliability. Only accept crosses above the cloud, or add an ADX filter."
     },
     "bollinger_squeeze_breakout": {
       "label": "Bollinger Squeeze Breakout",
@@ -2290,9 +2290,9 @@
         "std_mult": "Std Mult"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20, =2.0, =10.0",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Catch stocks exploding from dead silence.\" BB squeeze (narrow band) + upper breakout = volatility contraction followed by expansion. A precursor to big moves.",
+      "howToRead": "max_width_pct=10 passes stocks where band width is under 10% of price during breakout. Lower to 5 for extreme squeezes — rarer signals but more explosive.",
+      "caution": "Squeeze can break downward too — direction isn't guaranteed. Confirm with volume surge. Low-liquidity stocks have wide spreads making actual entry prices unfavorable."
     },
     "bollinger_percent_b": {
       "label": "Bollinger Percent B",
@@ -2304,9 +2304,9 @@
         "std_mult": "Std Mult"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =20, =2.0, =0.0, =1.0",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"Where is the price within the Bollinger Band?\" %B normalizes position from 0 (lower) to 1 (upper). Useful for overbought/oversold judgment and band-walking detection.",
+      "howToRead": "min=0, max=1 passes \"normal\" stocks within the band. min=0.8 = near upper band (strong rally); max=0.2 = near lower band (weak/bounce candidate).",
+      "caution": "%B above 1 means upper band breakout — in strong trends, prices \"walk the band\" for weeks (not necessarily overbought). Interpret with ADX trend strength."
     },
     "ppo_signal_cross": {
       "label": "PPO Signal Cross",
@@ -2318,9 +2318,9 @@
         "slow_period": "Slow Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =12, =26, =9, =5",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"MACD in percentage terms — comparing momentum across different price levels.\" PPO normalizes MACD to percentages, enabling direct momentum comparison between a $10 stock and a $1000 stock.",
+      "howToRead": "lookback_days=5 passes stocks where PPO crossed above its signal line within 5 days. Interpretation is identical to MACD, but the percentage scale makes multi-stock screening and ranking fairer.",
+      "caution": "Shares the same sideways-market whipsaw weakness as MACD. The normalization advantage is primarily useful for ranking momentum across a universe of stocks rather than generating standalone buy signals."
     },
     "stochastic_cross_signal": {
       "label": "Stochastic Cross Signal",
@@ -2331,9 +2331,9 @@
         "lookback_days": "Lookback Days"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =14, =3, =5",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"Has %K crossed above %D — the classic Stochastic buy signal?\" A bullish cross in the oversold zone (below 20) is the textbook Stochastic entry. One of the most widely taught oscillator trading signals.",
+      "howToRead": "lookback_days=5 passes stocks where %K crossed above %D in the last 5 days. Crosses below 20 are most significant; above 80 they indicate potential sells. Standard settings: K=14, D=3 (Slow Stochastic).",
+      "caution": "Sideways markets produce constant crosses with no follow-through — pure noise. Combine with an RSI range or trend filter to only accept crosses that align with the prevailing direction. Use Slow (D=3 smoothed), not Fast Stochastic."
     },
     "stochrsi_signal": {
       "label": "StochRSI Signal",
@@ -2344,9 +2344,9 @@
         "stoch_period": "Stoch Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use as a supporting filter with liquidity, trend, and risk controls.",
-      "howToRead": "Tune parameters with sensitivity tests; avoid relying on one threshold alone. Key params: =14, =14, =oversold",
-      "caution": "Always confirm with out-of-sample validation before live deployment."
+      "whenToUse": "\"Need a faster oscillator than RSI?\" StochRSI applies Stochastic math to RSI itself, creating a double-oscillator that reaches extreme zones faster. Purpose-built for short-term timing in swing-trading setups.",
+      "howToRead": "mode=oversold passes stocks where StochRSI is in its oversold zone. Signals appear faster and more frequently than RSI alone. Standard: rsi_period=14, stoch_period=14. Best suited for active swing trading.",
+      "caution": "The increased sensitivity means dramatically more false signals — StochRSI can flip from oversold to overbought in a single day. Never use as a standalone signal. Mandatory to combine with trend direction and volume confirmation."
     },
     "aroon_oscillator_signal": {
       "label": "Aroon Oscillator Signal",
@@ -2356,9 +2356,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =25, =30.0",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"Is the uptrend or downtrend winning?\" Aroon Oscillator = Aroon Up - Aroon Down. Positive = bullish dominance. Captures both direction and strength of trend.",
+      "howToRead": "min_oscillator=30 passes stocks where uptrend clearly dominates. +100 = perfect uptrend; -100 = perfect downtrend. Shorter period = faster response.",
+      "caution": "Whipsaws near zero in sideways markets. Only considers the location of highs/lows within the period, ignoring price action between them. Combine with ADX."
     },
     "ultimate_oscillator_signal": {
       "label": "Ultimate Oscillator Signal",
@@ -2367,9 +2367,9 @@
         "min_value": "Minimum Value"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =50.0",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"What does buying pressure look like across three timeframes simultaneously?\" Larry Williams's Ultimate Oscillator combines 7-, 14-, and 28-day buying pressure into a single multi-timeframe momentum reading.",
+      "howToRead": "min_value=50 passes stocks with UO above 50 (buying pressure dominates). Below 30 is oversold; above 70 is overbought. Williams's original strategy requires a three-step bullish divergence confirmation before entry.",
+      "caution": "The original UO trading rules are complex (divergence + level confirmation). A simple level filter misses the indicator's true design intent. For full benefit, implement the divergence logic, or use as a supplementary filter only."
     },
     "chaikin_money_flow_signal": {
       "label": "Chaikin Money Flow",
@@ -2379,9 +2379,9 @@
         "period": "Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want volume/flow confirmation behind price movement.",
-      "howToRead": "Stricter flow confirmation reduces noise but may miss early moves. Key params: =20, =0.0",
-      "caution": "Low-liquidity names can produce unstable flow signals."
+      "whenToUse": "\"Are institutions putting money in or pulling it out?\" CMF is volume-weighted closing position. Positive = buying pressure dominates. Directly measures money flow direction.",
+      "howToRead": "min_cmf=0 passes stocks with positive CMF (buying pressure). Above 0.1 = clear inflow. period=20 is monthly; shorten to 10 for near-term flow shifts.",
+      "caution": "Late-session closing price manipulation (window dressing) can distort CMF. A few large trades can flip CMF in small-caps. Cross-check with AD Line and OBV."
     },
     "chaikin_oscillator_signal": {
       "label": "Chaikin Oscillator",
@@ -2392,9 +2392,9 @@
         "slow_period": "Slow Period"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when timing reversals around overbought/oversold conditions matters.",
-      "howToRead": "More extreme oscillator levels increase reversal sensitivity but raise false signals in strong trends. Key params: =3, =10, =0.0",
-      "caution": "Overbought/oversold does not guarantee reversal in one-way markets."
+      "whenToUse": "\"Is money inflow accelerating?\" Chaikin Oscillator = fast EMA - slow EMA of AD Line. Positive = inflow accelerating. Captures the rate of change in money flow.",
+      "howToRead": "min_value=0 passes stocks where inflow is accelerating. fast=3/slow=10 is standard. The moment value crosses from negative to positive is the buy timing signal.",
+      "caution": "Similar structure to MACD, sharing its sideways-market whipsaw weakness. AD Line can't capture gaps, so gap-up/gap-down periods may distort readings."
     },
     "ad_line_trend": {
       "label": "A/D Line Trend",
@@ -2403,9 +2403,9 @@
         "lookback_days": "Lookback Days"
       },
       "help": "Practical summary for based on the issue-487 research guide. Sources:",
-      "whenToUse": "Use when you want to trade with the prevailing trend instead of fighting it.",
-      "howToRead": "Higher trend strength or cleaner alignment typically means fewer names and stronger trend quality. Key params: =20",
-      "caution": "Whipsaws increase in sideways regimes; pair with volume or volatility filters."
+      "whenToUse": "\"Is money actually flowing in while the price rises?\" An upward AD Line confirms sustained buying pressure. Validates whether price and money flow align.",
+      "howToRead": "lookback_days=20 passes stocks where the AD Line trends up over 20 days. Shorten to 10 for short-term flow changes; extend to 40 for medium-term confirmation.",
+      "caution": "AD Line only reflects closing price position, missing gaps. Unreliable for low-volume stocks. Cross-check with OBV or CMF for confirmation."
     }
   },
   "settings": {
