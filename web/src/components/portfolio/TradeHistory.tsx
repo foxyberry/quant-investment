@@ -128,7 +128,7 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
                 className={`text-lg font-mono font-semibold ${getPnlColorClass(totalPnl)}`}
               >
                 {totalPnl >= 0 ? '+' : ''}
-                {formatCurrency(totalPnl, 'USD')}
+                {formatCurrency(totalPnl, trades[0]?.currency)}
               </p>
             </div>
             <div>
