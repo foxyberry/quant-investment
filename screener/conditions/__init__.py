@@ -259,7 +259,7 @@ from .fundamental import (
 from . import basic_catalog  # noqa: F401
 
 # Registry accessors (populated by @register_condition decorators above)
-from .registry import get_condition_class_map, get_condition_metadata
+from .registry import get_condition_class_map, get_condition_metadata, register_alias
 
 __all__ = [
     # Base
@@ -381,5 +381,5 @@ __all__ = [
     'DsoTrendFilterCondition', 'clear_info_cache',
 
     # Registry
-    'get_condition_class_map', 'get_condition_metadata',
+    'get_condition_class_map', 'get_condition_metadata', 'register_alias',
 ]

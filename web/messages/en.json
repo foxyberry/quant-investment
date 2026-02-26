@@ -2568,68 +2568,12 @@
       "howToRead": "lookback_days=20 passes stocks where the AD Line trends up over 20 days. Shorten to 10 for short-term flow changes; extend to 40 for medium-term confirmation.",
       "caution": "AD Line only reflects closing price position, missing gaps. Unreliable for low-volume stocks. Cross-check with OBV or CMF for confirmation."
     },
-    "volume_ma_ratio_2_20": {
-      "label": "Volume MA Ratio 2/20",
-      "desc": "Volume short MA(2) / long MA(20) ratio filter",
+    "volume_ma_ratio": {
+      "label": "Volume MA Ratio",
+      "desc": "Volume short MA / long MA ratio range filter",
       "params": {
-        "short_period": "Short period",
-        "long_period": "Long period",
-        "min_ratio": "Minimum ratio",
-        "max_ratio": "Maximum ratio"
-      },
-      "help": "Measures whether short-term volume is overheating or drying up versus baseline.",
-      "whenToUse": "Is current trading activity meaningfully different from baseline? Useful for momentum confirmation or risk throttling.",
-      "howToRead": "Example: if short_period=2, long_period=20, ratio=1.5 means short-term volume is 50% above baseline. Raising min_ratio requires stronger participation.",
-      "caution": "Different sectors have different natural turnover profiles. Use with price filters to avoid low-quality churn signals."
-    },
-    "volume_ma_ratio_2_60": {
-      "label": "Volume MA Ratio 2/60",
-      "desc": "Volume short MA(2) / long MA(60) ratio filter",
-      "params": {
-        "short_period": "Short period",
-        "long_period": "Long period",
-        "min_ratio": "Minimum ratio",
-        "max_ratio": "Maximum ratio"
-      },
-      "help": "Measures whether short-term volume is overheating or drying up versus baseline.",
-      "whenToUse": "Is current trading activity meaningfully different from baseline? Useful for momentum confirmation or risk throttling.",
-      "howToRead": "Example: if short_period=2, long_period=60, ratio=1.5 means short-term volume is 50% above baseline. Raising min_ratio requires stronger participation.",
-      "caution": "Different sectors have different natural turnover profiles. Use with price filters to avoid low-quality churn signals."
-    },
-    "volume_ma_ratio_3_20": {
-      "label": "Volume MA Ratio 3/20",
-      "desc": "Volume short MA(3) / long MA(20) ratio filter",
-      "params": {
-        "short_period": "Short period",
-        "long_period": "Long period",
-        "min_ratio": "Minimum ratio",
-        "max_ratio": "Maximum ratio"
-      },
-      "help": "Measures whether short-term volume is overheating or drying up versus baseline.",
-      "whenToUse": "Is current trading activity meaningfully different from baseline? Useful for momentum confirmation or risk throttling.",
-      "howToRead": "Example: if short_period=3, long_period=20, ratio=1.5 means short-term volume is 50% above baseline. Raising min_ratio requires stronger participation.",
-      "caution": "Different sectors have different natural turnover profiles. Use with price filters to avoid low-quality churn signals."
-    },
-    "volume_ma_ratio_3_60": {
-      "label": "Volume MA Ratio 3/60",
-      "desc": "Volume short MA(3) / long MA(60) ratio filter",
-      "params": {
-        "short_period": "Short period",
-        "long_period": "Long period",
-        "min_ratio": "Minimum ratio",
-        "max_ratio": "Maximum ratio"
-      },
-      "help": "Measures whether short-term volume is overheating or drying up versus baseline.",
-      "whenToUse": "Is current trading activity meaningfully different from baseline? Useful for momentum confirmation or risk throttling.",
-      "howToRead": "Example: if short_period=3, long_period=60, ratio=1.5 means short-term volume is 50% above baseline. Raising min_ratio requires stronger participation.",
-      "caution": "Different sectors have different natural turnover profiles. Use with price filters to avoid low-quality churn signals."
-    },
-    "volume_ma_ratio_5_20": {
-      "label": "Volume MA Ratio 5/20",
-      "desc": "Volume short MA(5) / long MA(20) ratio filter",
-      "params": {
-        "short_period": "Short period",
-        "long_period": "Long period",
+        "short_period": "Short MA period",
+        "long_period": "Long MA period",
         "min_ratio": "Minimum ratio",
         "max_ratio": "Maximum ratio"
       },
@@ -2638,124 +2582,17 @@
       "howToRead": "Example: if short_period=5, long_period=20, ratio=1.5 means short-term volume is 50% above baseline. Raising min_ratio requires stronger participation.",
       "caution": "Different sectors have different natural turnover profiles. Use with price filters to avoid low-quality churn signals."
     },
-    "volume_ma_ratio_5_60": {
-      "label": "Volume MA Ratio 5/60",
-      "desc": "Volume short MA(5) / long MA(60) ratio filter",
-      "params": {
-        "short_period": "Short period",
-        "long_period": "Long period",
-        "min_ratio": "Minimum ratio",
-        "max_ratio": "Maximum ratio"
-      },
-      "help": "Measures whether short-term volume is overheating or drying up versus baseline.",
-      "whenToUse": "Is current trading activity meaningfully different from baseline? Useful for momentum confirmation or risk throttling.",
-      "howToRead": "Example: if short_period=5, long_period=60, ratio=1.5 means short-term volume is 50% above baseline. Raising min_ratio requires stronger participation.",
-      "caution": "Different sectors have different natural turnover profiles. Use with price filters to avoid low-quality churn signals."
-    },
-    "volume_ma_ratio_10_20": {
-      "label": "Volume MA Ratio 10/20",
-      "desc": "Volume short MA(10) / long MA(20) ratio filter",
-      "params": {
-        "short_period": "Short period",
-        "long_period": "Long period",
-        "min_ratio": "Minimum ratio",
-        "max_ratio": "Maximum ratio"
-      },
-      "help": "Measures whether short-term volume is overheating or drying up versus baseline.",
-      "whenToUse": "Is current trading activity meaningfully different from baseline? Useful for momentum confirmation or risk throttling.",
-      "howToRead": "Example: if short_period=10, long_period=20, ratio=1.5 means short-term volume is 50% above baseline. Raising min_ratio requires stronger participation.",
-      "caution": "Different sectors have different natural turnover profiles. Use with price filters to avoid low-quality churn signals."
-    },
-    "volume_ma_ratio_10_60": {
-      "label": "Volume MA Ratio 10/60",
-      "desc": "Volume short MA(10) / long MA(60) ratio filter",
-      "params": {
-        "short_period": "Short period",
-        "long_period": "Long period",
-        "min_ratio": "Minimum ratio",
-        "max_ratio": "Maximum ratio"
-      },
-      "help": "Measures whether short-term volume is overheating or drying up versus baseline.",
-      "whenToUse": "Is current trading activity meaningfully different from baseline? Useful for momentum confirmation or risk throttling.",
-      "howToRead": "Example: if short_period=10, long_period=60, ratio=1.5 means short-term volume is 50% above baseline. Raising min_ratio requires stronger participation.",
-      "caution": "Different sectors have different natural turnover profiles. Use with price filters to avoid low-quality churn signals."
-    },
-    "return_pct_1d_minmax": {
-      "label": "1D Return % Range",
-      "desc": "1-day return percentage range filter",
+    "return_pct_range": {
+      "label": "Return % Range",
+      "desc": "N-day return percentage range filter",
       "params": {
         "lookback_days": "Lookback days",
         "min_return_pct": "Minimum return %",
         "max_return_pct": "Maximum return %"
       },
-      "help": "Filters names by bounded short-horizon return range.",
-      "whenToUse": "Is recent performance within a tradable range? Useful for mean-reversion selection and risk-bucket construction.",
-      "howToRead": "Example: lookback_days=1, min_return_pct=-3, max_return_pct=5 keeps names with 1-day return between -3% and +5%. Widening bounds increases candidates.",
-      "caution": "Return alone is regime-sensitive and may overfit. Combine with trend/volume or quality filters and account for earnings/event gaps."
-    },
-    "return_pct_2d_minmax": {
-      "label": "2D Return % Range",
-      "desc": "2-day return percentage range filter",
-      "params": {
-        "lookback_days": "Lookback days",
-        "min_return_pct": "Minimum return %",
-        "max_return_pct": "Maximum return %"
-      },
-      "help": "Filters names by bounded short-horizon return range.",
-      "whenToUse": "Is recent performance within a tradable range? Useful for mean-reversion selection and risk-bucket construction.",
-      "howToRead": "Example: lookback_days=2, min_return_pct=-3, max_return_pct=5 keeps names with 2-day return between -3% and +5%. Widening bounds increases candidates.",
-      "caution": "Return alone is regime-sensitive and may overfit. Combine with trend/volume or quality filters and account for earnings/event gaps."
-    },
-    "return_pct_3d_minmax": {
-      "label": "3D Return % Range",
-      "desc": "3-day return percentage range filter",
-      "params": {
-        "lookback_days": "Lookback days",
-        "min_return_pct": "Minimum return %",
-        "max_return_pct": "Maximum return %"
-      },
-      "help": "Filters names by bounded short-horizon return range.",
-      "whenToUse": "Is recent performance within a tradable range? Useful for mean-reversion selection and risk-bucket construction.",
-      "howToRead": "Example: lookback_days=3, min_return_pct=-3, max_return_pct=5 keeps names with 3-day return between -3% and +5%. Widening bounds increases candidates.",
-      "caution": "Return alone is regime-sensitive and may overfit. Combine with trend/volume or quality filters and account for earnings/event gaps."
-    },
-    "return_pct_5d_minmax": {
-      "label": "5D Return % Range",
-      "desc": "5-day return percentage range filter",
-      "params": {
-        "lookback_days": "Lookback days",
-        "min_return_pct": "Minimum return %",
-        "max_return_pct": "Maximum return %"
-      },
-      "help": "Filters names by bounded short-horizon return range.",
+      "help": "Filters names by bounded return range over a configurable lookback period.",
       "whenToUse": "Is recent performance within a tradable range? Useful for mean-reversion selection and risk-bucket construction.",
       "howToRead": "Example: lookback_days=5, min_return_pct=-3, max_return_pct=5 keeps names with 5-day return between -3% and +5%. Widening bounds increases candidates.",
-      "caution": "Return alone is regime-sensitive and may overfit. Combine with trend/volume or quality filters and account for earnings/event gaps."
-    },
-    "return_pct_10d_minmax": {
-      "label": "10D Return % Range",
-      "desc": "10-day return percentage range filter",
-      "params": {
-        "lookback_days": "Lookback days",
-        "min_return_pct": "Minimum return %",
-        "max_return_pct": "Maximum return %"
-      },
-      "help": "Filters names by bounded short-horizon return range.",
-      "whenToUse": "Is recent performance within a tradable range? Useful for mean-reversion selection and risk-bucket construction.",
-      "howToRead": "Example: lookback_days=10, min_return_pct=-3, max_return_pct=5 keeps names with 10-day return between -3% and +5%. Widening bounds increases candidates.",
-      "caution": "Return alone is regime-sensitive and may overfit. Combine with trend/volume or quality filters and account for earnings/event gaps."
-    },
-    "return_pct_20d_minmax": {
-      "label": "20D Return % Range",
-      "desc": "20-day return percentage range filter",
-      "params": {
-        "lookback_days": "Lookback days",
-        "min_return_pct": "Minimum return %",
-        "max_return_pct": "Maximum return %"
-      },
-      "help": "Filters names by bounded short-horizon return range.",
-      "whenToUse": "Is recent performance within a tradable range? Useful for mean-reversion selection and risk-bucket construction.",
-      "howToRead": "Example: lookback_days=20, min_return_pct=-3, max_return_pct=5 keeps names with 20-day return between -3% and +5%. Widening bounds increases candidates.",
       "caution": "Return alone is regime-sensitive and may overfit. Combine with trend/volume or quality filters and account for earnings/event gaps."
     },
     "supertrend_signal": {
