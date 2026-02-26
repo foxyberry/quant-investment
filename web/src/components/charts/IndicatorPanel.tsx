@@ -227,24 +227,46 @@ export default function IndicatorPanel({
                 {getSignalLabel(technicalData.bollingerBands.position, t)}
               </div>
             </div>
-            <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-[var(--foreground-muted)]">Upper Band</span>
-                <span className="font-medium text-[var(--foreground)]">
+            {/* Visual Band Diagram */}
+            <div className="relative rounded-lg overflow-hidden border border-[var(--border)]">
+              {/* High zone */}
+              <div className="flex items-center justify-between px-3 py-2 bg-red-500/10">
+                <span className="text-xs font-medium text-red-600 dark:text-red-400">{t('bbZoneHigh')}</span>
+                <span className="text-xs font-mono text-[var(--foreground-muted)]">
                   ${technicalData.bollingerBands.upper.toFixed(2)}
                 </span>
+                {technicalData.bollingerBands.position === 'above' && (
+                  <div className="absolute right-[40%] flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[10px] text-red-600 dark:text-red-400">{t('bbCurrentPosition')}</span>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--foreground-muted)]">Middle Band</span>
-                <span className="font-medium text-[var(--foreground)]">
+              {/* Normal zone */}
+              <div className="relative flex items-center justify-between px-3 py-3 bg-green-500/8 border-y border-[var(--border)]/50">
+                <span className="text-xs font-medium text-green-600 dark:text-green-400">{t('bbZoneNormal')}</span>
+                <span className="text-xs font-mono text-[var(--foreground-muted)]">
                   ${technicalData.bollingerBands.middle.toFixed(2)}
                 </span>
+                {technicalData.bollingerBands.position === 'within' && (
+                  <div className="absolute right-[40%] flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-[10px] text-green-600 dark:text-green-400">{t('bbCurrentPosition')}</span>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--foreground-muted)]">Lower Band</span>
-                <span className="font-medium text-[var(--foreground)]">
+              {/* Low zone */}
+              <div className="flex items-center justify-between px-3 py-2 bg-blue-500/10">
+                <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{t('bbZoneLow')}</span>
+                <span className="text-xs font-mono text-[var(--foreground-muted)]">
                   ${technicalData.bollingerBands.lower.toFixed(2)}
                 </span>
+                {technicalData.bollingerBands.position === 'below' && (
+                  <div className="absolute right-[40%] flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                    <span className="text-[10px] text-blue-600 dark:text-blue-400">{t('bbCurrentPosition')}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -2706,8 +2706,17 @@
     "neutral": "Neutral",
     "rsiExplain": "RSI measures momentum on a 0\u2013100 scale. Below 30 signals oversold (buy opportunity), above 70 signals overbought (sell opportunity).",
     "macdExplain": "MACD tracks trend direction. When MACD crosses above the Signal line, it suggests upward momentum (bullish). Below means bearish.",
-    "bollingerExplain": "Bollinger Bands show price volatility. Near the upper band may mean overvalued; near the lower band may mean undervalued.",
+    "bollingerExplain": "Think of Bollinger Bands as a price 'highway'. Above the upper line = possibly too expensive. Below the lower line = possibly a bargain. The middle line shows the average trend.",
+    "bbZoneHigh": "Expensive zone",
+    "bbZoneNormal": "Normal zone",
+    "bbZoneLow": "Bargain zone",
+    "bbCurrentPosition": "Current",
     "maExplain": "Moving averages smooth out price trends. Price above averages = uptrend; below = downtrend. Shorter periods react faster to changes.",
-    "volumeExplain": "Volume measures trading activity. Higher-than-average volume confirms price moves and suggests strong market interest."
+    "volumeExplain": "Volume measures trading activity. Higher-than-average volume confirms price moves and suggests strong market interest.",
+    "maLegend": "MA Lines",
+    "ma5Label": "5D Short-term",
+    "ma20Label": "20D Mid-term",
+    "ma60Label": "60D Long-term",
+    "ma120Label": "120D Very long-term"
   }
 }

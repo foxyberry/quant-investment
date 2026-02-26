@@ -12,6 +12,9 @@ import type { IChartApi, ISeriesApi, CandlestickData, HistogramData, Time, LineW
 import { useTranslations } from 'next-intl';
 import type { OHLCVData } from '@/lib/types';
 
+/** MA legend label keys mapped to each config index */
+const MA_LABEL_KEYS = ['ma5Label', 'ma20Label', 'ma60Label', 'ma120Label'] as const;
+
 interface CandleChartProps {
   /** OHLCV data array */
   data: OHLCVData[];
@@ -57,6 +60,7 @@ export default function CandleChart({
   className = '',
 }: CandleChartProps) {
   const t = useTranslations('stockDetail');
+  const tInd = useTranslations('indicators');
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -262,9 +266,28 @@ export default function CandleChart({
 
   return (
     <div
-      ref={containerRef}
-      className={`rounded-lg border border-[var(--border)] overflow-hidden ${className}`}
+      className={`relative rounded-lg border border-[var(--border)] overflow-hidden ${className}`}
       style={{ height }}
-    />
+    >
+      <div ref={containerRef} className="w-full h-full" />
+      {showMA && (
+        <div className="absolute top-2 left-2 z-10 flex items-center gap-3 rounded-md bg-[var(--background)]/80 backdrop-blur-sm px-2.5 py-1.5 border border-[var(--border)]/50">
+          <span className="text-[10px] font-medium text-[var(--foreground-muted)]">
+            {tInd('maLegend')}
+          </span>
+          {MA_CONFIGS.map((cfg, idx) => (
+            <div key={cfg.period} className="flex items-center gap-1">
+              <div
+                className="h-[2px] w-3 rounded-full"
+                style={{ backgroundColor: cfg.color }}
+              />
+              <span className="text-[10px] text-[var(--foreground-muted)]">
+                {tInd(MA_LABEL_KEYS[idx])}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
