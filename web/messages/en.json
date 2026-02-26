@@ -648,7 +648,9 @@
     "movingAverages": "Moving Averages",
     "summary": "Summary",
     "addToScreening": "Screen with Preset",
-    "dataDelayNote": "Data delayed by 15 min."
+    "dataDelayNote": "Data delayed by 15 min.",
+    "ohlcvVol": "Vol",
+    "ohlcvMa": "MA({period})"
   },
   "backtest": {
     "title": "Backtest Strategy",
@@ -2733,6 +2735,20 @@
     "ma5Label": "5D Short-term",
     "ma20Label": "20D Mid-term",
     "ma60Label": "60D Long-term",
-    "ma120Label": "120D Very long-term"
+    "ma120Label": "120D Very long-term",
+    "rsiScaleOversold": "0 (Oversold)",
+    "rsiScaleMid": "50",
+    "rsiScaleOverbought": "100 (Overbought)",
+    "macdLine": "MACD Line",
+    "signalLine": "Signal Line",
+    "histogram": "Histogram",
+    "macdCrossDesc": "MACD is {diff} {direction} Signal → {signal}",
+    "above": "above",
+    "below": "below",
+    "macdMomentumUp": "Upward trend forming",
+    "macdMomentumDown": "Downward trend forming",
+    "macdStrength": "Momentum",
+    "macdGrowing": "Getting stronger",
+    "macdFading": "Getting weaker"
   }
 }

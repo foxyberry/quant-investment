@@ -648,7 +648,9 @@
     "movingAverages": "移动平均",
     "summary": "综合",
     "addToScreening": "使用预设筛选",
-    "dataDelayNote": "数据延迟15分钟。"
+    "dataDelayNote": "数据延迟15分钟。",
+    "ohlcvVol": "成交量",
+    "ohlcvMa": "MA({period})"
   },
   "backtest": {
     "title": "策略回测",
@@ -2733,6 +2735,20 @@
     "ma5Label": "5日 短期",
     "ma20Label": "20日 中期",
     "ma60Label": "60日 长期",
-    "ma120Label": "120日 超长期"
+    "ma120Label": "120日 超长期",
+    "rsiScaleOversold": "0 (超卖)",
+    "rsiScaleMid": "50",
+    "rsiScaleOverbought": "100 (超买)",
+    "macdLine": "MACD 线",
+    "signalLine": "信号线",
+    "histogram": "柱状图",
+    "macdCrossDesc": "MACD在信号线{direction} {diff} → {signal}",
+    "above": "上方",
+    "below": "下方",
+    "macdMomentumUp": "上升趋势形成中",
+    "macdMomentumDown": "下降趋势形成中",
+    "macdStrength": "趋势强度",
+    "macdGrowing": "逐渐增强",
+    "macdFading": "逐渐减弱"
   }
 }

@@ -445,6 +445,18 @@ def get_ticker_analysis(
             info = {}
         if info:
             name = info.get("shortName") or info.get("longName") or name
+
+            # For Korean tickers, prefer the native Korean name from pykrx
+            if ticker.upper().endswith((".KS", ".KQ")):
+                try:
+                    from pykrx import stock as pykrx_stock
+
+                    code = ticker.split(".")[0]
+                    ko_name = pykrx_stock.get_market_ticker_name(code)
+                    if ko_name:
+                        name = ko_name
+                except Exception:
+                    pass  # fallback to yfinance name
             fundamental = TickerFundamental(
                 market_cap=info.get("marketCap"),
                 pe_ratio=info.get("trailingPE"),

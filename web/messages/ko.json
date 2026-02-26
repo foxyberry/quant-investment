@@ -648,7 +648,9 @@
     "movingAverages": "이동평균",
     "summary": "종합",
     "addToScreening": "프리셋으로 스크리닝",
-    "dataDelayNote": "데이터는 15분 지연됩니다."
+    "dataDelayNote": "데이터는 15분 지연됩니다.",
+    "ohlcvVol": "거래량",
+    "ohlcvMa": "MA({period})"
   },
   "backtest": {
     "title": "전략 백테스트",
@@ -2733,6 +2735,20 @@
     "ma5Label": "5일 단기",
     "ma20Label": "20일 중기",
     "ma60Label": "60일 장기",
-    "ma120Label": "120일 초장기"
+    "ma120Label": "120일 초장기",
+    "rsiScaleOversold": "0 (과매도)",
+    "rsiScaleMid": "50",
+    "rsiScaleOverbought": "100 (과매수)",
+    "macdLine": "MACD 라인",
+    "signalLine": "시그널 라인",
+    "histogram": "히스토그램",
+    "macdCrossDesc": "MACD가 시그널 {direction} {diff} → {signal}",
+    "above": "위",
+    "below": "아래",
+    "macdMomentumUp": "상승 추세 형성 중",
+    "macdMomentumDown": "하락 추세 형성 중",
+    "macdStrength": "추세 강도",
+    "macdGrowing": "점점 강해지는 중",
+    "macdFading": "점점 약해지는 중"
   }
 }
