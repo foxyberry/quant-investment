@@ -1,6 +1,7 @@
 'use client';
 
-import { TrendingUp, TrendingDown, Minus, Activity, BarChart2, Waves } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Activity, BarChart2, Waves, Info } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui';
 import type { TechnicalIndicators } from '@/lib/types';
 
@@ -14,10 +15,11 @@ interface IndicatorPanelProps {
 interface IndicatorCardProps {
   title: string;
   icon: React.ReactNode;
+  explanation?: string;
   children: React.ReactNode;
 }
 
-function IndicatorCard({ title, icon, children }: IndicatorCardProps) {
+function IndicatorCard({ title, icon, explanation, children }: IndicatorCardProps) {
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-4">
       <div className="flex items-center gap-2 mb-3">
@@ -25,6 +27,14 @@ function IndicatorCard({ title, icon, children }: IndicatorCardProps) {
         <h4 className="font-medium text-[var(--foreground)]">{title}</h4>
       </div>
       {children}
+      {explanation && (
+        <div className="mt-3 rounded-lg bg-[var(--background)]/60 px-3 py-2.5 flex gap-2">
+          <Info className="h-4 w-4 text-[var(--color-primary)] shrink-0 mt-0.5" />
+          <p className="text-xs text-[var(--foreground-muted)] leading-relaxed">
+            {explanation}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -59,24 +69,24 @@ function getSignalIcon(signal: string) {
   }
 }
 
-function getSignalLabel(signal: string): string {
+function getSignalLabel(signal: string, t: (key: string) => string): string {
   switch (signal) {
     case 'oversold':
-      return 'Oversold';
+      return t('oversold');
     case 'overbought':
-      return 'Overbought';
+      return t('overbought');
     case 'bullish':
-      return 'Bullish';
+      return t('bullish');
     case 'bearish':
-      return 'Bearish';
+      return t('bearish');
     case 'above':
-      return 'Above Band';
+      return t('aboveBand');
     case 'below':
-      return 'Below Band';
+      return t('belowBand');
     case 'within':
-      return 'Within Band';
+      return t('withinBand');
     default:
-      return 'Neutral';
+      return t('neutral');
   }
 }
 
@@ -87,6 +97,8 @@ export default function IndicatorPanel({
   technicalData,
   className = '',
 }: IndicatorPanelProps) {
+  const t = useTranslations('indicators');
+
   if (!technicalData) {
     return (
       <Card className={className}>
@@ -106,6 +118,7 @@ export default function IndicatorPanel({
         <IndicatorCard
           title="RSI (14)"
           icon={<Activity className="h-5 w-5" />}
+          explanation={t('rsiExplain')}
         >
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -118,7 +131,7 @@ export default function IndicatorPanel({
                 )} bg-[var(--background)]`}
               >
                 {getSignalIcon(technicalData.rsi.signal)}
-                {getSignalLabel(technicalData.rsi.signal)}
+                {getSignalLabel(technicalData.rsi.signal, t)}
               </div>
             </div>
             {/* RSI gauge */}
@@ -151,6 +164,7 @@ export default function IndicatorPanel({
         <IndicatorCard
           title="MACD"
           icon={<BarChart2 className="h-5 w-5" />}
+          explanation={t('macdExplain')}
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -166,7 +180,7 @@ export default function IndicatorPanel({
                 )} bg-[var(--background)]`}
               >
                 {getSignalIcon(technicalData.macd.trend)}
-                {getSignalLabel(technicalData.macd.trend)}
+                {getSignalLabel(technicalData.macd.trend, t)}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -199,6 +213,7 @@ export default function IndicatorPanel({
         <IndicatorCard
           title="Bollinger Bands"
           icon={<Waves className="h-5 w-5" />}
+          explanation={t('bollingerExplain')}
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -209,7 +224,7 @@ export default function IndicatorPanel({
                 )} bg-[var(--background)]`}
               >
                 {getSignalIcon(technicalData.bollingerBands.position)}
-                {getSignalLabel(technicalData.bollingerBands.position)}
+                {getSignalLabel(technicalData.bollingerBands.position, t)}
               </div>
             </div>
             <div className="space-y-1 text-sm">
@@ -241,6 +256,7 @@ export default function IndicatorPanel({
         <IndicatorCard
           title="Moving Averages"
           icon={<TrendingUp className="h-5 w-5" />}
+          explanation={t('maExplain')}
         >
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -270,6 +286,7 @@ export default function IndicatorPanel({
         <IndicatorCard
           title="Volume Analysis"
           icon={<BarChart2 className="h-5 w-5" />}
+          explanation={t('volumeExplain')}
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">

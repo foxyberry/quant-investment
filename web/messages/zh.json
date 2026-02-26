@@ -2694,5 +2694,20 @@
     "kosdaq": "KOSDAQ",
     "nasdaq": "NASDAQ",
     "sp500": "标普 500"
+  },
+  "indicators": {
+    "oversold": "超卖",
+    "overbought": "超买",
+    "bullish": "看涨",
+    "bearish": "看跌",
+    "aboveBand": "上轨上方",
+    "belowBand": "下轨下方",
+    "withinBand": "轨道内",
+    "neutral": "中性",
+    "rsiExplain": "RSI是0-100范围的动量指标。低于30表示超卖（买入机会），高于70表示超买（卖出机会）。",
+    "macdExplain": "MACD追踪趋势方向。MACD线上穿信号线表示上升动能（看涨），下穿表示下降动能（看跌）。",
+    "bollingerExplain": "布林带展示价格波动范围。接近上轨可能高估，接近下轨可能低估。",
+    "maExplain": "移动均线平滑价格趋势。价格在均线上方为上升趋势，下方为下降趋势。较短周期对变化反应更快。",
+    "volumeExplain": "成交量衡量交易活跃度。高于平均的成交量确认价格走势，表明市场关注度高。"
   }
 }

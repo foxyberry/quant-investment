@@ -2694,5 +2694,20 @@
     "kosdaq": "KOSDAQ",
     "nasdaq": "NASDAQ",
     "sp500": "S&P 500"
+  },
+  "indicators": {
+    "oversold": "Oversold",
+    "overbought": "Overbought",
+    "bullish": "Bullish",
+    "bearish": "Bearish",
+    "aboveBand": "Above Band",
+    "belowBand": "Below Band",
+    "withinBand": "Within Band",
+    "neutral": "Neutral",
+    "rsiExplain": "RSI measures momentum on a 0\u2013100 scale. Below 30 signals oversold (buy opportunity), above 70 signals overbought (sell opportunity).",
+    "macdExplain": "MACD tracks trend direction. When MACD crosses above the Signal line, it suggests upward momentum (bullish). Below means bearish.",
+    "bollingerExplain": "Bollinger Bands show price volatility. Near the upper band may mean overvalued; near the lower band may mean undervalued.",
+    "maExplain": "Moving averages smooth out price trends. Price above averages = uptrend; below = downtrend. Shorter periods react faster to changes.",
+    "volumeExplain": "Volume measures trading activity. Higher-than-average volume confirms price moves and suggests strong market interest."
   }
 }
