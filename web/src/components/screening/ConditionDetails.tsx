@@ -53,6 +53,7 @@ export default function ConditionDetails({
   ticker,
 }: ConditionDetailsProps) {
   const t = useTranslations('screening');
+  const tConditions = useTranslations('conditions');
   const locale = useLocale();
 
   if (conditions.length === 0) {
@@ -104,6 +105,13 @@ export default function ConditionDetails({
         {conditions.map((condition, index) => {
           const actual = extractActualValue(condition.details);
           const threshold = extractThreshold(condition.details);
+          const conditionI18nKey = `${condition.condition_name}.label`;
+          const conditionLabel = tConditions.has(conditionI18nKey)
+            ? tConditions(conditionI18nKey as never)
+            : condition.condition_name
+                .replace(/_/g, ' ')
+                .replace(/\./g, ' ')
+                .replace(/\b\w/g, (char) => char.toUpperCase());
 
           return (
             <div
@@ -118,7 +126,7 @@ export default function ConditionDetails({
                   <XCircle className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
                 )}
                 <span className="truncate text-sm font-medium text-[var(--foreground)]">
-                  {condition.condition_name}
+                  {conditionLabel}
                 </span>
               </div>
 

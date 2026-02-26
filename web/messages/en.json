@@ -544,6 +544,7 @@
     "loadFailed": "Failed to Load Data",
     "noChartData": "No chart data available",
     "retry": "Retry",
+    "refresh": "Refresh",
     "loadingConditions": "Loading conditions...",
     "aiDescription": "AI-powered analysis with valuation score, risk assessment, and entry recommendation.",
     "low": "Low",

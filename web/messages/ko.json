@@ -544,6 +544,7 @@
     "loadFailed": "데이터 로드 실패",
     "noChartData": "차트 데이터가 없습니다",
     "retry": "다시 시도",
+    "refresh": "새로고침",
     "loadingConditions": "조건 로딩 중...",
     "aiDescription": "밸류에이션 점수, 리스크 평가, 진입 추천을 포함한 AI 기반 분석입니다.",
     "low": "최저",

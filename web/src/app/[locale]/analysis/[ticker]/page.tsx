@@ -57,7 +57,11 @@ const LOCALE_SYNC_KEY = 'quant-investment:locale-sync';
 
 function toTitleCaseFromKey(value: string): string {
   return value
+    .replace(/^screening\.presetNames\./, '')
+    .replace(/^conditions\./, '')
+    .replace(/^custom:/, '')
     .replace(/_/g, ' ')
+    .replace(/\./g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
@@ -825,11 +829,14 @@ export default function TickerAnalysisPage() {
                   {presets.map((p) => (
                     <option key={p.name} value={p.name}>
                       {(() => {
-                        try {
-                          return `${tScreening(`presetNames.${p.name}` as never)} (${p.conditions.length})`;
-                        } catch {
-                          return `${toTitleCaseFromKey(p.name)} (${p.conditions.length})`;
+                        const key = `presetNames.${p.name}`;
+                        if (tScreening.has(key)) {
+                          return `${tScreening(key as never)} (${p.conditions.length})`;
                         }
+                        const fallback = p.name.startsWith('custom:')
+                          ? p.description || toTitleCaseFromKey(p.name)
+                          : toTitleCaseFromKey(p.name);
+                        return `${fallback} (${p.conditions.length})`;
                       })()}
                     </option>
                   ))}
@@ -892,11 +899,10 @@ export default function TickerAnalysisPage() {
                             {getConditionIcon(condition)}
                             <span className="text-sm text-[var(--foreground)]">
                               {(() => {
-                                try {
-                                  return tConditions(`${condition.condition_name}.label` as never);
-                                } catch {
-                                  return toTitleCaseFromKey(condition.condition_name);
-                                }
+                                const key = `${condition.condition_name}.label`;
+                                return tConditions.has(key)
+                                  ? tConditions(key as never)
+                                  : toTitleCaseFromKey(condition.condition_name);
                               })()}
                             </span>
                           </div>
