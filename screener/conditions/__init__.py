@@ -38,10 +38,11 @@ from .price import (
     MaxPriceCondition,
     PriceRangeCondition,
     PriceChangeCondition,
-    CloseLag1Lt3Condition,
     ReturnTurnaroundCondition,
     DrawdownFromHighCondition,
 )
+
+from .basic_catalog import PriceLagCompareCondition, VolumeLagCompareCondition
 
 from .volume import (
     MinVolumeCondition,
@@ -266,7 +267,7 @@ __all__ = [
 
     # Price
     'MinPriceCondition', 'MaxPriceCondition', 'PriceRangeCondition', 'PriceChangeCondition',
-    'CloseLag1Lt3Condition',
+    'PriceLagCompareCondition', 'VolumeLagCompareCondition',
     'ReturnTurnaroundCondition',
     'DrawdownFromHighCondition',
 
