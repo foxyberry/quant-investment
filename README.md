@@ -58,6 +58,49 @@ cd web && PORT=3002 npm run dev
 - Web UI: `http://localhost:3002`
 - API Docs: `http://localhost:8002/docs`
 
+## Shared DB via Docker (Location/Port Independent)
+
+Use this when you want one persistent local DB regardless of where you run API/web.
+
+### 1) Configure env
+
+```bash
+cp .env.example .env
+```
+
+Set these in `.env`:
+- `DB_PORT` (default `5432`, change if conflict)
+- `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- `DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@localhost:<DB_PORT>/<DB_NAME>`
+
+### 2) Start DB only
+
+```bash
+docker compose up -d db
+docker compose ps db
+```
+
+The DB data is persisted in named volume `quant-investment-pgdata`.
+
+### 3) Initialize schema/migrations entrypoint
+
+```bash
+source venv/bin/activate
+python -c "from api.database import init_db; init_db()"
+```
+
+### 4) Port conflict policy
+
+If `5432` is already in use, set:
+- `DB_PORT=55432` in `.env`
+- update `DATABASE_URL` to use `55432`
+
+Then restart DB:
+
+```bash
+docker compose up -d db
+```
+
 ## Core Workflows
 
 ### Workflow A: Build And Execute A Strategy

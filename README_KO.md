@@ -58,6 +58,49 @@ cd web && PORT=3002 npm run dev
 - Web UI: `http://localhost:3002`
 - API 문서: `http://localhost:8002/docs`
 
+## Docker 공용 DB (실행 위치/포트 독립)
+
+API/Web를 어디서 실행해도 동일한 로컬 DB를 쓰고 싶을 때 사용합니다.
+
+### 1) env 설정
+
+```bash
+cp .env.example .env
+```
+
+`.env`에서 아래 값을 설정하세요.
+- `DB_PORT` (기본 `5432`, 충돌 시 변경)
+- `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- `DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@localhost:<DB_PORT>/<DB_NAME>`
+
+### 2) DB만 기동
+
+```bash
+docker compose up -d db
+docker compose ps db
+```
+
+데이터는 named volume `quant-investment-pgdata`에 영속 저장됩니다.
+
+### 3) 스키마 초기화(마이그레이션 진입점)
+
+```bash
+source venv/bin/activate
+python -c "from api.database import init_db; init_db()"
+```
+
+### 4) 포트 충돌 정책
+
+`5432`가 이미 사용 중이면:
+- `.env`에서 `DB_PORT=55432`
+- `DATABASE_URL`도 `55432`로 변경
+
+이후 DB 재기동:
+
+```bash
+docker compose up -d db
+```
+
 ## 핵심 작업 시나리오
 
 ### 시나리오 A: 전략 생성 후 실행
