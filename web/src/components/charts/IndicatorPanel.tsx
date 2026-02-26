@@ -311,6 +311,7 @@ export default function IndicatorPanel({
               { label: 'SMA 200', value: technicalData.sma.sma200 },
             ] as const).map((item) => {
               const signal = currentPrice != null ? getSMASignal(item.value, currentPrice) : null;
+              const diffPct = currentPrice != null ? ((currentPrice - item.value) / item.value) * 100 : null;
               return (
                 <div
                   key={item.label}
@@ -332,9 +333,18 @@ export default function IndicatorPanel({
                       </span>
                     )}
                   </div>
-                  <p className="text-lg font-bold font-mono text-[var(--foreground)]">
-                    {item.value.toFixed(2)}
-                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-lg font-bold font-mono text-[var(--foreground)]">
+                      {item.value.toFixed(2)}
+                    </p>
+                    {diffPct != null && (
+                      <span className={`text-xs font-semibold ${
+                        diffPct >= 0 ? 'text-green-500' : 'text-red-500'
+                      }`}>
+                        {diffPct >= 0 ? '+' : ''}{diffPct.toFixed(1)}%
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}
