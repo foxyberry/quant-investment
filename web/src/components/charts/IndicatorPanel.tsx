@@ -172,9 +172,9 @@ export default function IndicatorPanel({
               </div>
             </div>
             <div className="flex justify-between text-xs text-[var(--foreground-muted)]">
-              <span>0 (Oversold)</span>
-              <span>50</span>
-              <span>100 (Overbought)</span>
+              <span>{t('rsiScaleOversold')}</span>
+              <span>{t('rsiScaleMid')}</span>
+              <span>{t('rsiScaleOverbought')}</span>
             </div>
           </div>
         </IndicatorCard>
@@ -190,39 +190,65 @@ export default function IndicatorPanel({
           explanation={t('macdExplain')}
         >
           <div className="space-y-3">
-            <div className="flex items-end justify-between">
-              <div>
-                <span className="text-xs uppercase tracking-wide text-[var(--foreground-muted)]">MACD Line</span>
-                <p className="text-2xl font-bold font-mono text-[var(--foreground)]">
-                  {technicalData.macd.macd.toFixed(4)}
+            {/* Momentum summary — the key takeaway */}
+            <div className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
+              technicalData.macd.histogram >= 0
+                ? 'bg-green-500/10'
+                : 'bg-red-500/10'
+            }`}>
+              {technicalData.macd.histogram >= 0
+                ? <TrendingUp className="h-5 w-5 text-green-500" />
+                : <TrendingDown className="h-5 w-5 text-red-500" />}
+              <span className={`text-sm font-semibold ${
+                technicalData.macd.histogram >= 0 ? 'text-green-500' : 'text-red-500'
+              }`}>
+                {technicalData.macd.histogram >= 0
+                  ? t('macdMomentumUp')
+                  : t('macdMomentumDown')}
+              </span>
+            </div>
+
+            {/* MACD vs Signal lines */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg bg-[var(--background)]/60 border border-[var(--border)]/50 px-3 py-2">
+                <span className="text-xs text-[var(--foreground-muted)]">{t('macdLine')}</span>
+                <p className="text-lg font-bold font-mono text-[var(--foreground)]">
+                  {technicalData.macd.macd.toFixed(2)}
                 </p>
               </div>
-              <div className="text-right">
-                <span className="text-xs uppercase tracking-wide text-[var(--foreground-muted)]">Signal Line</span>
-                <p className="text-2xl font-bold font-mono text-[var(--foreground)]">
-                  {technicalData.macd.signal.toFixed(4)}
+              <div className="rounded-lg bg-[var(--background)]/60 border border-[var(--border)]/50 px-3 py-2">
+                <span className="text-xs text-[var(--foreground-muted)]">{t('signalLine')}</span>
+                <p className="text-lg font-bold font-mono text-[var(--foreground)]">
+                  {technicalData.macd.signal.toFixed(2)}
                 </p>
               </div>
             </div>
-            {/* Histogram visual */}
-            <div className="flex items-end justify-center gap-0.5 h-12 rounded-lg bg-[var(--background)]/60 px-3 py-2">
-              <BarChart2
-                className={`h-8 w-8 ${
-                  technicalData.macd.histogram >= 0
-                    ? 'text-green-500'
-                    : 'text-red-500'
-                }`}
-              />
-              <span
-                className={`text-sm font-semibold ${
-                  technicalData.macd.histogram >= 0
-                    ? 'text-green-500'
-                    : 'text-red-500'
-                }`}
-              >
-                {technicalData.macd.histogram >= 0 ? '+' : ''}
-                {technicalData.macd.histogram.toFixed(4)} Histogram
-              </span>
+
+            {/* Histogram bar */}
+            <div className="rounded-lg bg-[var(--background)]/60 px-3 py-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs text-[var(--foreground-muted)]">{t('histogram')}</span>
+                <span className={`text-sm font-bold font-mono ${
+                  technicalData.macd.histogram >= 0 ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {technicalData.macd.histogram >= 0 ? '+' : ''}{technicalData.macd.histogram.toFixed(2)}
+                </span>
+              </div>
+              {/* Visual bar centered at zero */}
+              <div className="relative h-3 rounded-full bg-[var(--border)]/30 overflow-hidden">
+                <div className="absolute top-0 left-1/2 h-full w-px bg-[var(--foreground-muted)]/40" />
+                {technicalData.macd.histogram >= 0 ? (
+                  <div
+                    className="absolute top-0 left-1/2 h-full rounded-r-full bg-green-500/60"
+                    style={{ width: `${Math.min(50, Math.abs(technicalData.macd.histogram) / (Math.abs(technicalData.macd.macd) + Math.abs(technicalData.macd.signal) || 1) * 50)}%` }}
+                  />
+                ) : (
+                  <div
+                    className="absolute top-0 right-1/2 h-full rounded-l-full bg-red-500/60"
+                    style={{ width: `${Math.min(50, Math.abs(technicalData.macd.histogram) / (Math.abs(technicalData.macd.macd) + Math.abs(technicalData.macd.signal) || 1) * 50)}%` }}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </IndicatorCard>

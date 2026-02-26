@@ -2735,6 +2735,17 @@
     "ma5Label": "5일 단기",
     "ma20Label": "20일 중기",
     "ma60Label": "60일 장기",
-    "ma120Label": "120일 초장기"
+    "ma120Label": "120일 초장기",
+    "rsiScaleOversold": "0 (과매도)",
+    "rsiScaleMid": "50",
+    "rsiScaleOverbought": "100 (과매수)",
+    "macdLine": "MACD 라인",
+    "signalLine": "시그널 라인",
+    "histogram": "히스토그램",
+    "macdCrossDesc": "MACD가 시그널 {direction} {diff} → {signal}",
+    "above": "위",
+    "below": "아래",
+    "macdMomentumUp": "상승 모멘텀 형성 중",
+    "macdMomentumDown": "하락 모멘텀 형성 중"
   }
 }

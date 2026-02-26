@@ -2735,6 +2735,17 @@
     "ma5Label": "5D Short-term",
     "ma20Label": "20D Mid-term",
     "ma60Label": "60D Long-term",
-    "ma120Label": "120D Very long-term"
+    "ma120Label": "120D Very long-term",
+    "rsiScaleOversold": "0 (Oversold)",
+    "rsiScaleMid": "50",
+    "rsiScaleOverbought": "100 (Overbought)",
+    "macdLine": "MACD Line",
+    "signalLine": "Signal Line",
+    "histogram": "Histogram",
+    "macdCrossDesc": "MACD is {diff} {direction} Signal → {signal}",
+    "above": "above",
+    "below": "below",
+    "macdMomentumUp": "Bullish momentum building",
+    "macdMomentumDown": "Bearish momentum building"
   }
 }

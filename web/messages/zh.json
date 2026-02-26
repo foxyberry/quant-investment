@@ -2735,6 +2735,17 @@
     "ma5Label": "5日 短期",
     "ma20Label": "20日 中期",
     "ma60Label": "60日 长期",
-    "ma120Label": "120日 超长期"
+    "ma120Label": "120日 超长期",
+    "rsiScaleOversold": "0 (超卖)",
+    "rsiScaleMid": "50",
+    "rsiScaleOverbought": "100 (超买)",
+    "macdLine": "MACD 线",
+    "signalLine": "信号线",
+    "histogram": "柱状图",
+    "macdCrossDesc": "MACD在信号线{direction} {diff} → {signal}",
+    "above": "上方",
+    "below": "下方",
+    "macdMomentumUp": "上升动能形成中",
+    "macdMomentumDown": "下降动能形成中"
   }
 }
