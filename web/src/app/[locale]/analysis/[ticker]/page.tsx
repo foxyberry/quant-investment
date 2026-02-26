@@ -243,7 +243,8 @@ export default function TickerAnalysisPage() {
     }
   };
 
-  const formatMarketCap = (value: number): string => {
+  const formatMarketCap = (value: number | null | undefined): string => {
+    if (value == null) return '-';
     if (value >= 1_000_000_000_000) {
       return `$${(value / 1_000_000_000_000).toFixed(2)}T`;
     }
@@ -675,7 +676,7 @@ export default function TickerAnalysisPage() {
             onToggle={() => toggleSection('indicators')}
             isPopup={isPopup}
           >
-            <IndicatorPanel technicalData={tickerData.technical} />
+            <IndicatorPanel technicalData={tickerData.technical} currentPrice={tickerData.current_price} />
           </CollapsibleSection>
 
           {/* ===== Financial Overview ===== */}

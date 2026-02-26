@@ -1,13 +1,26 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Search, BarChart3, X, ArrowRight } from 'lucide-react';
+import { Search, BarChart3, X, ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Card, Button } from '@/components/ui';
 import { CandleChart, IndicatorPanel } from '@/components/charts';
 import { getTickerAnalysis, searchTickers } from '@/lib/api';
 import type { TickerAnalysis } from '@/lib/types';
+
+/**
+ * Extracts a market badge label from a ticker symbol suffix.
+ * E.g. "005930.KS" -> "KRX", "7203.T" -> "TSE", "AAPL" -> "US"
+ */
+function getMarketBadge(ticker: string): string {
+  if (ticker.includes('.KS') || ticker.includes('.KQ')) return 'KRX';
+  if (ticker.includes('.T')) return 'TSE';
+  if (ticker.includes('.L')) return 'LSE';
+  if (ticker.includes('.HK')) return 'HKEX';
+  if (ticker.includes('.SS') || ticker.includes('.SZ')) return 'CN';
+  return 'US';
+}
 
 /**
  * Main analysis page with ticker search, charts, and indicators.
@@ -84,7 +97,7 @@ export default function AnalysisPage() {
         <h1 className="text-2xl font-bold text-[var(--foreground)]">
           {t('title')}
         </h1>
-        <p className="mt-1 text-[var(--foreground-muted)]">
+        <p className="mt-1 text-sm text-[var(--foreground-muted)]">
           {t('subtitle')}
         </p>
       </div>
@@ -94,14 +107,14 @@ export default function AnalysisPage() {
         <div className="relative">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--foreground-muted)]" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--foreground-muted)]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchResults.length > 0 && setShowResults(true)}
                 placeholder={t('searchPlaceholder')}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] py-2.5 pl-10 pr-4 text-[var(--foreground)] placeholder:text-[var(--foreground-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] py-3.5 pl-12 pr-4 text-base text-[var(--foreground)] placeholder:text-[var(--foreground-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)] transition-shadow"
               />
               {isSearching && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -114,7 +127,7 @@ export default function AnalysisPage() {
               <button
                 type="button"
                 onClick={handleClearTicker}
-                className="flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-white hover:bg-[var(--color-primary-light)] transition-colors"
+                className="flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-3.5 text-white hover:bg-[var(--color-primary-light)] transition-colors"
               >
                 <span className="font-medium">{selectedTicker}</span>
                 <X className="h-4 w-4" />
@@ -125,19 +138,23 @@ export default function AnalysisPage() {
           {/* Search Results Dropdown */}
           {showResults && searchResults.length > 0 && (
             <div className="absolute z-10 mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] shadow-lg">
-              <ul className="py-2">
+              <ul className="py-1">
                 {searchResults.map((result) => (
                   <li key={result.ticker}>
                     <button
                       type="button"
                       onClick={() => handleSelectTicker(result.ticker)}
-                      className="w-full flex items-center justify-between px-4 py-2 hover:bg-[var(--background)] text-left transition-colors"
+                      className="w-full flex items-center justify-between rounded-lg mx-2 my-0.5 px-3 py-2.5 hover:bg-[var(--background)] text-left transition-colors"
+                      style={{ width: 'calc(100% - 1rem)' }}
                     >
-                      <div>
+                      <div className="flex items-center gap-2">
                         <span className="font-medium text-[var(--foreground)]">
                           {result.ticker}
                         </span>
-                        <span className="ml-2 text-sm text-[var(--foreground-muted)]">
+                        <span className="rounded-md bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-1.5 py-0.5 text-xs font-mono">
+                          {getMarketBadge(result.ticker)}
+                        </span>
+                        <span className="text-sm text-[var(--foreground-muted)]">
                           {result.name}
                         </span>
                       </div>
@@ -151,24 +168,26 @@ export default function AnalysisPage() {
         </div>
 
         {/* Quick ticker buttons */}
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="text-sm text-[var(--foreground-muted)] mr-2">
-            {t('popular')}:
+        <div className="mt-4">
+          <span className="block text-sm font-medium text-[var(--foreground-muted)] mb-2">
+            {t('popularLabel')}
           </span>
-          {['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA'].map((ticker) => (
-            <button
-              key={ticker}
-              type="button"
-              onClick={() => handleSelectTicker(ticker)}
-              className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
-                selectedTicker === ticker
-                  ? 'bg-[var(--color-primary)] text-white'
-                  : 'bg-[var(--background)] text-[var(--foreground)] hover:bg-[var(--border)]'
-              }`}
-            >
-              {ticker}
-            </button>
-          ))}
+          <div className="flex flex-wrap gap-2">
+            {['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA'].map((ticker) => (
+              <button
+                key={ticker}
+                type="button"
+                onClick={() => handleSelectTicker(ticker)}
+                className={`rounded-full px-3 py-1 text-sm font-medium border transition-all ${
+                  selectedTicker === ticker
+                    ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-[0_0_0_3px_var(--color-primary)]/20'
+                    : 'bg-[var(--background)] text-[var(--foreground)] border-[var(--border)] hover:border-[var(--color-primary)]/40 hover:bg-[var(--background)]'
+                }`}
+              >
+                {ticker}
+              </button>
+            ))}
+          </div>
         </div>
       </Card>
 
@@ -176,23 +195,30 @@ export default function AnalysisPage() {
       {(selectedTicker || isLoadingChart) && (
         <div className="space-y-4">
           {/* Chart Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between rounded-xl bg-[var(--background-secondary)] border border-[var(--border)] p-4">
             <div className="flex items-center gap-3">
               <BarChart3 className="h-6 w-6 text-[var(--color-primary)]" />
               <div>
-                <h2 className="text-xl font-semibold text-[var(--foreground)]">
-                  {tickerData?.name || selectedTicker}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-bold text-[var(--foreground)]">
+                    {tickerData?.name || selectedTicker}
+                  </h2>
+                  {selectedTicker && (
+                    <span className="rounded-md bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-2 py-0.5 text-sm font-mono">
+                      {selectedTicker}
+                    </span>
+                  )}
+                </div>
                 {tickerData && (
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-lg font-medium text-[var(--foreground)]">
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-2xl font-mono font-bold text-[var(--foreground)]">
                       ${tickerData.current_price.toFixed(2)}
                     </span>
                     <span
-                      className={`text-sm font-medium ${
+                      className={`rounded-full px-2.5 py-0.5 text-sm font-medium ${
                         tickerData.change_pct >= 0
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
+                          ? 'bg-green-500/10 text-green-500'
+                          : 'bg-red-500/10 text-red-500'
                       }`}
                     >
                       {tickerData.change_pct >= 0 ? '+' : ''}
@@ -205,7 +231,7 @@ export default function AnalysisPage() {
             {selectedTicker && (
               <Link
                 href={`/analysis/${selectedTicker}`}
-                className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background)] transition-colors"
+                className="flex items-center gap-2 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 px-4 py-2 font-medium transition-colors"
               >
                 {t('fullAnalysis')}
                 <ArrowRight className="h-4 w-4" />
@@ -251,27 +277,47 @@ export default function AnalysisPage() {
 
               {/* Indicators */}
               <div>
-                <h3 className="text-lg font-semibold text-[var(--foreground)] mb-3">
+                <h3 className="text-lg font-semibold text-[var(--foreground)] pb-3 border-b border-[var(--border)] mb-4">
                   {t('technicalIndicators')}
                 </h3>
-                <IndicatorPanel technicalData={tickerData.technical} />
+                <IndicatorPanel technicalData={tickerData.technical} currentPrice={tickerData.current_price} />
               </div>
             </>
           )}
         </div>
       )}
 
-      {/* Empty state for chart */}
+      {/* Empty state - 3 Guide Cards */}
       {!selectedTicker && !isLoadingChart && (
-        <Card padding="lg" className="text-center">
-          <BarChart3 className="h-12 w-12 text-[var(--foreground-muted)] mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-[var(--foreground)]">
-            {t('selectTicker')}
-          </h3>
-          <p className="mt-1 text-sm text-[var(--foreground-muted)]">
-            {t('selectTickerDesc')}
-          </p>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-6 hover:border-[var(--color-primary)]/30 transition-colors">
+            <Search className="h-8 w-8 text-[var(--color-primary)] mb-3" />
+            <h3 className="text-base font-bold text-[var(--foreground)] mb-1">
+              {t('guideSearchTitle')}
+            </h3>
+            <p className="text-sm text-[var(--foreground-muted)]">
+              {t('guideSearchDesc')}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-6 hover:border-[var(--color-primary)]/30 transition-colors">
+            <BarChart3 className="h-8 w-8 text-[var(--color-primary)] mb-3" />
+            <h3 className="text-base font-bold text-[var(--foreground)] mb-1">
+              {t('guideTechnicalTitle')}
+            </h3>
+            <p className="text-sm text-[var(--foreground-muted)]">
+              {t('guideTechnicalDesc')}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-6 hover:border-[var(--color-primary)]/30 transition-colors">
+            <Sparkles className="h-8 w-8 text-[var(--color-primary)] mb-3" />
+            <h3 className="text-base font-bold text-[var(--foreground)] mb-1">
+              {t('guideFullTitle')}
+            </h3>
+            <p className="text-sm text-[var(--foreground-muted)]">
+              {t('guideFullDesc')}
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );

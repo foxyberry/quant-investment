@@ -5,11 +5,15 @@ import {
   createChart,
   CandlestickSeries,
   HistogramSeries,
+  LineSeries,
   ColorType,
 } from 'lightweight-charts';
-import type { IChartApi, ISeriesApi, CandlestickData, HistogramData, Time } from 'lightweight-charts';
+import type { IChartApi, ISeriesApi, CandlestickData, HistogramData, Time, LineWidth } from 'lightweight-charts';
 import { useTranslations } from 'next-intl';
 import type { OHLCVData } from '@/lib/types';
+
+/** MA legend label keys mapped to each config index */
+const MA_LABEL_KEYS = ['ma5Label', 'ma20Label', 'ma60Label', 'ma120Label'] as const;
 
 interface CandleChartProps {
   /** OHLCV data array */
@@ -18,8 +22,31 @@ interface CandleChartProps {
   height?: number;
   /** Show volume histogram */
   showVolume?: boolean;
+  /** Show moving average lines (SMA 5, 20, 60, 120) */
+  showMA?: boolean;
   /** Additional CSS class */
   className?: string;
+}
+
+/** MA line display configurations */
+const MA_CONFIGS = [
+  { period: 5, color: '#f59e0b', lineWidth: 1 as LineWidth },
+  { period: 20, color: '#3b82f6', lineWidth: 1 as LineWidth },
+  { period: 60, color: '#8b5cf6', lineWidth: 1 as LineWidth },
+  { period: 120, color: '#ef4444', lineWidth: 1 as LineWidth },
+] as const;
+
+/** Calculate Simple Moving Average from OHLCV data */
+function calculateSMA(data: OHLCVData[], period: number): { time: string; value: number }[] {
+  const result: { time: string; value: number }[] = [];
+  for (let i = period - 1; i < data.length; i++) {
+    let sum = 0;
+    for (let j = 0; j < period; j++) {
+      sum += data[i - j].close;
+    }
+    result.push({ time: data[i].time, value: sum / period });
+  }
+  return result;
 }
 
 /**
@@ -29,13 +56,16 @@ export default function CandleChart({
   data,
   height = 400,
   showVolume = true,
+  showMA = true,
   className = '',
 }: CandleChartProps) {
   const t = useTranslations('stockDetail');
+  const tInd = useTranslations('indicators');
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const maSeriesRefs = useRef<(ISeriesApi<'Line'> | null)[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Detect dark mode
@@ -113,6 +143,22 @@ export default function CandleChart({
       volumeSeriesRef.current = volumeSeries;
     }
 
+    // Create moving average line series if enabled
+    if (showMA) {
+      maSeriesRefs.current = MA_CONFIGS.map((cfg) => {
+        const series = chart.addSeries(LineSeries, {
+          color: cfg.color,
+          lineWidth: cfg.lineWidth,
+          crosshairMarkerVisible: false,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        return series;
+      });
+    } else {
+      maSeriesRefs.current = [];
+    }
+
     // Handle resize with ResizeObserver (works in popups where initial width may be 0)
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -131,8 +177,9 @@ export default function CandleChart({
       chartRef.current = null;
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
+      maSeriesRefs.current = [];
     };
-  }, [height, showVolume]);
+  }, [height, showVolume, showMA]);
 
   // Update data
   useEffect(() => {
@@ -160,11 +207,22 @@ export default function CandleChart({
       volumeSeriesRef.current.setData(volumeData);
     }
 
+    // Update moving average data
+    if (showMA && maSeriesRefs.current.length > 0) {
+      MA_CONFIGS.forEach((cfg, idx) => {
+        const series = maSeriesRefs.current[idx];
+        if (series) {
+          const smaData = calculateSMA(data, cfg.period);
+          series.setData(smaData.map((d) => ({ time: d.time as Time, value: d.value })));
+        }
+      });
+    }
+
     // Fit content
     if (chartRef.current) {
       chartRef.current.timeScale().fitContent();
     }
-  }, [data, showVolume]);
+  }, [data, showVolume, showMA]);
 
   // Update chart colors on theme change
   useEffect(() => {
@@ -208,9 +266,28 @@ export default function CandleChart({
 
   return (
     <div
-      ref={containerRef}
-      className={`rounded-lg border border-[var(--border)] overflow-hidden ${className}`}
+      className={`relative rounded-lg border border-[var(--border)] overflow-hidden ${className}`}
       style={{ height }}
-    />
+    >
+      <div ref={containerRef} className="w-full h-full" />
+      {showMA && (
+        <div className="absolute top-2 left-2 z-10 flex items-center gap-3 rounded-md bg-[var(--background)]/80 backdrop-blur-sm px-2.5 py-1.5 border border-[var(--border)]/50">
+          <span className="text-[10px] font-medium text-[var(--foreground-muted)]">
+            {tInd('maLegend')}
+          </span>
+          {MA_CONFIGS.map((cfg, idx) => (
+            <div key={cfg.period} className="flex items-center gap-1">
+              <div
+                className="h-[2px] w-3 rounded-full"
+                style={{ backgroundColor: cfg.color }}
+              />
+              <span className="text-[10px] text-[var(--foreground-muted)]">
+                {tInd(MA_LABEL_KEYS[idx])}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
