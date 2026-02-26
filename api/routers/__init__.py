@@ -14,6 +14,7 @@ from api.routers.portfolio import router as portfolio_router
 from api.routers.screening import router as screening_router
 from api.routers.search import router as search_router
 from api.routers.backtest import router as backtest_router
+from api.routers.settings import router as settings_router
 from api.routers.strategy import router as strategy_router
 
 __all__ = [
@@ -27,5 +28,6 @@ __all__ = [
     "portfolio_router",
     "screening_router",
     "search_router",
+    "settings_router",
     "strategy_router",
 ]

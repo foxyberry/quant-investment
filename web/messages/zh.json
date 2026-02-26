@@ -2674,7 +2674,20 @@
     "languageDesc": "界面显示语言。这不会影响每个市场的数字或货币格式。",
     "saved": "设置已保存",
     "general": "常规",
-    "display": "显示"
+    "display": "显示",
+    "brokerConnections": "券商连接",
+    "sync": "全部同步",
+    "loading": "加载中...",
+    "accountsCount": "{count} 个账户",
+    "primaryAccount": "主账户",
+    "lastChecked": "上次检查",
+    "testConnection": "连接测试",
+    "disconnect": "断开连接",
+    "disconnectPhaseLater": "断开连接将在 Phase B/C 提供。",
+    "connected": "已连接",
+    "disconnected": "已断开",
+    "connecting": "连接中",
+    "unavailable": "不可用"
   },
   "kiwoom": {
     "title": "Kiwoom",

@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import get_settings
 from api.database import init_db
-from api.routers import analysis_router, broker_router, exchange_rates_router, health_router, portfolio_router, screening_router
+from api.routers import analysis_router, broker_router, exchange_rates_router, health_router, portfolio_router, screening_router, settings_router
 from api.routers.backtest import router as backtest_router
 from api.routers.market import router as market_router
 from api.routers.search import router as search_router
@@ -89,6 +89,7 @@ def create_app() -> FastAPI:
     app.include_router(portfolio_router)
     app.include_router(exchange_rates_router)
     app.include_router(screening_router)
+    app.include_router(settings_router)
     app.include_router(search_router)
     app.include_router(strategy_router)
     app.include_router(backtest_router)

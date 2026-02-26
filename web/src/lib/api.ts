@@ -706,6 +706,11 @@ export async function listBrokers(): Promise<string[]> {
   return data.brokers;
 }
 
+export async function getSettingsBrokerStatuses(): Promise<BrokerConnectionStatus[]> {
+  const data = await fetchApi<{ brokers: BrokerConnectionStatus[] }>('/api/settings/brokers');
+  return data.brokers;
+}
+
 export async function getBrokerConnectionStatus(
   broker: string
 ): Promise<BrokerConnectionStatus> {

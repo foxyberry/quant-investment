@@ -99,3 +99,11 @@ class BrokerListResponse(BaseModel):
     brokers: List[str] = Field(
         default_factory=list, description="Registered broker names"
     )
+
+
+class BrokerSettingsResponse(BaseModel):
+    """Aggregated broker status payload for settings page."""
+
+    brokers: List[BrokerConnectionResponse] = Field(
+        default_factory=list, description="Broker statuses for settings page"
+    )
