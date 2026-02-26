@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download, Search } from 'lucide-react';
+import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download, Search, History } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import {
   HoldingsTable,
@@ -13,6 +13,8 @@ import {
   CsvImportModal,
   OrderDesk,
   BrokerOrderDesk,
+  SellModal,
+  TradeHistory,
 } from '@/components/portfolio';
 import {
   getHoldings,
@@ -116,6 +118,12 @@ export default function PortfolioPage() {
 
   // CSV import modal state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  // Sell modal state
+  const [sellTarget, setSellTarget] = useState<Holding | null>(null);
+
+  // Trade history section state
+  const [isTradeHistoryOpen, setIsTradeHistoryOpen] = useState(false);
 
   // Sell signal banner state
   const [isBannerDismissed, setIsBannerDismissed] = useState(false);
@@ -513,6 +521,10 @@ export default function PortfolioPage() {
     orderDeskRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
+  const handleSellClick = useCallback((holding: Holding) => {
+    setSellTarget(holding);
+  }, []);
+
   const handleAnalyzeClick = useCallback((holding: Holding) => {
     const width = 900;
     const height = 700;
@@ -605,6 +617,10 @@ export default function PortfolioPage() {
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             {t('refresh')}
+          </Button>
+          <Button variant="outline" onClick={() => setIsTradeHistoryOpen((prev) => !prev)}>
+            <History className="h-4 w-4 mr-2" />
+            {t('tradeHistory')}
           </Button>
           <Button variant="outline" onClick={() => setIsImportModalOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
@@ -741,6 +757,7 @@ export default function PortfolioPage() {
           onAnalyze={handleAnalyzeClick}
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
+          onSell={handleSellClick}
           priceChangeDirection={priceChangeDirection}
         />
       </Card>
@@ -812,6 +829,17 @@ export default function PortfolioPage() {
         onClose={() => setIsImportModalOpen(false)}
         onImportComplete={() => fetchData(false)}
       />
+
+      {/* Sell Modal */}
+      <SellModal
+        isOpen={!!sellTarget}
+        holding={sellTarget}
+        onClose={() => setSellTarget(null)}
+        onSellComplete={() => fetchData(false)}
+      />
+
+      {/* Trade History */}
+      {isTradeHistoryOpen && <TradeHistory />}
     </div>
   );
 }

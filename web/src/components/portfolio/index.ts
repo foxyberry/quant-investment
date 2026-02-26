@@ -6,3 +6,5 @@ export { default as SellSignalBanner } from './SellSignalBanner';
 export { default as CsvImportModal } from './CsvImportModal';
 export { default as OrderDesk } from './OrderDesk';
 export { default as BrokerOrderDesk } from './BrokerOrderDesk';
+export { default as SellModal } from './SellModal';
+export { default as TradeHistory } from './TradeHistory';
