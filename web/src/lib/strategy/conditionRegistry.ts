@@ -10,6 +10,7 @@ export interface ConditionParam {
   type: 'int' | 'float' | 'str' | 'bool';
   default: unknown;
   description: string;
+  options?: string[];
 }
 
 export interface ConditionMeta {

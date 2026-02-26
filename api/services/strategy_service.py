@@ -9,6 +9,7 @@ import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
+from itertools import combinations
 from typing import Any, Callable, Dict, List, Optional, Type
 
 import numpy as np
@@ -46,6 +47,23 @@ MAX_TICKERS_PER_RUN = 4000
 # Auto-populated from @register_condition decorators
 CONDITION_CLASS_MAP: Dict[str, Type[BaseCondition]] = get_condition_class_map()
 CONDITION_METADATA: Dict[str, Dict[str, Any]] = get_condition_metadata()
+
+_LEGACY_ALIAS_MAP: Dict[str, tuple[str, Dict[str, Any]]] = {}
+_LAGS = [1, 2, 3, 5, 10, 20, 60]
+
+for _field in ["close", "open", "high", "low"]:
+    for _left, _right in combinations(_LAGS, 2):
+        for _op in ("gt", "lt"):
+            _LEGACY_ALIAS_MAP[f"{_field}_lag_{_left}_{_op}_{_right}"] = (
+                "price_lag_compare",
+                {"field": _field, "lag_a": _left, "lag_b": _right, "operator": _op},
+            )
+
+for _left, _right in combinations(_LAGS, 2):
+    _LEGACY_ALIAS_MAP[f"volume_lag_{_left}_gt_{_right}"] = (
+        "volume_lag_compare",
+        {"lag_a": _left, "lag_b": _right, "operator": "gt"},
+    )
 
 
 def _to_optional_float(value: Any) -> Optional[float]:
@@ -653,6 +671,20 @@ def _resolve_execution_universes(
 
 def _build_condition(condition_type: str, params: Dict[str, Any]) -> BaseCondition:
     """Instantiate a single condition from type key and params."""
+    if condition_type not in CONDITION_CLASS_MAP and condition_type in _LEGACY_ALIAS_MAP:
+        new_type, default_params = _LEGACY_ALIAS_MAP[condition_type]
+        # Remap old param names to new ones
+        remapped = {}
+        for k, v in params.items():
+            if k == "left_lag":
+                remapped["lag_a"] = v
+            elif k == "right_lag":
+                remapped["lag_b"] = v
+            else:
+                remapped[k] = v
+        merged = {**default_params, **remapped}  # user overrides win
+        return _build_condition(new_type, merged)
+
     cls = CONDITION_CLASS_MAP.get(condition_type)
     if cls is None:
         raise ValueError(f"Unknown condition type: {condition_type}")

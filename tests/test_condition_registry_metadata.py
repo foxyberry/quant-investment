@@ -37,11 +37,15 @@ RECOMMENDED_DEFAULTS = [
 ]
 
 RECOMMENDED_KEYS = [
+    "price_lag_compare",
     "ma_touch",
+    "volume_lag_compare",
     "ma_cross_up",
     "above_ma",
     "rsi_oversold",
     "rsi_range",
+    "avg_trading_value",
+    "drawdown_from_high",
     "volume_spike",
     "volume_above_avg",
     "bollinger_width",
@@ -50,11 +54,15 @@ RECOMMENDED_KEYS = [
 ]
 
 RECOMMENDED_ORDERS = {
+    "price_lag_compare": 10,
     "ma_touch": 10,
+    "volume_lag_compare": 11,
     "ma_cross_up": 20,
     "above_ma": 30,
     "rsi_oversold": 40,
     "rsi_range": 50,
+    "avg_trading_value": 65,
+    "drawdown_from_high": 50,
     "volume_spike": 60,
     "volume_above_avg": 70,
     "bollinger_width": 80,

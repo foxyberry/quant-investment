@@ -85,6 +85,24 @@ export function ParamInput({
   }
 
   if (param.type === 'str') {
+    // Generic options-based dropdown
+    if (param.options && param.options.length > 0) {
+      return (
+        <div>
+          <FieldLabel>{paramLabel}</FieldLabel>
+          <SelectInput
+            value={String(value || param.default || '')}
+            onChange={(v) => onChange(param.name, v)}
+          >
+            {param.options.map((opt) => {
+              const optKey = `${conditionKey}.options.${param.name}.${opt}`;
+              const optLabel = tCond.has(optKey) ? tCond(optKey) : toTitleCaseFromKey(opt);
+              return <option key={opt} value={opt}>{optLabel}</option>;
+            })}
+          </SelectInput>
+        </div>
+      );
+    }
     if (param.name === 'direction') {
       return (
         <div>

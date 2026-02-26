@@ -1,12 +1,10 @@
 """Basic condition catalog for common lag/ratio/range filters.
 
-This module registers a large set of beginner-friendly primitive conditions
-used in many rule-based screeners.
+This module registers parametric condition classes and dynamic
+ratio/range conditions used in many rule-based screeners.
 """
 
 from __future__ import annotations
-
-from itertools import combinations
 
 import pandas as pd
 
@@ -14,133 +12,190 @@ from .base import BaseCondition, ConditionResult
 from .registry import register_condition
 
 
-LAGS = [1, 2, 3, 5, 10, 20, 60]
-PRICE_FIELDS = [
-    ("close", "Close"),
-    ("open", "Open"),
-    ("high", "High"),
-    ("low", "Low"),
-]
+# ---------------------------------------------------------------------------
+# Parametric lag-compare conditions (replace 189 dynamic registrations)
+# ---------------------------------------------------------------------------
 
 
-def _register_price_lag_compare(field: str, left_lag: int, right_lag: int, operator: str) -> None:
-    op_symbol = "<" if operator == "lt" else ">"
-    key = f"{field}_lag_{left_lag}_{operator}_{right_lag}"
+@register_condition(
+    key="price_lag_compare",
+    label="Price Lag Compare",
+    description="Compare OHLC price at two different lag points",
+    category="price",
+    params=[
+        {
+            "name": "field",
+            "type": "str",
+            "default": "close",
+            "description": "Price field",
+            "options": ["close", "open", "high", "low"],
+        },
+        {"name": "lag_a", "type": "int", "default": 1, "description": "First lag (days ago)"},
+        {"name": "lag_b", "type": "int", "default": 3, "description": "Second lag (days ago)"},
+        {
+            "name": "operator",
+            "type": "str",
+            "default": "lt",
+            "description": "Comparison operator",
+            "options": ["gt", "lt"],
+        },
+    ],
+    recommended=True,
+    order=10,
+)
+class PriceLagCompareCondition(BaseCondition):
+    """Compare an OHLC price field at two different lag points.
 
-    # Keep the dedicated implementation from price.py for this key.
-    if key == "close_lag_1_lt_3":
-        return
+    Parameters
+    ----------
+    field : str
+        One of ``"close"``, ``"open"``, ``"high"``, ``"low"``.
+    lag_a : int
+        First lag in trading days (must be >= 1).
+    lag_b : int
+        Second lag in trading days (must be >= 1).
+    operator : str
+        ``"lt"`` (lag_a value < lag_b value) or ``"gt"``.
+    """
 
-    class _PriceLagCompareCondition(BaseCondition):
-        def __init__(self, left_lag: int = left_lag, right_lag: int = right_lag, operator: str = operator):
-            self.left_lag = max(1, int(left_lag))
-            self.right_lag = max(1, int(right_lag))
-            self.operator = operator if operator in {"lt", "gt"} else "lt"
+    VALID_FIELDS: set[str] = {"close", "open", "high", "low"}
+    VALID_OPS: set[str] = {"gt", "lt"}
 
-        @property
-        def name(self) -> str:
-            return f"{field}_lag_compare_{self.left_lag}_{self.operator}_{self.right_lag}"
+    def __init__(
+        self,
+        field: str = "close",
+        lag_a: int = 1,
+        lag_b: int = 3,
+        operator: str = "lt",
+    ) -> None:
+        self.field: str = field if field in self.VALID_FIELDS else "close"
+        self.lag_a: int = max(1, int(lag_a))
+        self.lag_b: int = max(1, int(lag_b))
+        self.operator: str = operator if operator in self.VALID_OPS else "lt"
 
-        @property
-        def required_days(self) -> int:
-            return max(self.left_lag, self.right_lag) + 2
+    @property
+    def name(self) -> str:
+        return f"price_lag_compare_{self.field}_{self.lag_a}_{self.operator}_{self.lag_b}"
 
-        def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
-            if field not in data.columns:
-                return ConditionResult(False, self.name, {"error": f"Missing {field} column"})
-            if len(data) < self.required_days:
-                return ConditionResult(False, self.name, {"error": "Insufficient data"})
+    @property
+    def required_days(self) -> int:
+        return max(self.lag_a, self.lag_b) + 2
 
-            left_value = data[field].iloc[-(self.left_lag + 1)]
-            right_value = data[field].iloc[-(self.right_lag + 1)]
-            if pd.isna(left_value) or pd.isna(right_value):
-                return ConditionResult(False, self.name, {"error": f"NaN in {field} data"})
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        col = self.field
+        if col not in data.columns:
+            return ConditionResult(False, self.name, {"error": f"Missing {col} column"})
+        if len(data) < self.required_days:
+            return ConditionResult(False, self.name, {"error": "Insufficient data"})
 
-            if self.operator == "lt":
-                matched = bool(left_value < right_value)
-            else:
-                matched = bool(left_value > right_value)
+        left_value = data[col].iloc[-(self.lag_a + 1)]
+        right_value = data[col].iloc[-(self.lag_b + 1)]
+        if pd.isna(left_value) or pd.isna(right_value):
+            return ConditionResult(False, self.name, {"error": f"NaN in {col} data"})
 
-            return ConditionResult(
-                matched=matched,
-                condition_name=self.name,
-                details={
-                    "field": field,
-                    "left_lag": self.left_lag,
-                    "right_lag": self.right_lag,
-                    "operator": self.operator,
-                    "left_value": float(left_value),
-                    "right_value": float(right_value),
-                },
-            )
-
-    _PriceLagCompareCondition.__name__ = f"{field.title()}Lag{left_lag}{operator.upper()}{right_lag}Condition"
-    register_condition(
-        key=key,
-        label=f"{field.title()} t-{left_lag} {op_symbol} t-{right_lag}",
-        description=f"{field.title()} at t-{left_lag} {op_symbol} t-{right_lag}",
-        category="price",
-        params=[
-            {"name": "left_lag", "type": "int", "default": left_lag, "description": "Left lag day"},
-            {"name": "right_lag", "type": "int", "default": right_lag, "description": "Right lag day"},
-            {"name": "operator", "type": "str", "default": operator, "description": "Comparison operator"},
-        ],
-    )(_PriceLagCompareCondition)
-
-
-def _register_volume_lag_compare(left_lag: int, right_lag: int) -> None:
-    key = f"volume_lag_{left_lag}_gt_{right_lag}"
-
-    class _VolumeLagCompareCondition(BaseCondition):
-        def __init__(self, left_lag: int = left_lag, right_lag: int = right_lag, operator: str = "gt"):
-            self.left_lag = max(1, int(left_lag))
-            self.right_lag = max(1, int(right_lag))
-            self.operator = "gt"
-
-        @property
-        def name(self) -> str:
-            return f"volume_lag_compare_{self.left_lag}_gt_{self.right_lag}"
-
-        @property
-        def required_days(self) -> int:
-            return max(self.left_lag, self.right_lag) + 2
-
-        def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
-            if "volume" not in data.columns:
-                return ConditionResult(False, self.name, {"error": "Missing volume column"})
-            if len(data) < self.required_days:
-                return ConditionResult(False, self.name, {"error": "Insufficient data"})
-
-            left_value = data["volume"].iloc[-(self.left_lag + 1)]
-            right_value = data["volume"].iloc[-(self.right_lag + 1)]
-            if pd.isna(left_value) or pd.isna(right_value):
-                return ConditionResult(False, self.name, {"error": "NaN in volume data"})
-
+        if self.operator == "lt":
+            matched = bool(left_value < right_value)
+        else:
             matched = bool(left_value > right_value)
-            return ConditionResult(
-                matched=matched,
-                condition_name=self.name,
-                details={
-                    "left_lag": self.left_lag,
-                    "right_lag": self.right_lag,
-                    "operator": self.operator,
-                    "left_value": float(left_value),
-                    "right_value": float(right_value),
-                },
-            )
 
-    _VolumeLagCompareCondition.__name__ = f"VolumeLag{left_lag}GT{right_lag}Condition"
-    register_condition(
-        key=key,
-        label=f"Volume t-{left_lag} > t-{right_lag}",
-        description=f"Volume at t-{left_lag} is greater than volume at t-{right_lag}",
-        category="volume",
-        params=[
-            {"name": "left_lag", "type": "int", "default": left_lag, "description": "Left lag day"},
-            {"name": "right_lag", "type": "int", "default": right_lag, "description": "Right lag day"},
-            {"name": "operator", "type": "str", "default": "gt", "description": "Comparison operator"},
-        ],
-    )(_VolumeLagCompareCondition)
+        return ConditionResult(
+            matched=matched,
+            condition_name=self.name,
+            details={
+                "field": self.field,
+                "lag_a": self.lag_a,
+                "lag_b": self.lag_b,
+                "operator": self.operator,
+                "left_value": float(left_value),
+                "right_value": float(right_value),
+            },
+        )
+
+
+@register_condition(
+    key="volume_lag_compare",
+    label="Volume Lag Compare",
+    description="Compare volume at two different lag points",
+    category="volume",
+    params=[
+        {"name": "lag_a", "type": "int", "default": 1, "description": "First lag (days ago)"},
+        {"name": "lag_b", "type": "int", "default": 2, "description": "Second lag (days ago)"},
+        {
+            "name": "operator",
+            "type": "str",
+            "default": "gt",
+            "description": "Comparison operator",
+            "options": ["gt", "lt"],
+        },
+    ],
+    recommended=True,
+    order=11,
+)
+class VolumeLagCompareCondition(BaseCondition):
+    """Compare volume at two different lag points.
+
+    Parameters
+    ----------
+    lag_a : int
+        First lag in trading days (must be >= 1).
+    lag_b : int
+        Second lag in trading days (must be >= 1).
+    operator : str
+        ``"gt"`` (lag_a value > lag_b value) or ``"lt"``.
+    """
+
+    VALID_OPS: set[str] = {"gt", "lt"}
+
+    def __init__(
+        self,
+        lag_a: int = 1,
+        lag_b: int = 2,
+        operator: str = "gt",
+    ) -> None:
+        self.lag_a: int = max(1, int(lag_a))
+        self.lag_b: int = max(1, int(lag_b))
+        self.operator: str = operator if operator in self.VALID_OPS else "gt"
+
+    @property
+    def name(self) -> str:
+        return f"volume_lag_compare_{self.lag_a}_{self.operator}_{self.lag_b}"
+
+    @property
+    def required_days(self) -> int:
+        return max(self.lag_a, self.lag_b) + 2
+
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        if "volume" not in data.columns:
+            return ConditionResult(False, self.name, {"error": "Missing volume column"})
+        if len(data) < self.required_days:
+            return ConditionResult(False, self.name, {"error": "Insufficient data"})
+
+        left_value = data["volume"].iloc[-(self.lag_a + 1)]
+        right_value = data["volume"].iloc[-(self.lag_b + 1)]
+        if pd.isna(left_value) or pd.isna(right_value):
+            return ConditionResult(False, self.name, {"error": "NaN in volume data"})
+
+        if self.operator == "lt":
+            matched = bool(left_value < right_value)
+        else:
+            matched = bool(left_value > right_value)
+
+        return ConditionResult(
+            matched=matched,
+            condition_name=self.name,
+            details={
+                "lag_a": self.lag_a,
+                "lag_b": self.lag_b,
+                "operator": self.operator,
+                "left_value": float(left_value),
+                "right_value": float(right_value),
+            },
+        )
+
+
+# ---------------------------------------------------------------------------
+# Dynamic ratio / range registrations (kept as-is)
+# ---------------------------------------------------------------------------
 
 
 def _register_volume_ma_ratio(short_period: int, long_period: int) -> None:
@@ -268,14 +323,6 @@ def _register_return_range(lookback_days: int) -> None:
         ],
     )(_ReturnRangeCondition)
 
-
-for field, _ in PRICE_FIELDS:
-    for left_lag, right_lag in combinations(LAGS, 2):
-        _register_price_lag_compare(field, left_lag, right_lag, "gt")
-        _register_price_lag_compare(field, left_lag, right_lag, "lt")
-
-for left_lag, right_lag in combinations(LAGS, 2):
-    _register_volume_lag_compare(left_lag, right_lag)
 
 for short_period in [2, 3, 5, 10]:
     for long_period in [20, 60]:

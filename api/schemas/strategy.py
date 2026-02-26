@@ -330,6 +330,7 @@ class ConditionParamInfo(BaseModel):
     type: str = Field(description="'int', 'float', 'str', 'bool'")
     default: Any = None
     description: str = ""
+    options: Optional[List[str]] = None
 
 
 class ConditionInfo(BaseModel):

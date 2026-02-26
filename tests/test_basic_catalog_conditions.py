@@ -1,22 +1,15 @@
-from itertools import combinations
-
 import pandas as pd
 
+from screener.conditions.basic_catalog import PriceLagCompareCondition, VolumeLagCompareCondition
 from screener.conditions.registry import get_condition_class_map, get_condition_metadata
 
 
-LAGS = [1, 2, 3, 5, 10, 20, 60]
-
-
-def _expected_keys() -> list[str]:
-    keys: list[str] = []
-    for field in ["close", "open", "high", "low"]:
-        for left_lag, right_lag in combinations(LAGS, 2):
-            keys.append(f"{field}_lag_{left_lag}_gt_{right_lag}")
-            keys.append(f"{field}_lag_{left_lag}_lt_{right_lag}")
-
-    for left_lag, right_lag in combinations(LAGS, 2):
-        keys.append(f"volume_lag_{left_lag}_gt_{right_lag}")
+def _expected_parametric_keys() -> list[str]:
+    """Return the two parametric keys plus the remaining dynamic keys."""
+    keys: list[str] = [
+        "price_lag_compare",
+        "volume_lag_compare",
+    ]
 
     for short_period in [2, 3, 5, 10]:
         for long_period in [20, 60]:
@@ -44,33 +37,91 @@ def _sample_df(length: int = 120) -> pd.DataFrame:
 
 def test_basic_catalog_keys_registered():
     metadata = get_condition_metadata()
-    expected = _expected_keys()
+    expected = _expected_parametric_keys()
 
     missing = [k for k in expected if k not in metadata]
-    assert not missing, f"Missing catalog condition metadata keys: {missing[:10]}"
+    assert not missing, f"Missing catalog condition metadata keys: {missing}"
 
 
-def test_basic_catalog_conditions_instantiable_and_evaluable():
-    class_map = get_condition_class_map()
-    df = _sample_df()
+def test_price_lag_compare_registered_metadata():
+    metadata = get_condition_metadata()
+    assert "price_lag_compare" in metadata
+    meta = metadata["price_lag_compare"]
+    assert meta["category"] == "price"
+    assert meta["recommended"] is True
+    param_names = [p["name"] for p in meta["params"]]
+    assert "field" in param_names
+    assert "lag_a" in param_names
+    assert "lag_b" in param_names
+    assert "operator" in param_names
 
-    for key in _expected_keys():
-        cls = class_map[key]
-        cond = cls()
-        result = cond.evaluate("TEST", df)
-        assert isinstance(bool(result.matched), bool)
+
+def test_volume_lag_compare_registered_metadata():
+    metadata = get_condition_metadata()
+    assert "volume_lag_compare" in metadata
+    meta = metadata["volume_lag_compare"]
+    assert meta["category"] == "volume"
+    assert meta["recommended"] is True
+    param_names = [p["name"] for p in meta["params"]]
+    assert "lag_a" in param_names
+    assert "lag_b" in param_names
+    assert "operator" in param_names
 
 
-def test_representative_logic_checks():
-    class_map = get_condition_class_map()
+def test_price_lag_compare_default_instantiation():
+    cond = PriceLagCompareCondition()
+    assert cond.field == "close"
+    assert cond.lag_a == 1
+    assert cond.lag_b == 3
+    assert cond.operator == "lt"
+    assert cond.name == "price_lag_compare_close_1_lt_3"
+    assert cond.required_days == 5
 
-    # close_lag_1_gt_3 should be true on increasing close series
-    df_up = _sample_df(40)
-    assert class_map["close_lag_1_gt_3"]().evaluate("TEST", df_up).matched is True
 
-    # close_lag_1_lt_3 should be true on decreasing close series
+def test_volume_lag_compare_default_instantiation():
+    cond = VolumeLagCompareCondition()
+    assert cond.lag_a == 1
+    assert cond.lag_b == 2
+    assert cond.operator == "gt"
+    assert cond.name == "volume_lag_compare_1_gt_2"
+    assert cond.required_days == 4
+
+
+def test_price_lag_compare_invalid_params_fallback():
+    cond = PriceLagCompareCondition(field="invalid", lag_a=-5, operator="bad")
+    assert cond.field == "close"
+    assert cond.lag_a == 1
+    assert cond.operator == "lt"
+
+
+def test_volume_lag_compare_invalid_operator_fallback():
+    cond = VolumeLagCompareCondition(operator="invalid")
+    assert cond.operator == "gt"
+
+
+def test_price_lag_compare_lt_on_increasing_series():
+    # On increasing series, t-1 > t-3 so "lt" should be False
+    df = _sample_df(40)
+    cond = PriceLagCompareCondition(field="close", lag_a=1, lag_b=3, operator="lt")
+    result = cond.evaluate("TEST", df)
+    assert result.matched is False
+
+
+def test_price_lag_compare_gt_on_increasing_series():
+    # On increasing series, t-1 > t-3 so "gt" should be True
+    df = _sample_df(40)
+    cond = PriceLagCompareCondition(field="close", lag_a=1, lag_b=3, operator="gt")
+    result = cond.evaluate("TEST", df)
+    assert result.matched is True
+    assert result.details["field"] == "close"
+    assert result.details["lag_a"] == 1
+    assert result.details["lag_b"] == 3
+    assert result.details["operator"] == "gt"
+
+
+def test_price_lag_compare_lt_on_decreasing_series():
     dec = list(reversed([100 + i * 0.5 for i in range(40)]))
-    df_down = pd.DataFrame(
+    df = pd.DataFrame(
         {
             "open": [v - 0.3 for v in dec],
             "high": [v + 1.0 for v in dec],
@@ -79,9 +130,78 @@ def test_representative_logic_checks():
             "volume": [100000 + (i * 300) for i in range(40)],
         }
     )
-    assert class_map["close_lag_1_lt_3"]().evaluate("TEST", df_down).matched is True
+    cond = PriceLagCompareCondition(field="close", lag_a=1, lag_b=3, operator="lt")
+    result = cond.evaluate("TEST", df)
+    assert result.matched is True
 
-    # volume ratio should pass when recent volume is materially larger than long average
+
+def test_price_lag_compare_insufficient_data():
+    df = pd.DataFrame({"close": [100, 101]})
+    cond = PriceLagCompareCondition(field="close", lag_a=1, lag_b=3, operator="lt")
+    result = cond.evaluate("TEST", df)
+    assert result.matched is False
+    assert "error" in result.details
+
+
+def test_price_lag_compare_missing_column():
+    df = pd.DataFrame({"close": [100] * 10})
+    cond = PriceLagCompareCondition(field="high", lag_a=1, lag_b=2, operator="gt")
+    result = cond.evaluate("TEST", df)
+    assert result.matched is False
+    assert "Missing" in result.details["error"]
+
+
+def test_volume_lag_compare_gt_on_increasing_volume():
+    # Volume increases over time -> t-1 > t-2 -> "gt" should be True
+    df = _sample_df(40)
+    cond = VolumeLagCompareCondition(lag_a=1, lag_b=2, operator="gt")
+    result = cond.evaluate("TEST", df)
+    assert result.matched is True
+    assert result.details["lag_a"] == 1
+    assert result.details["lag_b"] == 2
+    assert result.details["operator"] == "gt"
+
+
+def test_volume_lag_compare_lt_on_increasing_volume():
+    # Volume increases -> t-1 > t-2 -> "lt" should be False
+    df = _sample_df(40)
+    cond = VolumeLagCompareCondition(lag_a=1, lag_b=2, operator="lt")
+    result = cond.evaluate("TEST", df)
+    assert result.matched is False
+
+
+def test_volume_lag_compare_insufficient_data():
+    df = pd.DataFrame({"volume": [100000]})
+    cond = VolumeLagCompareCondition(lag_a=1, lag_b=2, operator="gt")
+    result = cond.evaluate("TEST", df)
+    assert result.matched is False
+    assert "error" in result.details
+
+
+def test_volume_lag_compare_missing_column():
+    df = pd.DataFrame({"close": [100] * 10})
+    cond = VolumeLagCompareCondition(lag_a=1, lag_b=2, operator="gt")
+    result = cond.evaluate("TEST", df)
+    assert result.matched is False
+    assert "Missing" in result.details["error"]
+
+
+def test_parametric_conditions_via_class_map():
+    """Verify that the parametric classes are accessible via the registry."""
+    class_map = get_condition_class_map()
+
+    assert "price_lag_compare" in class_map
+    assert class_map["price_lag_compare"] is PriceLagCompareCondition
+
+    assert "volume_lag_compare" in class_map
+    assert class_map["volume_lag_compare"] is VolumeLagCompareCondition
+
+
+def test_volume_ma_ratio_still_registered():
+    """Verify that the kept dynamic registrations still work."""
+    class_map = get_condition_class_map()
+    df = _sample_df()
+
     vol = [100000] * 70 + [150000] * 10
     df_vol = pd.DataFrame(
         {
@@ -94,3 +214,13 @@ def test_representative_logic_checks():
     )
     cond = class_map["volume_ma_ratio_2_20"](min_ratio=1.1, max_ratio=2.0)
     assert cond.evaluate("TEST", df_vol).matched is True
+
+
+def test_return_range_still_registered():
+    """Verify that the kept dynamic registrations still work."""
+    class_map = get_condition_class_map()
+    df = _sample_df(40)
+
+    cond = class_map["return_pct_5d_minmax"](min_return_pct=-10.0, max_return_pct=10.0)
+    result = cond.evaluate("TEST", df)
+    assert isinstance(result.matched, bool)
