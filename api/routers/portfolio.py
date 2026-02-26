@@ -6,10 +6,11 @@ Provides endpoints for portfolio management operations.
 
 import io
 import logging
+import asyncio
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import APIRouter, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Form, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 
 from api.schemas.portfolio import (
@@ -33,6 +34,21 @@ MAX_UPLOAD_SIZE = 1_048_576  # 1 MB
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/portfolio", tags=["Portfolio"])
+WS_PUSH_INTERVAL_SECONDS = 10
+
+
+def _parse_ticker_query(raw: str | None) -> List[str]:
+    """Parse comma-separated ticker query into deduplicated list."""
+    if not raw:
+        return []
+    seen: set[str] = set()
+    tickers: List[str] = []
+    for token in raw.split(","):
+        ticker = token.strip().upper()
+        if ticker and ticker not in seen:
+            seen.add(ticker)
+            tickers.append(ticker)
+    return tickers
 
 
 @router.get(
@@ -462,6 +478,46 @@ async def get_sell_signals(
             status_code=500,
             detail=f"Failed to get sell signals: {str(e)}"
         )
+
+
+# ── Realtime websocket ─────────────────────────────────────────────
+
+
+@router.websocket("/realtime/ws")
+async def portfolio_realtime_websocket(websocket: WebSocket) -> None:
+    """Stream periodic portfolio price updates for selected tickers."""
+    await websocket.accept()
+    service = get_portfolio_service()
+    subscribed = _parse_ticker_query(websocket.query_params.get("tickers"))
+
+    try:
+        while True:
+            holdings = await asyncio.to_thread(service.get_all_holdings, False)
+            currency_by_ticker = {h.ticker.upper(): h.currency for h in holdings if h.ticker}
+
+            tickers = subscribed or list(currency_by_ticker.keys())
+            if not tickers:
+                await websocket.send_json({"updates": []})
+                await asyncio.sleep(WS_PUSH_INTERVAL_SECONDS)
+                continue
+
+            prices = await asyncio.to_thread(service._get_current_prices, tickers)
+            updates = [
+                {
+                    "ticker": ticker,
+                    "current_price": float(price),
+                    "currency": currency_by_ticker.get(ticker.upper()),
+                }
+                for ticker, price in prices.items()
+                if price is not None
+            ]
+
+            await websocket.send_json({"updates": updates})
+            await asyncio.sleep(WS_PUSH_INTERVAL_SECONDS)
+    except WebSocketDisconnect:
+        logger.info("Portfolio realtime websocket disconnected")
+    except Exception as e:
+        logger.warning("Portfolio realtime websocket terminated: %s", e)
 
 
 # ── Trade (sell recording + history) ──────────────────────────────
