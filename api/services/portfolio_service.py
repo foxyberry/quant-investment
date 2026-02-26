@@ -618,6 +618,7 @@ class PortfolioService:
 
             trade = Trade(
                 ticker=data.ticker,
+                name=holding.name,
                 trade_type="SELL",
                 quantity=data.quantity,
                 price=data.price,
@@ -647,6 +648,7 @@ class PortfolioService:
             return TradeResponse(
                 id=trade.id,
                 ticker=trade.ticker,
+                name=trade.name,
                 trade_type=trade.trade_type,
                 quantity=trade.quantity,
                 price=trade.price,
@@ -675,12 +677,12 @@ class PortfolioService:
                 query = query.filter(Trade.ticker == ticker)
             rows = query.all()
 
-            # Look up holding names for traded tickers
-            traded_tickers = list({r.ticker for r in rows})
+            # Fallback: fill name from Holding for legacy rows missing name
+            nameless = [r.ticker for r in rows if not r.name]
             name_map: Dict[str, str] = {}
-            if traded_tickers:
+            if nameless:
                 holdings = db.query(Holding.ticker, Holding.name).filter(
-                    Holding.ticker.in_(traded_tickers)
+                    Holding.ticker.in_(list(set(nameless)))
                 ).all()
                 name_map = {h.ticker: h.name for h in holdings if h.name}
         finally:
@@ -690,7 +692,7 @@ class PortfolioService:
             TradeResponse(
                 id=r.id,
                 ticker=r.ticker,
-                name=name_map.get(r.ticker),
+                name=r.name or name_map.get(r.ticker),
                 trade_type=r.trade_type,
                 quantity=r.quantity,
                 price=r.price,

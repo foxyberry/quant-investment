@@ -28,6 +28,7 @@ class Trade(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     ticker = Column(String(32), nullable=False, index=True)
+    name = Column(String(255), nullable=True)
     trade_type = Column(String(8), nullable=False)  # BUY or SELL
     quantity = Column(Integer, nullable=False)
     price = Column(Float, nullable=False)
