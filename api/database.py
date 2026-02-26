@@ -49,6 +49,7 @@ def get_db():
 def init_db() -> None:
     """Create tables and migrate legacy JSON data if present."""
     import api.models.agent_task  # noqa: F401 — register model with Base
+    import api.models.execution_history  # noqa: F401 — register model with Base
     import api.models.portfolio  # noqa: F401 — register model with Base
     import api.models.screening_result  # noqa: F401 — register model with Base
     import api.models.strategy  # noqa: F401 — register model with Base
@@ -58,6 +59,7 @@ def init_db() -> None:
 
     _migrate_json_data()
     _migrate_portfolio_json()
+    _migrate_saved_screening_to_execution_history()
 
 
 def _migrate_json_data() -> None:
@@ -215,3 +217,70 @@ def _migrate_portfolio_json() -> None:
             logger.info("Renamed %s → %s", json_path, migrated_path)
         except OSError as e:
             logger.warning("Could not rename migrated file: %s", e)
+
+
+def _migrate_saved_screening_to_execution_history() -> None:
+    """One-time migration: copy saved_screening_results rows into execution_history."""
+    from api.models.execution_history import ExecutionHistory
+    from api.models.screening_result import SavedScreeningResult
+    from api.schemas.execution_history import compute_fingerprint
+
+    db = SessionLocal()
+    migrated = 0
+    skipped = 0
+    try:
+        saved_count = db.query(SavedScreeningResult).count()
+        if saved_count == 0:
+            return
+
+        existing_fps = {
+            row[0]
+            for row in db.query(ExecutionHistory.fingerprint).all()
+        }
+
+        rows = db.query(SavedScreeningResult).all()
+        for row in rows:
+            fp = compute_fingerprint(
+                execution_type="screening",
+                preset=row.preset,
+                universes=row.universes or [],
+                reference_date=row.reference_date,
+                params=None,
+            )
+            if fp in existing_fps:
+                skipped += 1
+                continue
+
+            eh = ExecutionHistory(
+                id=row.id,
+                execution_type="screening",
+                preset=row.preset,
+                universes=row.universes or [],
+                reference_date=row.reference_date,
+                params=None,
+                graph=None,
+                total_count=row.total_count,
+                matched_count=row.matched_count,
+                elapsed_ms=row.elapsed_ms,
+                results=row.results or [],
+                name=row.name,
+                description=row.description,
+                strategy_id=None,
+                fingerprint=fp,
+                created_at=row.created_at,
+            )
+            db.add(eh)
+            existing_fps.add(fp)
+            migrated += 1
+
+        if migrated > 0:
+            db.commit()
+        logger.info(
+            "Saved screening → execution_history migration: %d migrated, %d skipped",
+            migrated, skipped,
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error("Saved screening migration failed: %s", e)
+    finally:
+        db.close()
