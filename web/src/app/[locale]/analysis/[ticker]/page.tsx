@@ -676,7 +676,7 @@ export default function TickerAnalysisPage() {
             onToggle={() => toggleSection('indicators')}
             isPopup={isPopup}
           >
-            <IndicatorPanel technicalData={tickerData.technical} />
+            <IndicatorPanel technicalData={tickerData.technical} currentPrice={tickerData.current_price} />
           </CollapsibleSection>
 
           {/* ===== Financial Overview ===== */}

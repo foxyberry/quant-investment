@@ -280,7 +280,7 @@ export default function AnalysisPage() {
                 <h3 className="text-lg font-semibold text-[var(--foreground)] pb-3 border-b border-[var(--border)] mb-4">
                   {t('technicalIndicators')}
                 </h3>
-                <IndicatorPanel technicalData={tickerData.technical} />
+                <IndicatorPanel technicalData={tickerData.technical} currentPrice={tickerData.current_price} />
               </div>
             </>
           )}
