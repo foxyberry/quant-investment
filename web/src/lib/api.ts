@@ -4,6 +4,8 @@ import type {
   ScreeningResponse,
   ScreeningProgressEvent,
   ScreeningResult,
+  SavedScreeningResultSummary,
+  SavedScreeningResult,
   Holding,
   HoldingCreate,
   HoldingUpdate,
@@ -40,6 +42,10 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
 
   if (!response.ok) {
     throw new Error(`API Error: ${response.status}`);
+  }
+
+  if (response.status === 204 || response.headers.get('content-length') === '0') {
+    return undefined as T;
   }
 
   return response.json();
@@ -336,6 +342,56 @@ export async function analyzeStock(ticker: string, includeNews = true): Promise<
   return fetchApi<AIAnalysisResult>('/api/analysis/analyze', {
     method: 'POST',
     body: JSON.stringify({ ticker, include_news: includeNews }),
+  });
+}
+
+/**
+ * List all saved screening results (summaries only)
+ */
+export async function listSavedScreeningResults(): Promise<{
+  results: SavedScreeningResultSummary[];
+  total_count: number;
+}> {
+  return fetchApi<{ results: SavedScreeningResultSummary[]; total_count: number }>(
+    '/api/screening/saved'
+  );
+}
+
+/**
+ * Save a screening result
+ */
+export async function saveScreeningResult(data: {
+  name: string;
+  description?: string;
+  preset: string;
+  universes: string[];
+  reference_date?: string | null;
+  total_count: number;
+  matched_count: number;
+  elapsed_ms?: number | null;
+  results: ScreeningResult[];
+}): Promise<SavedScreeningResult> {
+  return fetchApi<SavedScreeningResult>('/api/screening/saved', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Get a single saved screening result (with full results)
+ */
+export async function getSavedScreeningResult(id: string): Promise<SavedScreeningResult> {
+  return fetchApi<SavedScreeningResult>(
+    `/api/screening/saved/${encodeURIComponent(id)}`
+  );
+}
+
+/**
+ * Delete a saved screening result
+ */
+export async function deleteSavedScreeningResult(id: string): Promise<void> {
+  return fetchApi<void>(`/api/screening/saved/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
   });
 }
 

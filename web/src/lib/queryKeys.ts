@@ -11,6 +11,7 @@ export const queryKeys = {
     universes: () => [...queryKeys.screening.all, 'universes'] as const,
     results: (preset: string, universe: string) =>
       [...queryKeys.screening.all, 'results', preset, universe] as const,
+    saved: () => [...queryKeys.screening.all, 'saved'] as const,
   },
   analysis: {
     all: ['analysis'] as const,

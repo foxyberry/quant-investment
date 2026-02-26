@@ -342,3 +342,21 @@ export interface BrokerKillSwitchResult {
   activated: boolean;
   cancelled_orders: number;
 }
+
+// Saved screening result types
+export interface SavedScreeningResultSummary {
+  id: string;
+  name: string;
+  description?: string | null;
+  preset: string;
+  universes: string[];
+  reference_date?: string | null;
+  total_count: number;
+  matched_count: number;
+  elapsed_ms?: number | null;
+  created_at: string;
+}
+
+export interface SavedScreeningResult extends SavedScreeningResultSummary {
+  results: ScreeningResult[];
+}

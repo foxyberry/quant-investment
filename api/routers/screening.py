@@ -22,10 +22,14 @@ from api.schemas.screening import (
     PresetInfo,
     UniverseInfo,
     SingleStockRequest,
+    SaveScreeningResultRequest,
+    SavedScreeningResultResponse,
+    SavedScreeningResultListResponse,
     find_invalid_universes,
     format_invalid_universe_error,
 )
 from api.services.screening_service import get_screening_service
+from api.services.screening_save_service import get_screening_save_service
 
 logger = logging.getLogger(__name__)
 
@@ -393,3 +397,92 @@ def check_single_stock_with_params(
             status_code=500,
             detail=f"Stock check failed: {str(e)}"
         )
+
+
+# --- Saved screening results CRUD ---
+
+
+@router.get(
+    "/saved",
+    response_model=SavedScreeningResultListResponse,
+    summary="List Saved Screening Results",
+)
+def list_saved_results():
+    """
+    List all saved screening results.
+
+    Returns lightweight summaries (without the full results data)
+    ordered by creation date (newest first).
+    """
+    svc = get_screening_save_service()
+    items = svc.list_results()
+    return SavedScreeningResultListResponse(results=items, total_count=len(items))
+
+
+@router.post(
+    "/saved",
+    response_model=SavedScreeningResultResponse,
+    status_code=201,
+    summary="Save Screening Result",
+)
+def save_screening_result(data: SaveScreeningResultRequest):
+    """
+    Save a screening result.
+
+    Persists the screening result with metadata for later retrieval.
+
+    Args:
+        data: Screening result payload to save
+
+    Returns:
+        Created saved screening result with generated ID
+    """
+    svc = get_screening_save_service()
+    return svc.save_result(data)
+
+
+@router.get(
+    "/saved/{result_id}",
+    response_model=SavedScreeningResultResponse,
+    summary="Get Saved Screening Result",
+)
+def get_saved_result(result_id: str):
+    """
+    Get a saved screening result by ID.
+
+    Returns the full screening result including all matched stocks.
+
+    Args:
+        result_id: Saved screening result ID
+
+    Returns:
+        Full saved screening result
+
+    Raises:
+        HTTPException: 404 if not found
+    """
+    svc = get_screening_save_service()
+    result = svc.get_result(result_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Saved result not found")
+    return result
+
+
+@router.delete(
+    "/saved/{result_id}",
+    status_code=204,
+    summary="Delete Saved Screening Result",
+)
+def delete_saved_result(result_id: str):
+    """
+    Delete a saved screening result by ID.
+
+    Args:
+        result_id: Saved screening result ID
+
+    Raises:
+        HTTPException: 404 if not found
+    """
+    svc = get_screening_save_service()
+    if not svc.delete_result(result_id):
+        raise HTTPException(status_code=404, detail="Saved result not found")
