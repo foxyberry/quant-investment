@@ -1,9 +1,9 @@
 'use client';
 
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { Handle, Position, useNodeId, useReactFlow } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import { Filter, CheckCircle2, CircleDashed, Info, Eye } from 'lucide-react';
+import { Filter, CheckCircle2, CircleDashed, Info, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { getDownstreamNodeIds, type StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import type { ConditionParam } from '@/lib/strategy/conditionRegistry';
@@ -58,6 +58,9 @@ function ConditionNode({ data, selected }: NodeProps) {
   const { getNode, getEdges, setNodes, updateNodeData, deleteElements } = useReactFlow();
   const currentNode = nodeId ? getNode(nodeId) : null;
   const isInsideGroup = !!currentNode?.parentId;
+
+  const [showDesc, setShowDesc] = useState(false);
+  const [showInsight, setShowInsight] = useState(false);
 
   // Check if condition has params configured
   const hasParams = nodeData.params && Object.keys(nodeData.params).length > 0;
@@ -254,18 +257,35 @@ function ConditionNode({ data, selected }: NodeProps) {
 
             return (
               <>
+                {/* Category badge inline with dropdown */}
                 {currentMeta.category && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap -mt-2">
                     <CategoryBadge category={currentMeta.category} />
                   </div>
                 )}
 
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  {tCond.has(currentMeta.key + '.desc')
-                    ? tCond(currentMeta.key + '.desc')
-                    : (currentMeta.description || '')}
-                </p>
+                {/* Collapsible description */}
+                <button
+                  type="button"
+                  onClick={() => setShowDesc((prev) => !prev)}
+                  className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  {showDesc ? (
+                    <ChevronUp className="h-3 w-3" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3" />
+                  )}
+                  {showDesc ? t('hideDescription') : t('showDescription')}
+                </button>
+                {showDesc && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                    {tCond.has(currentMeta.key + '.desc')
+                      ? tCond(currentMeta.key + '.desc')
+                      : (currentMeta.description || '')}
+                  </p>
+                )}
 
+                {/* Params */}
                 <div className="space-y-3">
                   {paired.map(([minP, maxP]) => {
                     const suffix = minP.name.replace(/^min_/, '');
@@ -310,50 +330,68 @@ function ConditionNode({ data, selected }: NodeProps) {
                     );
                   })}
 
-                  {standalone.map((param) => (
-                    <ParamInput
-                      key={param.name}
-                      param={param}
-                      value={nodeData.params?.[param.name] ?? param.default}
-                      onChange={handleParamChange}
-                      conditionKey={currentMeta.key}
-                    />
-                  ))}
+                  {/* 2-column grid for standalone params when 2+ */}
+                  <div className={standalone.length >= 2 ? "grid grid-cols-2 gap-3" : "space-y-3"}>
+                    {standalone.map((param) => (
+                      <ParamInput
+                        key={param.name}
+                        param={param}
+                        value={nodeData.params?.[param.name] ?? param.default}
+                        onChange={handleParamChange}
+                        conditionKey={currentMeta.key}
+                      />
+                    ))}
+                  </div>
                 </div>
 
-                {/* Quick Insight */}
-                <div className="rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-3">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Info className="h-3.5 w-3.5 text-[#1313ec] dark:text-blue-400" />
-                    <span className="text-xs font-semibold text-[#1313ec] dark:text-blue-400 uppercase">
-                      {t('quickInsight')}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                    {tCond.has(currentMeta.key + '.help')
-                      ? tCond(currentMeta.key + '.help')
-                      : (currentMeta.description || '')}
-                  </p>
-                  <div className="mt-2 space-y-1.5 text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
-                    <p>
-                      <span className="font-semibold text-[#1313ec] dark:text-blue-400">
-                        {t('guidanceWhenToUse')}:
-                      </span>{' '}
-                      {whenToUse}
-                    </p>
-                    <p>
-                      <span className="font-semibold text-[#1313ec] dark:text-blue-400">
-                        {t('guidanceHowToRead')}:
-                      </span>{' '}
-                      {howToRead}
-                    </p>
-                    <p>
-                      <span className="font-semibold text-[#1313ec] dark:text-blue-400">
-                        {t('guidanceCaution')}:
-                      </span>{' '}
-                      {caution}
-                    </p>
-                  </div>
+                {/* Quick Insight — collapsible, collapsed by default */}
+                <div className="rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20">
+                  <button
+                    type="button"
+                    onClick={() => setShowInsight((prev) => !prev)}
+                    className="w-full flex items-center justify-between gap-1.5 p-3"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Info className="h-3.5 w-3.5 text-[#1313ec] dark:text-blue-400" />
+                      <span className="text-xs font-semibold text-[#1313ec] dark:text-blue-400 uppercase">
+                        {t('quickInsight')}
+                      </span>
+                    </div>
+                    {showInsight ? (
+                      <ChevronUp className="h-3 w-3 text-[#1313ec] dark:text-blue-400" />
+                    ) : (
+                      <ChevronDown className="h-3 w-3 text-[#1313ec] dark:text-blue-400" />
+                    )}
+                  </button>
+                  {showInsight && (
+                    <div className="px-3 pb-3">
+                      <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+                        {tCond.has(currentMeta.key + '.help')
+                          ? tCond(currentMeta.key + '.help')
+                          : (currentMeta.description || '')}
+                      </p>
+                      <div className="mt-2 space-y-1.5 text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
+                        <p>
+                          <span className="font-semibold text-[#1313ec] dark:text-blue-400">
+                            {t('guidanceWhenToUse')}:
+                          </span>{' '}
+                          {whenToUse}
+                        </p>
+                        <p>
+                          <span className="font-semibold text-[#1313ec] dark:text-blue-400">
+                            {t('guidanceHowToRead')}:
+                          </span>{' '}
+                          {howToRead}
+                        </p>
+                        <p>
+                          <span className="font-semibold text-[#1313ec] dark:text-blue-400">
+                            {t('guidanceCaution')}:
+                          </span>{' '}
+                          {caution}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             );

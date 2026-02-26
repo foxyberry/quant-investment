@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Flag } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flag, Maximize2, Minimize2 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import type { NodeIntermediateResult, StrategyResultItem } from '@/lib/api';
 
@@ -167,6 +167,7 @@ export default function IntermediateResultsPanel({
   const tConditions = useTranslations('conditions');
   const locale = useLocale();
   const [collapsed, setCollapsed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [activeTabId, setActiveTabId] = useState<string>('__output__');
 
   // Build tabs from node results + output
@@ -277,9 +278,10 @@ export default function IntermediateResultsPanel({
       {/* Tab bar */}
       <div className="flex items-center border-b border-[#e1e3e5] dark:border-[#2e2e30]">
         <div className="flex-1 flex items-center gap-0 overflow-x-auto px-2">
-          {tabs.map((tab) => {
+          {tabs.map((tab, index) => {
             const isActive = effectiveTab === tab.id;
             const isOutput = tab.id === '__output__';
+            const stepNumber = String.fromCodePoint(0x2460 + index); // ①②③...
             return (
               <button
                 key={tab.id}
@@ -292,6 +294,7 @@ export default function IntermediateResultsPanel({
                 }`}
               >
                 {isOutput && <Flag className="h-3 w-3" />}
+                <span className="opacity-60">{stepNumber}</span>
                 <span>{tab.label}</span>
                 <span
                   className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
@@ -306,18 +309,28 @@ export default function IntermediateResultsPanel({
             );
           })}
         </div>
-        <button
-          type="button"
-          onClick={() => setCollapsed((v) => !v)}
-          className="px-3 py-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-        >
-          {collapsed ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="px-2 py-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            title={expanded ? t('collapsePanel') : t('expandPanel')}
+          >
+            {expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            className="px-2 py-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            {collapsed ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
       {/* Content */}
       {!collapsed && (
-        <div className="max-h-64 overflow-y-auto">
+        <div className={`${expanded ? 'max-h-[70vh]' : 'max-h-64'} overflow-y-auto transition-[max-height] duration-300`}>
           {isPending ? (
             <div className="flex flex-col items-center justify-center py-10 text-gray-400 dark:text-gray-500">
               <div className="w-64 mb-3">
