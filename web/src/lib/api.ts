@@ -27,6 +27,9 @@ import type {
   BrokerKillSwitchResult,
   BrokerOrder,
   BrokerOrderRequest,
+  Trade,
+  TradeHistoryResponse,
+  SellRecordCreate,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -282,6 +285,24 @@ export async function exportHoldingsCsv(): Promise<void> {
   a.download = 'portfolio_holdings.csv';
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Record a sell transaction
+ */
+export async function recordSell(data: SellRecordCreate): Promise<Trade> {
+  return fetchApi<Trade>('/api/portfolio/trades', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Get trade history, optionally filtered by ticker
+ */
+export async function getTradeHistory(ticker?: string): Promise<TradeHistoryResponse> {
+  const params = ticker ? `?ticker=${encodeURIComponent(ticker)}` : '';
+  return fetchApi<TradeHistoryResponse>(`/api/portfolio/trades${params}`);
 }
 
 /**

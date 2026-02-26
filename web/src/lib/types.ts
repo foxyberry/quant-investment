@@ -360,3 +360,35 @@ export interface SavedScreeningResultSummary {
 export interface SavedScreeningResult extends SavedScreeningResultSummary {
   results: ScreeningResult[];
 }
+
+// Trade / sell recording types
+export interface Trade {
+  id: number;
+  ticker: string;
+  name: string | null;
+  trade_type: string;
+  quantity: number;
+  price: number;
+  fee: number;
+  realized_pnl: number | null;
+  avg_price_at_trade: number | null;
+  currency: string;
+  note: string | null;
+  traded_at: string;
+  created_at: string;
+}
+
+export interface TradeHistoryResponse {
+  trades: Trade[];
+  total_realized_pnl: number;
+  trade_count: number;
+}
+
+export interface SellRecordCreate {
+  ticker: string;
+  quantity: number;
+  price: number;
+  fee?: number;
+  traded_at: string; // YYYY-MM-DD
+  note?: string;
+}

@@ -140,6 +140,37 @@ class CsvImportResponse(BaseModel):
     errors: List[CsvRowError] = Field(default_factory=list, description="Row errors")
 
 
+class SellRecordCreate(BaseModel):
+    ticker: str = Field(..., description="Stock ticker symbol")
+    quantity: int = Field(..., gt=0, description="Number of shares sold")
+    price: float = Field(..., gt=0, description="Sell price per share")
+    fee: float = Field(default=0, ge=0, description="Commission/tax")
+    traded_at: date = Field(..., description="Date of the trade")
+    note: Optional[str] = Field(default=None, description="Optional memo")
+
+
+class TradeResponse(BaseModel):
+    id: int
+    ticker: str
+    name: Optional[str] = None
+    trade_type: str
+    quantity: int
+    price: float
+    fee: float
+    realized_pnl: Optional[float] = None
+    avg_price_at_trade: Optional[float] = None
+    currency: str
+    note: Optional[str] = None
+    traded_at: date
+    created_at: datetime
+
+
+class TradeHistoryResponse(BaseModel):
+    trades: List[TradeResponse] = Field(default_factory=list)
+    total_realized_pnl: float = Field(default=0)
+    trade_count: int = Field(default=0)
+
+
 class SellSignal(BaseModel):
     """
     Schema for sell signal information.

@@ -21,6 +21,9 @@ from api.schemas.portfolio import (
     PortfolioResponse,
     SellSignal,
     SellSignalsResponse,
+    SellRecordCreate,
+    TradeResponse,
+    TradeHistoryResponse,
 )
 from api.services.portfolio_service import get_portfolio_service
 
@@ -459,3 +462,39 @@ async def get_sell_signals(
             status_code=500,
             detail=f"Failed to get sell signals: {str(e)}"
         )
+
+
+# ── Trade (sell recording + history) ──────────────────────────────
+
+
+@router.post(
+    "/trades",
+    response_model=TradeResponse,
+    status_code=201,
+    summary="Record a Sell Trade",
+)
+async def record_sell(data: SellRecordCreate) -> TradeResponse:
+    service = get_portfolio_service()
+    try:
+        return service.record_sell(data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to record sell: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to record sell: {str(e)}")
+
+
+@router.get(
+    "/trades",
+    response_model=TradeHistoryResponse,
+    summary="Get Trade History",
+)
+async def get_trade_history(
+    ticker: Optional[str] = Query(default=None, description="Filter by ticker"),
+) -> TradeHistoryResponse:
+    service = get_portfolio_service()
+    try:
+        return service.get_trade_history(ticker=ticker)
+    except Exception as e:
+        logger.error(f"Failed to get trade history: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get trade history: {str(e)}")
