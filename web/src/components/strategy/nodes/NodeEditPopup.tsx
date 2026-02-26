@@ -440,10 +440,10 @@ export default function NodeEditPopup({
       align="center"
     >
       <div
-        className="nodrag nowheel w-80 rounded-xl border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] shadow-xl"
+        className="nodrag nowheel w-[360px] rounded-xl border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] shadow-xl"
         style={{ transform: `scale(${popupScale})`, transformOrigin: 'top center' }}
       >
-        <div className="p-4 space-y-4 max-h-[400px] overflow-y-auto">
+        <div className="p-4 space-y-4 max-h-[480px] overflow-y-auto">
           {children}
         </div>
         {onDelete && (
