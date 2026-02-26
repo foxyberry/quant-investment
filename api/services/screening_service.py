@@ -7,7 +7,8 @@ Bridges the API layer with the screener module.
 
 import logging
 import time
-from typing import List, Dict, Any, Optional
+from datetime import date
+from typing import Callable, List, Dict, Any, Optional
 
 from api.schemas.screening import (
     ScreeningResultItem,
@@ -301,16 +302,18 @@ class ScreeningService:
         self,
         universe_input: Any,
         fail_fast: bool = False,
-    ) -> tuple[Dict[str, str], List[str], Dict[str, str]]:
+    ) -> tuple[Dict[str, str], List[str], Dict[str, str], Dict[str, str]]:
         """
         Merge symbols across universes with stable-order dedupe.
 
         Returns:
-            (merged_symbols, resolved_universes, failed_universe_errors)
+            (merged_symbols, resolved_universes, failed_universe_errors, ticker_to_market)
+            ticker_to_market maps each ticker to the first universe it appeared in.
         """
         resolved_universes = self.resolve_universes(universe_input)
         merged_symbols: Dict[str, str] = {}
         failed_errors: Dict[str, str] = {}
+        ticker_to_market: Dict[str, str] = {}
 
         for universe in resolved_universes:
             try:
@@ -327,8 +330,9 @@ class ScreeningService:
             for ticker, name in symbols.items():
                 if ticker not in merged_symbols:
                     merged_symbols[ticker] = name
+                    ticker_to_market[ticker] = universe
 
-        return merged_symbols, resolved_universes, failed_errors
+        return merged_symbols, resolved_universes, failed_errors, ticker_to_market
 
     def get_tickers_for_universes(
         self,
@@ -336,7 +340,7 @@ class ScreeningService:
         fail_fast: bool = False,
     ) -> List[str]:
         """Return deduplicated tickers across one or more universes."""
-        symbols, resolved_universes, failed_errors = self._get_symbols_for_universes(
+        symbols, resolved_universes, failed_errors, _ticker_to_market = self._get_symbols_for_universes(
             universe_input=universe_input,
             fail_fast=fail_fast,
         )
@@ -365,7 +369,7 @@ class ScreeningService:
             if time.time() - ts < self._UNIVERSE_COUNT_TTL:
                 return count
 
-        symbols, _, _ = self._get_symbols_for_universes(resolved_universes, fail_fast=False)
+        symbols, _, _, _ = self._get_symbols_for_universes(resolved_universes, fail_fast=False)
         count = len(symbols)
         self._universe_combo_count_cache[cache_key] = (time.time(), count)
         return count
@@ -401,6 +405,8 @@ class ScreeningService:
         universe: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
         universes: Optional[List[str]] = None,
+        reference_date: Optional[date] = None,
+        progress_callback: Optional[Callable[[int, int, int], None]] = None,
     ) -> Dict[str, Any]:
         """
         Run stock screening with the given preset and universe.
@@ -410,6 +416,7 @@ class ScreeningService:
             universe: Universe name (backward-compatible single value)
             params: Optional parameters to override preset defaults
             universes: Universe list (preferred for multi-market)
+            reference_date: Reference date for screening (defaults to today)
 
         Returns:
             Dict with results, total_count, matched_count, and resolved universes
@@ -421,7 +428,7 @@ class ScreeningService:
 
         resolve_started_at = time.perf_counter()
         try:
-            symbols_dict, resolved_universes, failed_errors = self._get_symbols_for_universes(
+            symbols_dict, resolved_universes, failed_errors, ticker_to_market = self._get_symbols_for_universes(
                 universe_input=requested_universes,
                 fail_fast=False,
             )
@@ -458,15 +465,21 @@ class ScreeningService:
             use_full_universe=False,
             use_cache=True,
             stock_names=symbols_dict,
+            reference_date=reference_date,
         )
 
         # Run screening (show_progress=False for API)
         run_started_at = time.perf_counter()
-        results = screener.run(tickers=tickers, show_progress=False)
+        results = screener.run(
+            tickers=tickers,
+            show_progress=False,
+            progress_callback=progress_callback,
+        )
         run_elapsed_ms = (time.perf_counter() - run_started_at) * 1000.0
 
         # Convert to response format
         convert_started_at = time.perf_counter()
+        total_conditions = len(conditions)
         result_items = []
         for result in results:
             conditions_list = [
@@ -478,12 +491,20 @@ class ScreeningService:
                 for cr in result.condition_results
             ]
 
+            # Compute condition match score (0-100)
+            matched_conditions = sum(1 for cr in result.condition_results if cr.matched)
+            score = (matched_conditions / total_conditions) * 100 if total_conditions > 0 else None
+
             result_items.append(ScreeningResultItem(
                 ticker=result.ticker,
                 name=result.name,
+                market=ticker_to_market.get(result.ticker),
                 current_price=result.current_price,
+                change_pct=result.change_pct,
+                volume=result.volume,
+                score=score,
                 matched=result.matched,
-                conditions=conditions_list
+                conditions=conditions_list,
             ))
         convert_elapsed_ms = (time.perf_counter() - convert_started_at) * 1000.0
         total_elapsed_ms = (time.perf_counter() - started_at) * 1000.0
@@ -512,6 +533,7 @@ class ScreeningService:
             "matched_count": len(result_items),
             "resolved_universes": resolved_universes,
             "failed_universe_errors": failed_errors,
+            "elapsed_ms": round(total_elapsed_ms, 1),
         }
 
     def check_single_stock(
@@ -557,12 +579,20 @@ class ScreeningService:
             for cr in result.condition_results
         ]
 
+        # Compute condition match score for single stock
+        matched_conditions = sum(1 for cr in result.condition_results if cr.matched)
+        total_conds = len(conditions)
+        score = (matched_conditions / total_conds) * 100 if total_conds > 0 else None
+
         return ScreeningResultItem(
             ticker=result.ticker,
             name=result.name,
             current_price=result.current_price,
+            change_pct=result.change_pct,
+            volume=result.volume,
+            score=score,
             matched=result.matched,
-            conditions=conditions_list
+            conditions=conditions_list,
         )
 
 

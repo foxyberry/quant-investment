@@ -24,12 +24,14 @@ export function useRunScreening() {
   return useMutation({
     mutationFn: ({
       preset,
-      universe,
+      universes,
+      referenceDate,
       params,
     }: {
       preset: string;
-      universe: string;
+      universes: string[];
+      referenceDate?: string | null;
       params?: Record<string, unknown>;
-    }) => runScreening(preset, universe, params),
+    }) => runScreening(preset, universes, referenceDate, params),
   });
 }

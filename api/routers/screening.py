@@ -4,15 +4,21 @@ Screening router.
 Provides endpoints for stock screening operations.
 """
 
+import json
 import logging
+import queue
+import threading
+import time
 from typing import List
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import StreamingResponse
 
 from api.schemas.screening import (
     ScreeningRequest,
     ScreeningResponse,
     ScreeningResultItem,
+    ScreeningProgressEvent,
     PresetInfo,
     UniverseInfo,
     SingleStockRequest,
@@ -106,7 +112,8 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
             preset=request.preset,
             universe=request.universe,
             universes=request.universes,
-            params=request.params
+            params=request.params,
+            reference_date=request.reference_date,
         )
 
         return ScreeningResponse(
@@ -115,6 +122,8 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
             matched_count=result["matched_count"],
             universe=request.universe,
             universes=request.universes,
+            reference_date=request.reference_date,
+            elapsed_ms=result.get("elapsed_ms"),
         )
 
     except ValueError as e:
@@ -126,6 +135,167 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
             status_code=500,
             detail=f"Screening failed: {str(e)}"
         )
+
+
+@router.post(
+    "/run/stream",
+    summary="Run Screening with SSE progress",
+    description="Run stock screening and stream progress events via SSE.",
+)
+def run_screening_stream(request: ScreeningRequest):
+    """Run screening with progress events."""
+    service = get_screening_service()
+
+    invalid_universes = find_invalid_universes(request.universes)
+    if invalid_universes:
+        raise HTTPException(
+            status_code=400,
+            detail=format_invalid_universe_error(invalid_universes),
+        )
+
+    progress_queue: queue.Queue = queue.Queue(maxsize=100)
+    cancel_event = threading.Event()
+
+    def _progress_cb(processed: int, total: int, matched: int) -> None:
+        if cancel_event.is_set():
+            return
+        interval = max(1, -(-total // 50))
+        if processed % interval != 0 and processed != total:
+            return
+        try:
+            progress_queue.put_nowait(
+                ScreeningProgressEvent(
+                    processed_tickers=processed,
+                    total_tickers=total,
+                    matched_count=matched,
+                    progress_pct=round(processed / total * 100, 1) if total else 0.0,
+                    status="running",
+                )
+            )
+        except queue.Full:
+            pass
+
+    def _run() -> None:
+        try:
+            result = service.run_screening(
+                preset=request.preset,
+                universe=request.universe,
+                universes=request.universes,
+                params=request.params,
+                reference_date=request.reference_date,
+                progress_callback=_progress_cb,
+            )
+            if cancel_event.is_set():
+                return
+            progress_queue.put(
+                ScreeningProgressEvent(
+                    processed_tickers=result["total_count"],
+                    total_tickers=result["total_count"],
+                    matched_count=result["matched_count"],
+                    progress_pct=100.0,
+                    status="done",
+                ),
+                timeout=5,
+            )
+            if cancel_event.is_set():
+                return
+            progress_queue.put(result, timeout=5)
+        except ValueError as e:
+            if cancel_event.is_set():
+                return
+            try:
+                progress_queue.put(
+                    ScreeningProgressEvent(status="error", message=str(e)),
+                    timeout=5,
+                )
+            except queue.Full:
+                pass
+        except Exception:
+            logger.error("Screening stream error", exc_info=True)
+            if cancel_event.is_set():
+                return
+            try:
+                progress_queue.put(
+                    ScreeningProgressEvent(
+                        status="error",
+                        message="Screening failed. Check server logs for details.",
+                    ),
+                    timeout=5,
+                )
+            except queue.Full:
+                pass
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+
+    def event_stream():
+        start = time.monotonic()
+        max_duration = 600
+        try:
+            while True:
+                if time.monotonic() - start > max_duration:
+                    yield f"event: error\ndata: {json.dumps({'status': 'error', 'message': 'Maximum duration exceeded'})}\n\n"
+                    break
+                try:
+                    item = progress_queue.get(timeout=5)
+                except queue.Empty:
+                    yield ": heartbeat\n\n"
+                    continue
+
+                if isinstance(item, ScreeningProgressEvent):
+                    yield f"event: progress\ndata: {item.model_dump_json()}\n\n"
+                    if item.status in ("done", "error"):
+                        if item.status == "done":
+                            final_result = None
+                            for _ in range(6):
+                                if time.monotonic() - start > max_duration:
+                                    yield f"event: error\ndata: {json.dumps({'status': 'error', 'message': 'Maximum duration exceeded'})}\n\n"
+                                    return
+                                try:
+                                    maybe_result = progress_queue.get(timeout=5)
+                                    if isinstance(maybe_result, ScreeningProgressEvent):
+                                        yield f"event: progress\ndata: {maybe_result.model_dump_json()}\n\n"
+                                        continue
+                                    final_result = maybe_result
+                                    break
+                                except queue.Empty:
+                                    yield ": heartbeat\n\n"
+                            if final_result is not None:
+                                response = ScreeningResponse(
+                                    results=final_result["results"],
+                                    total_count=final_result["total_count"],
+                                    matched_count=final_result["matched_count"],
+                                    universe=request.universe,
+                                    universes=request.universes,
+                                    reference_date=request.reference_date,
+                                    elapsed_ms=final_result.get("elapsed_ms"),
+                                )
+                                yield f"event: result\ndata: {response.model_dump_json()}\n\n"
+                        break
+                else:
+                    response = ScreeningResponse(
+                        results=item["results"],
+                        total_count=item["total_count"],
+                        matched_count=item["matched_count"],
+                        universe=request.universe,
+                        universes=request.universes,
+                        reference_date=request.reference_date,
+                        elapsed_ms=item.get("elapsed_ms"),
+                    )
+                    yield f"event: result\ndata: {response.model_dump_json()}\n\n"
+                    break
+        finally:
+            cancel_event.set()
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get(

@@ -26,7 +26,7 @@ Usage:
 
 from typing import Callable, List, Dict, Any, Optional
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import time
 import pandas as pd
 import yfinance as yf
@@ -57,6 +57,7 @@ class ScreeningResult:
     condition_results: List[ConditionResult]
     current_price: Optional[float] = None
     volume: Optional[int] = None
+    change_pct: Optional[float] = None
     timestamp: datetime = field(default_factory=datetime.now)
 
     @property
@@ -72,6 +73,7 @@ class ScreeningResult:
             "matched": self.matched,
             "current_price": self.current_price,
             "volume": self.volume,
+            "change_pct": self.change_pct,
             "conditions": [
                 {
                     "name": r.condition_name,
@@ -155,6 +157,7 @@ class StockScreener:
         request_delay: float = 0.2,
         use_cache: bool = True,
         stock_names: Optional[Dict[str, str]] = None,
+        reference_date: Optional[date] = None,
     ):
         """
         Args:
@@ -165,6 +168,8 @@ class StockScreener:
             use_cache: 데이터 캐시 사용 여부 (기본 True)
             stock_names: Pre-fetched {ticker: name} mapping to avoid
                          per-stock yfinance info calls (N+1 problem).
+            reference_date: Reference date for screening (defaults to today).
+                            Data is truncated at this date.
         """
         self.conditions: List[BaseCondition] = conditions or []
         self.max_workers = max_workers
@@ -175,6 +180,7 @@ class StockScreener:
         self._cache = get_cache() if self.use_cache else None
         self._stock_names: Dict[str, str] = stock_names or {}
         self._korean_names: Optional[Dict[str, str]] = None  # 한국어 종목명 캐시
+        self.reference_date: Optional[date] = reference_date
 
     def add_condition(self, condition: BaseCondition) -> "StockScreener":
         """조건 추가 (체이닝 지원)"""
@@ -233,9 +239,7 @@ class StockScreener:
             code = ticker.split('.')[0]
 
             # 최근 거래일 찾기
-            from datetime import date
-            today = date.today()
-            end_date = today
+            end_date = self.reference_date or date.today()
 
             start_date = end_date - timedelta(days=days * 2)
 
@@ -282,7 +286,16 @@ class StockScreener:
 
             stock = yf.Ticker(ticker)
             # 여유있게 데이터 가져오기 (주말/휴장일 고려)
-            data = stock.history(period=f"{days * 2}d")
+            if self.reference_date:
+                end_dt = self.reference_date
+                start_dt = end_dt - timedelta(days=days * 2)
+                # yfinance `end` is exclusive, so add 1 day to include the reference date
+                data = stock.history(
+                    start=start_dt.isoformat(),
+                    end=(end_dt + timedelta(days=1)).isoformat(),
+                )
+            else:
+                data = stock.history(period=f"{days * 2}d")
             if data.empty:
                 return None
 
@@ -359,6 +372,13 @@ class StockScreener:
 
         current_price = float(data['close'].iloc[-1]) if not data.empty else None
         volume = int(data['volume'].iloc[-1]) if not data.empty else None
+
+        change_pct: Optional[float] = None
+        if len(data) >= 2:
+            prev_close = float(data['close'].iloc[-2])
+            if prev_close > 0:
+                change_pct = ((current_price - prev_close) / prev_close) * 100
+
         name = self._get_stock_name(ticker)
 
         return ScreeningResult(
@@ -367,7 +387,8 @@ class StockScreener:
             matched=all_matched,
             condition_results=results,
             current_price=current_price,
-            volume=volume
+            volume=volume,
+            change_pct=change_pct,
         )
 
     def run(

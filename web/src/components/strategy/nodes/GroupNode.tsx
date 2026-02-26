@@ -6,7 +6,7 @@ import type { NodeProps } from '@xyflow/react';
 import { GitMerge } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
-import NodeEditPopup, { FieldLabel, SelectInput } from './NodeEditPopup';
+import NodeEditPopup, { FieldLabel, MatchedCountBadge, SelectInput } from './NodeEditPopup';
 
 const OPERATOR_STYLES: Record<
   string,
@@ -50,6 +50,24 @@ const OPERATOR_LABELS: Record<string, string> = {
   not: 'notGroup',
 };
 
+const OPERATOR_SUBTITLES: Record<string, string> = {
+  and: 'allConditionsMustMatch',
+  or: 'anyConditionMustMatch',
+  not: 'invertFirstCondition',
+};
+
+const OPERATOR_CONNECTOR: Record<string, string> = {
+  and: '&',
+  or: '|',
+  not: '!',
+};
+
+const CONNECTOR_STYLES: Record<string, string> = {
+  and: 'bg-blue-100 dark:bg-blue-500/20 border-blue-300 dark:border-blue-500/40 text-[#1313ec] dark:text-blue-400',
+  or: 'bg-purple-100 dark:bg-purple-500/20 border-purple-300 dark:border-purple-500/40 text-purple-600 dark:text-purple-400',
+  not: 'bg-red-100 dark:bg-red-500/20 border-red-300 dark:border-red-500/40 text-red-600 dark:text-red-400',
+};
+
 const OPERATOR_RESIZER_COLORS: Record<string, string> = {
   and: '#1313ec',
   or: '#9333ea',
@@ -63,7 +81,11 @@ function GroupNode({ id, data, selected }: NodeProps) {
   const style = OPERATOR_STYLES[op] || OPERATOR_STYLES.and;
   const titleKey = OPERATOR_TITLES[op] || 'andGroupTitle';
   const labelKey = OPERATOR_LABELS[op] || 'andGroup';
+  const subtitleKey = OPERATOR_SUBTITLES[op] || 'allConditionsMustMatch';
+  const connectorSymbol = OPERATOR_CONNECTOR[op] || '&';
+  const connectorStyle = CONNECTOR_STYLES[op] || CONNECTOR_STYLES.and;
   const resizerColor = OPERATOR_RESIZER_COLORS[op] || OPERATOR_RESIZER_COLORS.and;
+  const intermediateResult = nodeData.intermediateResult;
 
   const nodeId = useNodeId()!;
   const { getNodes, updateNodeData, deleteElements } = useReactFlow();
@@ -121,9 +143,17 @@ function GroupNode({ id, data, selected }: NodeProps) {
             {t(labelKey)}
           </span>
         </div>
-        <p className="text-[11px] text-white/60 mt-0.5">
-          {t('multiFilterGroup')}
-        </p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <p className="text-[11px] text-white/60">
+            {t(subtitleKey)}
+          </p>
+          {intermediateResult && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/15 text-[10px] font-bold text-white">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              {intermediateResult.stock_count.toLocaleString()} {t('stockCount')}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Children area */}
@@ -135,7 +165,26 @@ function GroupNode({ id, data, selected }: NodeProps) {
             </p>
           </div>
         )}
+        {childCount > 1 && (
+          <div className="absolute left-1/2 top-[60px] bottom-[28px] -translate-x-1/2 flex flex-col items-center justify-evenly pointer-events-none">
+            {Array.from({ length: childCount - 1 }).map((_, i) => (
+              <div
+                key={i}
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 ${connectorStyle}`}
+              >
+                {connectorSymbol}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Stock count badge below children area */}
+      {intermediateResult && (
+        <div className="px-4 pb-2">
+          <MatchedCountBadge count={intermediateResult.stock_count} />
+        </div>
+      )}
 
       <Handle
         type="source"

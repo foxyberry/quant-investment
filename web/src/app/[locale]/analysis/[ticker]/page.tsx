@@ -533,6 +533,43 @@ export default function TickerAnalysisPage() {
             showVolume={true}
           />
 
+          {/* OHLC Strip — today's Open/High/Low/Close + MA values */}
+          {tickerData.ohlcv.length > 0 && (() => {
+            const latest = tickerData.ohlcv[tickerData.ohlcv.length - 1];
+            const sma = tickerData.technical?.sma;
+            return (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-2 text-xs">
+                <span className="text-[var(--foreground-muted)]">
+                  {t('open')} <span className="font-mono font-medium text-[var(--foreground)]">{latest.open.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </span>
+                <span className="text-[var(--foreground-muted)]">
+                  {t('high')} <span className="font-mono font-medium text-[var(--foreground)]">{latest.high.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </span>
+                <span className="text-[var(--foreground-muted)]">
+                  {t('low')} <span className="font-mono font-medium text-[var(--foreground)]">{latest.low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </span>
+                <span className="text-[var(--foreground-muted)]">
+                  {t('close')} <span className="font-mono font-medium text-[var(--foreground)]">{latest.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </span>
+                {latest.volume != null && (
+                  <span className="text-[var(--foreground-muted)]">
+                    Vol <span className="font-mono font-medium text-[var(--foreground)]">{latest.volume.toLocaleString()}</span>
+                  </span>
+                )}
+                {sma?.sma20 != null && (
+                  <span className="text-[var(--foreground-muted)]">
+                    MA(20) <span className="font-mono font-medium text-blue-600 dark:text-blue-400">{sma.sma20.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </span>
+                )}
+                {sma?.sma50 != null && (
+                  <span className="text-[var(--foreground-muted)]">
+                    MA(50) <span className="font-mono font-medium text-amber-600 dark:text-amber-400">{sma.sma50.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </span>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Popup KPI strip */}
           {isPopup && (
             <div className="grid grid-cols-3 gap-2">
@@ -563,6 +600,69 @@ export default function TickerAnalysisPage() {
               </Card>
             </div>
           )}
+
+          {/* Technical Summary — Oscillators / Moving Averages / Overall */}
+          {tickerData.technical && (() => {
+            const tech = tickerData.technical;
+            const getOscillatorSignal = () => {
+              const rsiSignal = tech.rsi?.signal;
+              if (rsiSignal === 'oversold') return 'buy';
+              if (rsiSignal === 'overbought') return 'sell';
+              return 'neutral';
+            };
+            const getMaSignal = () => {
+              if (!tech.sma) return 'neutral';
+              const price = tickerData.current_price;
+              const above20 = price > tech.sma.sma20;
+              const above50 = price > tech.sma.sma50;
+              const above200 = price > tech.sma.sma200;
+              const aboveCount = [above20, above50, above200].filter(Boolean).length;
+              if (aboveCount === 3) return 'strongBuy';
+              if (aboveCount >= 2) return 'buy';
+              if (aboveCount === 0) return 'strongSell';
+              if (aboveCount <= 1) return 'sell';
+              return 'neutral';
+            };
+            const oscSignal = getOscillatorSignal();
+            const maSignal = getMaSignal();
+            const overallMap: Record<string, Record<string, string>> = {
+              buy: { buy: 'strongBuy', sell: 'neutral', strongBuy: 'strongBuy', strongSell: 'neutral', neutral: 'buy' },
+              sell: { buy: 'neutral', sell: 'strongSell', strongBuy: 'neutral', strongSell: 'strongSell', neutral: 'sell' },
+              neutral: { buy: 'buy', sell: 'sell', strongBuy: 'buy', strongSell: 'sell', neutral: 'neutral' },
+            };
+            const overall = overallMap[oscSignal]?.[maSignal] ?? 'neutral';
+            const signalLabel = (s: string) => {
+              switch (s) {
+                case 'strongBuy': return t('strongBuy');
+                case 'buy': return t('buySignal');
+                case 'neutral': return t('neutralSignal');
+                case 'sell': return t('sellSignal');
+                case 'strongSell': return t('strongSell');
+                default: return t('neutralSignal');
+              }
+            };
+            const signalColor = (s: string) => {
+              if (s === 'strongBuy' || s === 'buy') return 'text-green-600 dark:text-green-400';
+              if (s === 'strongSell' || s === 'sell') return 'text-red-600 dark:text-red-400';
+              return 'text-amber-600 dark:text-amber-400';
+            };
+            return (
+              <div className="grid grid-cols-3 gap-3">
+                <Card padding="sm">
+                  <p className="text-xs text-[var(--foreground-muted)] text-center">{t('oscillators')}</p>
+                  <p className={`mt-1 text-center text-sm font-bold ${signalColor(oscSignal)}`}>{signalLabel(oscSignal)}</p>
+                </Card>
+                <Card padding="sm">
+                  <p className="text-xs text-[var(--foreground-muted)] text-center">{t('movingAverages')}</p>
+                  <p className={`mt-1 text-center text-sm font-bold ${signalColor(maSignal)}`}>{signalLabel(maSignal)}</p>
+                </Card>
+                <Card padding="sm">
+                  <p className="text-xs text-[var(--foreground-muted)] text-center">{t('summary')}</p>
+                  <p className={`mt-1 text-center text-sm font-bold ${signalColor(overall)}`}>{signalLabel(overall)}</p>
+                </Card>
+              </div>
+            );
+          })()}
 
           {/* Technical Indicators */}
           <CollapsibleSection
@@ -674,6 +774,34 @@ export default function TickerAnalysisPage() {
                   </div>
                 </Card>
               </div>
+
+              {/* 52-Week Range */}
+              {tickerData.fundamental.week52_high != null && tickerData.fundamental.week52_low != null && (() => {
+                const w52High = tickerData.fundamental.week52_high!;
+                const w52Low = tickerData.fundamental.week52_low!;
+                const range = w52High - w52Low;
+                const pos = range > 0
+                  ? ((tickerData.current_price - w52Low) / range) * 100
+                  : 50;
+                return (
+                  <div className="mt-4 space-y-2">
+                    <h4 className="text-sm font-medium text-[var(--foreground)]">{t('week52Range')}</h4>
+                    <div className="flex items-center justify-between text-xs text-[var(--foreground-muted)]">
+                      <span>{t('week52Low')}: ${w52Low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span>{t('week52High')}: ${w52High.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="relative h-3 rounded-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400">
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-[var(--color-primary)] shadow-md"
+                        style={{ left: `calc(${Math.min(100, Math.max(0, pos))}% - 8px)` }}
+                      />
+                    </div>
+                    <div className="text-center text-xs text-[var(--foreground-muted)]">
+                      {t('currentPriceAt')} <span className="font-medium text-[var(--foreground)]">{pos.toFixed(0)}%</span> {t('ofRange')}
+                    </div>
+                  </div>
+                );
+              })()}
             </CollapsibleSection>
           )}
 
