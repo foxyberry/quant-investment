@@ -2672,7 +2672,20 @@
     "languageDesc": "UI 표시 언어입니다. 각 시장의 숫자나 통화 표시 방식에는 영향을 주지 않습니다.",
     "saved": "설정이 저장되었습니다",
     "general": "일반",
-    "display": "표시"
+    "display": "표시",
+    "brokerConnections": "브로커 연결",
+    "sync": "전체 동기화",
+    "loading": "불러오는 중...",
+    "accountsCount": "{count}개 계좌",
+    "primaryAccount": "기본 계좌",
+    "lastChecked": "마지막 점검",
+    "testConnection": "연결 테스트",
+    "disconnect": "연결 해제",
+    "disconnectPhaseLater": "연결 해제는 다음 단계(Phase B/C)에서 제공됩니다.",
+    "connected": "연결됨",
+    "disconnected": "연결 끊김",
+    "connecting": "연결 중",
+    "unavailable": "사용 불가"
   },
   "kiwoom": {
     "title": "키움",

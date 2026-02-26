@@ -2672,7 +2672,20 @@
     "languageDesc": "UI display language. This does not affect how numbers or currencies are formatted for each market.",
     "saved": "Settings saved",
     "general": "General",
-    "display": "Display"
+    "display": "Display",
+    "brokerConnections": "Broker Connections",
+    "sync": "Sync All",
+    "loading": "Loading...",
+    "accountsCount": "{count} account(s)",
+    "primaryAccount": "Primary Account",
+    "lastChecked": "Last Checked",
+    "testConnection": "Test Connection",
+    "disconnect": "Disconnect",
+    "disconnectPhaseLater": "Disconnect will be available in Phase B/C.",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "connecting": "Connecting",
+    "unavailable": "Unavailable"
   },
   "kiwoom": {
     "title": "Kiwoom",
