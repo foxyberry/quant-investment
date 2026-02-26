@@ -53,21 +53,44 @@ function metricLabel(key: string): string {
 }
 
 /** Determine common metric columns across all stocks in a result. */
-function detectMetricColumns(stocks: StrategyResultItem[]): string[] {
+function detectMetricColumns(
+  stocks: StrategyResultItem[],
+  preferredMetricKey?: string
+): string[] {
   const freq: Record<string, number> = {};
-  for (const stock of stocks.slice(0, 50)) {
+  const sample = stocks.slice(0, 50);
+  for (const stock of sample) {
     const m = extractMetrics(stock);
     for (const k of Object.keys(m)) {
       freq[k] = (freq[k] || 0) + 1;
     }
   }
-  // Show metrics present in >30% of stocks, up to 4 columns
-  const threshold = Math.max(1, stocks.length * 0.3);
-  return Object.entries(freq)
+  const sortedAll = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  if (sortedAll.length === 0) return [];
+
+  // Use sample-based threshold (not full stock_count) to avoid empty columns on large tabs.
+  const threshold = Math.max(1, Math.ceil(sample.length * 0.3));
+  const selected = sortedAll
     .filter(([, count]) => count >= threshold)
-    .sort((a, b) => b[1] - a[1])
     .slice(0, 4)
     .map(([k]) => k);
+
+  // Fallback: if threshold removed everything, still show top-used metrics.
+  const columns = selected.length > 0 ? selected : sortedAll.slice(0, 4).map(([k]) => k);
+
+  if (!preferredMetricKey) return columns;
+  const normalized = preferredMetricKey.toLowerCase();
+  const preferred = columns.find((k) => {
+    const lower = k.toLowerCase();
+    return (
+      lower === normalized ||
+      lower.includes(normalized) ||
+      normalized.includes(lower)
+    );
+  });
+  if (!preferred) return columns;
+
+  return [preferred, ...columns.filter((k) => k !== preferred)];
 }
 
 interface Tab {
@@ -222,9 +245,16 @@ export default function IntermediateResultsPanel({
     return [];
   }, [effectiveTab, nodeResults, finalResults]);
 
+  const preferredMetricKey = useMemo(() => {
+    if (!nodeResults || effectiveTab === '__output__') return undefined;
+    const currentNode = nodeResults[effectiveTab];
+    if (!currentNode || currentNode.node_type !== 'condition') return undefined;
+    return currentNode.label;
+  }, [nodeResults, effectiveTab]);
+
   const metricColumns = useMemo(
-    () => detectMetricColumns(currentStocks),
-    [currentStocks]
+    () => detectMetricColumns(currentStocks, preferredMetricKey),
+    [currentStocks, preferredMetricKey]
   );
 
   const hasContent = isPending || tabs.length > 0;
