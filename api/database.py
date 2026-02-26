@@ -50,6 +50,7 @@ def init_db() -> None:
     """Create tables and migrate legacy JSON data if present."""
     import api.models.agent_task  # noqa: F401 — register model with Base
     import api.models.portfolio  # noqa: F401 — register model with Base
+    import api.models.screening_result  # noqa: F401 — register model with Base
     import api.models.strategy  # noqa: F401 — register model with Base
 
     Base.metadata.create_all(bind=engine)

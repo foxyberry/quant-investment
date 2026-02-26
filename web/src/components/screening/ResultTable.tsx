@@ -11,6 +11,7 @@ import {
   ChevronsRight,
   ArrowUpDown,
   Download,
+  Save,
   Construction,
   Rocket,
   Globe,
@@ -31,6 +32,7 @@ interface ResultTableProps {
   isLoading?: boolean;
   hasRun?: boolean;
   onRunScreening?: () => void;
+  onSave?: () => void;
 }
 
 interface SortButtonProps {
@@ -115,7 +117,7 @@ function exportCsv(results: ScreeningResult[]) {
   URL.revokeObjectURL(url);
 }
 
-export default function ResultTable({ results, isLoading, hasRun, onRunScreening }: ResultTableProps) {
+export default function ResultTable({ results, isLoading, hasRun, onRunScreening, onSave }: ResultTableProps) {
   const t = useTranslations('screening');
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [selectedResult, setSelectedResult] = useState<ScreeningResult | null>(null);
@@ -263,8 +265,19 @@ export default function ResultTable({ results, isLoading, hasRun, onRunScreening
 
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] overflow-hidden">
-      {/* Toolbar: Export CSV */}
-      <div className="flex items-center justify-end border-b border-[var(--border)] px-4 py-2">
+      {/* Toolbar: Save + Export CSV */}
+      <div className="flex items-center justify-end gap-2 border-b border-[var(--border)] px-4 py-2">
+        {onSave && (
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={results.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-xs font-medium text-[var(--foreground)] hover:bg-[var(--border)]/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Save className="h-3.5 w-3.5" />
+            {t('saveResult')}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => exportCsv(sortedResults)}
