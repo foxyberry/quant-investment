@@ -138,6 +138,7 @@ export default function PortfolioPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [orderDeskPrefill, setOrderDeskPrefill] = useState<OrderDeskPrefill | null>(null);
   const [orderDeskTab, setOrderDeskTab] = useState<'kiwoom' | 'unified'>('unified');
+  const tradeHistoryRef = useRef<HTMLDivElement | null>(null);
   const orderDeskRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const pollingIntervalRef = useRef<number | null>(null);
@@ -618,7 +619,17 @@ export default function PortfolioPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             {t('refresh')}
           </Button>
-          <Button variant="outline" onClick={() => setIsTradeHistoryOpen((prev) => !prev)}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsTradeHistoryOpen((prev) => {
+                if (!prev) {
+                  setTimeout(() => tradeHistoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                }
+                return !prev;
+              });
+            }}
+          >
             <History className="h-4 w-4 mr-2" />
             {t('tradeHistory')}
           </Button>
@@ -762,6 +773,13 @@ export default function PortfolioPage() {
         />
       </Card>
 
+      {/* Trade History */}
+      {isTradeHistoryOpen && (
+        <div ref={tradeHistoryRef}>
+          <TradeHistory />
+        </div>
+      )}
+
       <div ref={orderDeskRef}>
         <div className="flex gap-1 rounded-lg bg-[var(--background)] p-1 mb-4 w-fit">
           <button
@@ -838,8 +856,6 @@ export default function PortfolioPage() {
         onSellComplete={() => fetchData(false)}
       />
 
-      {/* Trade History */}
-      {isTradeHistoryOpen && <TradeHistory />}
     </div>
   );
 }
