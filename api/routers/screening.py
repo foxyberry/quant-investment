@@ -118,6 +118,7 @@ def run_screening(request: ScreeningRequest) -> ScreeningResponse:
             universes=request.universes,
             params=request.params,
             reference_date=request.reference_date,
+            graph=request.graph,
         )
 
         return ScreeningResponse(
@@ -188,6 +189,7 @@ def run_screening_stream(request: ScreeningRequest):
                 params=request.params,
                 reference_date=request.reference_date,
                 progress_callback=_progress_cb,
+                graph=request.graph,
             )
             if cancel_event.is_set():
                 return

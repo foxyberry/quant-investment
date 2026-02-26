@@ -31,7 +31,7 @@ export interface PresetInfo {
   name: string;
   description: string;
   conditions: string[];
-  source: 'static' | 'custom';
+  source: 'static' | 'custom' | 'sample';
 }
 
 export interface UniverseInfo {

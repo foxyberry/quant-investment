@@ -32,6 +32,7 @@ export default function ScreeningPage() {
     elapsedMs: number | null;
   } | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [selectedGraph, setSelectedGraph] = useState<Record<string, unknown> | null>(null);
 
   const handleRunScreening = async () => {
     if (!selectedPreset || selectedUniverses.length === 0) {
@@ -97,7 +98,7 @@ export default function ScreeningPage() {
               }
         );
       },
-    });
+    }, selectedGraph);
   };
 
   const handleLoadSavedResult = (data: {
@@ -123,6 +124,7 @@ export default function ScreeningPage() {
     });
     setProgress(null);
     setError(null);
+    setSelectedGraph(null);
     setActiveMode('preset');
   };
 
@@ -189,6 +191,7 @@ export default function ScreeningPage() {
                 onUniverseChange={setSelectedUniverses}
                 onReferenceDateChange={setReferenceDate}
                 onRun={handleRunScreening}
+                onGraphChange={setSelectedGraph}
               />
             </div>
 

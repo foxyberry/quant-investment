@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import { getPresets, getUniverses } from '@/lib/api';
 import type { PresetInfo, UniverseInfo } from '@/lib/types';
+import { SAMPLE_STRATEGY_PRESETS } from '@/lib/strategy/sampleStrategies';
 import UniverseCheckboxGroup from './UniverseCheckboxGroup';
 import DateSelector from './DateSelector';
 
@@ -18,6 +19,7 @@ interface FilterPanelProps {
   onUniverseChange: (universes: string[]) => void;
   onReferenceDateChange: (date: string | null) => void;
   onRun: () => void;
+  onGraphChange?: (graph: Record<string, unknown> | null) => void;
 }
 
 export default function FilterPanel({
@@ -29,6 +31,7 @@ export default function FilterPanel({
   onUniverseChange,
   onReferenceDateChange,
   onRun,
+  onGraphChange,
 }: FilterPanelProps) {
   const t = useTranslations('screening');
   const tConditions = useTranslations('conditions');
@@ -72,10 +75,21 @@ export default function FilterPanel({
     loadUniverses();
   }, [onPresetChange, selectedPreset, t]);
 
-  const { staticPresets, customPresets } = useMemo(() => {
+  const { staticPresets, customPresets, samplePresets } = useMemo(() => {
     const staticGroup = presets.filter((p) => p.source === 'static');
     const customGroup = presets.filter((p) => p.source === 'custom');
-    return { staticPresets: staticGroup, customPresets: customGroup };
+
+    // Convert SAMPLE_STRATEGY_PRESETS to PresetInfo format
+    const sampleGroup: PresetInfo[] = SAMPLE_STRATEGY_PRESETS.map((s) => ({
+      name: `sample:${s.key}`,
+      description: s.description,
+      conditions: s.graph.nodes
+        .filter((n) => n.data.node_type === 'condition' && n.data.condition_type)
+        .map((n) => n.data.condition_type!),
+      source: 'sample' as const,
+    }));
+
+    return { staticPresets: staticGroup, customPresets: customGroup, samplePresets: sampleGroup };
   }, [presets]);
 
   const stockCounts = useMemo(() => {
@@ -86,7 +100,8 @@ export default function FilterPanel({
     return counts;
   }, [universes]);
 
-  const selectedPresetInfo = presets.find((p) => p.name === selectedPreset);
+  const selectedPresetInfo = presets.find((p) => p.name === selectedPreset)
+    || samplePresets.find((p) => p.name === selectedPreset);
   const canRun = selectedPreset && selectedUniverses.length > 0 && !isLoading;
 
   const toTitleCaseFromKey = (value: string) =>
@@ -102,6 +117,7 @@ export default function FilterPanel({
     const i18nKey = `presetNames.${preset.name}`;
     if (t.has(i18nKey)) return t(i18nKey as never);
     if (preset.source === 'custom') return preset.description || toTitleCaseFromKey(preset.name);
+    if (preset.source === 'sample') return preset.description || toTitleCaseFromKey(preset.name);
     return toTitleCaseFromKey(preset.name);
   };
 
@@ -136,7 +152,17 @@ export default function FilterPanel({
           <select
             id="preset-select"
             value={selectedPreset}
-            onChange={(e) => onPresetChange(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              onPresetChange(value);
+              if (value.startsWith('sample:')) {
+                const sampleKey = value.slice('sample:'.length);
+                const sample = SAMPLE_STRATEGY_PRESETS.find((s) => s.key === sampleKey);
+                onGraphChange?.(sample ? (sample.graph as unknown as Record<string, unknown>) : null);
+              } else {
+                onGraphChange?.(null);
+              }
+            }}
             disabled={loadingPresets || isLoading}
             className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[var(--foreground)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-opacity-20 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -149,6 +175,15 @@ export default function FilterPanel({
                 {staticPresets.length > 0 && (
                   <optgroup label={t('builtInPresets')}>
                     {staticPresets.map((preset) => (
+                      <option key={preset.name} value={preset.name}>
+                        {presetLabel(preset)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                {samplePresets.length > 0 && (
+                  <optgroup label={t('sampleStrategies')}>
+                    {samplePresets.map((preset) => (
                       <option key={preset.name} value={preset.name}>
                         {presetLabel(preset)}
                       </option>
