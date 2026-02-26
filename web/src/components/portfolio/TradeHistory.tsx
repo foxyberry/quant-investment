@@ -81,6 +81,21 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
     setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
   }, []);
 
+  const openAnalysis = useCallback(
+    (ticker: string) => {
+      const width = 1000;
+      const height = 720;
+      const left = (screen.width - width) / 2;
+      const top = (screen.height - height) / 2;
+      window.open(
+        `/${locale}/analysis/${encodeURIComponent(ticker)}?popup=true`,
+        `analysis_${ticker}`,
+        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`,
+      );
+    },
+    [locale],
+  );
+
   // Loading state
   if (isLoading) {
     return (
@@ -210,9 +225,13 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
                       {trade.traded_at}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-mono font-medium text-[var(--color-primary)]">
+                      <button
+                        type="button"
+                        onClick={() => openAnalysis(trade.ticker)}
+                        className="font-mono font-medium text-[var(--color-primary)] hover:underline cursor-pointer"
+                      >
                         {trade.ticker}
-                      </span>
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-[var(--foreground)]">
                       {trade.name || '-'}
@@ -266,9 +285,13 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
               <div key={trade.id} className="p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-medium text-[var(--color-primary)]">
+                    <button
+                      type="button"
+                      onClick={() => openAnalysis(trade.ticker)}
+                      className="font-mono font-medium text-[var(--color-primary)] hover:underline cursor-pointer"
+                    >
                       {trade.ticker}
-                    </span>
+                    </button>
                     {trade.name && (
                       <span className="text-sm text-[var(--foreground)]">
                         {trade.name}
