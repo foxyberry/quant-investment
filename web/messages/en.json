@@ -345,6 +345,7 @@
     "tradeDate": "Date",
     "tradeType": "Type",
     "tradeTicker": "Ticker",
+    "tradeName": "Name",
     "tradeQty": "Qty",
     "tradePrice": "Price",
     "tradeFee": "Fee",

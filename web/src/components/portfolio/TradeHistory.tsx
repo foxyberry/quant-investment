@@ -175,6 +175,9 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
                     {t('tradeTicker')}
                   </th>
                   <th className="px-4 py-3 text-left font-semibold text-[var(--foreground)]">
+                    {t('tradeName')}
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold text-[var(--foreground)]">
                     {t('tradeType')}
                   </th>
                   <th className="px-4 py-3 text-right font-semibold text-[var(--foreground)]">
@@ -210,6 +213,9 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
                       <span className="font-mono font-medium text-[var(--color-primary)]">
                         {trade.ticker}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-[var(--foreground)]">
+                      {trade.name || '-'}
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-block rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
@@ -263,6 +269,11 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
                     <span className="font-mono font-medium text-[var(--color-primary)]">
                       {trade.ticker}
                     </span>
+                    {trade.name && (
+                      <span className="text-sm text-[var(--foreground)]">
+                        {trade.name}
+                      </span>
+                    )}
                     <span className="inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
                       {trade.trade_type}
                     </span>

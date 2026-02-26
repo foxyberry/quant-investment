@@ -674,6 +674,15 @@ class PortfolioService:
             if ticker:
                 query = query.filter(Trade.ticker == ticker)
             rows = query.all()
+
+            # Look up holding names for traded tickers
+            traded_tickers = list({r.ticker for r in rows})
+            name_map: Dict[str, str] = {}
+            if traded_tickers:
+                holdings = db.query(Holding.ticker, Holding.name).filter(
+                    Holding.ticker.in_(traded_tickers)
+                ).all()
+                name_map = {h.ticker: h.name for h in holdings if h.name}
         finally:
             db.close()
 
@@ -681,6 +690,7 @@ class PortfolioService:
             TradeResponse(
                 id=r.id,
                 ticker=r.ticker,
+                name=name_map.get(r.ticker),
                 trade_type=r.trade_type,
                 quantity=r.quantity,
                 price=r.price,

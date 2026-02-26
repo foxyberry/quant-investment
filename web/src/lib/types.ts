@@ -365,6 +365,7 @@ export interface SavedScreeningResult extends SavedScreeningResultSummary {
 export interface Trade {
   id: number;
   ticker: string;
+  name: string | null;
   trade_type: string;
   quantity: number;
   price: number;

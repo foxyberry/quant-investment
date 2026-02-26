@@ -152,6 +152,7 @@ class SellRecordCreate(BaseModel):
 class TradeResponse(BaseModel):
     id: int
     ticker: str
+    name: Optional[str] = None
     trade_type: str
     quantity: int
     price: float
