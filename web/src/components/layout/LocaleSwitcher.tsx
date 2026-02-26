@@ -27,6 +27,9 @@ export default function LocaleSwitcher({ variant = 'default' }: LocaleSwitcherPr
   const nextLocale = localeOrder[(currentIndex + 1) % localeOrder.length];
 
   const handleSwitch = () => {
+    // Set cookie so next-intl middleware remembers the preference on refresh
+    document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    // Sync across tabs via localStorage
     window.localStorage.setItem(
       LOCALE_SYNC_KEY,
       JSON.stringify({ locale: nextLocale })
