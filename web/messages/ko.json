@@ -2745,7 +2745,10 @@
     "macdCrossDesc": "MACD가 시그널 {direction} {diff} → {signal}",
     "above": "위",
     "below": "아래",
-    "macdMomentumUp": "상승 모멘텀 형성 중",
-    "macdMomentumDown": "하락 모멘텀 형성 중"
+    "macdMomentumUp": "상승 추세 형성 중",
+    "macdMomentumDown": "하락 추세 형성 중",
+    "macdStrength": "추세 강도",
+    "macdGrowing": "점점 강해지는 중",
+    "macdFading": "점점 약해지는 중"
   }
 }

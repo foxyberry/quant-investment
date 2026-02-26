@@ -2745,7 +2745,10 @@
     "macdCrossDesc": "MACD在信号线{direction} {diff} → {signal}",
     "above": "上方",
     "below": "下方",
-    "macdMomentumUp": "上升动能形成中",
-    "macdMomentumDown": "下降动能形成中"
+    "macdMomentumUp": "上升趋势形成中",
+    "macdMomentumDown": "下降趋势形成中",
+    "macdStrength": "趋势强度",
+    "macdGrowing": "逐渐增强",
+    "macdFading": "逐渐减弱"
   }
 }

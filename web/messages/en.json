@@ -2745,7 +2745,10 @@
     "macdCrossDesc": "MACD is {diff} {direction} Signal → {signal}",
     "above": "above",
     "below": "below",
-    "macdMomentumUp": "Bullish momentum building",
-    "macdMomentumDown": "Bearish momentum building"
+    "macdMomentumUp": "Upward trend forming",
+    "macdMomentumDown": "Downward trend forming",
+    "macdStrength": "Momentum",
+    "macdGrowing": "Getting stronger",
+    "macdFading": "Getting weaker"
   }
 }
