@@ -539,7 +539,14 @@
     "technicalIndicators": "技术指标",
     "recentReports": "最近分析报告",
     "runScreeningForReports": "运行筛选以生成报告",
-    "retry": "重试"
+    "retry": "重试",
+    "popularLabel": "热门",
+    "guideSearchTitle": "搜索股票",
+    "guideSearchDesc": "输入股票代码或公司名称查看互动图表",
+    "guideTechnicalTitle": "技术分析",
+    "guideTechnicalDesc": "查看RSI、MACD、布林带等关键技术指标",
+    "guideFullTitle": "完整分析",
+    "guideFullDesc": "获取AI洞察、策略背景和财务数据"
   },
   "reports": {
     "title": "分析报告",

@@ -539,7 +539,14 @@
     "technicalIndicators": "Technical Indicators",
     "recentReports": "Recent Analysis Reports",
     "runScreeningForReports": "Run a screening to generate reports",
-    "retry": "Retry"
+    "retry": "Retry",
+    "popularLabel": "Popular",
+    "guideSearchTitle": "Search Ticker",
+    "guideSearchDesc": "Enter a ticker symbol or company name to view interactive charts",
+    "guideTechnicalTitle": "Technical Analysis",
+    "guideTechnicalDesc": "View RSI, MACD, Bollinger Bands, and other key indicators",
+    "guideFullTitle": "Full Analysis",
+    "guideFullDesc": "Get AI-powered insights, strategy context, and financial data"
   },
   "reports": {
     "title": "Analysis Reports",

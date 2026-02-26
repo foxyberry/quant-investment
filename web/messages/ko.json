@@ -539,7 +539,14 @@
     "technicalIndicators": "기술적 지표",
     "recentReports": "최근 분석 리포트",
     "runScreeningForReports": "스크리닝을 실행하여 리포트를 생성하세요",
-    "retry": "재시도"
+    "retry": "재시도",
+    "popularLabel": "인기 종목",
+    "guideSearchTitle": "종목 검색",
+    "guideSearchDesc": "티커 심볼 또는 회사명을 입력하여 인터랙티브 차트를 확인하세요",
+    "guideTechnicalTitle": "기술적 분석",
+    "guideTechnicalDesc": "RSI, MACD, 볼린저 밴드 등 주요 기술 지표를 확인하세요",
+    "guideFullTitle": "상세 분석",
+    "guideFullDesc": "AI 분석, 전략 컨텍스트, 재무 데이터를 확인하세요"
   },
   "reports": {
     "title": "분석 리포트",
