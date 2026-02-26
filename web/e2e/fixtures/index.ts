@@ -56,8 +56,8 @@ async function installApiMocks(page: Page) {
     if (url.includes('/api/exchange-rates')) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ base: 'USD', rates: { KRW: 1350.5, SGD: 1.34, JPY: 149.8, EUR: 0.92, GBP: 0.79, CNY: 7.24, HKD: 7.82 }, updated_at: new Date().toISOString() }) });
     }
-    if (url.includes('/api/analysis/reports')) {
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ reports: [], total_count: 0 }) });
+    if (url.includes('/api/reports/executions')) {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], total_count: 0 }) });
     }
     if (url.includes('/api/analysis/status')) {
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ is_running: false }) });

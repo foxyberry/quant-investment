@@ -187,16 +187,6 @@ export interface CsvImportResponse {
   errors: CsvRowError[];
 }
 
-// Analysis types
-export interface ReportSummary {
-  date: string;
-  market: string;
-  total_stocks: number;
-  buy_count: number;
-  wait_count: number;
-  avoid_count: number;
-}
-
 // OHLCV data for charts
 export interface OHLCVData {
   time: string;
@@ -235,14 +225,6 @@ export interface TechnicalIndicators {
     average: number;
     ratio: number;
   };
-}
-
-// Report detail with markdown content
-export interface ReportDetail {
-  date: string;
-  market: string;
-  content: string;
-  stocks: Array<Record<string, unknown>>;
 }
 
 // Ticker analysis response
@@ -343,22 +325,35 @@ export interface BrokerKillSwitchResult {
   cancelled_orders: number;
 }
 
-// Saved screening result types
-export interface SavedScreeningResultSummary {
+// Execution history types
+export interface ExecutionHistorySummary {
   id: string;
-  name: string;
-  description?: string | null;
+  execution_type: 'screening' | 'strategy';
   preset: string;
   universes: string[];
   reference_date?: string | null;
   total_count: number;
   matched_count: number;
   elapsed_ms?: number | null;
+  name?: string | null;
+  description?: string | null;
+  strategy_id?: string | null;
   created_at: string;
 }
 
-export interface SavedScreeningResult extends SavedScreeningResultSummary {
-  results: ScreeningResult[];
+export interface ExecutionHistoryDetail extends ExecutionHistorySummary {
+  results: Array<Record<string, unknown>>;
+}
+
+export interface ExecutionHistoryListResponse {
+  items: ExecutionHistorySummary[];
+  total_count: number;
+}
+
+export interface DuplicateCheckResponse {
+  exists: boolean;
+  existing_id?: string | null;
+  created_at?: string | null;
 }
 
 // Trade / sell recording types

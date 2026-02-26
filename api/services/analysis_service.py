@@ -16,8 +16,6 @@ from typing import Dict, Any, List, Optional
 
 from api.schemas.analysis import (
     EnrichedStock,
-    ReportSummary,
-    ReportDetail,
     AnalysisResult,
 )
 
@@ -221,7 +219,7 @@ class AnalysisService:
             logger.error(f"Analysis failed for {ticker}: {e}")
             raise ValueError(f"Analysis failed: {str(e)}")
 
-    def get_reports(self) -> List[ReportSummary]:
+    def get_reports(self) -> List[dict]:
         """
         Get list of available analysis reports.
 
@@ -255,7 +253,7 @@ class AnalysisService:
 
         return reports
 
-    def _parse_report_summary(self, date_str: str, content: str) -> ReportSummary:
+    def _parse_report_summary(self, date_str: str, content: str) -> dict:
         """
         Parse report content to extract summary information.
 
@@ -291,7 +289,7 @@ class AnalysisService:
         wait_count = len(re.findall(r"\*\*WAIT\*\*", content))
         avoid_count = len(re.findall(r"\*\*AVOID\*\*", content))
 
-        return ReportSummary(
+        return dict(
             date=date_str,
             market=market,
             total_stocks=total_stocks,
@@ -300,7 +298,7 @@ class AnalysisService:
             avoid_count=avoid_count,
         )
 
-    def get_report(self, date: str, market: str = None) -> Optional[ReportDetail]:
+    def get_report(self, date: str, market: str = None) -> Optional[dict]:
         """
         Get a specific analysis report by date.
 
@@ -334,7 +332,7 @@ class AnalysisService:
                 except Exception as e:
                     logger.warning(f"Failed to load enriched data: {e}")
 
-            return ReportDetail(
+            return dict(
                 date=date,
                 market=market or "All",
                 content=content,
