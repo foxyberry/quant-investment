@@ -243,18 +243,32 @@ export default function TickerAnalysisPage() {
     }
   };
 
+  // Currency symbol based on ticker exchange suffix
+  const currencySymbol = ticker.toUpperCase().endsWith('.KS') || ticker.toUpperCase().endsWith('.KQ')
+    ? '₩'
+    : ticker.toUpperCase().endsWith('.T')
+      ? '¥'
+      : '$';
+
+  const formatPrice = (value: number): string => {
+    if (currencySymbol === '₩') return `₩${Math.round(value).toLocaleString()}`;
+    if (currencySymbol === '¥') return `¥${Math.round(value).toLocaleString()}`;
+    return `$${value.toFixed(2)}`;
+  };
+
   const formatMarketCap = (value: number | null | undefined): string => {
     if (value == null) return '-';
+    const sym = currencySymbol;
     if (value >= 1_000_000_000_000) {
-      return `$${(value / 1_000_000_000_000).toFixed(2)}T`;
+      return `${sym}${(value / 1_000_000_000_000).toFixed(2)}T`;
     }
     if (value >= 1_000_000_000) {
-      return `$${(value / 1_000_000_000).toFixed(2)}B`;
+      return `${sym}${(value / 1_000_000_000).toFixed(2)}B`;
     }
     if (value >= 1_000_000) {
-      return `$${(value / 1_000_000).toFixed(2)}M`;
+      return `${sym}${(value / 1_000_000).toFixed(2)}M`;
     }
-    return `$${value.toLocaleString()}`;
+    return `${sym}${value.toLocaleString()}`;
   };
 
   const getConditionIcon = (condition: ConditionResult) => {
@@ -340,31 +354,33 @@ export default function TickerAnalysisPage() {
       {isPopup && (
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-1 py-2 bg-[var(--background)] border-b border-[var(--border)]">
           <div className="flex items-center gap-3 min-w-0">
-            <h1 className="text-lg font-bold text-[var(--foreground)] truncate">
-              {ticker.toUpperCase()}
-            </h1>
-            {tickerData && (
-              <>
-                <span className="text-lg font-semibold text-[var(--foreground)]">
-                  ${tickerData.current_price.toFixed(2)}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-[var(--foreground)] truncate">
+                  {tickerData?.name || ticker.toUpperCase()}
+                </h1>
+                <span className="shrink-0 rounded-md bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-1.5 py-0.5 text-xs font-mono">
+                  {ticker.toUpperCase()}
                 </span>
-                <span
-                  className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    tickerData.change_pct >= 0
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                  }`}
-                >
-                  {tickerData.change_pct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                  {tickerData.change_pct >= 0 ? '+' : ''}{tickerData.change_pct.toFixed(2)}%
-                </span>
-              </>
-            )}
-            {tickerData && (
-              <span className="text-sm text-[var(--foreground-muted)] truncate">
-                {tickerData.name}
-              </span>
-            )}
+              </div>
+              {tickerData && (
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-lg font-semibold font-mono text-[var(--foreground)]">
+                    {formatPrice(tickerData.current_price)}
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      tickerData.change_pct >= 0
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                    }`}
+                  >
+                    {tickerData.change_pct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {tickerData.change_pct >= 0 ? '+' : ''}{tickerData.change_pct.toFixed(2)}%
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
           <button
             type="button"
@@ -429,7 +445,7 @@ export default function TickerAnalysisPage() {
           {tickerData && (
             <div className="text-right">
               <span className="text-3xl font-bold text-[var(--foreground)]">
-                ${tickerData.current_price.toFixed(2)}
+                {formatPrice(tickerData.current_price)}
               </span>
             </div>
           )}
@@ -558,17 +574,17 @@ export default function TickerAnalysisPage() {
                 </span>
                 {latest.volume != null && (
                   <span className="text-[var(--foreground-muted)]">
-                    Vol <span className="font-mono font-medium text-[var(--foreground)]">{latest.volume.toLocaleString()}</span>
+                    {t('ohlcvVol')} <span className="font-mono font-medium text-[var(--foreground)]">{latest.volume.toLocaleString()}</span>
                   </span>
                 )}
                 {sma?.sma20 != null && (
                   <span className="text-[var(--foreground-muted)]">
-                    MA(20) <span className="font-mono font-medium text-blue-600 dark:text-blue-400">{sma.sma20.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    {t('ohlcvMa', { period: 20 })} <span className="font-mono font-medium text-blue-600 dark:text-blue-400">{sma.sma20.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </span>
                 )}
                 {sma?.sma50 != null && (
                   <span className="text-[var(--foreground-muted)]">
-                    MA(50) <span className="font-mono font-medium text-amber-600 dark:text-amber-400">{sma.sma50.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    {t('ohlcvMa', { period: 50 })} <span className="font-mono font-medium text-amber-600 dark:text-amber-400">{sma.sma50.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </span>
                 )}
               </div>
@@ -577,17 +593,17 @@ export default function TickerAnalysisPage() {
 
           {/* Popup KPI strip */}
           {isPopup && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               <Card padding="sm">
-                <p className="text-xs text-[var(--foreground-muted)]">{t('popupKpiPrice')}</p>
-                <p className="mt-1 font-mono font-semibold text-[var(--foreground)]">
-                  ${tickerData.current_price.toFixed(2)}
+                <p className="text-xs text-[var(--foreground-muted)] text-center">{t('popupKpiPrice')}</p>
+                <p className="mt-1 font-mono font-semibold text-[var(--foreground)] text-center">
+                  {formatPrice(tickerData.current_price)}
                 </p>
               </Card>
               <Card padding="sm">
-                <p className="text-xs text-[var(--foreground-muted)]">{t('popupKpiChange')}</p>
+                <p className="text-xs text-[var(--foreground-muted)] text-center">{t('popupKpiChange')}</p>
                 <p
-                  className={`mt-1 font-mono font-semibold ${
+                  className={`mt-1 font-mono font-semibold text-center ${
                     tickerData.change_pct >= 0
                       ? 'text-green-600 dark:text-green-400'
                       : 'text-red-600 dark:text-red-400'
@@ -598,8 +614,8 @@ export default function TickerAnalysisPage() {
                 </p>
               </Card>
               <Card padding="sm">
-                <p className="text-xs text-[var(--foreground-muted)]">{t('popupKpiVolume')}</p>
-                <p className="mt-1 font-mono font-semibold text-[var(--foreground)]">
+                <p className="text-xs text-[var(--foreground-muted)] text-center">{t('popupKpiVolume')}</p>
+                <p className="mt-1 font-mono font-semibold text-[var(--foreground)] text-center">
                   {(tickerData.ohlcv[tickerData.ohlcv.length - 1]?.volume ?? 0).toLocaleString()}
                 </p>
               </Card>
@@ -755,7 +771,7 @@ export default function TickerAnalysisPage() {
                       </span>
                       <p className="text-lg font-semibold text-[var(--foreground)]">
                         {tickerData.fundamental.eps !== null
-                          ? `$${tickerData.fundamental.eps.toFixed(2)}`
+                          ? formatPrice(tickerData.fundamental.eps)
                           : t('notAvailable')}
                       </p>
                     </div>
@@ -792,8 +808,8 @@ export default function TickerAnalysisPage() {
                   <div className="mt-4 space-y-2">
                     <h4 className="text-sm font-medium text-[var(--foreground)]">{t('week52Range')}</h4>
                     <div className="flex items-center justify-between text-xs text-[var(--foreground-muted)]">
-                      <span>{t('week52Low')}: ${w52Low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      <span>{t('week52High')}: ${w52High.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span>{t('week52Low')}: {formatPrice(w52Low)}</span>
+                      <span>{t('week52High')}: {formatPrice(w52High)}</span>
                     </div>
                     <div className="relative h-3 rounded-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400">
                       <div
@@ -1145,19 +1161,19 @@ export default function TickerAnalysisPage() {
                           <div className="flex justify-between items-center">
                             <span className="text-[var(--foreground-muted)]">{t('periodHigh')}</span>
                             <span className="font-medium text-[var(--foreground)]">
-                              ${periodHigh.toFixed(2)}
+                              {formatPrice(periodHigh)}
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-[var(--foreground-muted)]">{t('periodLow')}</span>
                             <span className="font-medium text-[var(--foreground)]">
-                              ${periodLow.toFixed(2)}
+                              {formatPrice(periodLow)}
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-[var(--foreground-muted)]">{t('averagePrice')}</span>
                             <span className="font-medium text-[var(--foreground)]">
-                              ${avgPrice.toFixed(2)}
+                              {formatPrice(avgPrice)}
                             </span>
                           </div>
                           <div className="h-px bg-[var(--border)]" />
@@ -1196,8 +1212,8 @@ export default function TickerAnalysisPage() {
                       return (
                         <>
                           <div className="flex justify-between text-sm text-[var(--foreground-muted)]">
-                            <span>{t('low')}: ${periodLow.toFixed(2)}</span>
-                            <span>{t('high')}: ${periodHigh.toFixed(2)}</span>
+                            <span>{t('low')}: {formatPrice(periodLow)}</span>
+                            <span>{t('high')}: {formatPrice(periodHigh)}</span>
                           </div>
                           <div className="relative h-3 rounded-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400">
                             <div

@@ -648,7 +648,9 @@
     "movingAverages": "移动平均",
     "summary": "综合",
     "addToScreening": "使用预设筛选",
-    "dataDelayNote": "数据延迟15分钟。"
+    "dataDelayNote": "数据延迟15分钟。",
+    "ohlcvVol": "成交量",
+    "ohlcvMa": "MA({period})"
   },
   "backtest": {
     "title": "策略回测",

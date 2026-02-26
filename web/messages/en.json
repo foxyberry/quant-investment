@@ -648,7 +648,9 @@
     "movingAverages": "Moving Averages",
     "summary": "Summary",
     "addToScreening": "Screen with Preset",
-    "dataDelayNote": "Data delayed by 15 min."
+    "dataDelayNote": "Data delayed by 15 min.",
+    "ohlcvVol": "Vol",
+    "ohlcvMa": "MA({period})"
   },
   "backtest": {
     "title": "Backtest Strategy",
