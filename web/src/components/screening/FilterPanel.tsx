@@ -31,6 +31,7 @@ export default function FilterPanel({
   onRun,
 }: FilterPanelProps) {
   const t = useTranslations('screening');
+  const tConditions = useTranslations('conditions');
   const [presets, setPresets] = useState<PresetInfo[]>([]);
   const [universes, setUniverses] = useState<UniverseInfo[]>([]);
   const [loadingPresets, setLoadingPresets] = useState(true);
@@ -88,6 +89,28 @@ export default function FilterPanel({
   const selectedPresetInfo = presets.find((p) => p.name === selectedPreset);
   const canRun = selectedPreset && selectedUniverses.length > 0 && !isLoading;
 
+  const toTitleCaseFromKey = (value: string) =>
+    value
+      .replace(/^screening\.presetNames\./, '')
+      .replace(/^conditions\./, '')
+      .replace(/^custom:/, '')
+      .replace(/_/g, ' ')
+      .replace(/\./g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+
+  const presetLabel = (preset: PresetInfo): string => {
+    const i18nKey = `presetNames.${preset.name}`;
+    if (t.has(i18nKey)) return t(i18nKey as never);
+    if (preset.source === 'custom') return preset.description || toTitleCaseFromKey(preset.name);
+    return toTitleCaseFromKey(preset.name);
+  };
+
+  const conditionLabel = (condition: string): string => {
+    const i18nKey = `${condition}.label`;
+    if (tConditions.has(i18nKey)) return tConditions(i18nKey as never);
+    return toTitleCaseFromKey(condition);
+  };
+
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-6">
       <h2 className="mb-4 text-lg font-semibold text-[var(--foreground)]">
@@ -127,7 +150,7 @@ export default function FilterPanel({
                   <optgroup label={t('builtInPresets')}>
                     {staticPresets.map((preset) => (
                       <option key={preset.name} value={preset.name}>
-                        {preset.name}
+                        {presetLabel(preset)}
                       </option>
                     ))}
                   </optgroup>
@@ -136,7 +159,7 @@ export default function FilterPanel({
                   <optgroup label={t('myStrategies')}>
                     {customPresets.map((preset) => (
                       <option key={preset.name} value={preset.name}>
-                        {preset.description}
+                        {presetLabel(preset)}
                       </option>
                     ))}
                   </optgroup>
@@ -190,7 +213,7 @@ export default function FilterPanel({
               {selectedPresetInfo.conditions.map((condition, index) => (
                 <li key={index} className="flex items-start gap-2">
                   <span className="text-[var(--color-primary)]">-</span>
-                  <span>{condition}</span>
+                  <span>{conditionLabel(condition)}</span>
                 </li>
               ))}
             </ul>
