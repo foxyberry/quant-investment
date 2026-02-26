@@ -251,24 +251,24 @@ export default function TickerAnalysisPage() {
       : '$';
 
   const formatPrice = (value: number): string => {
-    if (currencySymbol === '₩') return `₩${Math.round(value).toLocaleString()}`;
-    if (currencySymbol === '¥') return `¥${Math.round(value).toLocaleString()}`;
-    return `$${value.toFixed(2)}`;
+    if (currencySymbol === '₩') return `₩ ${Math.round(value).toLocaleString()}`;
+    if (currencySymbol === '¥') return `¥ ${Math.round(value).toLocaleString()}`;
+    return `$ ${value.toFixed(2)}`;
   };
 
   const formatMarketCap = (value: number | null | undefined): string => {
     if (value == null) return '-';
     const sym = currencySymbol;
     if (value >= 1_000_000_000_000) {
-      return `${sym}${(value / 1_000_000_000_000).toFixed(2)}T`;
+      return `${sym} ${(value / 1_000_000_000_000).toFixed(2)}T`;
     }
     if (value >= 1_000_000_000) {
-      return `${sym}${(value / 1_000_000_000).toFixed(2)}B`;
+      return `${sym} ${(value / 1_000_000_000).toFixed(2)}B`;
     }
     if (value >= 1_000_000) {
-      return `${sym}${(value / 1_000_000).toFixed(2)}M`;
+      return `${sym} ${(value / 1_000_000).toFixed(2)}M`;
     }
-    return `${sym}${value.toLocaleString()}`;
+    return `${sym} ${value.toLocaleString()}`;
   };
 
   const getConditionIcon = (condition: ConditionResult) => {
