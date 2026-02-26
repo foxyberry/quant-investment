@@ -135,6 +135,10 @@ class ScreeningRequest(BaseModel):
         default=None,
         description="Optional parameters to override preset defaults"
     )
+    graph: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Inline strategy graph for sample: presets (StrategyGraph shape)",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -236,7 +240,7 @@ class PresetInfo(BaseModel):
         default_factory=list,
         description="List of condition names"
     )
-    source: str = Field(default="static", description="'static' or 'custom'")
+    source: str = Field(default="static", description="'static', 'custom', or 'sample'")
 
 
 class UniverseInfo(BaseModel):

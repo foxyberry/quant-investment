@@ -77,7 +77,8 @@ export async function runScreening(
   preset: string,
   universes: string[],
   referenceDate?: string | null,
-  params?: Record<string, unknown>
+  params?: Record<string, unknown>,
+  graph?: Record<string, unknown> | null,
 ): Promise<ScreeningResponse> {
   return fetchApi<ScreeningResponse>('/api/screening/run', {
     method: 'POST',
@@ -86,6 +87,7 @@ export async function runScreening(
       universes,
       reference_date: referenceDate ?? null,
       params,
+      ...(graph ? { graph } : {}),
     }),
   });
 }
@@ -102,7 +104,8 @@ export function runScreeningStream(
     onProgress?: (event: ScreeningProgressEvent) => void;
     onResult?: (data: ScreeningResponse) => void;
     onError?: (error: string) => void;
-  }
+  },
+  graph?: Record<string, unknown> | null,
 ): { abort: () => void } {
   const controller = new AbortController();
 
@@ -117,6 +120,7 @@ export function runScreeningStream(
           universe: universes[0] ?? 'KOSPI',
           reference_date: referenceDate ?? null,
           params,
+          ...(graph ? { graph } : {}),
         }),
         signal: controller.signal,
       });

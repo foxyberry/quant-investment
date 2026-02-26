@@ -374,8 +374,23 @@ class ScreeningService:
         self._universe_combo_count_cache[cache_key] = (time.time(), count)
         return count
 
-    def _resolve_conditions(self, preset: str, params: Optional[Dict[str, Any]] = None) -> list:
-        """Resolve conditions from a static preset or custom strategy."""
+    def _resolve_conditions(self, preset: str, params: Optional[Dict[str, Any]] = None, graph=None) -> list:
+        """Resolve conditions from a static preset, custom strategy, or sample graph."""
+        if preset.startswith("sample:"):
+            from api.services.strategy_service import build_conditions_from_graph
+            from api.schemas.strategy import StrategyGraph as StrategyGraphModel
+
+            if graph is None:
+                raise ValueError("graph payload is required for sample: presets")
+            if isinstance(graph, dict):
+                if len(graph.get("nodes", [])) > 50 or len(graph.get("edges", [])) > 100:
+                    raise ValueError("Sample graph too large (max 50 nodes, 100 edges)")
+                graph = StrategyGraphModel(**graph)
+            cond_list, _ = build_conditions_from_graph(graph)
+            if not cond_list:
+                raise ValueError("No conditions in sample strategy graph")
+            return cond_list
+
         if preset.startswith("custom:"):
             strategy_id = preset[len("custom:"):]
             from api.services.strategy_save_service import get_strategy_save_service
@@ -407,22 +422,24 @@ class ScreeningService:
         universes: Optional[List[str]] = None,
         reference_date: Optional[date] = None,
         progress_callback: Optional[Callable[[int, int, int], None]] = None,
+        graph=None,
     ) -> Dict[str, Any]:
         """
         Run stock screening with the given preset and universe.
 
         Args:
-            preset: Preset name (static name or 'custom:{strategy_id}')
+            preset: Preset name (static name, 'custom:{strategy_id}', or 'sample:{name}')
             universe: Universe name (backward-compatible single value)
             params: Optional parameters to override preset defaults
             universes: Universe list (preferred for multi-market)
             reference_date: Reference date for screening (defaults to today)
+            graph: Inline strategy graph for sample: presets
 
         Returns:
             Dict with results, total_count, matched_count, and resolved universes
         """
         started_at = time.perf_counter()
-        conditions = self._resolve_conditions(preset, params)
+        conditions = self._resolve_conditions(preset, params, graph=graph)
 
         requested_universes: Any = universes if universes is not None else universe
 
