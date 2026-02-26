@@ -32,6 +32,9 @@ export default function SettingsPage() {
 
   const handleLocaleSave = () => {
     if (selectedLocale === locale) return;
+    // Set cookie so next-intl middleware remembers the preference on refresh
+    document.cookie = `NEXT_LOCALE=${selectedLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    // Sync across tabs via localStorage
     window.localStorage.setItem(
       LOCALE_SYNC_KEY,
       JSON.stringify({ locale: selectedLocale })
