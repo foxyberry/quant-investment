@@ -68,6 +68,81 @@ const CHILD_HEIGHT = 80;
 const GROUP_MIN_WIDTH = 380;
 const GROUP_MIN_HEIGHT = 220;
 
+/**
+ * Compute a clean left-to-right layout for strategy nodes using topological sort.
+ * Nodes without parents in the edge graph appear in the first column (sources).
+ */
+function computeAutoLayout(
+  nodes: Array<{ id: string; data: { node_type: string } }>,
+  edges: Array<{ source: string; target: string }>
+): Map<string, { x: number; y: number }> {
+  const NODE_WIDTH = 240;
+  const NODE_GAP_X = 60;
+  const NODE_GAP_Y = 40;
+  const START_X = 60;
+  const START_Y = 120;
+
+  // Build adjacency + in-degree
+  const inDegree = new Map<string, number>();
+  const adj = new Map<string, string[]>();
+  for (const n of nodes) {
+    inDegree.set(n.id, 0);
+    adj.set(n.id, []);
+  }
+  for (const e of edges) {
+    adj.get(e.source)?.push(e.target);
+    inDegree.set(e.target, (inDegree.get(e.target) ?? 0) + 1);
+  }
+
+  // Kahn's topological sort → assigns each node a "column" (depth)
+  const depth = new Map<string, number>();
+  const queue: string[] = [];
+  for (const [id, deg] of inDegree) {
+    if (deg === 0) {
+      queue.push(id);
+      depth.set(id, 0);
+    }
+  }
+
+  while (queue.length > 0) {
+    const curr = queue.shift()!;
+    const currDepth = depth.get(curr) ?? 0;
+    for (const next of adj.get(curr) ?? []) {
+      const newDepth = currDepth + 1;
+      depth.set(next, Math.max(depth.get(next) ?? 0, newDepth));
+      const remaining = (inDegree.get(next) ?? 1) - 1;
+      inDegree.set(next, remaining);
+      if (remaining === 0) queue.push(next);
+    }
+  }
+
+  // Assign unvisited nodes (disconnected) to column 0
+  for (const n of nodes) {
+    if (!depth.has(n.id)) depth.set(n.id, 0);
+  }
+
+  // Group nodes by column
+  const columns = new Map<number, string[]>();
+  for (const [id, col] of depth) {
+    if (!columns.has(col)) columns.set(col, []);
+    columns.get(col)!.push(id);
+  }
+
+  // Assign positions
+  const positions = new Map<string, { x: number; y: number }>();
+  const sortedCols = Array.from(columns.keys()).sort((a, b) => a - b);
+  for (const col of sortedCols) {
+    const ids = columns.get(col)!;
+    const x = START_X + col * (NODE_WIDTH + NODE_GAP_X);
+    for (let row = 0; row < ids.length; row++) {
+      const y = START_Y + row * (NODE_GAP_Y + 100);
+      positions.set(ids[row], { x, y });
+    }
+  }
+
+  return positions;
+}
+
 function getNodeId() {
   return `node_${crypto.randomUUID().slice(0, 8)}`;
 }
@@ -926,9 +1001,21 @@ function StrategyPageInner() {
       strategyId: string | null;
       sample: boolean;
     }) => {
+      // Compute auto-layout positions for top-level (non-child) nodes
+      const topLevelNodes = graph.nodes.filter((n) => {
+        // A node is a child if any other node lists it in child_node_ids
+        return !graph.nodes.some(
+          (parent) =>
+            parent.data.child_node_ids?.includes(n.id)
+        );
+      });
+      const autoPositions = computeAutoLayout(topLevelNodes, graph.edges);
+
       // Reconstruct nodes and edges from saved graph
       const loadedNodes: Node[] = graph.nodes.map((n) => {
         const isGroup = n.data.node_type === 'logic';
+        // Use auto-layout position for top-level nodes
+        const autoPos = autoPositions.get(n.id);
         return {
           id: n.id,
           type:
@@ -941,7 +1028,7 @@ function StrategyPageInner() {
                   : n.data.node_type === 'logic'
                     ? 'groupNode'
                     : 'outputNode',
-          position: n.position || { x: 0, y: 0 },
+          position: autoPos || n.position || { x: 0, y: 0 },
           data: n.data as unknown as Record<string, unknown>,
           ...(isGroup ? { style: { width: GROUP_MIN_WIDTH, height: GROUP_MIN_HEIGHT } } : {}),
         };
@@ -955,6 +1042,12 @@ function StrategyPageInner() {
             if (childNode) {
               childNode.parentId = n.id;
               childNode.extent = 'parent' as const;
+              // Position children relative to parent group
+              const childIndex = n.data.child_node_ids.indexOf(childId);
+              childNode.position = {
+                x: GROUP_PADDING_X,
+                y: GROUP_PADDING_TOP + childIndex * (CHILD_HEIGHT + CHILD_SPACING),
+              };
             }
           }
         }
@@ -984,8 +1077,13 @@ function StrategyPageInner() {
       setLastRunTime(null);
       setErrors([]);
       setSelectedNodeId(null);
+
+      // Fit view after layout settles
+      requestAnimationFrame(() => {
+        reactFlowInstance?.fitView({ maxZoom: 0.75, padding: 0.3 });
+      });
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges, reactFlowInstance]
   );
 
   const handleLoadStrategy = useCallback(
