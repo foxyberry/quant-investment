@@ -194,139 +194,177 @@ class VolumeLagCompareCondition(BaseCondition):
 
 
 # ---------------------------------------------------------------------------
-# Dynamic ratio / range registrations (kept as-is)
+# Parametric ratio / range conditions (replace 14 dynamic registrations)
 # ---------------------------------------------------------------------------
 
 
-def _register_volume_ma_ratio(short_period: int, long_period: int) -> None:
-    key = f"volume_ma_ratio_{short_period}_{long_period}"
+@register_condition(
+    key="volume_ma_ratio",
+    label="Volume MA Ratio",
+    description="Volume short MA / long MA ratio range filter",
+    category="volume",
+    params=[
+        {"name": "short_period", "type": "int", "default": 5, "description": "Short MA period"},
+        {"name": "long_period", "type": "int", "default": 20, "description": "Long MA period"},
+        {"name": "min_ratio", "type": "float", "default": 0.8, "description": "Minimum ratio"},
+        {"name": "max_ratio", "type": "float", "default": 3.0, "description": "Maximum ratio"},
+    ],
+    recommended=True,
+    order=12,
+)
+class VolumeMARatioCondition(BaseCondition):
+    """Compare short-term vs long-term volume moving averages.
 
-    class _VolumeMARatioCondition(BaseCondition):
-        def __init__(
-            self,
-            short_period: int = short_period,
-            long_period: int = long_period,
-            min_ratio: float = 0.8,
-            max_ratio: float = 3.0,
-        ):
-            self.short_period = max(1, int(short_period))
-            self.long_period = max(self.short_period + 1, int(long_period))
-            self.min_ratio = float(min_ratio)
-            self.max_ratio = float(max_ratio)
+    Parameters
+    ----------
+    short_period : int
+        Short MA period in trading days (must be >= 1).
+    long_period : int
+        Long MA period in trading days (must be > short_period).
+    min_ratio : float
+        Minimum acceptable ratio (short_avg / long_avg).
+    max_ratio : float
+        Maximum acceptable ratio (short_avg / long_avg).
+    """
 
-        @property
-        def name(self) -> str:
-            return f"volume_ma_ratio_{self.short_period}_{self.long_period}"
+    def __init__(
+        self,
+        short_period: int = 5,
+        long_period: int = 20,
+        min_ratio: float = 0.8,
+        max_ratio: float = 3.0,
+    ) -> None:
+        self.short_period: int = max(1, int(short_period))
+        self.long_period: int = max(self.short_period + 1, int(long_period))
+        self.min_ratio: float = float(min_ratio)
+        self.max_ratio: float = float(max_ratio)
 
-        @property
-        def required_days(self) -> int:
-            return self.long_period + 5
+    @property
+    def name(self) -> str:
+        return f"volume_ma_ratio_{self.short_period}_{self.long_period}"
 
-        def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
-            if "volume" not in data.columns:
-                return ConditionResult(False, self.name, {"error": "Missing volume column"})
-            if len(data) < self.required_days:
-                return ConditionResult(False, self.name, {"error": "Insufficient data"})
+    @property
+    def required_days(self) -> int:
+        return self.long_period + 5
 
-            short_avg = data["volume"].tail(self.short_period).mean()
-            long_avg = data["volume"].tail(self.long_period).mean()
-            if pd.isna(short_avg) or pd.isna(long_avg) or long_avg <= 0:
-                return ConditionResult(False, self.name, {"error": "Invalid moving average data"})
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        if "volume" not in data.columns:
+            return ConditionResult(False, self.name, {"error": "Missing volume column"})
+        if len(data) < self.required_days:
+            return ConditionResult(False, self.name, {"error": "Insufficient data"})
 
-            ratio = float(short_avg / long_avg)
-            matched = self.min_ratio <= ratio <= self.max_ratio
-            return ConditionResult(
-                matched=bool(matched),
-                condition_name=self.name,
-                details={
-                    "short_period": self.short_period,
-                    "long_period": self.long_period,
-                    "short_avg": float(short_avg),
-                    "long_avg": float(long_avg),
-                    "ratio": ratio,
-                    "min_ratio": self.min_ratio,
-                    "max_ratio": self.max_ratio,
-                },
-            )
+        short_avg = data["volume"].tail(self.short_period).mean()
+        long_avg = data["volume"].tail(self.long_period).mean()
+        if pd.isna(short_avg) or pd.isna(long_avg) or long_avg <= 0:
+            return ConditionResult(False, self.name, {"error": "Invalid moving average data"})
 
-    _VolumeMARatioCondition.__name__ = f"VolumeMARatio{short_period}{long_period}Condition"
-    register_condition(
-        key=key,
-        label=f"Volume MA Ratio {short_period}/{long_period}",
-        description=f"Volume short MA({short_period}) / long MA({long_period}) ratio range filter",
-        category="volume",
-        params=[
-            {"name": "short_period", "type": "int", "default": short_period, "description": "Short MA period"},
-            {"name": "long_period", "type": "int", "default": long_period, "description": "Long MA period"},
-            {"name": "min_ratio", "type": "float", "default": 0.8, "description": "Minimum ratio"},
-            {"name": "max_ratio", "type": "float", "default": 3.0, "description": "Maximum ratio"},
-        ],
-    )(_VolumeMARatioCondition)
-
-
-def _register_return_range(lookback_days: int) -> None:
-    key = f"return_pct_{lookback_days}d_minmax"
-
-    class _ReturnRangeCondition(BaseCondition):
-        def __init__(
-            self,
-            lookback_days: int = lookback_days,
-            min_return_pct: float = -5.0,
-            max_return_pct: float = 5.0,
-        ):
-            self.lookback_days = max(1, int(lookback_days))
-            self.min_return_pct = float(min_return_pct)
-            self.max_return_pct = float(max_return_pct)
-
-        @property
-        def name(self) -> str:
-            return f"return_pct_{self.lookback_days}d_minmax"
-
-        @property
-        def required_days(self) -> int:
-            return self.lookback_days + 2
-
-        def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
-            if "close" not in data.columns:
-                return ConditionResult(False, self.name, {"error": "Missing close column"})
-            if len(data) < self.required_days:
-                return ConditionResult(False, self.name, {"error": "Insufficient data"})
-
-            current = data["close"].iloc[-1]
-            past = data["close"].iloc[-(self.lookback_days + 1)]
-            if pd.isna(current) or pd.isna(past) or past <= 0:
-                return ConditionResult(False, self.name, {"error": "Invalid close data"})
-
-            return_pct = float(((current - past) / past) * 100.0)
-            matched = self.min_return_pct <= return_pct <= self.max_return_pct
-            return ConditionResult(
-                matched=bool(matched),
-                condition_name=self.name,
-                details={
-                    "lookback_days": self.lookback_days,
-                    "return_pct": return_pct,
-                    "min_return_pct": self.min_return_pct,
-                    "max_return_pct": self.max_return_pct,
-                },
-            )
-
-    _ReturnRangeCondition.__name__ = f"ReturnPct{lookback_days}DRangeCondition"
-    register_condition(
-        key=key,
-        label=f"{lookback_days}D Return % Range",
-        description=f"{lookback_days}-day return percentage range filter",
-        category="price",
-        params=[
-            {"name": "lookback_days", "type": "int", "default": lookback_days, "description": "Lookback days"},
-            {"name": "min_return_pct", "type": "float", "default": -5.0, "description": "Minimum return %"},
-            {"name": "max_return_pct", "type": "float", "default": 5.0, "description": "Maximum return %"},
-        ],
-    )(_ReturnRangeCondition)
+        ratio = float(short_avg / long_avg)
+        matched = self.min_ratio <= ratio <= self.max_ratio
+        return ConditionResult(
+            matched=bool(matched),
+            condition_name=self.name,
+            details={
+                "short_period": self.short_period,
+                "long_period": self.long_period,
+                "short_avg": float(short_avg),
+                "long_avg": float(long_avg),
+                "ratio": ratio,
+                "min_ratio": self.min_ratio,
+                "max_ratio": self.max_ratio,
+            },
+        )
 
 
-for short_period in [2, 3, 5, 10]:
-    for long_period in [20, 60]:
-        _register_volume_ma_ratio(short_period, long_period)
+@register_condition(
+    key="return_pct_range",
+    label="Return % Range",
+    description="N-day return percentage range filter",
+    category="price",
+    params=[
+        {"name": "lookback_days", "type": "int", "default": 5, "description": "Lookback days"},
+        {"name": "min_return_pct", "type": "float", "default": -5.0, "description": "Minimum return %"},
+        {"name": "max_return_pct", "type": "float", "default": 5.0, "description": "Maximum return %"},
+    ],
+    recommended=True,
+    order=13,
+)
+class ReturnRangeCondition(BaseCondition):
+    """Filter stocks by N-day return percentage within a range.
 
-for lookback_days in [1, 2, 3, 5, 10, 20]:
-    _register_return_range(lookback_days)
+    Parameters
+    ----------
+    lookback_days : int
+        Number of trading days to look back (must be >= 1).
+    min_return_pct : float
+        Minimum acceptable return percentage.
+    max_return_pct : float
+        Maximum acceptable return percentage.
+    """
+
+    def __init__(
+        self,
+        lookback_days: int = 5,
+        min_return_pct: float = -5.0,
+        max_return_pct: float = 5.0,
+    ) -> None:
+        self.lookback_days: int = max(1, int(lookback_days))
+        self.min_return_pct: float = float(min_return_pct)
+        self.max_return_pct: float = float(max_return_pct)
+
+    @property
+    def name(self) -> str:
+        return f"return_pct_{self.lookback_days}d_minmax"
+
+    @property
+    def required_days(self) -> int:
+        return self.lookback_days + 2
+
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        if "close" not in data.columns:
+            return ConditionResult(False, self.name, {"error": "Missing close column"})
+        if len(data) < self.required_days:
+            return ConditionResult(False, self.name, {"error": "Insufficient data"})
+
+        current = data["close"].iloc[-1]
+        past = data["close"].iloc[-(self.lookback_days + 1)]
+        if pd.isna(current) or pd.isna(past) or past <= 0:
+            return ConditionResult(False, self.name, {"error": "Invalid close data"})
+
+        return_pct = float(((current - past) / past) * 100.0)
+        matched = self.min_return_pct <= return_pct <= self.max_return_pct
+        return ConditionResult(
+            matched=bool(matched),
+            condition_name=self.name,
+            details={
+                "lookback_days": self.lookback_days,
+                "return_pct": return_pct,
+                "min_return_pct": self.min_return_pct,
+                "max_return_pct": self.max_return_pct,
+            },
+        )
+
+
+# ---------------------------------------------------------------------------
+# Legacy aliases — keep old keys in CLASS_MAP only (no metadata → hidden
+# from the node palette) so that saved strategies referencing them still work.
+# Uses functools.partial so that default params match the old variant-specific
+# defaults (e.g. volume_ma_ratio_2_20 → short_period=2, long_period=20).
+# ---------------------------------------------------------------------------
+
+from .registry import register_alias  # noqa: E402
+
+for _sp in [2, 3, 5, 10]:
+    for _lp in [20, 60]:
+        register_alias(
+            f"volume_ma_ratio_{_sp}_{_lp}",
+            VolumeMARatioCondition,
+            short_period=_sp,
+            long_period=_lp,
+        )
+
+for _ld in [1, 2, 3, 5, 10, 20]:
+    register_alias(
+        f"return_pct_{_ld}d_minmax",
+        ReturnRangeCondition,
+        lookback_days=_ld,
+    )

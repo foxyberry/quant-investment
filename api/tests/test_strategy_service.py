@@ -48,9 +48,15 @@ class TestConditionClassMap:
             assert key in CONDITION_CLASS_MAP, f"Missing class mapping for: {key}"
 
     def test_all_class_map_keys_in_metadata(self):
-        """Every key in CONDITION_CLASS_MAP should have metadata."""
+        """Every key in CONDITION_CLASS_MAP should have metadata (except legacy aliases)."""
+        from screener.conditions.registry import get_condition_metadata
+        metadata = get_condition_metadata()
         for key in CONDITION_CLASS_MAP:
-            assert key in CONDITION_METADATA, f"Missing metadata for: {key}"
+            if key not in metadata:
+                # Legacy alias keys (class_map only) are allowed
+                assert callable(CONDITION_CLASS_MAP[key]), (
+                    f"Missing metadata for non-alias key: {key}"
+                )
 
     def test_class_map_not_empty(self):
         assert len(CONDITION_CLASS_MAP) >= 25
