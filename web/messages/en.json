@@ -208,7 +208,11 @@
     "noSavedResultsDesc": "Run a screening and save the results to view them here.",
     "savedTab": "Saved Results",
     "savedOn": "Saved on",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "duplicateFound": "A result with the same conditions already exists",
+    "duplicateCreatedAt": "Created: {date}",
+    "viewExistingResult": "View Existing Result",
+    "runAnyway": "Run Anyway"
   },
   "portfolio": {
     "title": "Portfolio",

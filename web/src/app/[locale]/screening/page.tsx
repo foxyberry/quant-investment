@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, Clock } from 'lucide-react';
 import {
@@ -8,8 +8,9 @@ import {
   FilterPanel,
   ResultTable,
 } from '@/components/screening';
-import { runScreeningStream } from '@/lib/api';
-import type { ScreeningProgressEvent, ScreeningResult } from '@/lib/types';
+import { runScreeningStream, saveExecution, checkDuplicateExecution } from '@/lib/api';
+import type { ScreeningProgressEvent, ScreeningResult, DuplicateCheckResponse } from '@/lib/types';
+import { Link } from '@/i18n/navigation';
 
 export default function ScreeningPage() {
   const t = useTranslations('screening');
@@ -30,13 +31,19 @@ export default function ScreeningPage() {
     elapsedMs: number | null;
   } | null>(null);
   const [selectedGraph, setSelectedGraph] = useState<Record<string, unknown> | null>(null);
+  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateCheckResponse | null>(null);
+  const [pendingRun, setPendingRun] = useState(false);
 
-  const handleRunScreening = async () => {
-    if (!selectedPreset || selectedUniverses.length === 0) {
-      setError(t('selectPresetAndUniverse'));
-      return;
-    }
+  useEffect(() => {
+    if (!duplicateInfo) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDuplicateInfo(null);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [duplicateInfo]);
 
+  const startScreening = () => {
     setIsLoading(true);
     setError(null);
     setResults([]);
@@ -76,6 +83,21 @@ export default function ScreeningPage() {
           status: 'done',
         });
         setIsLoading(false);
+
+        // Auto-save execution result (fire-and-forget)
+        saveExecution({
+          execution_type: 'screening',
+          preset: selectedPreset,
+          universes: response.universes ?? selectedUniverses,
+          reference_date: response.reference_date ?? referenceDate,
+          graph: selectedGraph,
+          total_count: response.total_count,
+          matched_count: response.matched_count,
+          elapsed_ms: response.elapsed_ms ?? null,
+          results: response.results as unknown as Array<Record<string, unknown>>,
+        }).catch((err) => {
+          console.warn('Auto-save failed:', err);
+        });
       },
       onError: (message) => {
         console.error('Screening failed:', message);
@@ -96,6 +118,34 @@ export default function ScreeningPage() {
         );
       },
     }, selectedGraph);
+  };
+
+  const handleRunScreening = async () => {
+    if (!selectedPreset || selectedUniverses.length === 0) {
+      setError(t('selectPresetAndUniverse'));
+      return;
+    }
+
+    // Check for duplicate execution before running
+    try {
+      setPendingRun(true);
+      const dup = await checkDuplicateExecution(
+        'screening',
+        selectedPreset,
+        selectedUniverses,
+        referenceDate
+      );
+      if (dup.exists) {
+        setDuplicateInfo(dup);
+        return;
+      }
+    } catch {
+      // If duplicate check fails, proceed with screening anyway
+    } finally {
+      setPendingRun(false);
+    }
+
+    startScreening();
   };
 
   return (
@@ -145,7 +195,7 @@ export default function ScreeningPage() {
                 selectedPreset={selectedPreset}
                 selectedUniverses={selectedUniverses}
                 referenceDate={referenceDate}
-                isLoading={isLoading}
+                isLoading={isLoading || pendingRun}
                 onPresetChange={setSelectedPreset}
                 onUniverseChange={setSelectedUniverses}
                 onReferenceDateChange={setReferenceDate}
@@ -271,6 +321,51 @@ export default function ScreeningPage() {
           </div>
         )}
       </div>
+
+      {/* Duplicate detection dialog */}
+      {duplicateInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <button
+            type="button"
+            className="absolute inset-0"
+            onClick={() => setDuplicateInfo(null)}
+            aria-label="Close"
+          />
+          <div className="relative z-10 w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-6 shadow-2xl">
+            <p className="text-[var(--foreground)]">
+              {t('duplicateFound')}
+            </p>
+            {duplicateInfo.created_at && (
+              <p className="mt-1 text-sm text-[var(--foreground-muted)]">
+                {t('duplicateCreatedAt', {
+                  date: new Date(duplicateInfo.created_at).toLocaleString(),
+                })}
+              </p>
+            )}
+            <div className="mt-4 flex justify-end gap-3">
+              {duplicateInfo.existing_id && (
+                <Link
+                  href={`/reports/${duplicateInfo.existing_id}`}
+                  className="rounded-lg border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background)] transition-colors"
+                  onClick={() => setDuplicateInfo(null)}
+                >
+                  {t('viewExistingResult')}
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setDuplicateInfo(null);
+                  startScreening();
+                }}
+                className="rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-colors"
+              >
+                {t('runAnyway')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
