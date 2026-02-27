@@ -6,7 +6,6 @@ portfolio summary, sell signals, and CSV import/export.
 """
 
 import io
-import time
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -801,7 +800,7 @@ class TestPriceCache:
                     assert mock_price.call_count == 2
 
     def test_price_cache_expiry(self):
-        """Expired cache triggers a fresh fetch path on the next call."""
+        """Expired/cleared cache triggers a fresh fetch path on the next call."""
         # Arrange
         test_session = _setup_test_db([
             {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
@@ -816,10 +815,10 @@ class TestPriceCache:
                 # Act - first call fetches prices
                 service.get_all_holdings(with_prices=True)
 
-                # Expire the cache by backdating the timestamp
-                service._price_cache_time = time.monotonic() - (service.PRICE_CACHE_TTL + 30)
+                # Expire the cache by clearing it
+                service._price_cache.clear()
 
-                # Second call should re-fetch because cache is expired
+                # Second call should re-fetch because cache is cleared
                 service.get_all_holdings(with_prices=True)
 
                 # Assert - batch fetch path is invoked again after expiry
@@ -932,7 +931,7 @@ class TestSummaryCurrencyConversion:
         with patch("api.services.portfolio_service.SessionLocal", test_session):
             service = PortfolioService()
             # Keep market values equal to cost basis for deterministic totals.
-            with patch.object(service, "_get_current_price", return_value=None):
+            with patch.object(service, "_get_current_prices", return_value={}):
                 with patch.object(service._fx, "get_rates") as mock_rates:
                     # Base USD: 1 USD = 1350 KRW
                     mock_rates.return_value = {
@@ -948,3 +947,148 @@ class TestSummaryCurrencyConversion:
                     assert summary.total_investment == pytest.approx(274.074074, rel=1e-6)
                     assert summary.total_market_value == pytest.approx(274.074074, rel=1e-6)
                     assert summary.total_pnl == pytest.approx(0.0, abs=1e-9)
+
+
+class TestSectorCache:
+    """Tests for PortfolioService sector caching (TTLCache)."""
+
+    def test_sector_cache_reuse(self):
+        """Sectors cached on first call are reused on the second."""
+        test_session = _setup_test_db([
+            {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+
+            with patch.object(service._cache, "get_latest_prices", return_value={"AAPL": 175.0}):
+                with patch(
+                    "api.services.portfolio_service.PortfolioService._get_sectors",
+                    wraps=service._get_sectors,
+                ) as spy_sectors:
+                    # Seed the sector cache manually.
+                    service._sector_cache.set("AAPL", "Technology")
+
+                    holdings = service.get_all_holdings(with_prices=True)
+                    assert holdings[0].sector == "Technology"
+
+                    # _get_sectors is called but should short-circuit (all cached).
+                    # Verify no yfinance call was made.
+                    spy_sectors.assert_called()
+
+    def test_sector_cache_stores_none(self):
+        """Sector=None (unknown) is cached, preventing repeated lookups."""
+        test_session = _setup_test_db([
+            {"ticker": "XYZ", "name": "Unknown", "quantity": 5, "avg_price": 10.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+
+            # Seed cache with None to simulate "looked up, not found"
+            service._sector_cache.set("XYZ", None)
+
+            sectors = service._get_sectors(["XYZ"])
+            assert sectors == {"XYZ": None}
+
+
+class TestChangeCache:
+    """Tests for PortfolioService daily change caching (TTLCache)."""
+
+    def test_change_cache_reuse(self):
+        """Cached changes skip parquet reads on subsequent calls."""
+        test_session = _setup_test_db([
+            {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+
+            # Seed cache
+            service._change_cache.set("AAPL", 1.5)
+
+            changes = service._get_daily_changes(["AAPL"])
+            assert changes == {"AAPL": 1.5}
+
+    def test_change_cache_stores_none(self):
+        """None change (e.g. insufficient data) is cached, preventing repeated reads."""
+        test_session = _setup_test_db([
+            {"ticker": "XYZ", "name": "Unknown", "quantity": 5, "avg_price": 10.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+
+            service._change_cache.set("XYZ", None)
+
+            changes = service._get_daily_changes(["XYZ"])
+            # None means no change data — should not appear in result dict
+            assert changes == {}
+
+    def test_change_cache_miss_triggers_compute(self):
+        """Uncached tickers go through the computation path."""
+        test_session = _setup_test_db([
+            {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+
+            mock_data = MagicMock()
+            mock_data.__len__ = lambda self: 2
+            mock_data.__getitem__ = lambda self, key: {
+                "close": MagicMock(iloc=MagicMock(__getitem__=lambda s, i: {-1: 110.0, -2: 100.0}[i]))
+            }[key]
+
+            with patch.object(service._cache, "get", return_value=mock_data):
+                changes = service._get_daily_changes(["AAPL"])
+                assert "AAPL" in changes
+                assert changes["AAPL"] == pytest.approx(10.0, rel=1e-6)
+
+                # Now verify it's cached
+                assert service._change_cache.get("AAPL") == pytest.approx(10.0, rel=1e-6)
+
+
+class TestParallelEnrichment:
+    """Tests for parallel enrichment execution in get_all_holdings."""
+
+    def test_enrichment_runs_in_parallel(self):
+        """All three enrichment methods are submitted to the thread pool."""
+        test_session = _setup_test_db([
+            {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+
+            with patch.object(service, "_get_current_prices", return_value={"AAPL": 175.0}) as m_prices:
+                with patch.object(service, "_get_daily_changes", return_value={"AAPL": 1.5}) as m_changes:
+                    with patch.object(service, "_get_sectors", return_value={"AAPL": "Technology"}) as m_sectors:
+                        holdings = service.get_all_holdings(with_prices=True)
+
+                        m_prices.assert_called_once()
+                        m_changes.assert_called_once()
+                        m_sectors.assert_called_once()
+
+                        assert len(holdings) == 1
+                        assert holdings[0].current_price == 175.0
+                        assert holdings[0].change_pct == 1.5
+                        assert holdings[0].sector == "Technology"
+
+    def test_enrichment_failure_graceful(self):
+        """Sector/change failure doesn't crash get_all_holdings."""
+        test_session = _setup_test_db([
+            {"ticker": "AAPL", "name": "Apple", "quantity": 10, "avg_price": 150.0, "currency": "USD"},
+        ])
+
+        with patch("api.services.portfolio_service.SessionLocal", test_session):
+            service = PortfolioService()
+
+            with patch.object(service, "_get_current_prices", return_value={"AAPL": 175.0}):
+                with patch.object(service, "_get_daily_changes", side_effect=RuntimeError("oops")):
+                    with patch.object(service, "_get_sectors", side_effect=RuntimeError("oops")):
+                        holdings = service.get_all_holdings(with_prices=True)
+                        assert len(holdings) == 1
+                        assert holdings[0].current_price == 175.0
+                        assert holdings[0].sector is None
+                        assert holdings[0].change_pct is None
