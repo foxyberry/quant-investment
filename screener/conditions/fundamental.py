@@ -187,7 +187,7 @@ def _in_range(
     key="pe_ratio",
     label="P/E Ratio",
     description="Price-to-Earnings ratio filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_pe", "type": "float", "default": None, "description": "Min P/E"},
         {"name": "max_pe", "type": "float", "default": 15.0, "description": "Max P/E"},
@@ -255,7 +255,7 @@ class PERatioCondition(BaseCondition):
     key="pb_ratio",
     label="P/B Ratio",
     description="Price-to-Book ratio filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_pb", "type": "float", "default": None, "description": "Min P/B"},
         {"name": "max_pb", "type": "float", "default": 1.5, "description": "Max P/B"},
@@ -337,7 +337,7 @@ class PBRatioCondition(BaseCondition):
     key="ps_ratio",
     label="P/S Ratio",
     description="Price-to-Sales ratio filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_ps", "type": "float", "default": None, "description": "Min P/S"},
         {"name": "max_ps", "type": "float", "default": 2.0, "description": "Max P/S"},
@@ -402,7 +402,7 @@ class PSRatioCondition(BaseCondition):
     key="pcf_ratio",
     label="P/CF Ratio",
     description="Price-to-Cash-Flow ratio filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_pcf", "type": "float", "default": None, "description": "Min P/CF"},
         {"name": "max_pcf", "type": "float", "default": 10.0, "description": "Max P/CF"},
@@ -482,7 +482,7 @@ class PCFRatioCondition(BaseCondition):
     key="dividend_yield",
     label="Dividend Yield",
     description="Dividend yield percentage filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_yield", "type": "float", "default": 3.0, "description": "Min yield %"},
         {"name": "max_yield", "type": "float", "default": None, "description": "Max yield %"},
@@ -552,7 +552,7 @@ class DividendYieldCondition(BaseCondition):
     key="earnings_yield",
     label="Earnings Yield",
     description="Earnings yield (E/P) percentage filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_yield", "type": "float", "default": 8.0, "description": "Min yield %"},
         {"name": "max_yield", "type": "float", "default": None, "description": "Max yield %"},
@@ -632,7 +632,7 @@ class EarningsYieldCondition(BaseCondition):
     key="ebit_ev",
     label="EBIT/EV",
     description="EBIT / Enterprise Value yield filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_ebit_ev", "type": "float", "default": 10.0, "description": "Min EBIT/EV %"},
         {"name": "max_ebit_ev", "type": "float", "default": None, "description": "Max EBIT/EV %"},
@@ -725,7 +725,7 @@ class EbitEvCondition(BaseCondition):
     key="fcf_yield",
     label="FCF Yield",
     description="Free Cash Flow yield filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_fcf_yield", "type": "float", "default": 5.0, "description": "Min FCF yield %"},
         {"name": "max_fcf_yield", "type": "float", "default": None, "description": "Max FCF yield %"},
@@ -805,7 +805,7 @@ class FcfYieldCondition(BaseCondition):
     key="peg_ratio",
     label="PEG Ratio",
     description="Price/Earnings-to-Growth ratio filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_peg", "type": "float", "default": None, "description": "Min PEG"},
         {"name": "max_peg", "type": "float", "default": 1.0, "description": "Max PEG"},
@@ -880,7 +880,7 @@ class PegRatioCondition(BaseCondition):
     key="debt_to_equity",
     label="D/E Ratio",
     description="Debt-to-Equity ratio filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_de", "type": "float", "default": None, "description": "Min D/E %"},
         {"name": "max_de", "type": "float", "default": 100.0, "description": "Max D/E %"},
@@ -956,7 +956,7 @@ class DebtToEquityCondition(BaseCondition):
     key="current_ratio",
     label="Current Ratio",
     description="Current ratio (liquidity) filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_ratio", "type": "float", "default": 1.0, "description": "Min ratio"},
         {"name": "max_ratio", "type": "float", "default": 3.0, "description": "Max ratio"},
@@ -1021,7 +1021,7 @@ class CurrentRatioCondition(BaseCondition):
     key="roe",
     label="ROE",
     description="Return on Equity filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_roe", "type": "float", "default": 15.0, "description": "Min ROE %"},
         {"name": "max_roe", "type": "float", "default": None, "description": "Max ROE %"},
@@ -1092,7 +1092,7 @@ class RoeCondition(BaseCondition):
     key="piotroski_fscore",
     label="Piotroski F-Score",
     description="Piotroski F-Score (0-9) financial strength",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_score", "type": "int", "default": 7, "description": "Min F-Score"},
         {"name": "max_score", "type": "int", "default": None, "description": "Max F-Score"},
@@ -1303,7 +1303,7 @@ class PiotroskiFScoreCondition(BaseCondition):
     key="altman_zscore",
     label="Altman Z-Score",
     description="Altman Z-Score bankruptcy risk filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_zscore", "type": "float", "default": 2.5, "description": "Min Z-Score"},
         {"name": "max_zscore", "type": "float", "default": None, "description": "Max Z-Score"},
@@ -1466,7 +1466,7 @@ class AltmanZScoreCondition(BaseCondition):
     key="roic",
     label="ROIC",
     description="Return on Invested Capital filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "min_roic", "type": "float", "default": 15.0, "description": "Min ROIC %"},
         {"name": "max_roic", "type": "float", "default": None, "description": "Max ROIC %"},
@@ -1557,7 +1557,7 @@ class RoicCondition(BaseCondition):
     key="dso_trend_filter",
     label="DSO Trend Filter",
     description="Days Sales Outstanding deterioration trend filter",
-    category="Fundamental",
+    category="fundamental",
     params=[
         {"name": "lookback_years", "type": "int", "default": 1, "description": "Lookback years"},
         {"name": "min_dso_increase_pct", "type": "float", "default": 5.0, "description": "Min DSO increase %"},

@@ -45,7 +45,7 @@ export function ConditionsProvider({ children }: { children: React.ReactNode }) 
       ...c,
       category: normalizeCategoryKey(c.category),
     }));
-    const categories = (data?.categories ?? []).map(normalizeCategoryKey);
+    const categories = [...new Set((data?.categories ?? []).map(normalizeCategoryKey))];
 
     const conditionMap = new Map<string, StrategyConditionInfo>();
     for (const c of conditions) {
