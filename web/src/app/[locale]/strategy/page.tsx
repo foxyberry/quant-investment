@@ -68,18 +68,40 @@ const CHILD_HEIGHT = 80;
 const GROUP_MIN_WIDTH = 380;
 const GROUP_MIN_HEIGHT = 220;
 
+function estimateNodeSize(node: { data: StrategyNodeData }): { width: number; height: number } {
+  const data = node.data;
+  if (data.node_type === 'universe') {
+    return { width: 340, height: 92 };
+  }
+  if (data.node_type === 'sector') {
+    return { width: 300, height: 92 };
+  }
+  if (data.node_type === 'logic') {
+    return { width: GROUP_MIN_WIDTH, height: GROUP_MIN_HEIGHT };
+  }
+  if (data.node_type === 'output') {
+    return { width: 220, height: 84 };
+  }
+
+  // condition node
+  const conditionKey = data.condition_type ?? '';
+  const paramCount = Object.keys(data.params ?? {}).length;
+  const width = Math.min(460, Math.max(280, 280 + conditionKey.length * 4 + paramCount * 10));
+  const height = Math.min(180, Math.max(96, 96 + Math.min(paramCount, 4) * 16));
+  return { width, height };
+}
+
 /**
  * Compute a clean left-to-right layout for strategy nodes using topological sort.
- * Nodes without parents in the edge graph appear in the first column (sources).
+ * Uses estimated node sizes so long condition cards do not overlap after loading.
  */
 function computeAutoLayout(
-  nodes: Array<{ id: string; data: { node_type: string } }>,
+  nodes: Array<{ id: string; data: StrategyNodeData }>,
   edges: Array<{ source: string; target: string }>
 ): Map<string, { x: number; y: number }> {
-  const NODE_WIDTH = 240;
-  const NODE_GAP_X = 60;
-  const NODE_GAP_Y = 40;
-  const START_X = 60;
+  const NODE_GAP_X = 140;
+  const NODE_GAP_Y = 72;
+  const START_X = 80;
   const START_Y = 120;
 
   // Build adjacency + in-degree
@@ -128,15 +150,39 @@ function computeAutoLayout(
     columns.get(col)!.push(id);
   }
 
-  // Assign positions
+  const nodeIndex = new Map(nodes.map((n, idx) => [n.id, idx]));
+  const sizeById = new Map(nodes.map((n) => [n.id, estimateNodeSize(n)]));
+
+  // Assign positions (column-aware widths + row-aware heights)
   const positions = new Map<string, { x: number; y: number }>();
   const sortedCols = Array.from(columns.keys()).sort((a, b) => a - b);
+  const columnMaxWidth = new Map<number, number>();
   for (const col of sortedCols) {
     const ids = columns.get(col)!;
-    const x = START_X + col * (NODE_WIDTH + NODE_GAP_X);
-    for (let row = 0; row < ids.length; row++) {
-      const y = START_Y + row * (NODE_GAP_Y + 100);
-      positions.set(ids[row], { x, y });
+    const maxWidth = Math.max(
+      ...ids.map((id) => sizeById.get(id)?.width ?? 260),
+      260
+    );
+    columnMaxWidth.set(col, maxWidth);
+  }
+
+  const colX = new Map<number, number>();
+  let runningX = START_X;
+  for (const col of sortedCols) {
+    colX.set(col, runningX);
+    runningX += (columnMaxWidth.get(col) ?? 260) + NODE_GAP_X;
+  }
+
+  for (const col of sortedCols) {
+    const ids = [...columns.get(col)!].sort(
+      (a, b) => (nodeIndex.get(a) ?? 0) - (nodeIndex.get(b) ?? 0)
+    );
+    const x = colX.get(col) ?? START_X;
+    let runningY = START_Y;
+    for (const id of ids) {
+      positions.set(id, { x, y: runningY });
+      const height = sizeById.get(id)?.height ?? 100;
+      runningY += height + NODE_GAP_Y;
     }
   }
 
@@ -1094,7 +1140,7 @@ function StrategyPageInner() {
 
       // Fit view after layout settles
       requestAnimationFrame(() => {
-        reactFlowInstance?.fitView({ maxZoom: 0.75, padding: 0.3 });
+        reactFlowInstance?.fitView({ maxZoom: 0.72, padding: 0.38 });
       });
     },
     [setNodes, setEdges, reactFlowInstance]
