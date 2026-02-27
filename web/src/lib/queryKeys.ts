@@ -11,13 +11,9 @@ export const queryKeys = {
     universes: () => [...queryKeys.screening.all, 'universes'] as const,
     results: (preset: string, universe: string) =>
       [...queryKeys.screening.all, 'results', preset, universe] as const,
-    saved: () => [...queryKeys.screening.all, 'saved'] as const,
   },
   analysis: {
     all: ['analysis'] as const,
-    reports: (limit?: number) => [...queryKeys.analysis.all, 'reports', limit] as const,
-    reportDetail: (date: string) =>
-      [...queryKeys.analysis.all, 'report', date] as const,
     ticker: (ticker: string, period?: string) =>
       [...queryKeys.analysis.all, 'ticker', ticker, period] as const,
   },

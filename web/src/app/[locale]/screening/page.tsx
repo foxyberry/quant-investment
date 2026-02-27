@@ -7,15 +7,13 @@ import {
   ConditionMonitorPanel,
   FilterPanel,
   ResultTable,
-  SaveResultDialog,
-  SavedResultsList,
 } from '@/components/screening';
 import { runScreeningStream } from '@/lib/api';
 import type { ScreeningProgressEvent, ScreeningResult } from '@/lib/types';
 
 export default function ScreeningPage() {
   const t = useTranslations('screening');
-  const [activeMode, setActiveMode] = useState<'preset' | 'condition' | 'saved'>('preset');
+  const [activeMode, setActiveMode] = useState<'preset' | 'condition'>('preset');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [selectedUniverses, setSelectedUniverses] = useState<string[]>(['KOSPI']);
   const [referenceDate, setReferenceDate] = useState<string | null>(null);
@@ -31,7 +29,6 @@ export default function ScreeningPage() {
     referenceDate: string | null;
     elapsedMs: number | null;
   } | null>(null);
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [selectedGraph, setSelectedGraph] = useState<Record<string, unknown> | null>(null);
 
   const handleRunScreening = async () => {
@@ -101,33 +98,6 @@ export default function ScreeningPage() {
     }, selectedGraph);
   };
 
-  const handleLoadSavedResult = (data: {
-    results: ScreeningResult[];
-    preset: string;
-    universes: string[];
-    referenceDate: string | null;
-    totalCount: number;
-    matchedCount: number;
-    elapsedMs: number | null;
-  }) => {
-    setResults(data.results);
-    setHasRun(true);
-    setSelectedPreset(data.preset);
-    setSelectedUniverses(data.universes);
-    setReferenceDate(data.referenceDate);
-    setStats({
-      total: data.totalCount,
-      matched: data.matchedCount,
-      universes: data.universes,
-      referenceDate: data.referenceDate,
-      elapsedMs: data.elapsedMs,
-    });
-    setProgress(null);
-    setError(null);
-    setSelectedGraph(null);
-    setActiveMode('preset');
-  };
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -164,17 +134,6 @@ export default function ScreeningPage() {
             }`}
           >
             {t('conditionTab')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveMode('saved')}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              activeMode === 'saved'
-                ? 'bg-[var(--background-secondary)] text-[var(--foreground)] shadow-sm'
-                : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
-            }`}
-          >
-            {t('savedTab')}
           </button>
         </div>
 
@@ -303,31 +262,15 @@ export default function ScreeningPage() {
                 isLoading={isLoading}
                 hasRun={hasRun}
                 onRunScreening={handleRunScreening}
-                onSave={results.length > 0 ? () => setSaveDialogOpen(true) : undefined}
               />
             </div>
           </div>
-        ) : activeMode === 'condition' ? (
+        ) : (
           <div>
             <ConditionMonitorPanel />
           </div>
-        ) : (
-          <SavedResultsList onLoad={handleLoadSavedResult} />
         )}
       </div>
-
-      {/* Save Dialog */}
-      <SaveResultDialog
-        open={saveDialogOpen}
-        onClose={() => setSaveDialogOpen(false)}
-        preset={selectedPreset}
-        universes={selectedUniverses}
-        referenceDate={referenceDate}
-        totalCount={stats?.total ?? 0}
-        matchedCount={stats?.matched ?? 0}
-        elapsedMs={stats?.elapsedMs ?? null}
-        results={results}
-      />
     </div>
   );
 }

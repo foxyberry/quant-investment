@@ -1,14 +1,11 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import {
   getPresets,
   getUniverses,
   runScreening,
-  listSavedScreeningResults,
-  saveScreeningResult,
-  deleteSavedScreeningResult,
 } from '@/lib/api';
 
 export function usePresets() {
@@ -40,32 +37,5 @@ export function useRunScreening() {
       referenceDate?: string | null;
       params?: Record<string, unknown>;
     }) => runScreening(preset, universes, referenceDate, params),
-  });
-}
-
-export function useSavedScreeningResults() {
-  return useQuery({
-    queryKey: queryKeys.screening.saved(),
-    queryFn: listSavedScreeningResults,
-  });
-}
-
-export function useSaveScreeningResult() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: saveScreeningResult,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.screening.saved() });
-    },
-  });
-}
-
-export function useDeleteScreeningResult() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteSavedScreeningResult,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.screening.saved() });
-    },
   });
 }
