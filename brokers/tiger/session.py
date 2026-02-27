@@ -34,6 +34,8 @@ class TigerSession:
         Tiger developer ID (required).
     TIGER_PRIVATE_KEY:
         Path to RSA private key PEM file (required).
+    TIGER_PRIVATE_KEY_CONTENT:
+        Raw RSA private key PEM content (optional; preferred in runtime settings mode).
     TIGER_ACCOUNT:
         Account number (required).
     TIGER_LICENSE:
@@ -48,34 +50,39 @@ class TigerSession:
 
         tiger_id = os.environ.get("TIGER_ID")
         private_key_path = os.environ.get("TIGER_PRIVATE_KEY")
+        private_key_content = os.environ.get("TIGER_PRIVATE_KEY_CONTENT")
         account = os.environ.get("TIGER_ACCOUNT")
         license_type = os.environ.get("TIGER_LICENSE", "TBNZ")
+        sandbox_debug = os.environ.get("TIGER_SANDBOX", "false").lower() == "true"
 
         if not tiger_id:
             raise BrokerConnectionError("TIGER_ID environment variable is required")
-        if not private_key_path:
+        if not private_key_path and not private_key_content:
             raise BrokerConnectionError(
-                "TIGER_PRIVATE_KEY environment variable is required"
+                "TIGER_PRIVATE_KEY or TIGER_PRIVATE_KEY_CONTENT environment variable is required"
             )
         if not account:
             raise BrokerConnectionError(
                 "TIGER_ACCOUNT environment variable is required"
             )
 
-        self._config = TigerOpenClientConfig(sandbox_debug=False)
+        self._config = TigerOpenClientConfig(sandbox_debug=sandbox_debug)
         self._config.tiger_id = tiger_id
         self._config.account = account
         self._config.language = Language.en_US
         self._config.license = license_type
 
-        # Read private key
-        try:
-            with open(private_key_path, "r") as f:
-                self._config.private_key = f.read()
-        except FileNotFoundError:
-            raise BrokerConnectionError(
-                f"Private key file not found: {private_key_path}"
-            )
+        # Read private key (direct content has priority over file path)
+        if private_key_content:
+            self._config.private_key = private_key_content
+        else:
+            try:
+                with open(private_key_path, "r") as f:
+                    self._config.private_key = f.read()
+            except FileNotFoundError:
+                raise BrokerConnectionError(
+                    f"Private key file not found: {private_key_path}"
+                )
 
         self._trade_client = TradeClient(self._config)
         logger.info("Tiger session initialized for account %s", account)

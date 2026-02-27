@@ -343,6 +343,23 @@ export interface BrokerKillSwitchResult {
   cancelled_orders: number;
 }
 
+export interface TigerSettings {
+  tiger_id: string | null;
+  account: string | null;
+  license: string | null;
+  sandbox: boolean;
+  has_private_key: boolean;
+  updated_at: string | null;
+}
+
+export interface TigerSettingsUpsert {
+  tiger_id: string;
+  account: string;
+  private_key?: string | null;
+  license: string;
+  sandbox: boolean;
+}
+
 // Saved screening result types
 export interface SavedScreeningResultSummary {
   id: string;

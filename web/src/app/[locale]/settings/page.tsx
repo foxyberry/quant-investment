@@ -9,8 +9,14 @@ import { BASE_CURRENCIES, CURRENCY_LABELS } from '@/lib/format';
 import type { BaseCurrency } from '@/lib/format';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
-import { getBrokerConnectionStatus, getSettingsBrokerStatuses } from '@/lib/api';
-import type { BrokerConnectionStatus, BrokerConnectionState } from '@/lib/types';
+import {
+  getBrokerConnectionStatus,
+  getSettingsBrokerStatuses,
+  getTigerSettings,
+  saveTigerSettings,
+  testTigerConnection,
+} from '@/lib/api';
+import type { BrokerConnectionStatus, BrokerConnectionState, TigerSettingsUpsert } from '@/lib/types';
 
 const LOCALE_LABELS: Record<string, string> = {
   en: 'English',
@@ -32,6 +38,17 @@ export default function SettingsPage() {
   const [brokerError, setBrokerError] = useState<string | null>(null);
   const [refreshingBroker, setRefreshingBroker] = useState<string | null>(null);
   const [syncingAll, setSyncingAll] = useState(false);
+  const [tigerForm, setTigerForm] = useState<TigerSettingsUpsert>({
+    tiger_id: '',
+    account: '',
+    private_key: '',
+    license: 'TBNZ',
+    sandbox: false,
+  });
+  const [tigerHasPrivateKey, setTigerHasPrivateKey] = useState(false);
+  const [savingTiger, setSavingTiger] = useState(false);
+  const [testingTiger, setTestingTiger] = useState(false);
+  const [tigerMessage, setTigerMessage] = useState<string | null>(null);
 
   const statusTextKey: Record<BrokerConnectionState, string> = {
     connected: 'connected',
@@ -55,8 +72,20 @@ export default function SettingsPage() {
       setLoadingBrokers(true);
       setBrokerError(null);
       try {
-        const result = await getSettingsBrokerStatuses();
-        setBrokers(result);
+        const [brokerStatuses, tigerSettings] = await Promise.all([
+          getSettingsBrokerStatuses(),
+          getTigerSettings(),
+        ]);
+        setBrokers(brokerStatuses);
+        setTigerForm((prev) => ({
+          ...prev,
+          tiger_id: tigerSettings.tiger_id ?? '',
+          account: tigerSettings.account ?? '',
+          license: tigerSettings.license ?? 'TBNZ',
+          sandbox: tigerSettings.sandbox,
+          private_key: '',
+        }));
+        setTigerHasPrivateKey(tigerSettings.has_private_key);
       } catch (e) {
         setBrokerError(e instanceof Error ? e.message : 'Failed to load broker status');
       } finally {
@@ -105,6 +134,39 @@ export default function SettingsPage() {
       setBrokerError(e instanceof Error ? e.message : 'Failed to sync broker status');
     } finally {
       setSyncingAll(false);
+    }
+  };
+
+  const handleSaveTiger = async () => {
+    setSavingTiger(true);
+    setTigerMessage(null);
+    try {
+      const response = await saveTigerSettings(tigerForm);
+      setTigerHasPrivateKey(response.has_private_key);
+      setTigerForm((prev) => ({ ...prev, private_key: '' }));
+      setTigerMessage(t('tigerSaved'));
+      const statuses = await getSettingsBrokerStatuses();
+      setBrokers(statuses);
+    } catch (e) {
+      setTigerMessage(e instanceof Error ? e.message : t('saveFailed'));
+    } finally {
+      setSavingTiger(false);
+    }
+  };
+
+  const handleTigerTest = async () => {
+    setTestingTiger(true);
+    setTigerMessage(null);
+    try {
+      const status = await testTigerConnection();
+      setBrokers((prev) =>
+        prev.map((item) => (item.broker === 'tiger' ? status : item))
+      );
+      setTigerMessage(t('testSuccess'));
+    } catch (e) {
+      setTigerMessage(e instanceof Error ? e.message : t('testFailed'));
+    } finally {
+      setTestingTiger(false);
     }
   };
 
@@ -288,6 +350,86 @@ export default function SettingsPage() {
               </div>
             ))
           )}
+        </div>
+
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-4">
+          <h3 className="font-medium text-[var(--foreground)]">{t('tigerConfigTitle')}</h3>
+          <p className="mt-1 text-sm text-[var(--foreground-muted)]">{t('tigerConfigDesc')}</p>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="text-sm text-[var(--foreground-muted)]">
+              {t('tigerId')}
+              <input
+                value={tigerForm.tiger_id}
+                onChange={(e) => setTigerForm((prev) => ({ ...prev, tiger_id: e.target.value }))}
+                className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+              />
+            </label>
+            <label className="text-sm text-[var(--foreground-muted)]">
+              {t('tigerAccount')}
+              <input
+                value={tigerForm.account}
+                onChange={(e) => setTigerForm((prev) => ({ ...prev, account: e.target.value }))}
+                className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+              />
+            </label>
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="text-sm text-[var(--foreground-muted)]">
+              {t('tigerLicense')}
+              <input
+                value={tigerForm.license}
+                onChange={(e) => setTigerForm((prev) => ({ ...prev, license: e.target.value }))}
+                className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+              />
+            </label>
+            <label className="flex items-center gap-2 pt-7 text-sm text-[var(--foreground)]">
+              <input
+                type="checkbox"
+                checked={tigerForm.sandbox}
+                onChange={(e) => setTigerForm((prev) => ({ ...prev, sandbox: e.target.checked }))}
+              />
+              {t('tigerSandbox')}
+            </label>
+          </div>
+
+          <label className="mt-3 block text-sm text-[var(--foreground-muted)]">
+            {t('tigerPrivateKey')}
+            <textarea
+              value={tigerForm.private_key ?? ''}
+              onChange={(e) => setTigerForm((prev) => ({ ...prev, private_key: e.target.value }))}
+              rows={5}
+              placeholder={tigerHasPrivateKey ? t('tigerPrivateKeyPlaceholderMasked') : t('tigerPrivateKeyPlaceholder')}
+              className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+            />
+            <span className="mt-1 block text-xs text-[var(--foreground-muted)]">
+              {tigerHasPrivateKey ? t('tigerPrivateKeyStored') : t('tigerPrivateKeyMissing')}
+            </span>
+          </label>
+
+          {tigerMessage && (
+            <p className="mt-3 text-sm text-[var(--foreground-muted)]">{tigerMessage}</p>
+          )}
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleSaveTiger}
+              disabled={savingTiger}
+              className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {savingTiger ? t('saving') : t('saveTiger')}
+            </button>
+            <button
+              type="button"
+              onClick={handleTigerTest}
+              disabled={testingTiger}
+              className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background-secondary)] disabled:opacity-60"
+            >
+              {testingTiger ? t('testing') : t('testTiger')}
+            </button>
+          </div>
         </div>
       </section>
     </div>

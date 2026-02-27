@@ -110,6 +110,12 @@ def list_brokers() -> List[str]:
     return _default_registry.list_brokers()
 
 
+def refresh_broker(name: str) -> None:
+    """Reset a cached broker adapter instance by name."""
+    _register_default_brokers()
+    _default_registry.reset(name)
+
+
 __all__ = [
     # Exceptions
     "BrokerError",
@@ -138,4 +144,5 @@ __all__ = [
     # Convenience helpers
     "get_broker",
     "list_brokers",
+    "refresh_broker",
 ]
