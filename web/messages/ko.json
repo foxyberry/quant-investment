@@ -208,7 +208,11 @@
     "noSavedResultsDesc": "스크리닝을 실행하고 결과를 저장하면 여기에 표시됩니다.",
     "savedTab": "저장된 결과",
     "savedOn": "저장일",
-    "cancel": "취소"
+    "cancel": "취소",
+    "duplicateFound": "동일 조건의 실행 결과가 이미 있습니다",
+    "duplicateCreatedAt": "생성일: {date}",
+    "viewExistingResult": "기존 결과 보기",
+    "runAnyway": "새로 실행"
   },
   "portfolio": {
     "title": "포트폴리오",

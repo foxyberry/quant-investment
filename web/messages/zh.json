@@ -208,7 +208,11 @@
     "noSavedResultsDesc": "运行筛选并保存结果后，它们将显示在此处。",
     "savedTab": "已保存结果",
     "savedOn": "保存日期",
-    "cancel": "取消"
+    "cancel": "取消",
+    "duplicateFound": "已存在相同条件的执行结果",
+    "duplicateCreatedAt": "创建时间: {date}",
+    "viewExistingResult": "查看已有结果",
+    "runAnyway": "重新执行"
   },
   "portfolio": {
     "title": "投资组合",
