@@ -46,7 +46,7 @@ import { SAMPLE_STRATEGY_PRESETS, type SampleStrategyPreset } from '@/lib/strate
 import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
 import { useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
 import type { StrategyResultItem, SavedStrategy, NodeIntermediateResult } from '@/lib/api';
-import { runStrategyStream } from '@/lib/api';
+import { runStrategyStream, saveExecution } from '@/lib/api';
 
 const nodeTypes: NodeTypes = {
   universeNode: UniverseNode,
@@ -883,6 +883,20 @@ function StrategyPageInner() {
         t('deploySuccess', { count: data.matched_count, total: data.total_count }),
         'success'
       );
+
+      // Auto-save execution result (fire-and-forget)
+      saveExecution({
+        execution_type: 'strategy',
+        preset: strategyName || 'Untitled Strategy',
+        universes: [data.universe],
+        graph: graph as unknown as Record<string, unknown>,
+        total_count: data.total_count,
+        matched_count: data.matched_count,
+        results: data.results as unknown as Array<Record<string, unknown>>,
+        strategy_id: currentStrategyId ?? undefined,
+      }).catch((err) => {
+        console.warn('Auto-save failed:', err);
+      });
     };
 
     const stream = runStrategyStream(graph, undefined, {

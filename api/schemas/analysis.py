@@ -4,7 +4,6 @@ Analysis API schemas.
 Pydantic models for stock analysis request/response validation.
 """
 
-from datetime import datetime
 from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel, Field
@@ -126,83 +125,6 @@ class AnalysisResult(BaseModel):
     catalysts: List[str] = Field(
         default_factory=list,
         description="List of potential catalysts"
-    )
-
-
-class ReportSummary(BaseModel):
-    """
-    Summary of an analysis report.
-
-    Attributes:
-        date: Report date (YYYYMMDD format)
-        market: Market name (SP500, KOSPI, etc.)
-        total_stocks: Total number of stocks analyzed
-        buy_count: Number of BUY recommendations
-        wait_count: Number of WAIT recommendations
-        avoid_count: Number of AVOID recommendations
-    """
-
-    date: str = Field(..., description="Report date (YYYYMMDD)")
-    market: str = Field(..., description="Market name")
-    total_stocks: int = Field(..., description="Total stocks analyzed")
-    buy_count: int = Field(default=0, description="Number of BUY recommendations")
-    wait_count: int = Field(default=0, description="Number of WAIT recommendations")
-    avoid_count: int = Field(default=0, description="Number of AVOID recommendations")
-
-
-class ReportDetail(BaseModel):
-    """
-    Detailed analysis report.
-
-    Attributes:
-        date: Report date (YYYYMMDD format)
-        market: Market name
-        content: Full report content in Markdown
-        stocks: List of analyzed stocks
-    """
-
-    date: str = Field(..., description="Report date (YYYYMMDD)")
-    market: str = Field(..., description="Market name")
-    content: str = Field(..., description="Report content in Markdown format")
-    stocks: List[Dict[str, Any]] = Field(
-        default_factory=list,
-        description="List of analyzed stocks with their data"
-    )
-
-
-class ReportListResponse(BaseModel):
-    """
-    Response containing list of available reports.
-
-    Attributes:
-        reports: List of report summaries
-        total_count: Total number of reports
-    """
-
-    reports: List[ReportSummary] = Field(
-        default_factory=list,
-        description="List of available reports"
-    )
-    total_count: int = Field(..., description="Total number of reports")
-
-
-class EnrichedDataResponse(BaseModel):
-    """
-    Response containing enriched stock data for a specific date and market.
-
-    Attributes:
-        date: Data date (YYYYMMDD format)
-        market: Market name
-        stock_count: Number of stocks
-        stocks: List of enriched stock data
-    """
-
-    date: str = Field(..., description="Data date (YYYYMMDD)")
-    market: str = Field(..., description="Market name")
-    stock_count: int = Field(..., description="Number of stocks")
-    stocks: List[EnrichedStock] = Field(
-        default_factory=list,
-        description="List of enriched stock data"
     )
 
 

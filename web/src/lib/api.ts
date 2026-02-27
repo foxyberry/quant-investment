@@ -4,16 +4,15 @@ import type {
   ScreeningResponse,
   ScreeningProgressEvent,
   ScreeningResult,
-  SavedScreeningResultSummary,
-  SavedScreeningResult,
+  ExecutionHistoryListResponse,
+  ExecutionHistoryDetail,
+  DuplicateCheckResponse,
   Holding,
   HoldingCreate,
   HoldingUpdate,
   PortfolioSummary,
   SellSignal,
   CsvImportResponse,
-  ReportSummary,
-  ReportDetail,
   TickerAnalysis,
   AIAnalysisResult,
   AnalysisStatus,
@@ -333,22 +332,6 @@ export async function downloadHoldingsTemplate(minimal: boolean = false): Promis
 // Analysis API functions
 
 /**
- * Get list of recent analysis reports
- */
-export async function getReports(limit: number = 10): Promise<ReportSummary[]> {
-  const response = await fetchApi<{ reports: ReportSummary[]; total_count: number }>(`/api/analysis/reports?limit=${limit}`);
-  return response.reports;
-}
-
-/**
- * Get detailed analysis report by date
- */
-export async function getReportDetail(date: string, market?: string): Promise<ReportDetail> {
-  const params = market ? `?market=${encodeURIComponent(market)}` : '';
-  return fetchApi<ReportDetail>(`/api/analysis/reports/${encodeURIComponent(date)}${params}`);
-}
-
-/**
  * Get ticker analysis with OHLCV data and technical indicators
  */
 export async function getTickerAnalysis(ticker: string, period: string = '6mo'): Promise<TickerAnalysis> {
@@ -372,52 +355,82 @@ export async function analyzeStock(ticker: string, includeNews = true): Promise<
   });
 }
 
+// --- Execution History API ---
+
 /**
- * List all saved screening results (summaries only)
+ * List execution history with optional filtering
  */
-export async function listSavedScreeningResults(): Promise<{
-  results: SavedScreeningResultSummary[];
-  total_count: number;
-}> {
-  return fetchApi<{ results: SavedScreeningResultSummary[]; total_count: number }>(
-    '/api/screening/saved'
+export async function getExecutions(
+  options?: { execution_type?: string; limit?: number; offset?: number }
+): Promise<ExecutionHistoryListResponse> {
+  const params = new URLSearchParams();
+  if (options?.execution_type) params.set('execution_type', options.execution_type);
+  if (options?.limit) params.set('limit', String(options.limit));
+  if (options?.offset) params.set('offset', String(options.offset));
+  const qs = params.toString();
+  return fetchApi<ExecutionHistoryListResponse>(
+    `/api/reports/executions${qs ? `?${qs}` : ''}`
   );
 }
 
 /**
- * Save a screening result
+ * Get a single execution history detail
  */
-export async function saveScreeningResult(data: {
-  name: string;
-  description?: string;
+export async function getExecution(id: string): Promise<ExecutionHistoryDetail> {
+  return fetchApi<ExecutionHistoryDetail>(
+    `/api/reports/executions/${encodeURIComponent(id)}`
+  );
+}
+
+/**
+ * Save an execution result to history
+ */
+export async function saveExecution(data: {
+  execution_type: 'screening' | 'strategy';
   preset: string;
   universes: string[];
   reference_date?: string | null;
+  params?: Record<string, unknown> | null;
+  graph?: Record<string, unknown> | null;
   total_count: number;
   matched_count: number;
   elapsed_ms?: number | null;
-  results: ScreeningResult[];
-}): Promise<SavedScreeningResult> {
-  return fetchApi<SavedScreeningResult>('/api/screening/saved', {
+  results: Array<Record<string, unknown>>;
+  name?: string | null;
+  description?: string | null;
+  strategy_id?: string | null;
+}): Promise<ExecutionHistoryDetail> {
+  return fetchApi<ExecutionHistoryDetail>('/api/reports/executions', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
 /**
- * Get a single saved screening result (with full results)
+ * Check if a duplicate execution exists
  */
-export async function getSavedScreeningResult(id: string): Promise<SavedScreeningResult> {
-  return fetchApi<SavedScreeningResult>(
-    `/api/screening/saved/${encodeURIComponent(id)}`
+export async function checkDuplicateExecution(
+  executionType: string,
+  preset: string,
+  universes: string[],
+  referenceDate?: string | null
+): Promise<DuplicateCheckResponse> {
+  const params = new URLSearchParams({
+    execution_type: executionType,
+    preset,
+    universes: universes.join(','),
+  });
+  if (referenceDate) params.set('reference_date', referenceDate);
+  return fetchApi<DuplicateCheckResponse>(
+    `/api/reports/executions/check-duplicate?${params.toString()}`
   );
 }
 
 /**
- * Delete a saved screening result
+ * Delete an execution history record
  */
-export async function deleteSavedScreeningResult(id: string): Promise<void> {
-  return fetchApi<void>(`/api/screening/saved/${encodeURIComponent(id)}`, {
+export async function deleteExecution(id: string): Promise<void> {
+  return fetchApi<void>(`/api/reports/executions/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
 }

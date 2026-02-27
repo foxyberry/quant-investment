@@ -127,6 +127,7 @@ class TestRunScreening:
             universes=["KOSPI"],
             params=None,
             reference_date=None,
+            graph=None,
         )
 
     def test_run_screening_with_invalid_preset_returns_400(
@@ -203,6 +204,7 @@ class TestRunScreening:
             universes=["KOSPI", "KOSDAQ"],
             params=None,
             reference_date=None,
+            graph=None,
         )
 
     def test_run_screening_invalid_universe_uses_standard_message(
@@ -250,6 +252,7 @@ class TestRunScreening:
             universes=["SP500", "NASDAQ100"],
             params=None,
             reference_date=None,
+            graph=None,
         )
 
     def test_run_screening_with_mixed_universe_and_duplicates(self, client, mock_screening_service):
@@ -275,6 +278,7 @@ class TestRunScreening:
             universes=["KOSPI", "SP500"],
             params=None,
             reference_date=None,
+            graph=None,
         )
 
     def test_run_screening_with_params(self, client, mock_screening_service):

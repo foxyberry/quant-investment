@@ -6,7 +6,7 @@ import { Card } from '@/components/ui';
 import {
   PortfolioSummaryCard,
   SellSignalsCard,
-  RecentReportsCard,
+  RecentExecutionsCard,
   QuickActionsCard,
 } from '@/components/dashboard';
 import { Wifi, WifiOff, Loader2 } from 'lucide-react';
@@ -92,7 +92,7 @@ export default function Home() {
       <div className="grid gap-6 lg:grid-cols-2">
         <PortfolioSummaryCard />
         <SellSignalsCard />
-        <RecentReportsCard />
+        <RecentExecutionsCard />
         <QuickActionsCard />
       </div>
 

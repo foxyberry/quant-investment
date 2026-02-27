@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import get_settings
 from api.database import init_db
-from api.routers import analysis_router, broker_router, exchange_rates_router, health_router, portfolio_router, screening_router, settings_router
+from api.routers import analysis_router, broker_router, exchange_rates_router, execution_history_router, health_router, portfolio_router, screening_router, settings_router
 from api.services.broker_settings_service import get_broker_settings_service
 from api.routers.backtest import router as backtest_router
 from api.routers.market import router as market_router
@@ -101,6 +101,7 @@ def create_app() -> FastAPI:
     app.include_router(agent_task_router)
     app.include_router(kiwoom_router)
     app.include_router(broker_router)
+    app.include_router(execution_history_router)
 
     # Future routers (추후 추가될 라우터)
     # app.include_router(news_router, prefix="/api/v1")
