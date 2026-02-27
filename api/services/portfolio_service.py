@@ -8,8 +8,6 @@ Provides CRUD operations for holdings and P&L calculations.
 import csv
 import io
 import logging
-import threading
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, date
 from typing import List, Dict, Any, Optional
@@ -30,8 +28,12 @@ from api.services.exchange_rate_service import ExchangeRateService, get_exchange
 
 # Import data cache for current price retrieval
 from utils.data_cache import OHLCVCache, get_cache
+from utils.ttl_cache import TTLCache
 
 logger = logging.getLogger(__name__)
+
+# Timeout for each enrichment future in get_all_holdings (seconds).
+ENRICHMENT_TIMEOUT_SECONDS = 30
 
 
 class PortfolioService:
@@ -48,13 +50,17 @@ class PortfolioService:
 
     # Price cache TTL in seconds (deduplicates concurrent requests)
     PRICE_CACHE_TTL = 60
+    # Sector cache TTL (1 hour – sectors change infrequently)
+    SECTOR_CACHE_TTL = 3600
+    # Daily change cache TTL (same as price)
+    CHANGE_CACHE_TTL = 60
 
     def __init__(self):
-        self._lock = threading.RLock()
         self._cache = get_cache()
         self._fx: ExchangeRateService = get_exchange_rate_service()
-        self._price_cache: Dict[str, float] = {}
-        self._price_cache_time: float = 0.0
+        self._price_cache: TTLCache[float] = TTLCache(self.PRICE_CACHE_TTL, max_size=512)
+        self._sector_cache: TTLCache[Optional[str]] = TTLCache(self.SECTOR_CACHE_TTL, max_size=512)
+        self._change_cache: TTLCache[Optional[float]] = TTLCache(self.CHANGE_CACHE_TTL, max_size=512)
 
     @staticmethod
     def _convert_to_base(
@@ -108,8 +114,8 @@ class PortfolioService:
         """
         Get current prices for multiple tickers.
 
-        Uses a short-lived in-memory cache (PRICE_CACHE_TTL seconds)
-        to deduplicate concurrent requests from the same page load.
+        Uses TTLCache (PRICE_CACHE_TTL seconds per ticker) to deduplicate
+        concurrent requests from the same page load.
         Fetches prices in parallel using ThreadPoolExecutor.
 
         Args:
@@ -121,51 +127,61 @@ class PortfolioService:
         if not tickers:
             return {}
 
-        with self._lock:
-            now = time.monotonic()
+        from utils.ttl_cache import _MISSING
 
-            # Return cached prices if still fresh and all requested tickers are present
-            if (now - self._price_cache_time < self.PRICE_CACHE_TTL
-                    and all(t in self._price_cache for t in tickers)):
-                return {t: self._price_cache[t] for t in tickers}
+        # Check which tickers already have a fresh cache entry.
+        prices: Dict[str, float] = {}
+        uncached: List[str] = []
+        for t in tickers:
+            raw = self._price_cache._get_raw(t)
+            if raw is not _MISSING:
+                prices[t] = raw  # type: ignore[assignment]
+            else:
+                uncached.append(t)
 
-            prices: Dict[str, float] = {}
-
-            # Prefer OHLCVCache batch path to avoid N independent yfinance calls.
-            if hasattr(self._cache, "get_latest_prices"):
-                try:
-                    prices = self._cache.get_latest_prices(tickers, days=5)
-                except Exception as e:
-                    logger.warning(f"Batch price fetch failed; fallback to per-ticker: {e}")
-
-            # Fallback: per-ticker parallel fetch for any missing tickers.
-            missing_tickers = [t for t in tickers if t not in prices]
-            if missing_tickers:
-                with ThreadPoolExecutor(max_workers=min(len(missing_tickers), 8)) as executor:
-                    futures = {
-                        executor.submit(self._get_current_price, t): t
-                        for t in missing_tickers
-                    }
-                    for future in as_completed(futures):
-                        ticker = futures[future]
-                        try:
-                            price = future.result()
-                            if price is not None:
-                                prices[ticker] = price
-                        except Exception as e:
-                            logger.warning(f"Failed to fetch price for {ticker}: {e}")
-
-            # Update cache
-            self._price_cache = prices
-            self._price_cache_time = time.monotonic()
+        if not uncached:
             return prices
+
+        # Prefer OHLCVCache batch path to avoid N independent yfinance calls.
+        batch_prices: Dict[str, float] = {}
+        if hasattr(self._cache, "get_latest_prices"):
+            try:
+                batch_prices = self._cache.get_latest_prices(uncached, days=5)
+            except Exception as e:
+                logger.warning(f"Batch price fetch failed; fallback to per-ticker: {e}")
+
+        # Store batch results in TTLCache.
+        for ticker, price in batch_prices.items():
+            self._price_cache.set(ticker, price)
+            prices[ticker] = price
+
+        # Fallback: per-ticker parallel fetch for any still-missing tickers.
+        missing_tickers = [t for t in uncached if t not in batch_prices]
+        if missing_tickers:
+            with ThreadPoolExecutor(max_workers=min(len(missing_tickers), 8)) as executor:
+                futures = {
+                    executor.submit(self._get_current_price, t): t
+                    for t in missing_tickers
+                }
+                for future in as_completed(futures):
+                    ticker = futures[future]
+                    try:
+                        price = future.result()
+                        if price is not None:
+                            self._price_cache.set(ticker, price)
+                            prices[ticker] = price
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch price for {ticker}: {e}")
+
+        return prices
 
     def _get_daily_changes(self, tickers: List[str]) -> Dict[str, float]:
         """
         Get daily price change percentages for multiple tickers.
 
         Computes (last_close - prev_close) / prev_close * 100
-        from OHLCV cache data.
+        from OHLCV cache data.  Results are cached per-ticker for
+        CHANGE_CACHE_TTL seconds.
 
         Returns:
             Dict mapping ticker to change_pct (e.g. -1.5 for -1.5%)
@@ -173,7 +189,20 @@ class PortfolioService:
         if not tickers:
             return {}
 
+        from utils.ttl_cache import _MISSING
+
         changes: Dict[str, float] = {}
+        uncached: List[str] = []
+        for t in tickers:
+            raw = self._change_cache._get_raw(t)
+            if raw is not _MISSING:
+                if raw is not None:
+                    changes[t] = raw  # type: ignore[assignment]
+            else:
+                uncached.append(t)
+
+        if not uncached:
+            return changes
 
         def _calc_change(ticker: str) -> Optional[float]:
             try:
@@ -187,12 +216,13 @@ class PortfolioService:
                 pass
             return None
 
-        with ThreadPoolExecutor(max_workers=min(len(tickers), 8)) as executor:
-            futures = {executor.submit(_calc_change, t): t for t in tickers}
+        with ThreadPoolExecutor(max_workers=min(len(uncached), 8)) as executor:
+            futures = {executor.submit(_calc_change, t): t for t in uncached}
             for future in as_completed(futures):
                 ticker = futures[future]
                 try:
                     result = future.result()
+                    self._change_cache.set(ticker, result)
                     if result is not None:
                         changes[ticker] = result
                 except Exception:
@@ -205,7 +235,8 @@ class PortfolioService:
         Get sector classifications for multiple tickers.
 
         For Korean stocks (.KS, .KQ): uses pykrx via SectorFetcher batch lookup.
-        For US stocks (no dot suffix): uses yfinance Ticker.info["sector"].
+        For US stocks (no dot suffix): uses yfinance Ticker.info["sector"],
+        cached per-ticker for SECTOR_CACHE_TTL seconds.
         Best-effort: returns None for any ticker whose sector cannot be resolved.
 
         Args:
@@ -217,14 +248,26 @@ class PortfolioService:
         if not tickers:
             return {}
 
-        sectors: Dict[str, Optional[str]] = {}
+        from utils.ttl_cache import _MISSING
 
-        # Partition tickers by market
+        sectors: Dict[str, Optional[str]] = {}
+        uncached: List[str] = []
+        for t in tickers:
+            raw = self._sector_cache._get_raw(t)
+            if raw is not _MISSING:
+                sectors[t] = raw  # type: ignore[assignment]
+            else:
+                uncached.append(t)
+
+        if not uncached:
+            return sectors
+
+        # Partition uncached tickers by market
         kr_kospi: List[str] = []
         kr_kosdaq: List[str] = []
         us_tickers: List[str] = []
 
-        for t in tickers:
+        for t in uncached:
             if t.endswith(".KS"):
                 kr_kospi.append(t)
             elif t.endswith(".KQ"):
@@ -240,18 +283,22 @@ class PortfolioService:
             if kr_kospi:
                 kospi_map = fetcher.get_all_sector_classifications("KOSPI")
                 for t in kr_kospi:
-                    sectors[t] = kospi_map.get(t)
+                    sector = kospi_map.get(t)
+                    self._sector_cache.set(t, sector)
+                    sectors[t] = sector
 
             if kr_kosdaq:
                 kosdaq_map = fetcher.get_all_sector_classifications("KOSDAQ")
                 for t in kr_kosdaq:
-                    sectors[t] = kosdaq_map.get(t)
+                    sector = kosdaq_map.get(t)
+                    self._sector_cache.set(t, sector)
+                    sectors[t] = sector
         except Exception as e:
             logger.warning(f"Failed to fetch Korean sector data: {e}")
             for t in kr_kospi + kr_kosdaq:
                 sectors[t] = None
 
-        # US stocks: per-ticker yfinance lookup in parallel
+        # US stocks: per-ticker yfinance lookup in parallel, cached individually
         if us_tickers:
             def _fetch_us_sector(ticker: str) -> Optional[str]:
                 try:
@@ -268,7 +315,9 @@ class PortfolioService:
                 for future in as_completed(futures):
                     ticker = futures[future]
                     try:
-                        sectors[ticker] = future.result()
+                        sector = future.result()
+                        self._sector_cache.set(ticker, sector)
+                        sectors[ticker] = sector
                     except Exception as e:
                         logger.warning(f"Failed to fetch sector for {ticker}: {e}")
                         sectors[ticker] = None
@@ -353,15 +402,22 @@ class PortfolioService:
         changes: Dict[str, float] = {}
         if with_prices and holdings_dicts:
             tickers = [h["ticker"] for h in holdings_dicts]
-            prices = self._get_current_prices(tickers)
-            try:
-                changes = self._get_daily_changes(tickers)
-            except Exception as e:
-                logger.warning(f"Daily change enrichment failed: {e}")
-            try:
-                sectors = self._get_sectors(tickers)
-            except Exception as e:
-                logger.warning(f"Sector enrichment failed: {e}")
+
+            # Run all three enrichment calls in parallel.
+            with ThreadPoolExecutor(max_workers=3) as outer:
+                f_prices = outer.submit(self._get_current_prices, tickers)
+                f_changes = outer.submit(self._get_daily_changes, tickers)
+                f_sectors = outer.submit(self._get_sectors, tickers)
+
+                prices = f_prices.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
+                try:
+                    changes = f_changes.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
+                except Exception as e:
+                    logger.warning(f"Daily change enrichment failed: {e}")
+                try:
+                    sectors = f_sectors.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
+                except Exception as e:
+                    logger.warning(f"Sector enrichment failed: {e}")
 
         return [
             self._holding_to_response(
