@@ -26,6 +26,8 @@ import type {
   BrokerKillSwitchResult,
   BrokerOrder,
   BrokerOrderRequest,
+  TigerSettings,
+  TigerSettingsUpsert,
   Trade,
   TradeHistoryResponse,
   SellRecordCreate,
@@ -722,6 +724,23 @@ export async function listBrokers(): Promise<string[]> {
 export async function getSettingsBrokerStatuses(): Promise<BrokerConnectionStatus[]> {
   const data = await fetchApi<{ brokers: BrokerConnectionStatus[] }>('/api/settings/brokers');
   return data.brokers;
+}
+
+export async function getTigerSettings(): Promise<TigerSettings> {
+  return fetchApi<TigerSettings>('/api/settings/brokers/tiger');
+}
+
+export async function saveTigerSettings(payload: TigerSettingsUpsert): Promise<TigerSettings> {
+  return fetchApi<TigerSettings>('/api/settings/brokers/tiger', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function testTigerConnection(): Promise<BrokerConnectionStatus> {
+  return fetchApi<BrokerConnectionStatus>('/api/settings/brokers/tiger/test', {
+    method: 'POST',
+  });
 }
 
 export async function getBrokerConnectionStatus(

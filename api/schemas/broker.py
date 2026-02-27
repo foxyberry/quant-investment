@@ -107,3 +107,26 @@ class BrokerSettingsResponse(BaseModel):
     brokers: List[BrokerConnectionResponse] = Field(
         default_factory=list, description="Broker statuses for settings page"
     )
+
+
+class TigerSettingsRequest(BaseModel):
+    """Tiger broker credential payload for settings save."""
+
+    tiger_id: str = Field(..., description="Tiger developer ID")
+    account: str = Field(..., description="Tiger account number")
+    private_key: Optional[str] = Field(
+        None, description="Tiger RSA private key PEM content"
+    )
+    license: str = Field(default="TBNZ", description="Tiger license type")
+    sandbox: bool = Field(default=False, description="Tiger sandbox mode")
+
+
+class TigerSettingsResponse(BaseModel):
+    """Tiger broker settings payload safe for UI."""
+
+    tiger_id: Optional[str] = None
+    account: Optional[str] = None
+    license: Optional[str] = None
+    sandbox: bool = False
+    has_private_key: bool = False
+    updated_at: Optional[str] = None

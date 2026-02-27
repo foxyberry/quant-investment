@@ -425,3 +425,13 @@ class BrokerRegistry:
         """Check whether a broker name is registered."""
         with self._lock:
             return name in self._classes
+
+    def reset(self, name: str) -> None:
+        """Drop a cached adapter instance so it will be recreated on next get()."""
+        with self._lock:
+            old = self._instances.pop(name, None)
+        if old is not None and hasattr(old, "close"):
+            try:
+                old.close()
+            except Exception:
+                pass

@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.config import get_settings
 from api.database import init_db
 from api.routers import analysis_router, broker_router, exchange_rates_router, execution_history_router, health_router, portfolio_router, screening_router, settings_router
+from api.services.broker_settings_service import get_broker_settings_service
 from api.routers.backtest import router as backtest_router
 from api.routers.market import router as market_router
 from api.routers.search import router as search_router
@@ -40,6 +41,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     print(f"Debug mode: {settings.debug}")
     try:
         init_db()
+        try:
+            get_broker_settings_service().apply_tiger_settings_to_runtime()
+        except Exception as e:
+            print(f"WARNING: Tiger settings runtime apply failed: {e}")
     except Exception as e:
         print(f"WARNING: Database initialization failed: {e}")
         print("Strategy persistence will be unavailable until DB is reachable.")
