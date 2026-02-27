@@ -259,6 +259,8 @@ function LabeledEdge({
 }: EdgeProps) {
   const t = useTranslations('strategy');
   const [showStockList, setShowStockList] = useState(false);
+  const label = (data as Record<string, unknown>)?.label as string | undefined;
+  const isOutputEdge = !label; // internal group edges have "Then" label
 
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -267,18 +269,15 @@ function LabeledEdge({
     targetX,
     targetY,
     targetPosition,
+    borderRadius: 16,
+    offset: isOutputEdge ? 36 : 28,
   });
-
-  const label = (data as Record<string, unknown>)?.label as string | undefined;
 
   // Reactively subscribe to source node data so edge re-renders when results arrive
   const sourceNodeData = useNodesData(source);
   const sourceData = sourceNodeData?.data as unknown as StrategyNodeData | undefined;
   const intermediateResult = sourceData?.intermediateResult;
   const stockCount = intermediateResult?.stock_count;
-
-  // Final edge (going to output) gets primary color
-  const isOutputEdge = !label; // internal group edges have "Then" label
 
   const handleToggleStockList = useCallback(() => {
     setShowStockList((prev) => !prev);
