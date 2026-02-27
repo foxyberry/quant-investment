@@ -160,10 +160,127 @@ class PortfolioService:
             self._price_cache_time = time.monotonic()
             return prices
 
+    def _get_daily_changes(self, tickers: List[str]) -> Dict[str, float]:
+        """
+        Get daily price change percentages for multiple tickers.
+
+        Computes (last_close - prev_close) / prev_close * 100
+        from OHLCV cache data.
+
+        Returns:
+            Dict mapping ticker to change_pct (e.g. -1.5 for -1.5%)
+        """
+        if not tickers:
+            return {}
+
+        changes: Dict[str, float] = {}
+
+        def _calc_change(ticker: str) -> Optional[float]:
+            try:
+                data = self._cache.get(ticker, days=5, force_refresh=False)
+                if data is not None and len(data) >= 2:
+                    cur = float(data["close"].iloc[-1])
+                    prev = float(data["close"].iloc[-2])
+                    if prev > 0:
+                        return (cur - prev) / prev * 100
+            except Exception:
+                pass
+            return None
+
+        with ThreadPoolExecutor(max_workers=min(len(tickers), 8)) as executor:
+            futures = {executor.submit(_calc_change, t): t for t in tickers}
+            for future in as_completed(futures):
+                ticker = futures[future]
+                try:
+                    result = future.result()
+                    if result is not None:
+                        changes[ticker] = result
+                except Exception:
+                    pass
+
+        return changes
+
+    def _get_sectors(self, tickers: List[str]) -> Dict[str, Optional[str]]:
+        """
+        Get sector classifications for multiple tickers.
+
+        For Korean stocks (.KS, .KQ): uses pykrx via SectorFetcher batch lookup.
+        For US stocks (no dot suffix): uses yfinance Ticker.info["sector"].
+        Best-effort: returns None for any ticker whose sector cannot be resolved.
+
+        Args:
+            tickers: List of ticker symbols
+
+        Returns:
+            Dict mapping ticker to sector name (or None)
+        """
+        if not tickers:
+            return {}
+
+        sectors: Dict[str, Optional[str]] = {}
+
+        # Partition tickers by market
+        kr_kospi: List[str] = []
+        kr_kosdaq: List[str] = []
+        us_tickers: List[str] = []
+
+        for t in tickers:
+            if t.endswith(".KS"):
+                kr_kospi.append(t)
+            elif t.endswith(".KQ"):
+                kr_kosdaq.append(t)
+            else:
+                us_tickers.append(t)
+
+        # Korean stocks: batch lookup via SectorFetcher
+        try:
+            from screener.sector_fetcher import get_sector_fetcher
+            fetcher = get_sector_fetcher()
+
+            if kr_kospi:
+                kospi_map = fetcher.get_all_sector_classifications("KOSPI")
+                for t in kr_kospi:
+                    sectors[t] = kospi_map.get(t)
+
+            if kr_kosdaq:
+                kosdaq_map = fetcher.get_all_sector_classifications("KOSDAQ")
+                for t in kr_kosdaq:
+                    sectors[t] = kosdaq_map.get(t)
+        except Exception as e:
+            logger.warning(f"Failed to fetch Korean sector data: {e}")
+            for t in kr_kospi + kr_kosdaq:
+                sectors[t] = None
+
+        # US stocks: per-ticker yfinance lookup in parallel
+        if us_tickers:
+            def _fetch_us_sector(ticker: str) -> Optional[str]:
+                try:
+                    import yfinance as yf
+                    return yf.Ticker(ticker).info.get("sector")
+                except Exception:
+                    return None
+
+            with ThreadPoolExecutor(max_workers=min(len(us_tickers), 8)) as executor:
+                futures = {
+                    executor.submit(_fetch_us_sector, t): t
+                    for t in us_tickers
+                }
+                for future in as_completed(futures):
+                    ticker = futures[future]
+                    try:
+                        sectors[ticker] = future.result()
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch sector for {ticker}: {e}")
+                        sectors[ticker] = None
+
+        return sectors
+
     def _holding_to_response(
         self,
         holding: Dict[str, Any],
-        current_price: Optional[float] = None
+        current_price: Optional[float] = None,
+        sector: Optional[str] = None,
+        change_pct: Optional[float] = None,
     ) -> HoldingResponse:
         """
         Convert holding dict to HoldingResponse with P&L.
@@ -171,6 +288,7 @@ class PortfolioService:
         Args:
             holding: Holding data dict
             current_price: Current market price (optional)
+            sector: Stock sector classification (optional)
 
         Returns:
             HoldingResponse with calculated fields
@@ -202,11 +320,13 @@ class PortfolioService:
             quantity=quantity,
             avg_price=avg_price,
             current_price=current_price,
+            change_pct=change_pct,
             market_value=market_value,
             cost_basis=cost_basis,
             pnl=pnl,
             pnl_pct=pnl_pct,
             currency=holding.get("currency", "KRW"),
+            sector=sector,
             bought_at=bought_at,
             note=holding.get("note")
         )
@@ -228,13 +348,28 @@ class PortfolioService:
         finally:
             db.close()
 
-        prices = {}
+        prices: Dict[str, float] = {}
+        sectors: Dict[str, Optional[str]] = {}
+        changes: Dict[str, float] = {}
         if with_prices and holdings_dicts:
             tickers = [h["ticker"] for h in holdings_dicts]
             prices = self._get_current_prices(tickers)
+            try:
+                changes = self._get_daily_changes(tickers)
+            except Exception as e:
+                logger.warning(f"Daily change enrichment failed: {e}")
+            try:
+                sectors = self._get_sectors(tickers)
+            except Exception as e:
+                logger.warning(f"Sector enrichment failed: {e}")
 
         return [
-            self._holding_to_response(h, prices.get(h["ticker"]))
+            self._holding_to_response(
+                h,
+                prices.get(h["ticker"]),
+                sector=sectors.get(h["ticker"]),
+                change_pct=changes.get(h["ticker"]),
+            )
             for h in holdings_dicts
         ]
 
@@ -259,10 +394,22 @@ class PortfolioService:
             db.close()
 
         current_price = None
+        sector = None
+        change_pct = None
         if with_price:
             current_price = self._get_current_price(ticker)
+            try:
+                sector_map = self._get_sectors([ticker])
+                sector = sector_map.get(ticker)
+            except Exception as e:
+                logger.warning(f"Sector enrichment failed for {ticker}: {e}")
+            try:
+                changes = self._get_daily_changes([ticker])
+                change_pct = changes.get(ticker)
+            except Exception as e:
+                logger.warning(f"Daily change enrichment failed for {ticker}: {e}")
 
-        return self._holding_to_response(holding, current_price)
+        return self._holding_to_response(holding, current_price, sector=sector, change_pct=change_pct)
 
     def add_holding(self, data: HoldingCreate) -> HoldingResponse:
         """

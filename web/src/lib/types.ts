@@ -132,10 +132,12 @@ export interface Holding {
   quantity: number;
   avg_price: number;
   current_price: number | null;
+  change_pct: number | null;
   market_value: number | null;
   pnl: number | null;
   pnl_pct: number | null;
   currency: string;
+  sector: string | null;
 }
 
 export interface HoldingCreate {

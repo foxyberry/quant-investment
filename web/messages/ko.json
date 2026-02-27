@@ -371,7 +371,9 @@
     "noTrades": "거래 이력이 없습니다",
     "tradeQuantity": "수량",
     "tradeAvgCost": "평단가",
-    "tradePnl": "손익"
+    "tradePnl": "손익",
+    "sector": "섹터",
+    "market": "마켓"
   },
   "brokerOrderDesk": {
     "title": "통합 주문 데스크",
@@ -2771,5 +2773,31 @@
     "macdStrength": "추세 강도",
     "macdGrowing": "점점 강해지는 중",
     "macdFading": "점점 약해지는 중"
+  },
+  "allocation": {
+    "stockAllocation": "종목별 비중",
+    "marketAllocation": "마켓별 비중",
+    "sectorAllocation": "섹터별 비중",
+    "totalInvested": "총 투자금액",
+    "totalHoldings": "종목",
+    "sectors": "섹터",
+    "others": "기타",
+    "kospi": "코스피",
+    "kosdaq": "코스닥",
+    "us": "미국 시장",
+    "etf": "ETF",
+    "unknown": "기타",
+    "noData": "보유 종목을 추가하면 비중 차트를 볼 수 있습니다",
+    "clearFilter": "필터 해제",
+    "technology": "기술",
+    "financials": "금융",
+    "consumer": "소비재",
+    "healthcare": "헬스케어",
+    "energy": "에너지",
+    "industrials": "산업재",
+    "materials": "소재",
+    "realEstate": "부동산",
+    "utilities": "유틸리티",
+    "communication": "통신"
   }
 }

@@ -371,7 +371,9 @@
     "noTrades": "暂无交易记录",
     "tradeQuantity": "数量",
     "tradeAvgCost": "均价",
-    "tradePnl": "盈亏"
+    "tradePnl": "盈亏",
+    "sector": "行业",
+    "market": "市场"
   },
   "brokerOrderDesk": {
     "title": "统一下单台",
@@ -2771,5 +2773,31 @@
     "macdStrength": "趋势强度",
     "macdGrowing": "逐渐增强",
     "macdFading": "逐渐减弱"
+  },
+  "allocation": {
+    "stockAllocation": "个股比重",
+    "marketAllocation": "市场比重",
+    "sectorAllocation": "行业比重",
+    "totalInvested": "总投资额",
+    "totalHoldings": "持仓",
+    "sectors": "行业",
+    "others": "其他",
+    "kospi": "KOSPI",
+    "kosdaq": "KOSDAQ",
+    "us": "美国市场",
+    "etf": "ETF",
+    "unknown": "其他",
+    "noData": "添加持仓后即可查看比重图表",
+    "clearFilter": "清除筛选",
+    "technology": "科技",
+    "financials": "金融",
+    "consumer": "消费",
+    "healthcare": "医疗",
+    "energy": "能源",
+    "industrials": "工业",
+    "materials": "材料",
+    "realEstate": "房地产",
+    "utilities": "公用事业",
+    "communication": "通信"
   }
 }
