@@ -6,11 +6,16 @@ US Stock List Fetcher Module
 - 또는 마스터 파일에서 로드
 """
 
-import pandas as pd
+import csv
+import json
 import logging
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
+from urllib.error import URLError, HTTPError
+from urllib.request import Request, urlopen
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +27,20 @@ class UsStockFetcher:
     NASDAQ100_CACHE_FILE = "data/us/nasdaq100_list.csv"
     MASTER_FILE = "data/us/us_master.csv"
     CACHE_DAYS = 7
+    SP500_MIN_VALID_COUNT = 400
+    NASDAQ100_MIN_VALID_COUNT = 90
+    SP500_DATASET_URL = (
+        "https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv"
+    )
+    NASDAQ100_API_URL = "https://api.nasdaq.com/api/quote/list-type/nasdaq100"
 
     def __init__(self, use_cache: bool = True):
         self.use_cache = use_cache
+        self._repo_root = Path(__file__).resolve().parents[1]
+
+    def _resolve_path(self, relative_path: str) -> Path:
+        """작업 디렉토리와 무관하게 저장 경로를 리포지토리 루트 기준으로 고정."""
+        return self._repo_root / relative_path
 
     def get_sp500_symbols(self, refresh: bool = False) -> List[Dict]:
         """
@@ -39,63 +55,67 @@ class UsStockFetcher:
         # 캐시 확인
         if self.use_cache and not refresh:
             cached = self._load_cache()
-            if cached is not None:
+            if cached is not None and self._is_valid_count("SP500", len(cached)):
                 logger.info(f"캐시에서 {len(cached)}개 종목 로드")
                 return cached
+            if cached is not None:
+                logger.warning(
+                    "SP500 캐시 종목 수가 비정상(%d)이라 캐시를 무시하고 재수집합니다.",
+                    len(cached),
+                )
 
         # 새로 가져오기
-        symbols = self._fetch_from_wikipedia()
+        symbols = self._fetch_sp500_from_remote()
 
-        if symbols:
+        if symbols and self._is_valid_count("SP500", len(symbols)):
             self._save_cache(symbols)
             logger.info(f"S&P 500 {len(symbols)}개 종목 수집 완료")
+        elif symbols:
+            logger.warning("SP500 수집 결과(%d개)가 비정상이라 캐시 저장을 건너뜁니다.", len(symbols))
 
         return symbols
 
-    def _fetch_from_wikipedia(self) -> List[Dict]:
-        """Wikipedia에서 S&P 500 종목 리스트 가져오기"""
+    def _fetch_sp500_from_remote(self) -> List[Dict]:
+        """원격 CSV 소스에서 S&P 500 종목 리스트 가져오기."""
         try:
-            url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-            # User-Agent 헤더 추가 (403 방지)
-            tables = pd.read_html(
-                url,
-                storage_options={'User-Agent': 'Mozilla/5.0 (compatible; QuantInvestment/1.0)'}
+            request = Request(
+                self.SP500_DATASET_URL,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; QuantInvestment/1.0)"},
             )
+            with urlopen(request, timeout=20) as response:
+                csv_text = response.read().decode("utf-8", errors="replace")
 
-            if not tables:
-                logger.warning("Wikipedia에서 테이블을 찾지 못함")
-                return self._fetch_fallback()
-
-            df = tables[0]
-
+            reader = csv.DictReader(csv_text.splitlines())
             symbols = []
-            for _, row in df.iterrows():
-                symbol = row.get('Symbol', '')
-                name = row.get('Security', '')
-                sector = row.get('GICS Sector', '')
+            for row in reader:
+                symbol = (row.get("Symbol") or "").strip()
+                name = (row.get("Name") or row.get("Security") or "").strip()
+                sector = (row.get("Sector") or row.get("GICS Sector") or "").strip()
 
                 # BRK.B -> BRK-B (yfinance 형식)
-                symbol = symbol.replace('.', '-')
+                symbol = symbol.replace(".", "-")
 
                 if symbol and name:
-                    symbols.append({
-                        'symbol': symbol,
-                        'name': name,
-                        'sector': sector
-                    })
+                    symbols.append(
+                        {
+                            "symbol": symbol,
+                            "name": name,
+                            "sector": sector,
+                        }
+                    )
 
-            logger.info(f"Wikipedia에서 {len(symbols)}개 종목 수집")
+            logger.info("원격 CSV에서 SP500 %d개 종목 수집", len(symbols))
             return symbols if symbols else self._fetch_fallback()
 
-        except Exception as e:
-            logger.warning(f"Wikipedia 조회 실패: {e}")
+        except (HTTPError, URLError, TimeoutError, OSError, ValueError) as e:
+            logger.warning(f"SP500 원격 소스 조회 실패: {e}")
             return self._fetch_fallback()
 
     def _fetch_fallback(self) -> List[Dict]:
         """
         대체 방법: 마스터 파일 또는 주요 종목 하드코딩
         """
-        master_path = Path(self.MASTER_FILE)
+        master_path = self._resolve_path(self.MASTER_FILE)
 
         if master_path.exists():
             try:
@@ -185,7 +205,7 @@ class UsStockFetcher:
 
     def _load_cache(self) -> Optional[List[Dict]]:
         """캐시 파일에서 로드"""
-        cache_path = Path(self.CACHE_FILE)
+        cache_path = self._resolve_path(self.CACHE_FILE)
 
         if not cache_path.exists():
             return None
@@ -206,7 +226,7 @@ class UsStockFetcher:
     def _save_cache(self, symbols: List[Dict]) -> None:
         """캐시 파일에 저장"""
         try:
-            cache_path = Path(self.CACHE_FILE)
+            cache_path = self._resolve_path(self.CACHE_FILE)
             cache_path.parent.mkdir(parents=True, exist_ok=True)
 
             df = pd.DataFrame(symbols)
@@ -227,50 +247,61 @@ class UsStockFetcher:
         """
         if self.use_cache and not refresh:
             cached = self._load_nasdaq100_cache()
-            if cached is not None:
+            if cached is not None and self._is_valid_count("NASDAQ100", len(cached)):
                 logger.info(f"캐시에서 NASDAQ100 {len(cached)}개 종목 로드")
                 return cached
+            if cached is not None:
+                logger.warning(
+                    "NASDAQ100 캐시 종목 수가 비정상(%d)이라 캐시를 무시하고 재수집합니다.",
+                    len(cached),
+                )
 
-        symbols = self._fetch_nasdaq100_from_wikipedia()
+        symbols = self._fetch_nasdaq100_from_remote()
 
-        if symbols:
+        if symbols and self._is_valid_count("NASDAQ100", len(symbols)):
             self._save_nasdaq100_cache(symbols)
             logger.info(f"NASDAQ 100 {len(symbols)}개 종목 수집 완료")
+        elif symbols:
+            logger.warning("NASDAQ100 수집 결과(%d개)가 비정상이라 캐시 저장을 건너뜁니다.", len(symbols))
 
         return symbols
 
-    def _fetch_nasdaq100_from_wikipedia(self) -> List[Dict]:
-        """Wikipedia에서 NASDAQ 100 종목 리스트 가져오기"""
+    def _fetch_nasdaq100_from_remote(self) -> List[Dict]:
+        """NASDAQ API에서 NASDAQ 100 종목 리스트 가져오기."""
         try:
-            url = "https://en.wikipedia.org/wiki/Nasdaq-100"
-            tables = pd.read_html(url)
+            request = Request(
+                self.NASDAQ100_API_URL,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (compatible; QuantInvestment/1.0)",
+                    "Accept": "application/json",
+                },
+            )
+            with urlopen(request, timeout=20) as response:
+                payload = json.loads(response.read().decode("utf-8", errors="replace"))
 
-            for table in tables:
-                if 'Ticker' in table.columns or 'Symbol' in table.columns:
-                    symbol_col = 'Ticker' if 'Ticker' in table.columns else 'Symbol'
-                    name_col = 'Company' if 'Company' in table.columns else 'Security'
+            rows = (
+                payload.get("data", {})
+                .get("data", {})
+                .get("rows", [])
+            )
+            symbols = []
+            for row in rows:
+                symbol = str(row.get("symbol", "")).strip().replace(".", "-")
+                name = str(row.get("companyName", "")).strip()
+                sector = str(row.get("sector", "")).strip()
+                if symbol and name:
+                    symbols.append(
+                        {
+                            "symbol": symbol,
+                            "name": name,
+                            "sector": sector,
+                        }
+                    )
 
-                    symbols = []
-                    for _, row in table.iterrows():
-                        symbol = row.get(symbol_col, '')
-                        name = row.get(name_col, '')
-
-                        if symbol and name:
-                            symbols.append({
-                                'symbol': str(symbol).replace('.', '-'),
-                                'name': name,
-                                'sector': ''
-                            })
-
-                    if symbols:
-                        logger.info(f"NASDAQ 100에서 {len(symbols)}개 종목 수집")
-                        return symbols
-
-            logger.warning("Wikipedia에서 NASDAQ 100 테이블을 찾지 못함")
-            return self._fetch_nasdaq100_fallback()
-
-        except Exception as e:
-            logger.warning(f"NASDAQ 100 조회 실패: {e}")
+            logger.info("NASDAQ API에서 NASDAQ100 %d개 종목 수집", len(symbols))
+            return symbols if symbols else self._fetch_nasdaq100_fallback()
+        except (HTTPError, URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as e:
+            logger.warning(f"NASDAQ100 원격 소스 조회 실패: {e}")
             return self._fetch_nasdaq100_fallback()
 
     def _fetch_nasdaq100_fallback(self) -> List[Dict]:
@@ -282,9 +313,17 @@ class UsStockFetcher:
         logger.info("NASDAQ100 기본 주요 종목 리스트 사용 (fallback)")
         return self._get_major_stocks()
 
+    def _is_valid_count(self, universe: str, count: int) -> bool:
+        """비정상적으로 작은 종목 수인지 판정."""
+        if universe == "SP500":
+            return count >= self.SP500_MIN_VALID_COUNT
+        if universe == "NASDAQ100":
+            return count >= self.NASDAQ100_MIN_VALID_COUNT
+        return count > 0
+
     def _load_nasdaq100_cache(self) -> Optional[List[Dict]]:
         """NASDAQ100 캐시 파일에서 로드"""
-        cache_path = Path(self.NASDAQ100_CACHE_FILE)
+        cache_path = self._resolve_path(self.NASDAQ100_CACHE_FILE)
 
         if not cache_path.exists():
             return None
@@ -304,7 +343,7 @@ class UsStockFetcher:
     def _save_nasdaq100_cache(self, symbols: List[Dict]) -> None:
         """NASDAQ100 캐시 파일에 저장"""
         try:
-            cache_path = Path(self.NASDAQ100_CACHE_FILE)
+            cache_path = self._resolve_path(self.NASDAQ100_CACHE_FILE)
             cache_path.parent.mkdir(parents=True, exist_ok=True)
 
             df = pd.DataFrame(symbols)
