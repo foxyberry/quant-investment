@@ -514,6 +514,75 @@ class TestGetFullPortfolio:
         assert data["summary"]["holdings_count"] == 1
 
 
+class TestTradeEndpoints:
+    """Tests for POST/GET /api/portfolio/trades endpoints."""
+
+    def test_record_sell_accepts_fee_and_tax(self, client, mock_portfolio_service):
+        mock_portfolio_service.record_sell.return_value = {
+            "id": 1,
+            "ticker": "AAPL",
+            "name": "Apple Inc.",
+            "trade_type": "SELL",
+            "quantity": 2,
+            "price": 200.0,
+            "fee": 1.0,
+            "tax": 2.0,
+            "realized_pnl": 47.0,
+            "avg_price_at_trade": 175.0,
+            "currency": "USD",
+            "note": None,
+            "traded_at": "2026-02-27",
+            "created_at": datetime.now().isoformat(),
+        }
+
+        response = client.post(
+            "/api/portfolio/trades",
+            json={
+                "ticker": "AAPL",
+                "quantity": 2,
+                "price": 200.0,
+                "fee": 1.0,
+                "tax": 2.0,
+                "traded_at": "2026-02-27",
+            },
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["fee"] == 1.0
+        assert data["tax"] == 2.0
+        assert data["realized_pnl"] == 47.0
+
+    def test_get_trade_history_includes_tax(self, client, mock_portfolio_service):
+        mock_portfolio_service.get_trade_history.return_value = {
+            "trades": [
+                {
+                    "id": 1,
+                    "ticker": "AAPL",
+                    "name": "Apple Inc.",
+                    "trade_type": "SELL",
+                    "quantity": 2,
+                    "price": 200.0,
+                    "fee": 1.0,
+                    "tax": 2.0,
+                    "realized_pnl": 47.0,
+                    "avg_price_at_trade": 175.0,
+                    "currency": "USD",
+                    "note": None,
+                    "traded_at": "2026-02-27",
+                    "created_at": datetime.now().isoformat(),
+                }
+            ],
+            "total_realized_pnl": 47.0,
+            "trade_count": 1,
+        }
+
+        response = client.get("/api/portfolio/trades")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["trades"][0]["tax"] == 2.0
+
+
 def _csv_upload(client, content: str, mode: str = "merge"):
     """Helper to POST CSV content as file upload."""
     return client.post(

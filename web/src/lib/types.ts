@@ -384,6 +384,7 @@ export interface Trade {
   quantity: number;
   price: number;
   fee: number;
+  tax: number;
   realized_pnl: number | null;
   avg_price_at_trade: number | null;
   currency: string;
@@ -403,6 +404,7 @@ export interface SellRecordCreate {
   quantity: number;
   price: number;
   fee?: number;
+  tax?: number;
   traded_at: string; // YYYY-MM-DD
   note?: string;
 }

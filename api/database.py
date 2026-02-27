@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
@@ -57,10 +57,24 @@ def init_db() -> None:
 
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables ensured")
+    _migrate_trade_columns()
 
     _migrate_json_data()
     _migrate_portfolio_json()
     _migrate_saved_screening_to_execution_history()
+
+
+def _migrate_trade_columns() -> None:
+    """Schema compatibility migration for legacy trades table."""
+    try:
+        with engine.begin() as conn:
+            column_rows = conn.execute(text("PRAGMA table_info(trades)")).fetchall()
+            existing_columns = {row[1] for row in column_rows}
+            if "tax" not in existing_columns:
+                conn.execute(text("ALTER TABLE trades ADD COLUMN tax FLOAT DEFAULT 0"))
+                logger.info("Added missing trades.tax column for legacy DB compatibility")
+    except Exception as e:
+        logger.warning("Trade schema compatibility migration skipped: %s", e)
 
 
 def _migrate_json_data() -> None:

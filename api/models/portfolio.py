@@ -33,6 +33,7 @@ class Trade(Base):
     quantity = Column(Integer, nullable=False)
     price = Column(Float, nullable=False)
     fee = Column(Float, nullable=True, default=0)
+    tax = Column(Float, nullable=True, default=0)
     realized_pnl = Column(Float, nullable=True)  # calculated for SELL trades
     avg_price_at_trade = Column(Float, nullable=True)  # avg_price snapshot at sell
     currency = Column(String(8), nullable=False, default="KRW")

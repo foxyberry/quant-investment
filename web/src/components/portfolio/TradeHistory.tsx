@@ -205,6 +205,9 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
                     {t('tradeFee')}
                   </th>
                   <th className="px-4 py-3 text-right font-semibold text-[var(--foreground)]">
+                    {t('tradeTax')}
+                  </th>
+                  <th className="px-4 py-3 text-right font-semibold text-[var(--foreground)]">
                     {t('tradeAvgPrice')}
                   </th>
                   <th className="px-4 py-3 text-right font-semibold text-[var(--foreground)]">
@@ -249,6 +252,9 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-[var(--foreground-muted)]">
                       {formatCurrency(trade.fee, trade.currency)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-[var(--foreground-muted)]">
+                      {formatCurrency(trade.tax ?? 0, trade.currency)}
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
                       {trade.avg_price_at_trade !== null
@@ -343,6 +349,14 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
                     </p>
                     <p className="font-mono text-[var(--foreground-muted)]">
                       {formatCurrency(trade.fee, trade.currency)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[var(--foreground-muted)]">
+                      {t('tradeTax')}
+                    </p>
+                    <p className="font-mono text-[var(--foreground-muted)]">
+                      {formatCurrency(trade.tax ?? 0, trade.currency)}
                     </p>
                   </div>
                 </div>
