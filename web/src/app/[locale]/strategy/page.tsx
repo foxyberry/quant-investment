@@ -36,6 +36,7 @@ import LabeledEdge from '@/components/strategy/edges/LabeledEdge';
 import NodePalette from '@/components/strategy/NodePalette';
 import IntermediateResultsPanel from '@/components/strategy/IntermediateResultsPanel';
 import SideInspectionPanel from '@/components/strategy/SideInspectionPanel';
+import ChatPanel from '@/components/strategy/ChatPanel';
 
 import BacktestPanel from '@/components/backtest/BacktestPanel';
 import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
@@ -1289,7 +1290,7 @@ function StrategyPageInner() {
         <NodePalette nodeCount={nodeCount} />
 
         {/* Canvas */}
-        <div className="flex-1" ref={reactFlowWrapper}>
+        <div className="relative flex-1" ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -1333,6 +1334,7 @@ function StrategyPageInner() {
               className="dark:!opacity-20"
             />
           </ReactFlow>
+          <ChatPanel graph={serializeGraph(nodes as Node<StrategyNodeData>[], edges)} />
         </div>
       </div>
 

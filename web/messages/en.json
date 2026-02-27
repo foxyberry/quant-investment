@@ -532,7 +532,13 @@
     "passRate": "{rate}%",
     "openFullDataset": "Open Full Dataset View",
     "inspectNode": "Click a node to inspect its results",
-    "topResultsPreview": "Top Results Preview"
+    "topResultsPreview": "Top Results Preview",
+    "chatbot": {
+      "title": "AI Strategy Assistant",
+      "placeholder": "Ask about your strategy...",
+      "empty": "Ask me anything about building your strategy.",
+      "error": "Failed to get response. Please try again."
+    }
   },
   "analysis": {
     "title": "Charts & Analysis",

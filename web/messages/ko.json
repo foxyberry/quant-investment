@@ -532,7 +532,13 @@
     "passRate": "{rate}%",
     "openFullDataset": "전체 데이터 보기",
     "inspectNode": "노드를 클릭하면 결과를 확인할 수 있습니다",
-    "topResultsPreview": "상위 결과 미리보기"
+    "topResultsPreview": "상위 결과 미리보기",
+    "chatbot": {
+      "title": "AI 전략 어시스턴트",
+      "placeholder": "전략에 대해 질문하세요...",
+      "empty": "전략 구성에 대해 무엇이든 물어보세요.",
+      "error": "응답을 받지 못했습니다. 다시 시도해주세요."
+    }
   },
   "analysis": {
     "title": "차트 & 분석",

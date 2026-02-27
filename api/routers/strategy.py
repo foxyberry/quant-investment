@@ -13,6 +13,7 @@ import time
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
+from api.schemas.strategy_chat import StrategyChatRequest
 from api.schemas.strategy import (
     ConditionsListResponse,
     SavedStrategiesListResponse,
@@ -372,6 +373,44 @@ async def run_strategy_stream(request: StrategyExecuteRequest):
                     break
         finally:
             cancel_event.set()
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.post(
+    "/chat",
+    summary="Chat with strategy assistant",
+    description="Send a message to the AI strategy assistant. Returns SSE stream.",
+)
+async def strategy_chat(request: StrategyChatRequest):
+    """Stream AI chat responses for strategy building assistance."""
+    from api.services.strategy_chat_service import get_strategy_chat_service
+
+    service = get_strategy_chat_service()
+    if not service.is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Strategy chat not available. Set ANTHROPIC_API_KEY.",
+        )
+
+    def event_stream():
+        try:
+            for chunk in service.stream_chat(
+                [{"role": m.role, "content": m.content} for m in request.messages],
+                request.graph,
+            ):
+                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+        except Exception as e:
+            logger.exception("Strategy chat failed")
+            yield f"data: {json.dumps({'type': 'error', 'message': 'An error occurred while processing your request.'})}\n\n"
 
     return StreamingResponse(
         event_stream(),
