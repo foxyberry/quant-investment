@@ -22,6 +22,8 @@ interface SellModalProps {
 interface FormErrors {
   quantity?: string;
   price?: string;
+  fee?: string;
+  tax?: string;
 }
 
 /**
@@ -45,6 +47,7 @@ export default function SellModal({
   const [quantity, setQuantity] = useState('');
   const [price, setPrice] = useState('');
   const [fee, setFee] = useState('0');
+  const [tax, setTax] = useState('0');
   const [tradedAt, setTradedAt] = useState('');
   const [note, setNote] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
@@ -61,6 +64,7 @@ export default function SellModal({
         holding.current_price !== null ? holding.current_price.toString() : '',
       );
       setFee('0');
+      setTax('0');
       setTradedAt(new Date().toISOString().slice(0, 10));
       setNote('');
       setErrors({});
@@ -86,6 +90,7 @@ export default function SellModal({
     const qty = parseFloat(quantity);
     const sellPrice = parseFloat(price);
     const sellFee = parseFloat(fee) || 0;
+    const sellTax = parseFloat(tax) || 0;
     if (
       !Number.isFinite(qty) ||
       qty <= 0 ||
@@ -94,8 +99,8 @@ export default function SellModal({
     ) {
       return null;
     }
-    return (sellPrice - holding.avg_price) * qty - sellFee;
-  }, [quantity, price, fee, holding]);
+    return (sellPrice - holding.avg_price) * qty - sellFee - sellTax;
+  }, [quantity, price, fee, tax, holding]);
 
   const validate = useCallback((): boolean => {
     if (!holding) return false;
@@ -119,9 +124,19 @@ export default function SellModal({
       newErrors.price = t('sellPriceRequired');
     }
 
+    const sellFee = parseFloat(fee || '0');
+    if (isNaN(sellFee) || sellFee < 0) {
+      newErrors.fee = t('sellCostNonNegative');
+    }
+
+    const sellTax = parseFloat(tax || '0');
+    if (isNaN(sellTax) || sellTax < 0) {
+      newErrors.tax = t('sellCostNonNegative');
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [quantity, price, holding, t]);
+  }, [quantity, price, fee, tax, holding, t]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -137,6 +152,7 @@ export default function SellModal({
           quantity: parseFloat(quantity),
           price: parseFloat(price),
           fee: parseFloat(fee) || undefined,
+          tax: parseFloat(tax) || undefined,
           traded_at: tradedAt,
           note: note.trim() || undefined,
         });
@@ -150,7 +166,7 @@ export default function SellModal({
         setIsSubmitting(false);
       }
     },
-    [holding, quantity, price, fee, tradedAt, note, validate, onSellComplete, onClose],
+    [holding, quantity, price, fee, tax, tradedAt, note, validate, onSellComplete, onClose],
   );
 
   if (!isOpen || !holding) return null;
@@ -297,9 +313,39 @@ export default function SellModal({
                 onChange={(e) => setFee(e.target.value)}
                 step="any"
                 min="0"
-                className="w-full rounded-lg border border-[var(--border)] px-3 py-2 text-[var(--foreground)] placeholder-[var(--foreground-muted)] bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                className={`w-full rounded-lg border px-3 py-2 text-[var(--foreground)] placeholder-[var(--foreground-muted)] bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
+                  errors.fee ? 'border-red-500' : 'border-[var(--border)]'
+                }`}
                 disabled={isSubmitting}
               />
+              {errors.fee && (
+                <p className="mt-1 text-sm text-red-500">{errors.fee}</p>
+              )}
+            </div>
+
+            {/* Tax */}
+            <div>
+              <label
+                htmlFor="sell-tax"
+                className="block text-sm font-medium text-[var(--foreground)] mb-1"
+              >
+                {t('sellTax')}
+              </label>
+              <input
+                type="number"
+                id="sell-tax"
+                value={tax}
+                onChange={(e) => setTax(e.target.value)}
+                step="any"
+                min="0"
+                className={`w-full rounded-lg border px-3 py-2 text-[var(--foreground)] placeholder-[var(--foreground-muted)] bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
+                  errors.tax ? 'border-red-500' : 'border-[var(--border)]'
+                }`}
+                disabled={isSubmitting}
+              />
+              {errors.tax && (
+                <p className="mt-1 text-sm text-red-500">{errors.tax}</p>
+              )}
             </div>
 
             {/* Trade Date */}

@@ -147,7 +147,8 @@ class SellRecordCreate(BaseModel):
     ticker: str = Field(..., description="Stock ticker symbol")
     quantity: int = Field(..., gt=0, description="Number of shares sold")
     price: float = Field(..., gt=0, description="Sell price per share")
-    fee: float = Field(default=0, ge=0, description="Commission/tax")
+    fee: float = Field(default=0, ge=0, description="Commission")
+    tax: float = Field(default=0, ge=0, description="Tax")
     traded_at: date = Field(..., description="Date of the trade")
     note: Optional[str] = Field(default=None, description="Optional memo")
 
@@ -160,6 +161,7 @@ class TradeResponse(BaseModel):
     quantity: int
     price: float
     fee: float
+    tax: float = Field(default=0)
     realized_pnl: Optional[float] = None
     avg_price_at_trade: Optional[float] = None
     currency: str

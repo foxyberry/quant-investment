@@ -761,7 +761,8 @@ class PortfolioService:
                 )
 
             avg_price = holding.avg_price
-            realized_pnl = (data.price - avg_price) * data.quantity - data.fee
+            total_cost = data.fee + data.tax
+            realized_pnl = (data.price - avg_price) * data.quantity - total_cost
 
             trade = Trade(
                 ticker=data.ticker,
@@ -770,6 +771,7 @@ class PortfolioService:
                 quantity=data.quantity,
                 price=data.price,
                 fee=data.fee,
+                tax=data.tax,
                 realized_pnl=realized_pnl,
                 avg_price_at_trade=avg_price,
                 currency=holding.currency,
@@ -800,6 +802,7 @@ class PortfolioService:
                 quantity=trade.quantity,
                 price=trade.price,
                 fee=trade.fee or 0,
+                tax=trade.tax or 0,
                 realized_pnl=trade.realized_pnl,
                 avg_price_at_trade=trade.avg_price_at_trade,
                 currency=trade.currency,
@@ -844,6 +847,7 @@ class PortfolioService:
                 quantity=r.quantity,
                 price=r.price,
                 fee=r.fee or 0,
+                tax=r.tax or 0,
                 realized_pnl=r.realized_pnl,
                 avg_price_at_trade=r.avg_price_at_trade,
                 currency=r.currency,
