@@ -64,6 +64,7 @@ class HoldingResponse(BaseModel):
         pnl: Profit/Loss amount
         pnl_pct: Profit/Loss percentage
         currency: Currency code
+        sector: Stock sector classification (None if unavailable)
         bought_at: Purchase date
         note: Optional note
     """
@@ -73,11 +74,13 @@ class HoldingResponse(BaseModel):
     quantity: int = Field(..., description="Number of shares")
     avg_price: float = Field(..., description="Average purchase price")
     current_price: Optional[float] = Field(default=None, description="Current market price")
+    change_pct: Optional[float] = Field(default=None, description="Daily price change percentage")
     market_value: Optional[float] = Field(default=None, description="Current market value")
     cost_basis: float = Field(..., description="Total cost basis (quantity * avg_price)")
     pnl: Optional[float] = Field(default=None, description="Profit/Loss amount")
     pnl_pct: Optional[float] = Field(default=None, description="Profit/Loss percentage")
     currency: str = Field(default="KRW", description="Currency code")
+    sector: Optional[str] = Field(default=None, description="Stock sector classification")
     bought_at: Optional[date] = Field(default=None, description="Purchase date")
     note: Optional[str] = Field(default=None, description="Optional note")
 

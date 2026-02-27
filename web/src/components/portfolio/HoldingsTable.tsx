@@ -5,8 +5,9 @@ import { useTranslations, useLocale } from 'next-intl';
 import { ArrowUpDown, Edit2, Trash2, TrendingUp, TrendingDown, BarChart3, Banknote } from 'lucide-react';
 import type { Holding } from '@/lib/types';
 import { formatCurrency as formatCurrencyUtil, formatQuantity as formatQuantityUtil, formatPercent as formatPercentUtil } from '@/lib/format';
+import { classifyMarket, normalizeSector, MARKET_COLORS, SECTOR_COLORS } from './AllocationCharts';
 
-type SortField = 'ticker' | 'name' | 'quantity' | 'avg_price' | 'current_price' | 'market_value' | 'pnl' | 'pnl_pct';
+type SortField = 'ticker' | 'name' | 'sector' | 'market' | 'quantity' | 'avg_price' | 'current_price' | 'market_value' | 'pnl' | 'pnl_pct';
 type SortDirection = 'asc' | 'desc';
 
 interface HoldingsTableProps {
@@ -63,6 +64,25 @@ function SortButton({ field, currentField, direction, children, onSort, align = 
 // Local wrappers that capture the locale from the component tree.
 // The actual implementations live in @/lib/format.
 
+const SECTOR_I18N: Record<string, string> = {
+  Technology: 'technology', Financials: 'financials', Consumer: 'consumer',
+  Healthcare: 'healthcare', Energy: 'energy', Industrials: 'industrials',
+  Materials: 'materials', 'Real Estate': 'realEstate', Utilities: 'utilities',
+  Communication: 'communication', Others: 'others',
+};
+
+const MARKET_I18N: Record<string, string> = {
+  KOSPI: 'kospi', KOSDAQ: 'kosdaq', US: 'us', ETF: 'etf', unknown: 'unknown',
+};
+
+function sectorI18nKey(sector: string): string {
+  return SECTOR_I18N[sector] ?? 'others';
+}
+
+function marketI18nKey(market: string): string {
+  return MARKET_I18N[market] ?? 'unknown';
+}
+
 /**
  * Get color class based on P&L value
  */
@@ -87,6 +107,7 @@ export default function HoldingsTable({
   priceChangeDirection,
 }: HoldingsTableProps) {
   const t = useTranslations('portfolio');
+  const ta = useTranslations('allocation');
   const locale = useLocale();
   const formatCurrency = (value: number | null, currency?: string) => formatCurrencyUtil(value, currency, locale);
   const formatPercent = (value: number | null) => formatPercentUtil(value);
@@ -104,6 +125,12 @@ export default function HoldingsTable({
           break;
         case 'name':
           comparison = (a.name || '').localeCompare(b.name || '');
+          break;
+        case 'sector':
+          comparison = normalizeSector(a.sector).localeCompare(normalizeSector(b.sector));
+          break;
+        case 'market':
+          comparison = classifyMarket(a.ticker).localeCompare(classifyMarket(b.ticker));
           break;
         case 'quantity':
           comparison = a.quantity - b.quantity;
@@ -172,13 +199,18 @@ export default function HoldingsTable({
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--background)]/50">
               <th className="px-4 py-3 text-left">
-                <SortButton field="ticker" currentField={sortField} direction={sortDirection} onSort={handleSort}>
-                  {t('ticker')}
+                <SortButton field="name" currentField={sortField} direction={sortDirection} onSort={handleSort}>
+                  {t('name')}
                 </SortButton>
               </th>
               <th className="px-4 py-3 text-left">
-                <SortButton field="name" currentField={sortField} direction={sortDirection} onSort={handleSort}>
-                  {t('name')}
+                <SortButton field="sector" currentField={sortField} direction={sortDirection} onSort={handleSort}>
+                  {t('sector')}
+                </SortButton>
+              </th>
+              <th className="px-4 py-3 text-left">
+                <SortButton field="market" currentField={sortField} direction={sortDirection} onSort={handleSort}>
+                  {t('market')}
                 </SortButton>
               </th>
               <th className="px-4 py-3 text-right">
@@ -223,13 +255,20 @@ export default function HoldingsTable({
                 onClick={() => onRowClick?.(holding)}
                 className={`border-b border-[var(--border)] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
               >
+                <td className="px-4 py-3 text-[var(--foreground)]">
+                  {holding.name || holding.ticker}
+                </td>
                 <td className="px-4 py-3">
-                  <span className="font-mono font-medium text-[var(--color-primary)]">
-                    {holding.ticker}
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--background)] px-2.5 py-0.5 text-xs text-[var(--foreground-muted)]">
+                    <span className="inline-block h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: SECTOR_COLORS[normalizeSector(holding.sector)] ?? '#94a3b8' }} />
+                    {ta(sectorI18nKey(normalizeSector(holding.sector)))}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-[var(--foreground)]">
-                  {holding.name || '-'}
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--background)] px-2.5 py-0.5 text-xs text-[var(--foreground-muted)]">
+                    <span className="inline-block h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: MARKET_COLORS[classifyMarket(holding.ticker)] ?? '#94a3b8' }} />
+                    {ta(marketI18nKey(classifyMarket(holding.ticker)))}
+                  </span>
                 </td>
                 <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
                   {formatQuantity(holding.quantity)}
@@ -238,7 +277,7 @@ export default function HoldingsTable({
                   {formatCurrency(holding.avg_price, holding.currency)}
                 </td>
                 <td
-                  className={`px-4 py-3 text-right font-mono text-[var(--foreground)] transition-colors ${
+                  className={`px-4 py-3 text-right font-mono transition-colors ${getPnlColorClass(holding.change_pct)} ${
                     priceChangeDirection?.[holding.ticker] === 'up'
                       ? 'bg-red-100/70 dark:bg-red-900/30'
                       : priceChangeDirection?.[holding.ticker] === 'down'
@@ -246,7 +285,16 @@ export default function HoldingsTable({
                       : ''
                   }`}
                 >
-                  {formatCurrency(holding.current_price, holding.currency)}
+                  <span className="flex items-center justify-end gap-1">
+                    {holding.change_pct !== null && holding.change_pct !== undefined && holding.change_pct !== 0 && (
+                      holding.change_pct > 0 ? (
+                        <TrendingUp className="h-3.5 w-3.5" />
+                      ) : (
+                        <TrendingDown className="h-3.5 w-3.5" />
+                      )
+                    )}
+                    {formatCurrency(holding.current_price, holding.currency)}
+                  </span>
                 </td>
                 <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
                   {formatCurrency(holding.market_value, holding.currency)}
@@ -367,8 +415,8 @@ function MobileCard({ holding, onRowClick, onEdit, onDelete, onAnalyze, onSell, 
             <span className="font-mono font-medium text-[var(--color-primary)]">
               {holding.ticker}
             </span>
-            {holding.pnl !== null && holding.pnl !== 0 && (
-              holding.pnl > 0 ? (
+            {holding.change_pct !== null && holding.change_pct !== undefined && holding.change_pct !== 0 && (
+              holding.change_pct > 0 ? (
                 <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -439,7 +487,7 @@ function MobileCard({ holding, onRowClick, onEdit, onDelete, onAnalyze, onSell, 
         <div>
           <p className="text-[var(--foreground-muted)]">{t('currentPrice')}</p>
           <p
-            className={`font-mono font-medium text-[var(--foreground)] inline-block rounded px-1 transition-colors ${
+            className={`font-mono font-medium inline-flex items-center gap-1 rounded px-1 transition-colors ${getPnlColorClass(holding.change_pct)} ${
               priceChangeDirection?.[holding.ticker] === 'up'
                 ? 'bg-red-100/70 dark:bg-red-900/30'
                 : priceChangeDirection?.[holding.ticker] === 'down'
@@ -447,6 +495,13 @@ function MobileCard({ holding, onRowClick, onEdit, onDelete, onAnalyze, onSell, 
                 : ''
             }`}
           >
+            {holding.change_pct !== null && holding.change_pct !== undefined && holding.change_pct !== 0 && (
+              holding.change_pct > 0 ? (
+                <TrendingUp className="h-3.5 w-3.5" />
+              ) : (
+                <TrendingDown className="h-3.5 w-3.5" />
+              )
+            )}
             {formatCurrency(holding.current_price, holding.currency)}
           </p>
         </div>

@@ -15,7 +15,9 @@ import {
   BrokerOrderDesk,
   SellModal,
   TradeHistory,
+  AllocationCharts,
 } from '@/components/portfolio';
+import { normalizeSector, classifyMarket } from '@/components/portfolio/AllocationCharts';
 import {
   getHoldings,
   addHolding,
@@ -136,6 +138,8 @@ export default function PortfolioPage() {
   // Filter state
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sectorFilter, setSectorFilter] = useState<string | null>(null);
+  const [marketFilter, setMarketFilter] = useState<string | null>(null);
   const [orderDeskPrefill, setOrderDeskPrefill] = useState<OrderDeskPrefill | null>(null);
   const [orderDeskTab, setOrderDeskTab] = useState<'kiwoom' | 'unified'>('unified');
   const tradeHistoryRef = useRef<HTMLDivElement | null>(null);
@@ -459,6 +463,16 @@ export default function PortfolioPage() {
       );
     }
 
+    // Apply sector filter (from chart click)
+    if (sectorFilter) {
+      filtered = filtered.filter((h) => normalizeSector(h.sector) === sectorFilter);
+    }
+
+    // Apply market filter (from chart click)
+    if (marketFilter) {
+      filtered = filtered.filter((h) => classifyMarket(h.ticker) === marketFilter);
+    }
+
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -470,7 +484,7 @@ export default function PortfolioPage() {
     }
 
     return filtered;
-  }, [holdings, activeFilter, searchQuery]);
+  }, [holdings, activeFilter, sectorFilter, marketFilter, searchQuery]);
 
   /**
    * Handle adding a new holding
@@ -534,6 +548,18 @@ export default function PortfolioPage() {
     window.open(
       `/${locale}/analysis/${encodeURIComponent(holding.ticker)}?popup=true`,
       `analysis_${holding.ticker}`,
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+  }, [locale]);
+
+  const handleTreemapTickerClick = useCallback((ticker: string) => {
+    const width = 900;
+    const height = 700;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    window.open(
+      `/${locale}/analysis/${encodeURIComponent(ticker)}?popup=true`,
+      `analysis_${ticker}`,
       `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
     );
   }, [locale]);
@@ -724,6 +750,19 @@ export default function PortfolioPage() {
             iconBgClass="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400"
           />
         </div>
+      )}
+
+      {/* Allocation Charts */}
+      {!isLoading && holdings.length > 0 && (
+        <AllocationCharts
+          holdings={holdings}
+          formatCurrency={formatCurrency}
+          onSectorClick={setSectorFilter}
+          onMarketClick={setMarketFilter}
+          onTickerClick={handleTreemapTickerClick}
+          activeSectorFilter={sectorFilter}
+          activeMarketFilter={marketFilter}
+        />
       )}
 
       {/* Search + Filter */}

@@ -371,7 +371,9 @@
     "noTrades": "No trade history yet",
     "tradeQuantity": "Qty",
     "tradeAvgCost": "Avg Cost",
-    "tradePnl": "P&L"
+    "tradePnl": "P&L",
+    "sector": "Sector",
+    "market": "Market"
   },
   "brokerOrderDesk": {
     "title": "Broker Order Desk",
@@ -2790,5 +2792,31 @@
     "macdStrength": "Momentum",
     "macdGrowing": "Getting stronger",
     "macdFading": "Getting weaker"
+  },
+  "allocation": {
+    "stockAllocation": "Stock Allocation",
+    "marketAllocation": "Market Allocation",
+    "sectorAllocation": "Sector Allocation",
+    "totalInvested": "Total Invested",
+    "totalHoldings": "holdings",
+    "sectors": "sectors",
+    "others": "Others",
+    "kospi": "KOSPI",
+    "kosdaq": "KOSDAQ",
+    "us": "US Market",
+    "etf": "ETF",
+    "unknown": "Other",
+    "noData": "Add holdings to see allocation charts",
+    "clearFilter": "Clear filter",
+    "technology": "Technology",
+    "financials": "Financials",
+    "consumer": "Consumer",
+    "healthcare": "Healthcare",
+    "energy": "Energy",
+    "industrials": "Industrials",
+    "materials": "Materials",
+    "realEstate": "Real Estate",
+    "utilities": "Utilities",
+    "communication": "Communication"
   }
 }
