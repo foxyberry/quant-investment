@@ -290,10 +290,21 @@ export default function ResultTable({ results, isLoading, hasRun, onRunScreening
 
       {/* Desktop Table View */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full table-fixed">
+          <colgroup>
+            <col className="w-14" />          {/* Rank */}
+            <col className="w-[10%]" />       {/* Ticker */}
+            <col className="w-[20%]" />       {/* Name */}
+            <col className="w-[8%]" />        {/* Market */}
+            <col className="w-[13%]" />       {/* Price */}
+            <col className="w-[11%]" />       {/* Change% */}
+            <col className="w-[12%]" />       {/* Volume */}
+            <col className="w-[10%]" />       {/* Score */}
+            <col className="w-10" />          {/* Expand */}
+          </colgroup>
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--background)]">
-              <th className="w-14 whitespace-nowrap px-3 py-3 text-center text-sm font-semibold text-[var(--foreground)]">{t('rank')}</th>
+              <th className="whitespace-nowrap px-3 py-3 text-center text-sm font-semibold text-[var(--foreground)]">{t('rank')}</th>
               <th className="whitespace-nowrap px-3 py-3 text-left text-sm font-semibold text-[var(--foreground)]">
                 <SortButton field="ticker" currentField={sortField} currentDirection={sortDirection} onSort={handleSort}>
                   {t('ticker')}
@@ -325,7 +336,7 @@ export default function ResultTable({ results, isLoading, hasRun, onRunScreening
                   {t('score')}
                 </SortButton>
               </th>
-              <th className="w-10 whitespace-nowrap px-2 py-3 text-center text-sm font-semibold text-[var(--foreground)]" />
+              <th className="px-2 py-3" />
             </tr>
           </thead>
           <tbody>
@@ -522,7 +533,7 @@ function TableRow({ result, rank, colCount = 9, isExpanded, onToggle, onOpen }: 
           isExpanded ? 'bg-[var(--background)]' : 'hover:bg-[var(--background)]'
         } cursor-pointer`}
       >
-        <td className="w-14 whitespace-nowrap px-3 py-3 text-center text-sm text-[var(--foreground-muted)]">
+        <td className="whitespace-nowrap px-3 py-3 text-center text-sm text-[var(--foreground-muted)]">
           {rank}
         </td>
         <td className="whitespace-nowrap px-3 py-3">
@@ -530,7 +541,9 @@ function TableRow({ result, rank, colCount = 9, isExpanded, onToggle, onOpen }: 
             {result.ticker}
           </span>
         </td>
-        <td className="px-3 py-3 text-sm text-[var(--foreground)] truncate max-w-[200px]">{result.name}</td>
+        <td className="overflow-hidden px-3 py-3 text-sm text-[var(--foreground)]">
+          <span className="block truncate">{result.name}</span>
+        </td>
         <td className="whitespace-nowrap px-3 py-3 text-center">
           {result.market ? (
             <span className="inline-flex rounded-full bg-[var(--background)] border border-[var(--border)] px-2 py-0.5 text-xs font-medium text-[var(--foreground-muted)]">
@@ -552,7 +565,7 @@ function TableRow({ result, rank, colCount = 9, isExpanded, onToggle, onOpen }: 
         <td className="whitespace-nowrap px-3 py-3 text-right font-mono text-sm">
           <ScoreBadge score={result.score} />
         </td>
-        <td className="w-10 whitespace-nowrap px-2 py-3 text-center">
+        <td className="whitespace-nowrap px-2 py-3 text-center">
           <button
             type="button"
             onClick={(e) => {
