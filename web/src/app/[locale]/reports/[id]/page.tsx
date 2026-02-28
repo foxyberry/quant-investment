@@ -12,6 +12,9 @@ import {
   Clock,
   RefreshCw,
   Play,
+  Database,
+  CheckCircle,
+  PieChart,
 } from 'lucide-react';
 
 function formatElapsed(ms: number | null | undefined): string {
@@ -94,7 +97,11 @@ export default function ExecutionDetailPage() {
         <BackLink t={t} />
         <div className="space-y-4 animate-pulse">
           <div className="h-10 w-64 rounded bg-[var(--border)]" />
-          <div className="h-16 rounded-lg bg-[var(--border)]" />
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-[72px] rounded-xl bg-[var(--border)]" />
+            ))}
+          </div>
           <div className="h-64 rounded-lg bg-[var(--border)]" />
         </div>
       </div>
@@ -170,51 +177,33 @@ export default function ExecutionDetailPage() {
         </Link>
       </div>
 
-      {/* Stats bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-[var(--foreground-muted)]">
-            {t('totalCount')}
-          </span>
-          <span className="font-semibold text-[var(--foreground)]">
-            {execution.total_count.toLocaleString()}
-          </span>
-        </div>
-        <div className="h-4 w-px bg-[var(--border)]" />
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-[var(--foreground-muted)]">
-            {t('matchedCount')}
-          </span>
-          <span className="font-semibold text-green-600 dark:text-green-400">
-            {execution.matched_count.toLocaleString()}
-          </span>
-        </div>
-        <div className="h-4 w-px bg-[var(--border)]" />
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-[var(--foreground-muted)]">
-            {t('matchRate')}
-          </span>
-          <span className="font-semibold text-[var(--foreground)]">
-            {execution.total_count > 0
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          icon={<Database className="h-5 w-5" />}
+          label={t('totalCount')}
+          value={execution.total_count.toLocaleString()}
+        />
+        <StatCard
+          icon={<CheckCircle className="h-5 w-5" />}
+          label={t('matchedCount')}
+          value={execution.matched_count.toLocaleString()}
+          accent="green"
+        />
+        <StatCard
+          icon={<PieChart className="h-5 w-5" />}
+          label={t('matchRate')}
+          value={`${
+            execution.total_count > 0
               ? ((execution.matched_count / execution.total_count) * 100).toFixed(1)
-              : '0'}
-            %
-          </span>
-        </div>
-        {execution.elapsed_ms != null && (
-          <>
-            <div className="h-4 w-px bg-[var(--border)]" />
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-[var(--foreground-muted)]" />
-              <span className="text-sm text-[var(--foreground-muted)]">
-                {t('executionTime')}
-              </span>
-              <span className="font-semibold text-[var(--foreground)]">
-                {formatElapsed(execution.elapsed_ms)}
-              </span>
-            </div>
-          </>
-        )}
+              : '0'
+          }%`}
+        />
+        <StatCard
+          icon={<Clock className="h-5 w-5" />}
+          label={t('executionTime')}
+          value={formatElapsed(execution.elapsed_ms)}
+        />
       </div>
 
       {/* Results table */}
@@ -234,6 +223,40 @@ function BackLink({ t }: { t: ReturnType<typeof useTranslations> }) {
       <ArrowLeft className="h-4 w-4" />
       {t('back')}
     </Link>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  accent?: 'green';
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3 backdrop-blur-sm">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-[var(--foreground-muted)] truncate">
+          {label}
+        </p>
+        <p
+          className={`text-lg font-semibold tabular-nums ${
+            accent === 'green'
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-[var(--foreground)]'
+          }`}
+        >
+          {value}
+        </p>
+      </div>
+    </div>
   );
 }
 
