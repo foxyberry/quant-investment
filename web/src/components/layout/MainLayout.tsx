@@ -56,7 +56,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       {/* Main content area */}
       <div className="lg:ml-[var(--sidebar-width)] min-h-screen flex flex-col transition-sidebar">
-        <main className="flex-1 p-4 lg:p-6 max-w-screen-2xl">
+        <main className="flex-1 p-4 lg:p-6">
           {children}
         </main>
         <Footer />

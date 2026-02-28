@@ -530,7 +530,7 @@ function TableRow({ result, rank, colCount = 9, isExpanded, onToggle, onOpen }: 
             {result.ticker}
           </span>
         </td>
-        <td className="whitespace-nowrap px-3 py-3 text-sm text-[var(--foreground)]">{result.name}</td>
+        <td className="px-3 py-3 text-sm text-[var(--foreground)] truncate max-w-[200px]">{result.name}</td>
         <td className="whitespace-nowrap px-3 py-3 text-center">
           {result.market ? (
             <span className="inline-flex rounded-full bg-[var(--background)] border border-[var(--border)] px-2 py-0.5 text-xs font-medium text-[var(--foreground-muted)]">

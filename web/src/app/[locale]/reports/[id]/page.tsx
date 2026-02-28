@@ -134,7 +134,7 @@ export default function ExecutionDetailPage() {
     execution.execution_type === 'strategy' ? '/strategy' : '/screening';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-screen-2xl">
       {/* Back link */}
       <BackLink t={t} />
 
@@ -199,11 +199,13 @@ export default function ExecutionDetailPage() {
               : '0'
           }%`}
         />
-        <StatCard
-          icon={<Clock className="h-5 w-5" />}
-          label={t('executionTime')}
-          value={formatElapsed(execution.elapsed_ms)}
-        />
+        {execution.elapsed_ms != null && (
+          <StatCard
+            icon={<Clock className="h-5 w-5" />}
+            label={t('executionTime')}
+            value={formatElapsed(execution.elapsed_ms)}
+          />
+        )}
       </div>
 
       {/* Results table */}
