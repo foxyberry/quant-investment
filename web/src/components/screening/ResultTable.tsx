@@ -50,7 +50,7 @@ function SortButton({ field, currentField, currentDirection, children, onSort, c
     <button
       type="button"
       onClick={() => onSort(field)}
-      className={`flex items-center gap-1 font-semibold text-[var(--foreground)] hover:text-[var(--color-primary)] transition-colors ${className}`}
+      className={`flex items-center gap-1 whitespace-nowrap text-sm font-semibold leading-5 text-[var(--foreground)] hover:text-[var(--color-primary)] transition-colors ${className}`}
     >
       {children}
       {isActive ? (
@@ -290,46 +290,53 @@ export default function ResultTable({ results, isLoading, hasRun, onRunScreening
 
       {/* Desktop Table View */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full table-fixed">
+          <colgroup>
+            <col className="w-14" />          {/* Rank */}
+            <col className="w-[10%]" />       {/* Ticker */}
+            <col className="w-[20%]" />       {/* Name */}
+            <col className="w-[8%]" />        {/* Market */}
+            <col className="w-[13%]" />       {/* Price */}
+            <col className="w-[11%]" />       {/* Change% */}
+            <col className="w-[12%]" />       {/* Volume */}
+            <col className="w-[10%]" />       {/* Score */}
+            <col className="w-10" />          {/* Expand */}
+          </colgroup>
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--background)]">
-              <th className="w-14 px-3 py-3 text-center text-xs font-semibold text-[var(--foreground-muted)]">
-                {t('rank')}
-              </th>
-              <th className="px-3 py-3 text-left">
+              <th className="whitespace-nowrap px-3 py-3 text-center text-sm font-semibold text-[var(--foreground)]">{t('rank')}</th>
+              <th className="whitespace-nowrap px-3 py-3 text-left text-sm font-semibold text-[var(--foreground)]">
                 <SortButton field="ticker" currentField={sortField} currentDirection={sortDirection} onSort={handleSort}>
                   {t('ticker')}
                 </SortButton>
               </th>
-              <th className="px-3 py-3 text-left">
+              <th className="whitespace-nowrap px-3 py-3 text-left text-sm font-semibold text-[var(--foreground)]">
                 <SortButton field="name" currentField={sortField} currentDirection={sortDirection} onSort={handleSort}>
                   {t('name')}
                 </SortButton>
               </th>
-              <th className="px-3 py-3 text-center text-xs font-semibold text-[var(--foreground)]">
-                {t('market')}
-              </th>
-              <th className="px-3 py-3 text-right">
+              <th className="whitespace-nowrap px-3 py-3 text-center text-sm font-semibold text-[var(--foreground)]">{t('market')}</th>
+              <th className="whitespace-nowrap px-3 py-3 text-right text-sm font-semibold text-[var(--foreground)]">
                 <SortButton field="current_price" currentField={sortField} currentDirection={sortDirection} onSort={handleSort} className="justify-end">
                   {t('price')}
                 </SortButton>
               </th>
-              <th className="px-3 py-3 text-right">
+              <th className="whitespace-nowrap px-3 py-3 text-right text-sm font-semibold text-[var(--foreground)]">
                 <SortButton field="change_pct" currentField={sortField} currentDirection={sortDirection} onSort={handleSort} className="justify-end">
                   {t('changePct')}
                 </SortButton>
               </th>
-              <th className="px-3 py-3 text-right">
+              <th className="whitespace-nowrap px-3 py-3 text-right text-sm font-semibold text-[var(--foreground)]">
                 <SortButton field="volume" currentField={sortField} currentDirection={sortDirection} onSort={handleSort} className="justify-end">
                   {t('volume')}
                 </SortButton>
               </th>
-              <th className="px-3 py-3 text-right">
+              <th className="whitespace-nowrap px-3 py-3 text-right text-sm font-semibold text-[var(--foreground)]">
                 <SortButton field="score" currentField={sortField} currentDirection={sortDirection} onSort={handleSort} className="justify-end">
                   {t('score')}
                 </SortButton>
               </th>
-              <th className="w-12 px-3 py-3" />
+              <th className="px-2 py-3" />
             </tr>
           </thead>
           <tbody>
@@ -526,37 +533,39 @@ function TableRow({ result, rank, colCount = 9, isExpanded, onToggle, onOpen }: 
           isExpanded ? 'bg-[var(--background)]' : 'hover:bg-[var(--background)]'
         } cursor-pointer`}
       >
-        <td className="px-3 py-3 text-center text-sm font-medium text-[var(--foreground-muted)]">
+        <td className="whitespace-nowrap px-3 py-3 text-center text-sm text-[var(--foreground-muted)]">
           {rank}
         </td>
-        <td className="px-3 py-3">
-          <span className="font-mono font-medium text-[var(--color-primary)]">
+        <td className="whitespace-nowrap px-3 py-3">
+          <span className="font-mono text-sm font-medium text-[var(--color-primary)]">
             {result.ticker}
           </span>
         </td>
-        <td className="px-3 py-3 text-sm text-[var(--foreground)]">{result.name}</td>
-        <td className="px-3 py-3 text-center">
+        <td className="overflow-hidden px-3 py-3 text-sm text-[var(--foreground)]">
+          <span className="block truncate">{result.name}</span>
+        </td>
+        <td className="whitespace-nowrap px-3 py-3 text-center">
           {result.market ? (
-            <span className="inline-flex rounded-full bg-[var(--background)] border border-[var(--border)] px-2 py-0.5 text-[10px] font-medium text-[var(--foreground-muted)]">
+            <span className="inline-flex rounded-full bg-[var(--background)] border border-[var(--border)] px-2 py-0.5 text-xs font-medium text-[var(--foreground-muted)]">
               {result.market}
             </span>
           ) : (
             <span className="text-[var(--foreground-muted)]">-</span>
           )}
         </td>
-        <td className="px-3 py-3 text-right font-mono text-sm text-[var(--foreground)]">
+        <td className="whitespace-nowrap px-3 py-3 text-right font-mono text-sm text-[var(--foreground)]">
           {formatPrice(result.current_price)}
         </td>
-        <td className={`px-3 py-3 text-right font-mono text-sm ${changePctColor(result.change_pct)}`}>
+        <td className={`whitespace-nowrap px-3 py-3 text-right font-mono text-sm ${changePctColor(result.change_pct)}`}>
           {formatChangePct(result.change_pct)}
         </td>
-        <td className="px-3 py-3 text-right font-mono text-sm text-[var(--foreground)]">
+        <td className="whitespace-nowrap px-3 py-3 text-right font-mono text-sm text-[var(--foreground)]">
           {formatVolume(result.volume)}
         </td>
-        <td className="px-3 py-3 text-right">
+        <td className="whitespace-nowrap px-3 py-3 text-right font-mono text-sm">
           <ScoreBadge score={result.score} />
         </td>
-        <td className="px-3 py-3 text-center">
+        <td className="whitespace-nowrap px-2 py-3 text-center">
           <button
             type="button"
             onClick={(e) => {
@@ -575,7 +584,7 @@ function TableRow({ result, rank, colCount = 9, isExpanded, onToggle, onOpen }: 
         <tr>
           <td
             colSpan={colCount}
-            className="border-b border-[var(--border)] bg-[var(--background)] px-4 py-4"
+            className="border-b border-[var(--border)] bg-[var(--background)] px-4 py-3"
           >
             <ConditionDetails conditions={result.conditions} ticker={result.ticker} />
           </td>
