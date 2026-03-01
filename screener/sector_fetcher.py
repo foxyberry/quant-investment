@@ -1,7 +1,7 @@
 """
 한국 주식 시장 업종 분류 수집 모듈
 - pykrx를 이용해 코스피/코스닥 업종 정보를 조회
-- pykrx 실패 시 마스터 CSV, yfinance 순으로 폴백
+- pykrx 실패 시 마스터 CSV로 폴백
 """
 
 import logging
@@ -174,6 +174,10 @@ class SectorFetcher:
             df = pd.read_csv(master_path, dtype={"code": str})
             if df.empty or "sector" not in df.columns:
                 return pd.DataFrame()
+
+            df = df.dropna(subset=["code", "sector"])
+            df = df[df["code"].str.match(r"^\d{6}$")]
+            df = df.drop_duplicates(subset=["code"], keep="last")
 
             result = pd.DataFrame(
                 {"업종명": df["sector"].values},
