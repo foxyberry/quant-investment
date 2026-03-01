@@ -4,10 +4,11 @@ Portfolio schemas for API request/response validation.
 Defines Pydantic models for portfolio management operations.
 """
 
+import math
 from datetime import datetime, date
-from typing import List, Optional
+from typing import List, Optional, Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class HoldingCreate(BaseModel):
@@ -84,6 +85,21 @@ class HoldingResponse(BaseModel):
     bought_at: Optional[date] = Field(default=None, description="Purchase date")
     note: Optional[str] = Field(default=None, description="Optional note")
 
+    @model_validator(mode="after")
+    def _sanitize_nan(self) -> "Self":
+        """Replace NaN/Inf with None (optional) or 0.0 (required) to prevent JSON serialization errors."""
+        # Optional float fields -> None on bad value
+        for field_name in ("current_price", "change_pct", "market_value", "pnl", "pnl_pct"):
+            val = getattr(self, field_name, None)
+            if val is not None and (math.isnan(val) or math.isinf(val)):
+                object.__setattr__(self, field_name, None)
+        # Required float fields -> 0.0 on bad value
+        for field_name in ("avg_price", "cost_basis"):
+            val = getattr(self, field_name)
+            if math.isnan(val) or math.isinf(val):
+                object.__setattr__(self, field_name, 0.0)
+        return self
+
 
 class PortfolioSummary(BaseModel):
     """
@@ -109,6 +125,15 @@ class PortfolioSummary(BaseModel):
         default_factory=datetime.now,
         description="Last update timestamp"
     )
+
+    @model_validator(mode="after")
+    def _sanitize_nan(self) -> "Self":
+        """Replace NaN/Inf with 0.0 for required float fields to prevent JSON serialization errors."""
+        for field_name in ("total_investment", "total_market_value", "total_pnl", "total_pnl_pct"):
+            val = getattr(self, field_name)
+            if math.isnan(val) or math.isinf(val):
+                object.__setattr__(self, field_name, 0.0)
+        return self
 
 
 class CsvRowError(BaseModel):
@@ -205,6 +230,19 @@ class SellSignal(BaseModel):
     avg_price: float = Field(..., description="Average purchase price")
     pnl_pct: float = Field(..., description="Current profit/loss percentage")
     currency: str = Field(..., description="Holding currency code")
+
+    @model_validator(mode="after")
+    def _sanitize_nan(self) -> "Self":
+        """Replace NaN/Inf to prevent JSON serialization errors."""
+        for field_name in ("trigger_price",):
+            val = getattr(self, field_name, None)
+            if val is not None and (math.isnan(val) or math.isinf(val)):
+                object.__setattr__(self, field_name, None)
+        for field_name in ("current_price", "avg_price", "pnl_pct"):
+            val = getattr(self, field_name)
+            if math.isnan(val) or math.isinf(val):
+                object.__setattr__(self, field_name, 0.0)
+        return self
 
 
 class PortfolioResponse(BaseModel):

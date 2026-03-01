@@ -584,7 +584,8 @@
     "loadMore": "Load More",
     "dateToday": "Today",
     "dateYesterday": "Yesterday",
-    "dateDaysAgo": "{days} days ago"
+    "dateDaysAgo": "{days} days ago",
+    "referenceDate": "Ref. Date"
   },
   "stockDetail": {
     "financialOverview": "Financial Overview",

@@ -584,7 +584,8 @@
     "loadMore": "加载更多",
     "dateToday": "今天",
     "dateYesterday": "昨天",
-    "dateDaysAgo": "{days}天前"
+    "dateDaysAgo": "{days}天前",
+    "referenceDate": "参考日期"
   },
   "stockDetail": {
     "financialOverview": "财务概览",
