@@ -10,6 +10,8 @@ from brokers.exceptions import BrokerConnectionError
 from api.schemas.broker import (
     BrokerConnectionResponse,
     BrokerSettingsResponse,
+    IBKRSettingsRequest,
+    IBKRSettingsResponse,
     TigerSettingsRequest,
     TigerSettingsResponse,
 )
@@ -113,6 +115,64 @@ def test_tiger_connection() -> BrokerConnectionResponse:
     try:
         _settings_service.apply_tiger_settings_to_runtime()
         status = _service.get_connection_status("tiger")
+        return BrokerConnectionResponse(
+            broker=status.broker,
+            status=status.status,
+            is_paper_trading=status.is_paper_trading,
+            accounts=status.accounts,
+            updated_at=status.updated_at,
+        )
+    except BrokerConnectionError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+# -- IBKR settings ----------------------------------------------------------
+
+
+@router.get(
+    "/brokers/ibkr",
+    response_model=IBKRSettingsResponse,
+    summary="Get IBKR broker settings",
+)
+def get_ibkr_settings() -> IBKRSettingsResponse:
+    view = _settings_service.get_ibkr_settings()
+    return IBKRSettingsResponse(
+        gateway_url=view.gateway_url,
+        account_id=view.account_id,
+        updated_at=view.updated_at,
+    )
+
+
+@router.put(
+    "/brokers/ibkr",
+    response_model=IBKRSettingsResponse,
+    summary="Save IBKR broker settings",
+)
+def save_ibkr_settings(request: IBKRSettingsRequest) -> IBKRSettingsResponse:
+    try:
+        view = _settings_service.save_ibkr_settings(request.model_dump())
+        return IBKRSettingsResponse(
+            gateway_url=view.gateway_url,
+            account_id=view.account_id,
+            updated_at=view.updated_at,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post(
+    "/brokers/ibkr/test",
+    response_model=BrokerConnectionResponse,
+    summary="Test IBKR broker connection",
+)
+def test_ibkr_connection() -> BrokerConnectionResponse:
+    try:
+        _settings_service.apply_ibkr_settings_to_runtime()
+        status = _service.get_connection_status("ibkr")
         return BrokerConnectionResponse(
             broker=status.broker,
             status=status.status,

@@ -2738,7 +2738,16 @@
     "tigerSaved": "Tiger 设置已保存。",
     "testSuccess": "连接测试完成。",
     "saveFailed": "保存失败。",
-    "testFailed": "连接测试失败。"
+    "testFailed": "连接测试失败。",
+    "ibkrConfigTitle": "IBKR 连接设置",
+    "ibkrConfigDesc": "配置 Interactive Brokers Client Portal Gateway 连接。",
+    "ibkrGatewayUrl": "网关 URL",
+    "ibkrGatewayUrlPlaceholder": "https://localhost:5000",
+    "ibkrAccountId": "账户 ID",
+    "ibkrAccountIdPlaceholder": "留空自动发现",
+    "saveIbkr": "保存 IBKR 设置",
+    "testIbkr": "测试 IBKR 连接",
+    "ibkrSaved": "IBKR 设置已保存。"
   },
   "kiwoom": {
     "title": "Kiwoom",

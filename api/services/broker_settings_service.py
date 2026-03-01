@@ -5,8 +5,10 @@ from __future__ import annotations
 import base64
 import json
 import os
+import re
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlparse
 
 from brokers import refresh_broker
 
@@ -30,6 +32,13 @@ class TigerSettingsView:
     license: str | None
     sandbox: bool
     has_private_key: bool
+    updated_at: str | None
+
+
+@dataclass
+class IBKRSettingsView:
+    gateway_url: str | None
+    account_id: str | None
     updated_at: str | None
 
 
@@ -167,6 +176,96 @@ class BrokerSettingsService:
             db.close()
 
         refresh_broker("tiger")
+
+    # -- IBKR settings -------------------------------------------------------
+
+    def get_ibkr_settings(self) -> IBKRSettingsView:
+        db = SessionLocal()
+        try:
+            row = db.get(BrokerCredential, "ibkr")
+            if not row:
+                return IBKRSettingsView(
+                    gateway_url=None,
+                    account_id=None,
+                    updated_at=None,
+                )
+
+            data = json.loads(row.config_json)
+            return IBKRSettingsView(
+                gateway_url=data.get("gateway_url"),
+                account_id=data.get("account_id"),
+                updated_at=row.updated_at.isoformat() if row.updated_at else None,
+            )
+        finally:
+            db.close()
+
+    @staticmethod
+    def _validate_ibkr_gateway_url(url: str) -> None:
+        """Restrict gateway_url to localhost to prevent SSRF."""
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+        allowed = {"localhost", "127.0.0.1", "::1"}
+        if host not in allowed and not re.match(r"^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$", host):
+            raise ValueError(
+                "gateway_url must point to localhost (e.g. https://localhost:5000)"
+            )
+
+    def save_ibkr_settings(self, payload: dict[str, Any]) -> IBKRSettingsView:
+        gateway_url = (payload.get("gateway_url") or "").strip()
+        account_id = (payload.get("account_id") or "").strip() or None
+
+        if not gateway_url:
+            raise ValueError("gateway_url is required")
+        self._validate_ibkr_gateway_url(gateway_url)
+
+        db = SessionLocal()
+        try:
+            row = db.get(BrokerCredential, "ibkr")
+            if not row:
+                row = BrokerCredential(
+                    broker="ibkr",
+                    account_id=account_id or "",
+                    is_enabled=True,
+                    config_json="{}",
+                )
+
+            merged = {
+                "gateway_url": gateway_url,
+                "account_id": account_id,
+            }
+
+            row.account_id = account_id or ""
+            row.is_enabled = True
+            row.config_json = json.dumps(merged)
+            db.merge(row)
+            db.commit()
+        finally:
+            db.close()
+
+        self.apply_ibkr_settings_to_runtime()
+        return self.get_ibkr_settings()
+
+    def apply_ibkr_settings_to_runtime(self) -> None:
+        """Load IBKR settings from DB and apply into process env."""
+        db = SessionLocal()
+        try:
+            row = db.get(BrokerCredential, "ibkr")
+            if not row:
+                return
+            data = json.loads(row.config_json)
+            gateway_url = data.get("gateway_url")
+            if not gateway_url:
+                return
+            os.environ["IBKR_GATEWAY_URL"] = str(gateway_url).strip()
+            account_id = data.get("account_id")
+            if account_id:
+                os.environ["IBKR_ACCOUNT_ID"] = str(account_id).strip()
+            else:
+                os.environ.pop("IBKR_ACCOUNT_ID", None)
+        finally:
+            db.close()
+
+        refresh_broker("ibkr")
 
 
 _broker_settings_service = BrokerSettingsService()

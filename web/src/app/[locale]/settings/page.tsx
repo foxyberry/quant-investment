@@ -15,8 +15,11 @@ import {
   getTigerSettings,
   saveTigerSettings,
   testTigerConnection,
+  getIbkrSettings,
+  saveIbkrSettings,
+  testIbkrConnection,
 } from '@/lib/api';
-import type { BrokerConnectionStatus, BrokerConnectionState, TigerSettingsUpsert } from '@/lib/types';
+import type { BrokerConnectionStatus, BrokerConnectionState, TigerSettingsUpsert, IBKRSettingsUpsert } from '@/lib/types';
 
 const LOCALE_LABELS: Record<string, string> = {
   en: 'English',
@@ -49,6 +52,13 @@ export default function SettingsPage() {
   const [savingTiger, setSavingTiger] = useState(false);
   const [testingTiger, setTestingTiger] = useState(false);
   const [tigerMessage, setTigerMessage] = useState<string | null>(null);
+  const [ibkrForm, setIbkrForm] = useState<IBKRSettingsUpsert>({
+    gateway_url: 'https://localhost:5000',
+    account_id: '',
+  });
+  const [savingIbkr, setSavingIbkr] = useState(false);
+  const [testingIbkr, setTestingIbkr] = useState(false);
+  const [ibkrMessage, setIbkrMessage] = useState<string | null>(null);
 
   const statusTextKey: Record<BrokerConnectionState, string> = {
     connected: 'connected',
@@ -72,20 +82,40 @@ export default function SettingsPage() {
       setLoadingBrokers(true);
       setBrokerError(null);
       try {
-        const [brokerStatuses, tigerSettings] = await Promise.all([
+        const [brokerResult, tigerResult, ibkrResult] = await Promise.allSettled([
           getSettingsBrokerStatuses(),
           getTigerSettings(),
+          getIbkrSettings(),
         ]);
-        setBrokers(brokerStatuses);
-        setTigerForm((prev) => ({
-          ...prev,
-          tiger_id: tigerSettings.tiger_id ?? '',
-          account: tigerSettings.account ?? '',
-          license: tigerSettings.license ?? 'TBNZ',
-          sandbox: tigerSettings.sandbox,
-          private_key: '',
-        }));
-        setTigerHasPrivateKey(tigerSettings.has_private_key);
+        if (brokerResult.status === 'fulfilled') {
+          setBrokers(brokerResult.value);
+        }
+        if (tigerResult.status === 'fulfilled') {
+          const tigerSettings = tigerResult.value;
+          setTigerForm((prev) => ({
+            ...prev,
+            tiger_id: tigerSettings.tiger_id ?? '',
+            account: tigerSettings.account ?? '',
+            license: tigerSettings.license ?? 'TBNZ',
+            sandbox: tigerSettings.sandbox,
+            private_key: '',
+          }));
+          setTigerHasPrivateKey(tigerSettings.has_private_key);
+        }
+        if (ibkrResult.status === 'fulfilled') {
+          const ibkrSettings = ibkrResult.value;
+          setIbkrForm({
+            gateway_url: ibkrSettings.gateway_url ?? 'https://localhost:5000',
+            account_id: ibkrSettings.account_id ?? '',
+          });
+        }
+        // Show error only if all requests failed
+        const allFailed = [brokerResult, tigerResult, ibkrResult].every(
+          (r) => r.status === 'rejected'
+        );
+        if (allFailed) {
+          setBrokerError('Failed to load broker status');
+        }
       } catch (e) {
         setBrokerError(e instanceof Error ? e.message : 'Failed to load broker status');
       } finally {
@@ -167,6 +197,41 @@ export default function SettingsPage() {
       setTigerMessage(e instanceof Error ? e.message : t('testFailed'));
     } finally {
       setTestingTiger(false);
+    }
+  };
+
+  const handleSaveIbkr = async () => {
+    setSavingIbkr(true);
+    setIbkrMessage(null);
+    try {
+      const response = await saveIbkrSettings(ibkrForm);
+      setIbkrForm({
+        gateway_url: response.gateway_url ?? 'https://localhost:5000',
+        account_id: response.account_id ?? '',
+      });
+      setIbkrMessage(t('ibkrSaved'));
+      const statuses = await getSettingsBrokerStatuses();
+      setBrokers(statuses);
+    } catch (e) {
+      setIbkrMessage(e instanceof Error ? e.message : t('saveFailed'));
+    } finally {
+      setSavingIbkr(false);
+    }
+  };
+
+  const handleIbkrTest = async () => {
+    setTestingIbkr(true);
+    setIbkrMessage(null);
+    try {
+      const status = await testIbkrConnection();
+      setBrokers((prev) =>
+        prev.map((item) => (item.broker === 'ibkr' ? status : item))
+      );
+      setIbkrMessage(t('testSuccess'));
+    } catch (e) {
+      setIbkrMessage(e instanceof Error ? e.message : t('testFailed'));
+    } finally {
+      setTestingIbkr(false);
     }
   };
 
@@ -428,6 +493,55 @@ export default function SettingsPage() {
               className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background-secondary)] disabled:opacity-60"
             >
               {testingTiger ? t('testing') : t('testTiger')}
+            </button>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-4">
+          <h3 className="font-medium text-[var(--foreground)]">{t('ibkrConfigTitle')}</h3>
+          <p className="mt-1 text-sm text-[var(--foreground-muted)]">{t('ibkrConfigDesc')}</p>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="text-sm text-[var(--foreground-muted)]">
+              {t('ibkrGatewayUrl')}
+              <input
+                value={ibkrForm.gateway_url}
+                onChange={(e) => setIbkrForm((prev) => ({ ...prev, gateway_url: e.target.value }))}
+                placeholder={t('ibkrGatewayUrlPlaceholder')}
+                className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+              />
+            </label>
+            <label className="text-sm text-[var(--foreground-muted)]">
+              {t('ibkrAccountId')}
+              <input
+                value={ibkrForm.account_id ?? ''}
+                onChange={(e) => setIbkrForm((prev) => ({ ...prev, account_id: e.target.value }))}
+                placeholder={t('ibkrAccountIdPlaceholder')}
+                className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+              />
+            </label>
+          </div>
+
+          {ibkrMessage && (
+            <p className="mt-3 text-sm text-[var(--foreground-muted)]">{ibkrMessage}</p>
+          )}
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleSaveIbkr}
+              disabled={savingIbkr}
+              className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {savingIbkr ? t('saving') : t('saveIbkr')}
+            </button>
+            <button
+              type="button"
+              onClick={handleIbkrTest}
+              disabled={testingIbkr}
+              className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background-secondary)] disabled:opacity-60"
+            >
+              {testingIbkr ? t('testing') : t('testIbkr')}
             </button>
           </div>
         </div>

@@ -2738,7 +2738,16 @@
     "tigerSaved": "Tiger settings saved.",
     "testSuccess": "Connection test completed.",
     "saveFailed": "Failed to save settings.",
-    "testFailed": "Connection test failed."
+    "testFailed": "Connection test failed.",
+    "ibkrConfigTitle": "IBKR Connection Settings",
+    "ibkrConfigDesc": "Configure Interactive Brokers Client Portal Gateway connection.",
+    "ibkrGatewayUrl": "Gateway URL",
+    "ibkrGatewayUrlPlaceholder": "https://localhost:5000",
+    "ibkrAccountId": "Account ID",
+    "ibkrAccountIdPlaceholder": "Auto-discovered if empty",
+    "saveIbkr": "Save IBKR Settings",
+    "testIbkr": "Test IBKR Connection",
+    "ibkrSaved": "IBKR settings saved."
   },
   "kiwoom": {
     "title": "Kiwoom",
