@@ -1,10 +1,12 @@
 """
 한국 주식 시장 업종 분류 수집 모듈
 - pykrx를 이용해 코스피/코스닥 업종 정보를 조회
+- pykrx 실패 시 마스터 CSV로 폴백
 """
 
 import logging
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -17,6 +19,10 @@ class SectorFetcher:
 
     CACHE_TTL = timedelta(days=1)
     SUPPORTED_MARKETS = {"KOSPI": ".KS", "KOSDAQ": ".KQ"}
+    MASTER_FILES = {
+        "KOSPI": "data/korean/kospi_master.csv",
+        "KOSDAQ": "data/korean/kosdaq_master.csv",
+    }
 
     def __init__(self):
         # {market: (fetched_at, dataframe)}
@@ -104,7 +110,7 @@ class SectorFetcher:
         return result
 
     def _get_market_classifications(self, market: str) -> pd.DataFrame:
-        """캐시 확인 후 업종 데이터 반환"""
+        """캐시 확인 후 업종 데이터 반환 (pykrx → 마스터 CSV 폴백)"""
         cached = self._cache.get(market)
         if cached is not None:
             cached_at, cached_df = cached
@@ -115,6 +121,9 @@ class SectorFetcher:
             logger.info(f"{market} 업종 데이터 캐시 만료")
 
         df = self._fetch_from_pykrx(market)
+        if df.empty:
+            df = self._fetch_from_master_csv(market)
+
         if not df.empty:
             self._cache[market] = (datetime.now(), df.copy())
             logger.info(f"{market} 업종 데이터 {len(df)}건 캐시 저장")
@@ -149,6 +158,37 @@ class SectorFetcher:
 
         logger.error(f"{market} 업종 데이터를 최근 11일 내에서 찾지 못함")
         return pd.DataFrame()
+
+    def _fetch_from_master_csv(self, market: str) -> pd.DataFrame:
+        """마스터 CSV에서 업종 분류 데이터 로드 (pykrx 실패 시 폴백)"""
+        relative_path = self.MASTER_FILES.get(market)
+        if not relative_path:
+            return pd.DataFrame()
+
+        master_path = Path(__file__).resolve().parent.parent / relative_path
+        if not master_path.exists():
+            logger.warning(f"마스터 파일 없음: {master_path}")
+            return pd.DataFrame()
+
+        try:
+            df = pd.read_csv(master_path, dtype={"code": str})
+            if df.empty or "sector" not in df.columns:
+                return pd.DataFrame()
+
+            df = df.dropna(subset=["code", "sector"])
+            df = df[df["code"].str.match(r"^\d{6}$")]
+            df = df.drop_duplicates(subset=["code"], keep="last")
+
+            result = pd.DataFrame(
+                {"업종명": df["sector"].values},
+                index=df["code"].str.zfill(6),
+            )
+            result = result[result["업종명"].notna() & (result["업종명"] != "")]
+            logger.info(f"{market} 마스터 CSV에서 {len(result)}건 업종 데이터 로드")
+            return result
+        except Exception as e:
+            logger.warning(f"마스터 CSV 업종 로드 실패: {e}")
+            return pd.DataFrame()
 
     def _normalize_market(self, market: str) -> str:
         """지원 시장명 검증 및 정규화"""
