@@ -24,6 +24,18 @@ function getPnlColorClass(value: number | null): string {
   return 'text-[var(--foreground-muted)]';
 }
 
+function getTradeTypeBadgeClass(tradeType: string): string {
+  switch (tradeType) {
+    case 'BUY':
+      return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+    case 'ADJUST':
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+    case 'SELL':
+    default:
+      return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+  }
+}
+
 /**
  * Inline section displaying trade history with a summary header,
  * a sortable table, and responsive mobile cards.
@@ -240,7 +252,7 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
                       {trade.name || '-'}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-block rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                      <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${getTradeTypeBadgeClass(trade.trade_type)}`}>
                         {trade.trade_type}
                       </span>
                     </td>
@@ -303,7 +315,7 @@ export default function TradeHistory({ className }: TradeHistoryProps) {
                         {trade.name}
                       </span>
                     )}
-                    <span className="inline-block rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${getTradeTypeBadgeClass(trade.trade_type)}`}>
                       {trade.trade_type}
                     </span>
                   </div>

@@ -16,6 +16,7 @@ from typing import List, Dict, Any, Optional
 from api.database import SessionLocal
 from api.models.portfolio import Holding, Trade
 from api.schemas.portfolio import (
+    AdditionalPurchaseRequest,
     HoldingCreate,
     HoldingUpdate,
     HoldingResponse,
@@ -543,6 +544,8 @@ class PortfolioService:
         """
         Update an existing holding.
 
+        Records an ADJUST trade when quantity or avg_price changes.
+
         Args:
             ticker: Stock ticker symbol
             data: HoldingUpdate schema with fields to update
@@ -556,6 +559,12 @@ class PortfolioService:
             if not row:
                 return None
 
+            # Snapshot before update for ADJUST trade recording
+            old_qty = row.quantity
+            old_avg = row.avg_price
+            qty_changed = data.quantity is not None and data.quantity != old_qty
+            price_changed = data.avg_price is not None and data.avg_price != old_avg
+
             if data.quantity is not None:
                 row.quantity = data.quantity
             if data.avg_price is not None:
@@ -565,10 +574,89 @@ class PortfolioService:
             if data.note is not None:
                 row.note = data.note
 
+            # Record ADJUST trade if quantity or price changed
+            if qty_changed or price_changed:
+                trade = Trade(
+                    ticker=ticker,
+                    name=row.name,
+                    trade_type="ADJUST",
+                    quantity=row.quantity,
+                    price=row.avg_price,
+                    fee=0,
+                    realized_pnl=None,
+                    avg_price_at_trade=old_avg,
+                    currency=row.currency,
+                    note=f"Manual adjust: {old_qty}@{old_avg:.2f} -> {row.quantity}@{row.avg_price:.2f}",
+                    traded_at=date.today(),
+                )
+                db.add(trade)
+
             db.commit()
             db.refresh(row)
             holding = self._row_to_dict(row)
             logger.info(f"Updated holding: {ticker}")
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+        current_price = self._get_current_price(ticker)
+        return self._holding_to_response(holding, current_price)
+
+    def add_purchase(self, ticker: str, data: AdditionalPurchaseRequest) -> Optional[HoldingResponse]:
+        """
+        Record an additional purchase for an existing holding.
+
+        Recalculates the average price and records a BUY trade.
+
+        Args:
+            ticker: Stock ticker symbol
+            data: AdditionalPurchaseRequest with purchase details
+
+        Returns:
+            Updated HoldingResponse or None if not found
+        """
+        db = SessionLocal()
+        try:
+            row = db.get(Holding, ticker)
+            if not row:
+                return None
+
+            old_qty = row.quantity
+            old_avg = row.avg_price
+
+            # Recalculate average price
+            total_cost = old_qty * old_avg + data.quantity * data.price
+            new_qty = old_qty + data.quantity
+            new_avg = total_cost / new_qty if new_qty > 0 else 0
+
+            row.quantity = new_qty
+            row.avg_price = new_avg
+
+            # Record BUY trade
+            trade = Trade(
+                ticker=ticker,
+                name=row.name,
+                trade_type="BUY",
+                quantity=data.quantity,
+                price=data.price,
+                fee=data.fee,
+                realized_pnl=None,
+                avg_price_at_trade=old_avg,
+                currency=row.currency,
+                note=data.note,
+                traded_at=data.traded_at or date.today(),
+            )
+            db.add(trade)
+
+            db.commit()
+            db.refresh(row)
+            holding = self._row_to_dict(row)
+            logger.info(
+                f"Additional purchase {ticker}: +{data.quantity}@{data.price:.2f}, "
+                f"new avg: {new_avg:.2f}, total qty: {new_qty}"
+            )
         except Exception:
             db.rollback()
             raise

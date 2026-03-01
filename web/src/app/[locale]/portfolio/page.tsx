@@ -21,13 +21,14 @@ import { normalizeSector, classifyMarket } from '@/components/portfolio/Allocati
 import {
   getHoldings,
   addHolding,
+  addPurchase,
   updateHolding,
   deleteHolding,
   getPortfolioSummary,
   getSellSignals,
   exportHoldingsCsv,
 } from '@/lib/api';
-import type { Holding, HoldingCreate, HoldingUpdate, PortfolioSummary, SellSignal } from '@/lib/types';
+import type { Holding, HoldingCreate, HoldingUpdate, AdditionalPurchaseRequest, PortfolioSummary, SellSignal } from '@/lib/types';
 import { formatCurrency as formatCurrencyUtil, formatPercent as formatPercentUtil } from '@/lib/format';
 import { useUserSettings } from '@/contexts/UserSettingsContext';
 import type { BaseCurrency } from '@/lib/format';
@@ -507,6 +508,17 @@ export default function PortfolioPage() {
   }, [fetchData]);
 
   /**
+   * Handle additional purchase for a holding
+   */
+  const handleAddPurchase = useCallback(async (ticker: string, data: AdditionalPurchaseRequest) => {
+    const updatedHolding = await addPurchase(ticker, data);
+    setHoldings((prev) =>
+      prev.map((h) => (h.ticker === ticker ? updatedHolding : h))
+    );
+    fetchData(false);
+  }, [fetchData]);
+
+  /**
    * Handle deleting a holding
    */
   const handleDeleteHolding = useCallback(async (ticker: string) => {
@@ -867,6 +879,7 @@ export default function PortfolioPage() {
           setSelectedHolding(null);
         }}
         onUpdate={handleUpdateHolding}
+        onAddPurchase={handleAddPurchase}
       />
 
       {/* Delete Confirmation Modal */}

@@ -376,7 +376,19 @@
     "tradeAvgCost": "均价",
     "tradePnl": "盈亏",
     "sector": "行业",
-    "market": "市场"
+    "market": "市场",
+    "editHolding": "编辑持仓",
+    "fullEdit": "全量编辑",
+    "additionalPurchase": "追加买入",
+    "addQty": "追加数量",
+    "addPrice": "买入价格",
+    "fee": "手续费 / 税费",
+    "currentHolding": "当前持仓",
+    "shares": "股",
+    "preview": "预览",
+    "updateHolding": "更新持仓",
+    "addPurchaseSubmit": "追加买入",
+    "cancel": "取消"
   },
   "brokerOrderDesk": {
     "title": "统一下单台",
@@ -535,7 +547,13 @@
     "passRate": "{rate}%",
     "openFullDataset": "查看完整数据",
     "inspectNode": "点击节点查看结果",
-    "topResultsPreview": "头部结果预览"
+    "topResultsPreview": "头部结果预览",
+    "chatbot": {
+      "title": "AI策略助手",
+      "placeholder": "询问关于策略的问题...",
+      "empty": "关于构建策略，可以随时问我任何问题。",
+      "error": "未能获取回复，请重试。"
+    }
   },
   "analysis": {
     "title": "图表与分析",

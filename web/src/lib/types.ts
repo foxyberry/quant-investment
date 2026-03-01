@@ -399,6 +399,14 @@ export interface TradeHistoryResponse {
   trade_count: number;
 }
 
+export interface AdditionalPurchaseRequest {
+  quantity: number;
+  price: number;
+  fee?: number;
+  traded_at?: string; // YYYY-MM-DD
+  note?: string;
+}
+
 export interface SellRecordCreate {
   ticker: string;
   quantity: number;
