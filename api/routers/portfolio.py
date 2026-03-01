@@ -14,6 +14,7 @@ from fastapi import APIRouter, Form, HTTPException, Query, UploadFile, WebSocket
 from fastapi.responses import StreamingResponse
 
 from api.schemas.portfolio import (
+    AdditionalPurchaseRequest,
     CsvImportResponse,
     HoldingCreate,
     HoldingUpdate,
@@ -346,6 +347,50 @@ async def update_holding(ticker: str, data: HoldingUpdate) -> HoldingResponse:
         raise HTTPException(
             status_code=500,
             detail=f"Failed to update holding: {str(e)}"
+        )
+
+
+@router.post(
+    "/holdings/{ticker}/add-purchase",
+    response_model=HoldingResponse,
+    summary="Add Purchase",
+    description="Record an additional purchase for an existing holding. Recalculates average price.",
+)
+async def add_purchase(ticker: str, data: AdditionalPurchaseRequest) -> HoldingResponse:
+    """
+    Record an additional purchase (averaging down/up).
+
+    Adds shares to the existing position, recalculates the weighted
+    average price, and records a BUY trade in the trade history.
+
+    Args:
+        ticker: Stock ticker symbol
+        data: AdditionalPurchaseRequest with quantity and price
+
+    Returns:
+        Updated HoldingResponse with recalculated averages
+
+    Raises:
+        HTTPException: If holding not found
+    """
+    service = get_portfolio_service()
+
+    try:
+        holding = service.add_purchase(ticker, data)
+        if holding is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Holding not found: {ticker}"
+            )
+        return holding
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to add purchase for {ticker}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to add purchase: {str(e)}"
         )
 
 

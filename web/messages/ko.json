@@ -373,7 +373,19 @@
     "tradeAvgCost": "평단가",
     "tradePnl": "손익",
     "sector": "섹터",
-    "market": "마켓"
+    "market": "마켓",
+    "editHolding": "보유 종목 수정",
+    "fullEdit": "전체 수정",
+    "additionalPurchase": "추가 매수",
+    "addQty": "추가 수량",
+    "addPrice": "매수 단가",
+    "fee": "수수료 / 세금",
+    "currentHolding": "현재 보유",
+    "shares": "주",
+    "preview": "미리보기",
+    "updateHolding": "수정 완료",
+    "addPurchaseSubmit": "추가 매수",
+    "cancel": "취소"
   },
   "brokerOrderDesk": {
     "title": "통합 주문 데스크",

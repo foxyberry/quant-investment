@@ -143,6 +143,25 @@ class CsvImportResponse(BaseModel):
     errors: List[CsvRowError] = Field(default_factory=list, description="Row errors")
 
 
+class AdditionalPurchaseRequest(BaseModel):
+    """
+    Schema for recording an additional purchase (averaging down/up).
+
+    Attributes:
+        quantity: Number of additional shares purchased
+        price: Purchase price per share for this transaction
+        fee: Commission or tax for this transaction
+        traded_at: Date of the trade (defaults to today)
+        note: Optional memo
+    """
+
+    quantity: int = Field(..., gt=0, description="Additional shares purchased")
+    price: float = Field(..., gt=0, description="Purchase price per share")
+    fee: float = Field(default=0, ge=0, description="Commission/tax")
+    traded_at: Optional[date] = Field(default=None, description="Trade date (YYYY-MM-DD)")
+    note: Optional[str] = Field(default=None, description="Optional memo")
+
+
 class SellRecordCreate(BaseModel):
     ticker: str = Field(..., description="Stock ticker symbol")
     quantity: int = Field(..., gt=0, description="Number of shares sold")

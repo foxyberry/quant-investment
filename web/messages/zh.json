@@ -373,7 +373,19 @@
     "tradeAvgCost": "均价",
     "tradePnl": "盈亏",
     "sector": "行业",
-    "market": "市场"
+    "market": "市场",
+    "editHolding": "编辑持仓",
+    "fullEdit": "全量编辑",
+    "additionalPurchase": "追加买入",
+    "addQty": "追加数量",
+    "addPrice": "买入价格",
+    "fee": "手续费 / 税费",
+    "currentHolding": "当前持仓",
+    "shares": "股",
+    "preview": "预览",
+    "updateHolding": "更新持仓",
+    "addPurchaseSubmit": "追加买入",
+    "cancel": "取消"
   },
   "brokerOrderDesk": {
     "title": "统一下单台",

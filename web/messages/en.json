@@ -373,7 +373,19 @@
     "tradeAvgCost": "Avg Cost",
     "tradePnl": "P&L",
     "sector": "Sector",
-    "market": "Market"
+    "market": "Market",
+    "editHolding": "Edit Holding",
+    "fullEdit": "Full Edit",
+    "additionalPurchase": "Add Purchase",
+    "addQty": "Additional Quantity",
+    "addPrice": "Purchase Price",
+    "fee": "Fee / Tax",
+    "currentHolding": "Current Holding",
+    "shares": "shares",
+    "preview": "Preview",
+    "updateHolding": "Update Holding",
+    "addPurchaseSubmit": "Add Purchase",
+    "cancel": "Cancel"
   },
   "brokerOrderDesk": {
     "title": "Broker Order Desk",

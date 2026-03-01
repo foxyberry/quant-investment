@@ -7,6 +7,7 @@ import type {
   ExecutionHistoryListResponse,
   ExecutionHistoryDetail,
   DuplicateCheckResponse,
+  AdditionalPurchaseRequest,
   Holding,
   HoldingCreate,
   HoldingUpdate,
@@ -290,6 +291,16 @@ export async function exportHoldingsCsv(): Promise<void> {
   a.download = 'portfolio_holdings.csv';
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Record an additional purchase for an existing holding
+ */
+export async function addPurchase(ticker: string, data: AdditionalPurchaseRequest): Promise<Holding> {
+  return fetchApi<Holding>(`/api/portfolio/holdings/${encodeURIComponent(ticker)}/add-purchase`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }
 
 /**
