@@ -8,6 +8,7 @@ Provides CRUD operations for holdings and P&L calculations.
 import csv
 import io
 import logging
+import math
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, date
 from typing import List, Dict, Any, Optional
@@ -92,6 +93,15 @@ class PortfolioService:
             "bought_at": row.bought_at,
         }
 
+    @staticmethod
+    def _sanitize_float(value: Optional[float], default: Optional[float] = 0.0) -> Optional[float]:
+        """Return *default* if value is NaN/Inf, else value. None passes through."""
+        if value is None:
+            return None
+        if math.isnan(value) or math.isinf(value):
+            return default if default is not None else None
+        return value
+
     def _get_current_price(self, ticker: str) -> Optional[float]:
         """
         Get current price for a ticker.
@@ -105,7 +115,8 @@ class PortfolioService:
         try:
             data = self._cache.get(ticker, days=5, force_refresh=False)
             if data is not None and not data.empty:
-                return float(data["close"].iloc[-1])
+                price = float(data["close"].iloc[-1])
+                return self._sanitize_float(price, default=None)
         except Exception as e:
             logger.warning(f"Failed to get current price for {ticker}: {e}")
         return None
@@ -208,10 +219,10 @@ class PortfolioService:
             try:
                 data = self._cache.get(ticker, days=5, force_refresh=False)
                 if data is not None and len(data) >= 2:
-                    cur = float(data["close"].iloc[-1])
-                    prev = float(data["close"].iloc[-2])
-                    if prev > 0:
-                        return (cur - prev) / prev * 100
+                    cur = self._sanitize_float(float(data["close"].iloc[-1]), default=None)
+                    prev = self._sanitize_float(float(data["close"].iloc[-2]), default=None)
+                    if cur is not None and prev is not None and prev > 0:
+                        return self._sanitize_float((cur - prev) / prev * 100, default=None)
             except Exception:
                 pass
             return None
@@ -351,9 +362,11 @@ class PortfolioService:
         pnl_pct = None
 
         if current_price is not None:
-            market_value = quantity * current_price
-            pnl = market_value - cost_basis
-            pnl_pct = (pnl / cost_basis * 100) if cost_basis > 0 else 0
+            market_value = self._sanitize_float(quantity * current_price)
+            pnl = self._sanitize_float(market_value - cost_basis if market_value is not None else None)
+            pnl_pct = self._sanitize_float(
+                (pnl / cost_basis * 100) if cost_basis > 0 and pnl is not None else 0
+            )
 
         # Parse bought_at date
         bought_at = holding.get("bought_at")
@@ -634,7 +647,10 @@ class PortfolioService:
             total_market_value += market_value
 
         total_pnl = total_market_value - total_investment
-        total_pnl_pct = (total_pnl / total_investment * 100) if total_investment > 0 else 0
+        total_pnl_pct = self._sanitize_float(
+            (total_pnl / total_investment * 100) if total_investment > 0 else 0,
+            default=0.0,
+        )
 
         return PortfolioSummary(
             total_investment=total_investment,

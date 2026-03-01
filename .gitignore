@@ -142,6 +142,10 @@ cython_debug/
 data/*
 !data/.gitkeep
 !data/templates/
+!data/korean/
+data/korean/*
+!data/korean/kospi_master.csv
+!data/korean/kosdaq_master.csv
 
 # Log files
 logs/

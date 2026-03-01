@@ -1,6 +1,7 @@
 """
-코스피 종목 리스트 수집 모듈
+코스피/코스닥 종목 리스트 수집 모듈
 - pykrx 라이브러리 또는 KRX 웹에서 종목 리스트 가져오기
+- 캐시 -> pykrx -> KRX API -> 마스터 CSV -> 하드코딩 순 폴백
 """
 
 import pandas as pd
@@ -14,14 +15,39 @@ logger = logging.getLogger(__name__)
 
 
 class KospiListFetcher:
-    """코스피 종목 리스트 수집기"""
+    """코스피/코스닥 종목 리스트 수집기"""
 
+    # KOSPI paths and thresholds
     CACHE_FILE = "data/korean/kospi_list.csv"
-    MASTER_FILE = "data/korean/kospi_master.csv"  # 수동 관리 종목 리스트
+    MASTER_FILE = "data/korean/kospi_master.csv"
+
+    # KOSDAQ paths and thresholds
+    KOSDAQ_CACHE_FILE = "data/korean/kosdaq_list.csv"
+    KOSDAQ_MASTER_FILE = "data/korean/kosdaq_master.csv"
+    KOSDAQ_MIN_VALID_COUNT = 1000
+
     CACHE_DAYS = 7  # 캐시 유효 기간 (일)
 
     def __init__(self, use_cache: bool = True):
         self.use_cache = use_cache
+
+    # ------------------------------------------------------------------
+    # Path resolution
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _resolve_path(relative: str) -> Path:
+        """Resolve a project-relative path to an absolute path.
+
+        Uses the project root (parent of the screener/ package) so that
+        cache and master files are found regardless of the working
+        directory.
+        """
+        return Path(__file__).resolve().parent.parent / relative
+
+    # ------------------------------------------------------------------
+    # KOSPI
+    # ------------------------------------------------------------------
 
     def get_kospi_symbols(self, refresh: bool = False) -> List[Dict]:
         """
@@ -35,7 +61,7 @@ class KospiListFetcher:
         """
         # 캐시 확인
         if self.use_cache and not refresh:
-            cached = self._load_cache()
+            cached = self._load_cache(self.CACHE_FILE)
             if cached is not None:
                 logger.info(f"캐시에서 {len(cached)}개 종목 로드")
                 return cached
@@ -44,7 +70,7 @@ class KospiListFetcher:
         symbols = self._fetch_from_pykrx()
 
         if symbols:
-            self._save_cache(symbols)
+            self._save_cache(symbols, self.CACHE_FILE)
             logger.info(f"코스피 {len(symbols)}개 종목 수집 완료")
 
         return symbols
@@ -144,71 +170,72 @@ class KospiListFetcher:
         대체 방법: 마스터 파일에서 종목 리스트 로드
         data/korean/kospi_master.csv 파일을 수정하여 종목 관리
         """
-        master_path = Path(self.MASTER_FILE)
+        return self._load_master_csv(self.MASTER_FILE, suffix=".KS")
 
-        if not master_path.exists():
-            logger.error(f"마스터 파일이 없습니다: {master_path}")
-            return []
-
-        try:
-            df = pd.read_csv(master_path, dtype={'code': str})
-            symbols = []
-
-            for _, row in df.iterrows():
-                code = str(row['code']).zfill(6)  # 6자리로 패딩
-                symbols.append({
-                    'symbol': f"{code}.KS",
-                    'code': code,
-                    'name': row['name'],
-                    'sector': row.get('sector', '')
-                })
-
-            logger.info(f"마스터 파일에서 {len(symbols)}개 종목 로드: {master_path}")
-            return symbols
-
-        except Exception as e:
-            logger.error(f"마스터 파일 로드 실패: {e}")
-            return []
-
-    def _load_cache(self) -> Optional[List[Dict]]:
-        """캐시 파일에서 로드"""
-        cache_path = Path(self.CACHE_FILE)
-
-        if not cache_path.exists():
-            return None
-
-        # 캐시 유효성 확인
-        mtime = datetime.fromtimestamp(cache_path.stat().st_mtime)
-        if (datetime.now() - mtime).days > self.CACHE_DAYS:
-            logger.info("캐시 만료됨")
-            return None
-
-        try:
-            df = pd.read_csv(cache_path)
-            return df.to_dict('records')
-        except Exception as e:
-            logger.warning(f"캐시 로드 실패: {e}")
-            return None
-
-    def _save_cache(self, symbols: List[Dict]) -> None:
-        """캐시 파일에 저장"""
-        try:
-            cache_path = Path(self.CACHE_FILE)
-            cache_path.parent.mkdir(parents=True, exist_ok=True)
-
-            df = pd.DataFrame(symbols)
-            df.to_csv(cache_path, index=False, encoding='utf-8-sig')
-            logger.info(f"캐시 저장: {cache_path}")
-        except Exception as e:
-            logger.warning(f"캐시 저장 실패: {e}")
+    # ------------------------------------------------------------------
+    # KOSDAQ
+    # ------------------------------------------------------------------
 
     def get_kosdaq_symbols(self, refresh: bool = False) -> List[Dict]:
-        """코스닥 종목 리스트 (추후 구현)"""
+        """
+        코스닥 종목 리스트 반환 (cache -> pykrx -> KRX API -> master CSV -> hardcoded)
+
+        Args:
+            refresh: True면 캐시 무시하고 새로 가져옴
+
+        Returns:
+            [{'symbol': '247540.KQ', 'code': '247540', 'name': '에코프로BM', 'sector': '전기전자'}, ...]
+        """
+        # 1) 캐시 확인
+        if self.use_cache and not refresh:
+            cached = self._load_cache(self.KOSDAQ_CACHE_FILE)
+            if cached is not None:
+                logger.info(f"코스닥 캐시에서 {len(cached)}개 종목 로드")
+                return cached
+
+        # 2) pykrx 시도
+        symbols = self._fetch_kosdaq_from_pykrx()
+
+        # 3) 검증: 충분한 종목 수인지 확인
+        if len(symbols) >= self.KOSDAQ_MIN_VALID_COUNT:
+            self._save_cache(symbols, self.KOSDAQ_CACHE_FILE)
+            logger.info(f"코스닥 {len(symbols)}개 종목 수집 완료")
+            return symbols
+
+        if symbols:
+            logger.warning(
+                f"코스닥 pykrx 결과가 부족 ({len(symbols)}개 < {self.KOSDAQ_MIN_VALID_COUNT}), "
+                "KRX API 폴백 시도"
+            )
+
+        # 4) KRX API 폴백
+        krx_symbols = self._fetch_kosdaq_from_krx()
+        if len(krx_symbols) >= self.KOSDAQ_MIN_VALID_COUNT:
+            self._save_cache(krx_symbols, self.KOSDAQ_CACHE_FILE)
+            logger.info(f"코스닥 KRX API에서 {len(krx_symbols)}개 종목 수집 완료")
+            return krx_symbols
+
+        # 5) 마스터 CSV 폴백
+        master_symbols = self._load_master_csv(self.KOSDAQ_MASTER_FILE, suffix=".KQ")
+        if master_symbols:
+            logger.info(f"코스닥 마스터 파일에서 {len(master_symbols)}개 종목 로드")
+            return master_symbols
+
+        # 6) 최후의 수단: 하드코딩된 주요 종목
+        logger.warning("모든 코스닥 소스 실패, 하드코딩 종목 사용")
+        return self._kosdaq_hardcoded_symbols()
+
+    def _fetch_kosdaq_from_pykrx(self) -> List[Dict]:
+        """pykrx에서 코스닥 종목 리스트 가져오기"""
         try:
             from pykrx import stock
 
             today = datetime.now().strftime("%Y%m%d")
             tickers = stock.get_market_ticker_list(today, market="KOSDAQ")
+
+            if not tickers:
+                logger.warning("pykrx에서 코스닥 종목 리스트 가져오기 실패")
+                return []
 
             def fetch_name(ticker_code):
                 try:
@@ -229,21 +256,215 @@ class KospiListFetcher:
                     })
 
             return symbols
+
         except ImportError:
             logger.warning("pykrx가 설치되지 않음")
             return []
         except Exception as e:
-            logger.error(f"코스닥 조회 실패: {e}")
+            logger.warning(f"코스닥 pykrx 조회 실패: {e}")
             return []
+
+    def _fetch_kosdaq_from_krx(self) -> List[Dict]:
+        """KRX 정보데이터시스템에서 코스닥 종목 리스트 가져오기"""
+        try:
+            import requests
+
+            url = "http://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd"
+            headers = {
+                'User-Agent': 'Mozilla/5.0',
+                'Referer': 'http://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020101'
+            }
+            params = {
+                'bld': 'dbms/MDC/STAT/standard/MDCSTAT01901',
+                'locale': 'ko_KR',
+                'mktId': 'KSQ',  # KSQ=코스닥
+                'share': '1',
+                'csvxls_is498': 'false',
+            }
+
+            response = requests.get(url, headers=headers, params=params, timeout=10)
+            response.raise_for_status()
+
+            data = response.json()
+            items = data.get('OutBlock_1', [])
+
+            if not items:
+                logger.warning("KRX 코스닥에서 데이터를 가져오지 못함")
+                return []
+
+            symbols = []
+            for item in items:
+                code = item.get('ISU_SRT_CD', '')
+                name = item.get('ISU_ABBRV', '')
+                sector = item.get('IDX_IND_NM', '')
+
+                if code and name:
+                    symbols.append({
+                        'symbol': f"{code}.KQ",
+                        'code': code,
+                        'name': name,
+                        'sector': sector
+                    })
+
+            logger.info(f"KRX 코스닥에서 {len(symbols)}개 종목 수집")
+            return symbols
+
+        except Exception as e:
+            logger.warning(f"KRX 코스닥 조회 실패: {e}")
+            return []
+
+    @staticmethod
+    def _kosdaq_hardcoded_symbols() -> List[Dict]:
+        """최후 폴백: 주요 코스닥 50종목 하드코딩 (snapshot: 2026-03-01)"""
+        stocks = [
+            ("247540", "에코프로BM", "전기전자"),
+            ("196170", "알테오젠", "의약품"),
+            ("035900", "JYP Ent.", "서비스업"),
+            ("293490", "카카오게임즈", "서비스업"),
+            ("263750", "펄어비스", "서비스업"),
+            ("086520", "에코프로", "화학"),
+            ("041510", "에스엠", "서비스업"),
+            ("112040", "위메이드", "서비스업"),
+            ("328130", "루닛", "서비스업"),
+            ("068270", "셀트리온제약", "의약품"),
+            ("357780", "솔브레인", "화학"),
+            ("005290", "동진쎄미켐", "화학"),
+            ("141080", "레고켐바이오", "의약품"),
+            ("145020", "휴젤", "의약품"),
+            ("067160", "아프리카TV", "서비스업"),
+            ("095340", "ISC", "전기전자"),
+            ("058470", "리노공업", "기계"),
+            ("039030", "이오테크닉스", "기계"),
+            ("028300", "HLB", "의약품"),
+            ("078600", "대주전자재료", "전기전자"),
+            ("108860", "셀바스AI", "서비스업"),
+            ("214150", "클래시스", "기계"),
+            ("090460", "비에이치", "전기전자"),
+            ("240810", "원익IPS", "기계"),
+            ("950160", "코오롱티슈진", "의약품"),
+            ("403870", "HPSP", "기계"),
+            ("000250", "삼천당제약", "의약품"),
+            ("222080", "씨아이에스", "기계"),
+            ("352820", "하이브", "서비스업"),
+            ("039200", "오스코텍", "의약품"),
+            ("950210", "프레스티지바이오파마", "의약품"),
+            ("060310", "3S", "전기전자"),
+            ("137310", "에스디바이오센서", "의약품"),
+            ("099190", "아이센스", "의약품"),
+            ("290650", "엘앤씨바이오", "의약품"),
+            ("048260", "오스템임플란트", "의약품"),
+            ("299030", "하나기술", "기계"),
+            ("089030", "테크윙", "기계"),
+            ("367340", "SK바이오사이언스", "의약품"),
+            ("064760", "티씨케이", "화학"),
+            ("226330", "신테카바이오", "의약품"),
+            ("277810", "레인보우로보틱스", "기계"),
+            ("053800", "안랩", "서비스업"),
+            ("340570", "티앤엘", "의약품"),
+            ("336260", "두산테스나", "기계"),
+            ("383220", "F&F", "유통업"),
+            ("035760", "CJ ENM", "서비스업"),
+            ("091990", "셀트리온헬스케어", "의약품"),
+            ("043150", "바텍", "의약품"),
+            ("237690", "에스티팜", "의약품"),
+        ]
+        return [
+            {'symbol': f"{code}.KQ", 'code': code, 'name': name, 'sector': sector}
+            for code, name, sector in stocks
+        ]
+
+    # ------------------------------------------------------------------
+    # Shared helpers
+    # ------------------------------------------------------------------
+
+    def _load_master_csv(self, relative_path: str, suffix: str) -> List[Dict]:
+        """Load symbols from a master CSV file.
+
+        Args:
+            relative_path: Project-relative path to the CSV (e.g. "data/korean/kospi_master.csv")
+            suffix: Yahoo Finance suffix (".KS" or ".KQ")
+        """
+        master_path = self._resolve_path(relative_path)
+
+        if not master_path.exists():
+            logger.error(f"마스터 파일이 없습니다: {master_path}")
+            return []
+
+        try:
+            df = pd.read_csv(master_path, dtype={'code': str})
+            symbols = []
+
+            for _, row in df.iterrows():
+                code = str(row['code']).zfill(6)  # 6자리로 패딩
+                symbols.append({
+                    'symbol': f"{code}{suffix}",
+                    'code': code,
+                    'name': row['name'],
+                    'sector': row.get('sector', '')
+                })
+
+            logger.info(f"마스터 파일에서 {len(symbols)}개 종목 로드: {master_path}")
+            return symbols
+
+        except Exception as e:
+            logger.error(f"마스터 파일 로드 실패: {e}")
+            return []
+
+    def _load_cache(self, relative_path: str) -> Optional[List[Dict]]:
+        """캐시 파일에서 로드
+
+        Args:
+            relative_path: Project-relative path to the cache CSV
+        """
+        cache_path = self._resolve_path(relative_path)
+
+        if not cache_path.exists():
+            return None
+
+        # 캐시 유효성 확인
+        mtime = datetime.fromtimestamp(cache_path.stat().st_mtime)
+        if (datetime.now() - mtime).days > self.CACHE_DAYS:
+            logger.info("캐시 만료됨")
+            return None
+
+        try:
+            df = pd.read_csv(cache_path)
+            return df.to_dict('records')
+        except Exception as e:
+            logger.warning(f"캐시 로드 실패: {e}")
+            return None
+
+    def _save_cache(self, symbols: List[Dict], relative_path: str) -> None:
+        """캐시 파일에 저장
+
+        Args:
+            symbols: Symbol list to persist
+            relative_path: Project-relative path to the cache CSV
+        """
+        try:
+            cache_path = self._resolve_path(relative_path)
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+
+            df = pd.DataFrame(symbols)
+            df.to_csv(cache_path, index=False, encoding='utf-8-sig')
+            logger.info(f"캐시 저장: {cache_path}")
+        except Exception as e:
+            logger.warning(f"캐시 저장 실패: {e}")
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     fetcher = KospiListFetcher()
-    symbols = fetcher.get_kospi_symbols()
 
-    print(f"\n총 {len(symbols)}개 종목")
+    symbols = fetcher.get_kospi_symbols()
+    print(f"\n코스피 총 {len(symbols)}개 종목")
     print("\n상위 10개:")
     for s in symbols[:10]:
+        print(f"  {s['symbol']} - {s['name']} ({s['sector']})")
+
+    kosdaq = fetcher.get_kosdaq_symbols()
+    print(f"\n코스닥 총 {len(kosdaq)}개 종목")
+    print("\n상위 10개:")
+    for s in kosdaq[:10]:
         print(f"  {s['symbol']} - {s['name']} ({s['sector']})")

@@ -200,6 +200,12 @@ export default function ExecutionHistoryList() {
                       {universe}
                     </span>
                   ))}
+                  {/* Reference date badge */}
+                  {item.reference_date && (
+                    <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                      {t('referenceDate')}: {item.reference_date}
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm text-[var(--foreground-muted)]">

@@ -584,7 +584,8 @@
     "loadMore": "더 보기",
     "dateToday": "오늘",
     "dateYesterday": "어제",
-    "dateDaysAgo": "{days}일 전"
+    "dateDaysAgo": "{days}일 전",
+    "referenceDate": "기준일"
   },
   "stockDetail": {
     "financialOverview": "재무 개요",
