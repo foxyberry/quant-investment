@@ -542,6 +542,19 @@ class PortfolioService:
             PortfolioSummary with aggregated metrics
         """
         holdings = self.get_all_holdings(with_prices=True)
+        return self.build_summary(holdings, base_currency=base_currency)
+
+    def build_summary(
+        self,
+        holdings: List[HoldingResponse],
+        base_currency: Optional[str] = None,
+    ) -> PortfolioSummary:
+        """
+        Build portfolio summary from a pre-fetched holdings list.
+
+        Useful when callers already loaded holdings with prices and want to
+        avoid a second fetch cycle.
+        """
 
         total_investment = 0.0
         total_market_value = 0.0
