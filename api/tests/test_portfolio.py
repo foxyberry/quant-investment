@@ -491,7 +491,7 @@ class TestGetFullPortfolio:
                 "note": None
             }
         ]
-        mock_portfolio_service.get_summary.return_value = {
+        mock_portfolio_service.build_summary.return_value = {
             "total_investment": 1500.0,
             "total_market_value": 1750.0,
             "total_pnl": 250.0,
@@ -511,6 +511,9 @@ class TestGetFullPortfolio:
         assert "summary" in data
         assert len(data["holdings"]) == 1
         assert data["summary"]["holdings_count"] == 1
+        mock_portfolio_service.get_all_holdings.assert_called_once_with(with_prices=True)
+        mock_portfolio_service.build_summary.assert_called_once()
+        mock_portfolio_service.get_summary.assert_not_called()
 
 
 class TestTradeEndpoints:

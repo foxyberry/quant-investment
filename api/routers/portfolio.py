@@ -72,7 +72,7 @@ async def get_portfolio() -> PortfolioResponse:
 
     try:
         holdings = service.get_all_holdings(with_prices=True)
-        summary = service.get_summary()
+        summary = service.build_summary(holdings)
 
         return PortfolioResponse(
             holdings=holdings,
