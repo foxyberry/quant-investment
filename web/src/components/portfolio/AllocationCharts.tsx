@@ -64,35 +64,60 @@ export function classifyMarket(ticker: string): string {
 }
 
 // Explicit mapping for pykrx Korean sector names → normalized category
+// pykrx returns names like "전기전자", "음식료품" (no middle dots)
 const KR_SECTOR_MAP: Record<string, string> = {
+  // Technology
+  '전기전자': 'Technology',
   '전기·전자': 'Technology',
   'IT 서비스': 'Technology',
+  // Materials
   '화학': 'Materials',
+  '철강금속': 'Materials',
   '금속': 'Materials',
   '비금속': 'Materials',
   '종이·목재': 'Materials',
-  '섬유·의류': 'Consumer',
+  // Consumer
+  '음식료품': 'Consumer',
   '음식료·담배': 'Consumer',
+  '섬유의복': 'Consumer',
+  '섬유·의류': 'Consumer',
+  '유통업': 'Consumer',
   '유통': 'Consumer',
   '오락·문화': 'Consumer',
   '일반서비스': 'Consumer',
+  '서비스업': 'Consumer',
+  // Industrials
+  '건설업': 'Industrials',
   '건설': 'Industrials',
+  '기계': 'Industrials',
   '기계·장비': 'Industrials',
+  '운수창고업': 'Industrials',
   '운송·창고': 'Industrials',
+  '운수장비': 'Industrials',
   '운송장비·부품': 'Industrials',
+  '기타제조업': 'Industrials',
   '기타제조': 'Industrials',
+  // Healthcare
+  '의약품': 'Healthcare',
   '제약': 'Healthcare',
   '의료·정밀기기': 'Healthcare',
+  // Financials
   '은행': 'Financials',
   '보험': 'Financials',
   '증권': 'Financials',
   '기타금융': 'Financials',
   '금융': 'Financials',
+  // Utilities
+  '전기가스업': 'Utilities',
   '전기·가스': 'Utilities',
   '전기·가스·수도': 'Utilities',
+  // Communication
+  '통신업': 'Communication',
   '통신': 'Communication',
   '출판·매체복제': 'Communication',
+  // Real Estate
   '부동산': 'Real Estate',
+  // Others
   '농업 임업 및 어업': 'Others',
 };
 
