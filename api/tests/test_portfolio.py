@@ -781,6 +781,12 @@ def _setup_test_db(holdings):
 class TestPriceCache:
     """Tests for PortfolioService price cache and parallel fetch behavior."""
 
+    def test_shared_executor_reuse(self):
+        """PortfolioService instances should share one thread pool."""
+        first = PortfolioService()
+        second = PortfolioService()
+        assert first._executor is second._executor
+
     def test_price_cache_reuse(self):
         """Cached prices are reused on the second call within TTL."""
         # Arrange

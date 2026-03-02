@@ -9,6 +9,7 @@ import csv
 import io
 import logging
 import math
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, date
 from typing import List, Dict, Any, Optional
@@ -56,6 +57,9 @@ class PortfolioService:
     SECTOR_CACHE_TTL = 3600
     # Daily change cache TTL (same as price)
     CHANGE_CACHE_TTL = 60
+    EXECUTOR_MAX_WORKERS = 8
+    _shared_executor: Optional[ThreadPoolExecutor] = None
+    _executor_lock = threading.Lock()
 
     def __init__(self):
         self._cache = get_cache()
@@ -63,6 +67,13 @@ class PortfolioService:
         self._price_cache: TTLCache[float] = TTLCache(self.PRICE_CACHE_TTL, max_size=512)
         self._sector_cache: TTLCache[Optional[str]] = TTLCache(self.SECTOR_CACHE_TTL, max_size=512)
         self._change_cache: TTLCache[Optional[float]] = TTLCache(self.CHANGE_CACHE_TTL, max_size=512)
+        if self.__class__._shared_executor is None:
+            with self.__class__._executor_lock:
+                if self.__class__._shared_executor is None:
+                    self.__class__._shared_executor = ThreadPoolExecutor(
+                        max_workers=self.EXECUTOR_MAX_WORKERS
+                    )
+        self._executor = self.__class__._shared_executor
 
     @staticmethod
     def _convert_to_base(
@@ -174,20 +185,19 @@ class PortfolioService:
         # Fallback: per-ticker parallel fetch for any still-missing tickers.
         missing_tickers = [t for t in uncached if t not in batch_prices]
         if missing_tickers:
-            with ThreadPoolExecutor(max_workers=min(len(missing_tickers), 8)) as executor:
-                futures = {
-                    executor.submit(self._get_current_price, t): t
-                    for t in missing_tickers
-                }
-                for future in as_completed(futures):
-                    ticker = futures[future]
-                    try:
-                        price = future.result()
-                        if price is not None:
-                            self._price_cache.set(ticker, price)
-                            prices[ticker] = price
-                    except Exception as e:
-                        logger.warning(f"Failed to fetch price for {ticker}: {e}")
+            futures = {
+                self._executor.submit(self._get_current_price, t): t
+                for t in missing_tickers
+            }
+            for future in as_completed(futures):
+                ticker = futures[future]
+                try:
+                    price = future.result()
+                    if price is not None:
+                        self._price_cache.set(ticker, price)
+                        prices[ticker] = price
+                except Exception as e:
+                    logger.warning(f"Failed to fetch price for {ticker}: {e}")
 
         return prices
 
@@ -232,17 +242,16 @@ class PortfolioService:
                 pass
             return None
 
-        with ThreadPoolExecutor(max_workers=min(len(uncached), 8)) as executor:
-            futures = {executor.submit(_calc_change, t): t for t in uncached}
-            for future in as_completed(futures):
-                ticker = futures[future]
-                try:
-                    result = future.result()
-                    self._change_cache.set(ticker, result)
-                    if result is not None:
-                        changes[ticker] = result
-                except Exception:
-                    pass
+        futures = {self._executor.submit(_calc_change, t): t for t in uncached}
+        for future in as_completed(futures):
+            ticker = futures[future]
+            try:
+                result = future.result()
+                self._change_cache.set(ticker, result)
+                if result is not None:
+                    changes[ticker] = result
+            except Exception:
+                pass
 
         return changes
 
@@ -323,20 +332,19 @@ class PortfolioService:
                 except Exception:
                     return None
 
-            with ThreadPoolExecutor(max_workers=min(len(us_tickers), 8)) as executor:
-                futures = {
-                    executor.submit(_fetch_us_sector, t): t
-                    for t in us_tickers
-                }
-                for future in as_completed(futures):
-                    ticker = futures[future]
-                    try:
-                        sector = future.result()
-                        self._sector_cache.set(ticker, sector)
-                        sectors[ticker] = sector
-                    except Exception as e:
-                        logger.warning(f"Failed to fetch sector for {ticker}: {e}")
-                        sectors[ticker] = None
+            futures = {
+                self._executor.submit(_fetch_us_sector, t): t
+                for t in us_tickers
+            }
+            for future in as_completed(futures):
+                ticker = futures[future]
+                try:
+                    sector = future.result()
+                    self._sector_cache.set(ticker, sector)
+                    sectors[ticker] = sector
+                except Exception as e:
+                    logger.warning(f"Failed to fetch sector for {ticker}: {e}")
+                    sectors[ticker] = None
 
         return sectors
 
@@ -458,15 +466,14 @@ class PortfolioService:
             tickers = [h["ticker"] for h in holdings_dicts]
 
             # Run price and change enrichment in parallel (sector is now in DB).
-            with ThreadPoolExecutor(max_workers=2) as outer:
-                f_prices = outer.submit(self._get_current_prices, tickers)
-                f_changes = outer.submit(self._get_daily_changes, tickers)
+            f_prices = self._executor.submit(self._get_current_prices, tickers)
+            f_changes = self._executor.submit(self._get_daily_changes, tickers)
 
-                prices = f_prices.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
-                try:
-                    changes = f_changes.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
-                except Exception as e:
-                    logger.warning(f"Daily change enrichment failed: {e}")
+            prices = f_prices.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
+            try:
+                changes = f_changes.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
+            except Exception as e:
+                logger.warning(f"Daily change enrichment failed: {e}")
 
         return [
             self._holding_to_response(
