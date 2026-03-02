@@ -7,6 +7,7 @@ Provides endpoints for portfolio management operations.
 import io
 import logging
 import asyncio
+import time
 from pathlib import Path
 from typing import List, Optional
 
@@ -36,6 +37,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/portfolio", tags=["Portfolio"])
 WS_PUSH_INTERVAL_SECONDS = 10
+WS_SNAPSHOT_TTL_SECONDS = 3
+_ws_snapshot_lock = asyncio.Lock()
+_ws_snapshot_cache: dict | None = None
+_ws_snapshot_ts: float = 0.0
 
 
 def _parse_ticker_query(raw: str | None) -> List[str]:
@@ -50,6 +55,47 @@ def _parse_ticker_query(raw: str | None) -> List[str]:
             seen.add(ticker)
             tickers.append(ticker)
     return tickers
+
+
+async def _get_ws_snapshot(service) -> dict:
+    """
+    Return a shared realtime snapshot for websocket clients.
+
+    Snapshot work (holdings + price fetch) is computed once per TTL window and
+    then reused across concurrent websocket clients.
+    """
+    global _ws_snapshot_cache, _ws_snapshot_ts
+
+    now = time.monotonic()
+    if _ws_snapshot_cache is not None and now - _ws_snapshot_ts < WS_SNAPSHOT_TTL_SECONDS:
+        return _ws_snapshot_cache
+
+    async with _ws_snapshot_lock:
+        # Double-check after lock acquisition.
+        now = time.monotonic()
+        if _ws_snapshot_cache is not None and now - _ws_snapshot_ts < WS_SNAPSHOT_TTL_SECONDS:
+            return _ws_snapshot_cache
+
+        holdings = await asyncio.to_thread(service.get_all_holdings, False)
+        currency_by_ticker = {h.ticker.upper(): h.currency for h in holdings if h.ticker}
+        tickers = list(currency_by_ticker.keys())
+        prices = await asyncio.to_thread(service._get_current_prices, tickers) if tickers else {}
+
+        updates_by_ticker = {
+            ticker: {
+                "ticker": ticker,
+                "current_price": float(price),
+                "currency": currency_by_ticker.get(ticker.upper()),
+            }
+            for ticker, price in prices.items()
+            if price is not None
+        }
+
+        _ws_snapshot_cache = {
+            "updates_by_ticker": updates_by_ticker,
+        }
+        _ws_snapshot_ts = now
+        return _ws_snapshot_cache
 
 
 @router.get(
@@ -537,24 +583,18 @@ async def portfolio_realtime_websocket(websocket: WebSocket) -> None:
 
     try:
         while True:
-            holdings = await asyncio.to_thread(service.get_all_holdings, False)
-            currency_by_ticker = {h.ticker.upper(): h.currency for h in holdings if h.ticker}
-
-            tickers = subscribed or list(currency_by_ticker.keys())
+            snapshot = await _get_ws_snapshot(service)
+            updates_by_ticker = snapshot.get("updates_by_ticker", {})
+            tickers = subscribed or list(updates_by_ticker.keys())
             if not tickers:
                 await websocket.send_json({"updates": []})
                 await asyncio.sleep(WS_PUSH_INTERVAL_SECONDS)
                 continue
 
-            prices = await asyncio.to_thread(service._get_current_prices, tickers)
             updates = [
-                {
-                    "ticker": ticker,
-                    "current_price": float(price),
-                    "currency": currency_by_ticker.get(ticker.upper()),
-                }
-                for ticker, price in prices.items()
-                if price is not None
+                updates_by_ticker[ticker]
+                for ticker in tickers
+                if ticker in updates_by_ticker
             ]
 
             await websocket.send_json({"updates": updates})
