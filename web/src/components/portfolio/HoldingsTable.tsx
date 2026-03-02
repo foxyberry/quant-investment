@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { ArrowUpDown, Edit2, Trash2, TrendingUp, TrendingDown, BarChart3, Banknote } from 'lucide-react';
+import { ArrowUpDown, Edit2, Trash2, TrendingUp, TrendingDown, BarChart3, Banknote, Shield } from 'lucide-react';
 import type { Holding } from '@/lib/types';
 import { formatCurrency as formatCurrencyUtil, formatQuantity as formatQuantityUtil, formatPercent as formatPercentUtil } from '@/lib/format';
 import { classifyMarket, normalizeSector, MARKET_COLORS, SECTOR_COLORS } from './AllocationCharts';
@@ -25,6 +25,8 @@ interface HoldingsTableProps {
   onAnalyze?: (holding: Holding) => void;
   /** Callback when sell button is clicked */
   onSell?: (holding: Holding) => void;
+  /** Callback when sell rules button is clicked */
+  onSellRules?: (holding: Holding) => void;
   /** Per-ticker current price change direction for transient highlight */
   priceChangeDirection?: Record<string, 'up' | 'down'>;
 }
@@ -104,6 +106,7 @@ export default function HoldingsTable({
   onDelete,
   onAnalyze,
   onSell,
+  onSellRules,
   priceChangeDirection,
 }: HoldingsTableProps) {
   const t = useTranslations('portfolio');
@@ -348,6 +351,17 @@ export default function HoldingsTable({
                         <Banknote className="h-4 w-4" />
                       </button>
                     )}
+                    {onSellRules && (
+                      <button
+                        type="button"
+                        onClick={() => onSellRules(holding)}
+                        className="rounded p-1.5 text-[var(--foreground-muted)] hover:bg-purple-100 hover:text-purple-600 dark:hover:bg-purple-900/50 dark:hover:text-purple-400 transition-colors"
+                        aria-label={`${t('sellRuleTitle')} ${holding.ticker}`}
+                        title={t('sellRuleTitle')}
+                      >
+                        <Shield className="h-4 w-4" />
+                      </button>
+                    )}
                     {onDelete && (
                       <button
                         type="button"
@@ -376,6 +390,7 @@ export default function HoldingsTable({
             onDelete={onDelete}
             onAnalyze={onAnalyze}
             onSell={onSell}
+            onSellRules={onSellRules}
             priceChangeDirection={priceChangeDirection}
           />
         ))}
@@ -391,13 +406,14 @@ interface MobileCardProps {
   onDelete?: (holding: Holding) => void;
   onAnalyze?: (holding: Holding) => void;
   onSell?: (holding: Holding) => void;
+  onSellRules?: (holding: Holding) => void;
   priceChangeDirection?: Record<string, 'up' | 'down'>;
 }
 
 /**
  * Mobile card component for responsive display
  */
-function MobileCard({ holding, onRowClick, onEdit, onDelete, onAnalyze, onSell, priceChangeDirection }: MobileCardProps) {
+function MobileCard({ holding, onRowClick, onEdit, onDelete, onAnalyze, onSell, onSellRules, priceChangeDirection }: MobileCardProps) {
   const t = useTranslations('portfolio');
   const locale = useLocale();
   const formatCurrency = (value: number | null, currency?: string) => formatCurrencyUtil(value, currency, locale);
@@ -445,6 +461,17 @@ function MobileCard({ holding, onRowClick, onEdit, onDelete, onAnalyze, onSell, 
               title={t('sell')}
             >
               <Banknote className="h-4 w-4" />
+            </button>
+          )}
+          {onSellRules && (
+            <button
+              type="button"
+              onClick={() => onSellRules(holding)}
+              className="rounded p-1.5 text-[var(--foreground-muted)] hover:bg-purple-100 hover:text-purple-600 dark:hover:bg-purple-900/50 dark:hover:text-purple-400 transition-colors"
+              aria-label={`${t('sellRuleTitle')} ${holding.ticker}`}
+              title={t('sellRuleTitle')}
+            >
+              <Shield className="h-4 w-4" />
             </button>
           )}
           {onDelete && (

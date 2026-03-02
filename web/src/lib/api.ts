@@ -34,6 +34,9 @@ import type {
   Trade,
   TradeHistoryResponse,
   SellRecordCreate,
+  SellRule,
+  SellRuleCreate,
+  SellRuleUpdate,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -313,6 +316,42 @@ export async function recordSell(data: SellRecordCreate): Promise<Trade> {
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+// --- Sell Rules API ---
+
+/**
+ * Get sell rules for a specific holding
+ */
+export async function getSellRules(ticker: string): Promise<SellRule[]> {
+  return fetchApi<SellRule[]>(`/api/portfolio/holdings/${encodeURIComponent(ticker)}/sell-rules`);
+}
+
+/**
+ * Create a sell rule for a holding
+ */
+export async function createSellRule(ticker: string, data: SellRuleCreate): Promise<SellRule> {
+  return fetchApi<SellRule>(`/api/portfolio/holdings/${encodeURIComponent(ticker)}/sell-rules`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Update a sell rule
+ */
+export async function updateSellRule(ruleId: number, data: SellRuleUpdate): Promise<SellRule> {
+  return fetchApi<SellRule>(`/api/portfolio/sell-rules/${ruleId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Delete a sell rule
+ */
+export async function deleteSellRule(ruleId: number): Promise<void> {
+  await fetchApi<void>(`/api/portfolio/sell-rules/${ruleId}`, { method: 'DELETE' });
 }
 
 /**

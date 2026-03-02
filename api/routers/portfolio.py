@@ -24,10 +24,15 @@ from api.schemas.portfolio import (
     SellSignal,
     SellSignalsResponse,
     SellRecordCreate,
+    SellRuleCreate,
+    SellRuleResponse,
+    SellRuleUpdate,
+    SellRulesEvaluateResponse,
     TradeResponse,
     TradeHistoryResponse,
 )
 from api.services.portfolio_service import get_portfolio_service
+from api.services.sell_rule_service import get_sell_rule_service
 
 TEMPLATE_DIR = Path(__file__).parent.parent.parent / "data" / "templates"
 MAX_UPLOAD_SIZE = 1_048_576  # 1 MB
@@ -599,3 +604,78 @@ async def get_trade_history(
     except Exception as e:
         logger.error(f"Failed to get trade history: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get trade history: {str(e)}")
+
+
+# ---------------------------------------------------------------------------
+# Sell Rules
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/holdings/{ticker}/sell-rules",
+    response_model=List[SellRuleResponse],
+    summary="Get sell rules for a holding",
+)
+async def get_sell_rules(ticker: str) -> List[SellRuleResponse]:
+    return get_sell_rule_service().get_rules_for_ticker(ticker)
+
+
+@router.post(
+    "/holdings/{ticker}/sell-rules",
+    response_model=SellRuleResponse,
+    status_code=201,
+    summary="Create a sell rule for a holding",
+)
+async def create_sell_rule(ticker: str, data: SellRuleCreate) -> SellRuleResponse:
+    try:
+        return get_sell_rule_service().create_rule(
+            ticker=ticker,
+            rule_type=data.rule_type,
+            params=data.params,
+            is_active=data.is_active,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put(
+    "/sell-rules/{rule_id}",
+    response_model=SellRuleResponse,
+    summary="Update a sell rule",
+)
+async def update_sell_rule(rule_id: int, data: SellRuleUpdate) -> SellRuleResponse:
+    try:
+        result = get_sell_rule_service().update_rule(
+            rule_id=rule_id,
+            params=data.params,
+            is_active=data.is_active,
+        )
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Sell rule not found: {rule_id}")
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete(
+    "/sell-rules/{rule_id}",
+    status_code=204,
+    summary="Delete a sell rule",
+)
+async def delete_sell_rule(rule_id: int) -> None:
+    if not get_sell_rule_service().delete_rule(rule_id):
+        raise HTTPException(status_code=404, detail=f"Sell rule not found: {rule_id}")
+
+
+@router.post(
+    "/sell-rules/evaluate",
+    response_model=SellRulesEvaluateResponse,
+    summary="Evaluate all active sell rules",
+)
+async def evaluate_sell_rules() -> SellRulesEvaluateResponse:
+    try:
+        results = get_sell_rule_service().evaluate_all()
+        return SellRulesEvaluateResponse(results=results)
+    except Exception as e:
+        logger.error(f"Failed to evaluate sell rules: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")

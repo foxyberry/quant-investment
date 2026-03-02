@@ -18,6 +18,7 @@ function formatSignalType(type: SellSignal['signal_type']): string {
     stop_loss: 'Stop Loss',
     take_profit: 'Take Profit',
     trailing_stop: 'Trailing Stop',
+    holding_period: 'Holding Period',
     manual: 'Manual',
   };
   return labels[type] || type;

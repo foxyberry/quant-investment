@@ -166,13 +166,40 @@ export interface PortfolioSummary {
 export interface SellSignal {
   ticker: string;
   name: string | null;
-  signal_type: 'stop_loss' | 'take_profit' | 'trailing_stop' | 'manual';
+  signal_type: 'stop_loss' | 'take_profit' | 'trailing_stop' | 'holding_period' | 'manual';
   reason: string;
   current_price: number | null;
   trigger_price: number | null;
   avg_price: number;
   pnl_pct: number;
   currency: string;
+  rule_id: number | null;
+}
+
+// Sell Rules
+export type SellRuleType = 'stop_loss' | 'take_profit' | 'trailing_stop' | 'holding_period';
+
+export interface SellRule {
+  id: number;
+  ticker: string;
+  rule_type: SellRuleType;
+  params: Record<string, number>;
+  state_json: Record<string, unknown> | null;
+  is_active: boolean;
+  triggered_at: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface SellRuleCreate {
+  rule_type: SellRuleType;
+  params: Record<string, number>;
+  is_active?: boolean;
+}
+
+export interface SellRuleUpdate {
+  params?: Record<string, number>;
+  is_active?: boolean;
 }
 
 // CSV import types

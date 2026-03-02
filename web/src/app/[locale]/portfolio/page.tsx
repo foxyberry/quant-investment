@@ -14,6 +14,7 @@ import {
   OrderDesk,
   BrokerOrderDesk,
   SellModal,
+  SellRuleModal,
   TradeHistory,
   AllocationCharts,
 } from '@/components/portfolio';
@@ -124,6 +125,9 @@ export default function PortfolioPage() {
 
   // Sell modal state
   const [sellTarget, setSellTarget] = useState<Holding | null>(null);
+
+  // Sell rule modal state
+  const [sellRuleTarget, setSellRuleTarget] = useState<Holding | null>(null);
 
   // Trade history section state
   const [isTradeHistoryOpen, setIsTradeHistoryOpen] = useState(false);
@@ -552,6 +556,10 @@ export default function PortfolioPage() {
     setSellTarget(holding);
   }, []);
 
+  const handleSellRulesClick = useCallback((holding: Holding) => {
+    setSellRuleTarget(holding);
+  }, []);
+
   const handleAnalyzeClick = useCallback((holding: Holding) => {
     const width = 900;
     const height = 700;
@@ -820,6 +828,7 @@ export default function PortfolioPage() {
           onEdit={handleEditClick}
           onDelete={handleDeleteClick}
           onSell={handleSellClick}
+          onSellRules={handleSellRulesClick}
           priceChangeDirection={priceChangeDirection}
         />
       </Card>
@@ -906,6 +915,14 @@ export default function PortfolioPage() {
         holding={sellTarget}
         onClose={() => setSellTarget(null)}
         onSellComplete={() => fetchData(false)}
+      />
+
+      {/* Sell Rule Modal */}
+      <SellRuleModal
+        isOpen={!!sellRuleTarget}
+        holding={sellRuleTarget}
+        onClose={() => setSellRuleTarget(null)}
+        onRulesChanged={() => fetchData(false)}
       />
 
     </div>

@@ -1089,30 +1089,60 @@ class PortfolioService:
         take_profit_pct: float = None
     ) -> List[SellSignal]:
         """
-        Get sell signals based on P&L thresholds.
+        Get sell signals by evaluating per-holding sell rules.
+
+        Holdings with DB-persisted rules are evaluated against those rules.
+        Holdings without rules fall back to global thresholds.
 
         Args:
-            stop_loss_pct: Stop loss threshold percentage (default: -10%)
-            take_profit_pct: Take profit threshold percentage (default: +20%)
+            stop_loss_pct: Fallback stop loss threshold percentage (default: -10%)
+            take_profit_pct: Fallback take profit threshold percentage (default: +20%)
 
         Returns:
             List of SellSignal objects
         """
+        from api.services.sell_rule_service import get_sell_rule_service
+
         stop_loss = stop_loss_pct if stop_loss_pct is not None else self.STOP_LOSS_PCT
         take_profit = take_profit_pct if take_profit_pct is not None else self.TAKE_PROFIT_PCT
 
         signals = []
         holdings = self.get_all_holdings(with_prices=True)
 
+        # Evaluate DB-persisted rules (read-only: no state mutation from GET)
+        svc = get_sell_rule_service()
+        rule_results = svc.evaluate_all(persist=False)
+        # Use DB to determine which tickers have rules (includes already-triggered)
+        tickers_with_rules = svc.get_tickers_with_rules()
+
+        for res in rule_results:
+            if not res.triggered:
+                continue
+            # Find matching holding for metadata
+            h = next((h for h in holdings if h.ticker == res.ticker), None)
+            if not h or h.current_price is None:
+                continue
+            signals.append(SellSignal(
+                ticker=res.ticker,
+                name=h.name or h.ticker,
+                signal_type=res.rule_type,
+                reason=res.reason or f"{res.rule_type} triggered",
+                current_price=h.current_price,
+                avg_price=h.avg_price,
+                pnl_pct=h.pnl_pct or 0.0,
+                currency=h.currency,
+                rule_id=res.rule_id,
+            ))
+
+        # Fallback: global thresholds for holdings without any DB rules
         for h in holdings:
+            if h.ticker in tickers_with_rules:
+                continue
             if h.pnl_pct is None or h.current_price is None:
                 continue
 
-            signal = None
-
-            # Check stop loss
             if h.pnl_pct <= stop_loss:
-                signal = SellSignal(
+                signals.append(SellSignal(
                     ticker=h.ticker,
                     name=h.name or h.ticker,
                     signal_type="stop_loss",
@@ -1122,11 +1152,9 @@ class PortfolioService:
                     avg_price=h.avg_price,
                     pnl_pct=h.pnl_pct,
                     currency=h.currency,
-                )
-
-            # Check take profit
+                ))
             elif h.pnl_pct >= take_profit:
-                signal = SellSignal(
+                signals.append(SellSignal(
                     ticker=h.ticker,
                     name=h.name or h.ticker,
                     signal_type="take_profit",
@@ -1136,10 +1164,7 @@ class PortfolioService:
                     avg_price=h.avg_price,
                     pnl_pct=h.pnl_pct,
                     currency=h.currency,
-                )
-
-            if signal:
-                signals.append(signal)
+                ))
 
         return signals
 

@@ -223,6 +223,90 @@ class TradeHistoryResponse(BaseModel):
     trade_count: int = Field(default=0)
 
 
+# ---------------------------------------------------------------------------
+# Sell Rules
+# ---------------------------------------------------------------------------
+
+SELL_RULE_TYPES = {"stop_loss", "take_profit", "trailing_stop", "holding_period"}
+
+
+def _validate_sell_rule_params(rule_type: str, params: dict) -> dict:
+    """Validate params dict against rule_type contract."""
+    if rule_type not in SELL_RULE_TYPES:
+        raise ValueError(f"Unknown rule_type: {rule_type}. Must be one of {SELL_RULE_TYPES}")
+
+    if rule_type in ("stop_loss", "take_profit", "trailing_stop"):
+        pct = params.get("pct")
+        if isinstance(pct, bool) or pct is None or not isinstance(pct, (int, float)):
+            raise ValueError(f"{rule_type} requires 'pct' (number, e.g. 10 for 10%)")
+        if pct <= 0:
+            raise ValueError(f"{rule_type} 'pct' must be positive")
+        return {"pct": float(pct)}
+
+    if rule_type == "holding_period":
+        max_days = params.get("max_days")
+        if isinstance(max_days, bool) or max_days is None or not isinstance(max_days, int):
+            raise ValueError("holding_period requires 'max_days' (integer, e.g. 30)")
+        if max_days <= 0:
+            raise ValueError("holding_period 'max_days' must be positive")
+        return {"max_days": int(max_days)}
+
+    return params
+
+
+class SellRuleCreate(BaseModel):
+    """Create a sell rule for a specific holding."""
+
+    rule_type: str = Field(..., description="Rule type: stop_loss, take_profit, trailing_stop, holding_period")
+    params: dict = Field(..., description="Rule parameters (e.g. {pct: 10} or {max_days: 30})")
+    is_active: bool = Field(default=True, description="Whether the rule is active")
+
+    @model_validator(mode="after")
+    def _validate_params(self) -> "Self":
+        self.params = _validate_sell_rule_params(self.rule_type, self.params)
+        return self
+
+
+class SellRuleUpdate(BaseModel):
+    """Update an existing sell rule."""
+
+    params: Optional[dict] = Field(default=None, description="New rule parameters")
+    is_active: Optional[bool] = Field(default=None, description="Active flag")
+
+
+class SellRuleResponse(BaseModel):
+    """Sell rule response."""
+
+    id: int
+    ticker: str
+    rule_type: str
+    params: dict
+    state_json: Optional[dict] = None
+    is_active: bool
+    triggered_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+
+class SellRuleEvaluateResult(BaseModel):
+    """Result of evaluating a single sell rule."""
+
+    rule_id: int
+    ticker: str
+    rule_type: str
+    triggered: bool
+    reason: Optional[str] = None
+    current_price: Optional[float] = None
+    pnl_pct: Optional[float] = None
+
+
+class SellRulesEvaluateResponse(BaseModel):
+    """Response for bulk sell rule evaluation."""
+
+    results: List[SellRuleEvaluateResult] = Field(default_factory=list)
+    evaluated_at: datetime = Field(default_factory=datetime.now)
+
+
 class SellSignal(BaseModel):
     """
     Schema for sell signal information.
@@ -244,7 +328,7 @@ class SellSignal(BaseModel):
     signal_type: str = Field(
         ...,
         description="Type of signal",
-        examples=["stop_loss", "take_profit", "technical"]
+        examples=["stop_loss", "take_profit", "trailing_stop", "holding_period"]
     )
     reason: str = Field(..., description="Reason for the signal")
     current_price: float = Field(..., description="Current market price")
@@ -252,6 +336,7 @@ class SellSignal(BaseModel):
     avg_price: float = Field(..., description="Average purchase price")
     pnl_pct: float = Field(..., description="Current profit/loss percentage")
     currency: str = Field(..., description="Holding currency code")
+    rule_id: Optional[int] = Field(default=None, description="Sell rule ID (None for global threshold)")
 
     @model_validator(mode="after")
     def _sanitize_nan(self) -> "Self":

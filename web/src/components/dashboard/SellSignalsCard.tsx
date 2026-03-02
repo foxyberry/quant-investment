@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui';
 import { getSellSignals } from '@/lib/api';
 import type { SellSignal } from '@/lib/types';
-import { AlertTriangle, ShieldCheck, TrendingDown, Target, Activity } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, TrendingDown, Target, Activity, Clock } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
 
 interface LoadingState {
@@ -51,6 +51,11 @@ export default function SellSignalsCard() {
       labelKey: 'trailingStop',
       icon: Activity,
       colorClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    },
+    holding_period: {
+      labelKey: 'holdingPeriod',
+      icon: Clock,
+      colorClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     },
     manual: {
       labelKey: 'manual',
