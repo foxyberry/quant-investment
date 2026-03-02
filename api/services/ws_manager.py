@@ -50,7 +50,10 @@ class ConnectionManager:
         )
 
     async def broadcast(
-        self, data: Dict[str, Any], timeout_seconds: float = 5.0
+        self,
+        data: Dict[str, Any],
+        timeout_seconds: float = 5.0,
+        max_concurrent_sends: int = 32,
     ) -> None:
         """Send *data* as JSON to every connected client.
 
@@ -58,16 +61,25 @@ class ConnectionManager:
         silently removed.
         """
         message = json.dumps(data, default=str)
+        if not self._connections:
+            return
+
         disconnected: List[WebSocket] = []
-        for ws in self._connections:
-            try:
-                await asyncio.wait_for(
-                    ws.send_text(message), timeout=timeout_seconds
-                )
-            except asyncio.TimeoutError:
-                disconnected.append(ws)
-            except Exception:
-                disconnected.append(ws)
+        semaphore = asyncio.Semaphore(max(1, max_concurrent_sends))
+        connections = list(self._connections)
+
+        async def _send(ws: WebSocket) -> None:
+            async with semaphore:
+                try:
+                    await asyncio.wait_for(
+                        ws.send_text(message), timeout=timeout_seconds
+                    )
+                except asyncio.TimeoutError:
+                    disconnected.append(ws)
+                except Exception:
+                    disconnected.append(ws)
+
+        await asyncio.gather(*(_send(ws) for ws in connections))
         for ws in disconnected:
             self._connections.discard(ws)
 
