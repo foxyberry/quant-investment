@@ -5,6 +5,7 @@ Main application instance with middleware configuration and router registration.
 """
 
 from contextlib import asynccontextmanager
+import threading
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
@@ -20,6 +21,102 @@ from api.routers.search import router as search_router
 from api.routers.agent_task import router as agent_task_router
 from api.routers.kiwoom import router as kiwoom_router
 from api.routers.strategy import router as strategy_router
+
+
+def _backfill_metadata():
+    """One-time backfill: populate sector/industry/country/exchange for existing holdings."""
+    import logging
+    _logger = logging.getLogger(__name__)
+    try:
+        from api.database import SessionLocal
+        from api.models.portfolio import Holding
+        db = SessionLocal()
+        try:
+            # Find holdings missing any metadata field
+            from sqlalchemy import or_
+            rows = db.query(Holding).filter(
+                or_(
+                    Holding.sector.is_(None),
+                    Holding.industry.is_(None),
+                    Holding.country.is_(None),
+                    Holding.exchange.is_(None),
+                )
+            ).all()
+            if not rows:
+                _logger.info("No holdings need metadata backfill")
+                return
+
+            _logger.info(f"Backfilling metadata for {len(rows)} holdings...")
+
+            # Partition by market
+            kr_kospi = [r for r in rows if r.ticker.endswith(".KS")]
+            kr_kosdaq = [r for r in rows if r.ticker.endswith(".KQ")]
+            us_tickers = [r for r in rows if not r.ticker.endswith((".KS", ".KQ"))]
+
+            # Korean: batch via SectorFetcher
+            try:
+                from screener.sector_fetcher import get_sector_fetcher
+                fetcher = get_sector_fetcher()
+
+                if kr_kospi:
+                    kospi_map = fetcher.get_all_sector_classifications("KOSPI")
+                    for r in kr_kospi:
+                        r.sector = kospi_map.get(r.ticker)
+                        r.country = "South Korea"
+                        r.exchange = "KOSPI"
+
+                if kr_kosdaq:
+                    kosdaq_map = fetcher.get_all_sector_classifications("KOSDAQ")
+                    for r in kr_kosdaq:
+                        r.sector = kosdaq_map.get(r.ticker)
+                        r.country = "South Korea"
+                        r.exchange = "KOSDAQ"
+            except Exception as e:
+                _logger.warning(f"KR sector backfill failed: {e}")
+
+            # US: parallel yfinance (return pure dicts to avoid thread-unsafe ORM mutation)
+            if us_tickers:
+                from concurrent.futures import ThreadPoolExecutor, as_completed
+
+                def _fetch_us_meta(ticker: str):
+                    try:
+                        import yfinance as yf
+                        info = yf.Ticker(ticker).info
+                        return {
+                            "sector": info.get("sector"),
+                            "industry": info.get("industry"),
+                            "country": info.get("country"),
+                            "exchange": info.get("exchange"),
+                        }
+                    except Exception as e:
+                        _logger.warning(f"US metadata fetch failed for {ticker}: {e}")
+                        return {}
+
+                ticker_to_holding = {r.ticker: r for r in us_tickers}
+                with ThreadPoolExecutor(max_workers=min(len(us_tickers), 8)) as executor:
+                    futures = {executor.submit(_fetch_us_meta, r.ticker): r.ticker for r in us_tickers}
+                    for f in as_completed(futures):
+                        t = futures[f]
+                        try:
+                            meta = f.result()
+                            h = ticker_to_holding[t]
+                            h.sector = meta.get("sector")
+                            h.industry = meta.get("industry")
+                            h.country = meta.get("country")
+                            h.exchange = meta.get("exchange")
+                        except Exception:
+                            pass
+
+            db.commit()
+            total = len(kr_kospi) + len(kr_kosdaq) + len(us_tickers)
+            _logger.info(f"Backfilled metadata for {total} holdings")
+        except Exception as e:
+            db.rollback()
+            _logger.error(f"Metadata backfill failed: {e}")
+        finally:
+            db.close()
+    except Exception as e:
+        _logger.error(f"Metadata backfill initialization failed: {e}")
 
 
 @asynccontextmanager
@@ -41,6 +138,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     print(f"Debug mode: {settings.debug}")
     try:
         init_db()
+        # Start background metadata backfill for existing holdings
+        threading.Thread(target=_backfill_metadata, daemon=True, name="metadata-backfill").start()
         try:
             get_broker_settings_service().apply_tiger_settings_to_runtime()
         except Exception as e:

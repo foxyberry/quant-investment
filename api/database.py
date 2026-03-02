@@ -58,6 +58,7 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables ensured")
     _migrate_trade_columns()
+    _migrate_holding_metadata_columns()
 
     _migrate_json_data()
     _migrate_portfolio_json()
@@ -75,6 +76,28 @@ def _migrate_trade_columns() -> None:
                 logger.info("Added missing trades.tax column for legacy DB compatibility")
     except Exception as e:
         logger.warning("Trade schema compatibility migration skipped: %s", e)
+
+
+def _migrate_holding_metadata_columns() -> None:
+    """Schema compatibility migration for legacy holdings metadata columns."""
+    try:
+        with engine.begin() as conn:
+            column_rows = conn.execute(text("PRAGMA table_info(holdings)")).fetchall()
+            existing_columns = {row[1] for row in column_rows}
+            if "sector" not in existing_columns:
+                conn.execute(text("ALTER TABLE holdings ADD COLUMN sector VARCHAR(128)"))
+                logger.info("Added missing holdings.sector column for legacy DB compatibility")
+            if "industry" not in existing_columns:
+                conn.execute(text("ALTER TABLE holdings ADD COLUMN industry VARCHAR(128)"))
+                logger.info("Added missing holdings.industry column for legacy DB compatibility")
+            if "country" not in existing_columns:
+                conn.execute(text("ALTER TABLE holdings ADD COLUMN country VARCHAR(64)"))
+                logger.info("Added missing holdings.country column for legacy DB compatibility")
+            if "exchange" not in existing_columns:
+                conn.execute(text("ALTER TABLE holdings ADD COLUMN exchange VARCHAR(32)"))
+                logger.info("Added missing holdings.exchange column for legacy DB compatibility")
+    except Exception as e:
+        logger.warning("Holding schema compatibility migration skipped: %s", e)
 
 
 def _migrate_json_data() -> None:

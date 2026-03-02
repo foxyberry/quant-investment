@@ -19,6 +19,10 @@ class Holding(Base):
     currency = Column(String(8), nullable=False, default="KRW")
     note = Column(Text, nullable=True)
     bought_at = Column(Date, nullable=True)
+    sector = Column(String(128), nullable=True)
+    industry = Column(String(128), nullable=True)
+    country = Column(String(64), nullable=True)
+    exchange = Column(String(32), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
