@@ -308,6 +308,54 @@ class TestBacktestRunEndpoint:
         data = response.json()
         assert data["strategy"] == "ma_touch"
 
+    @patch("api.services.backtest_service.BacktestEngine")
+    def test_run_backtest_respects_response_bounds(self, mock_engine_cls):
+        """Should limit trades/equity payload size when max_* options are set."""
+        mock_result = _make_mock_backtest_result()
+        mock_engine = MagicMock()
+        mock_engine.run.return_value = mock_result
+        mock_engine_cls.return_value = mock_engine
+
+        response = client.post(
+            "/api/backtest/run",
+            json={
+                "ticker": "AAPL",
+                "strategy": "sma",
+                "period": "1mo",
+                "max_trades": 2,
+                "max_equity_points": 20,
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["trades"]) == 2
+        assert len(data["equity_curve"]) <= 20
+
+    @patch("api.services.backtest_service.BacktestEngine")
+    def test_run_backtest_allows_disabling_large_sections(self, mock_engine_cls):
+        """Should return only metrics when trades/equity are disabled."""
+        mock_result = _make_mock_backtest_result()
+        mock_engine = MagicMock()
+        mock_engine.run.return_value = mock_result
+        mock_engine_cls.return_value = mock_engine
+
+        response = client.post(
+            "/api/backtest/run",
+            json={
+                "ticker": "AAPL",
+                "strategy": "sma",
+                "period": "1mo",
+                "include_trades": False,
+                "include_equity_curve": False,
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["trades"] == []
+        assert data["equity_curve"] == []
+
 
 class TestOptimizeEndpoint:
     """Test POST /api/backtest/optimize."""
