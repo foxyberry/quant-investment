@@ -53,6 +53,26 @@ class BacktestRequest(BaseModel):
         default_factory=dict,
         description="Strategy-specific parameters (e.g., {'n1': 10, 'n2': 20})",
     )
+    include_trades: bool = Field(
+        default=True,
+        description="Include trade records in response",
+    )
+    include_equity_curve: bool = Field(
+        default=True,
+        description="Include equity curve in response",
+    )
+    max_trades: int = Field(
+        default=500,
+        ge=1,
+        le=5000,
+        description="Maximum number of trades to return",
+    )
+    max_equity_points: int = Field(
+        default=1000,
+        ge=10,
+        le=5000,
+        description="Maximum number of equity curve points to return",
+    )
 
 
 class BacktestMetrics(BaseModel):
@@ -118,6 +138,26 @@ class OptimizeRequest(BaseModel):
     maximize: str = Field(
         default="Sharpe Ratio",
         description="Metric to maximize (e.g., 'Sharpe Ratio', 'Return [%]', 'Win Rate [%]')",
+    )
+    include_trades: bool = Field(
+        default=True,
+        description="Include trade records in optimization response",
+    )
+    include_equity_curve: bool = Field(
+        default=True,
+        description="Include equity curve in optimization response",
+    )
+    max_trades: int = Field(
+        default=500,
+        ge=1,
+        le=5000,
+        description="Maximum number of trades to return",
+    )
+    max_equity_points: int = Field(
+        default=1000,
+        ge=10,
+        le=5000,
+        description="Maximum number of equity curve points to return",
     )
 
 

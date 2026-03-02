@@ -147,14 +147,19 @@ def _metrics_to_schema(perf: PerformanceMetrics) -> BacktestMetrics:
     return BacktestMetrics(**sanitized)
 
 
-def _extract_trades(result: BacktestResult) -> List[TradeRecord]:
+def _extract_trades(result: BacktestResult, max_trades: Optional[int] = None) -> List[TradeRecord]:
     """Extract trade records from BacktestResult, converting to JSON-safe types."""
     trades_df = result.trades
     if trades_df is None or trades_df.empty:
         return []
 
+    records_raw = trades_df.to_dict(orient="records")
+    if max_trades is not None and len(records_raw) > max_trades:
+        # Keep recent trades when response size is bounded.
+        records_raw = records_raw[-max_trades:]
+
     records = []
-    for _, row in trades_df.iterrows():
+    for row in records_raw:
         # Backtesting.py trade columns: EntryBar, ExitBar, EntryPrice, ExitPrice,
         # PnL, ReturnPct, EntryTime, ExitTime, Size, ...
         entry_date = _sanitize_value(row.get("EntryTime"))
@@ -179,7 +184,10 @@ def _extract_trades(result: BacktestResult) -> List[TradeRecord]:
     return records
 
 
-def _extract_equity_curve(result: BacktestResult) -> List[EquityPoint]:
+def _extract_equity_curve(
+    result: BacktestResult,
+    max_points: Optional[int] = None,
+) -> List[EquityPoint]:
     """Extract equity curve points from BacktestResult."""
     eq_df = result.equity_curve
     if eq_df is None or eq_df.empty:
@@ -188,13 +196,19 @@ def _extract_equity_curve(result: BacktestResult) -> List[EquityPoint]:
     if "Equity" not in eq_df.columns:
         return []
 
+    indices = list(range(len(eq_df)))
+    if max_points is not None and len(indices) > max_points:
+        sampled = np.linspace(0, len(indices) - 1, num=max_points, dtype=int).tolist()
+        indices = sorted(set(sampled))
+
     points = []
-    for idx, row in eq_df.iterrows():
+    for i in indices:
+        idx = eq_df.index[i]
         date_str = _sanitize_value(idx)
         if date_str is None:
             # Fallback for non-Timestamp index
             date_str = str(idx)
-        equity = _sanitize_value(row["Equity"])
+        equity = _sanitize_value(eq_df["Equity"].iat[i])
         if equity is not None:
             points.append(EquityPoint(date=date_str, equity=equity))
     return points
@@ -259,8 +273,16 @@ def run_backtest(request: BacktestRequest) -> BacktestResponse:
     metrics = _metrics_to_schema(perf)
 
     # Extract trades and equity curve
-    trades = _extract_trades(result)
-    equity_curve = _extract_equity_curve(result)
+    trades = (
+        _extract_trades(result, max_trades=request.max_trades)
+        if request.include_trades
+        else []
+    )
+    equity_curve = (
+        _extract_equity_curve(result, max_points=request.max_equity_points)
+        if request.include_equity_curve
+        else []
+    )
 
     return BacktestResponse(
         ticker=request.ticker,
@@ -332,8 +354,16 @@ def optimize_backtest(request: OptimizeRequest) -> OptimizeResponse:
     metrics = _metrics_to_schema(perf)
 
     # Extract trades and equity curve
-    trades = _extract_trades(result)
-    equity_curve = _extract_equity_curve(result)
+    trades = (
+        _extract_trades(result, max_trades=request.max_trades)
+        if request.include_trades
+        else []
+    )
+    equity_curve = (
+        _extract_equity_curve(result, max_points=request.max_equity_points)
+        if request.include_equity_curve
+        else []
+    )
 
     return OptimizeResponse(
         ticker=request.ticker,
