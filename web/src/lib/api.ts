@@ -29,6 +29,8 @@ import type {
   BrokerOrderRequest,
   TigerSettings,
   TigerSettingsUpsert,
+  IBKRSettings,
+  IBKRSettingsUpsert,
   Trade,
   TradeHistoryResponse,
   SellRecordCreate,
@@ -750,6 +752,23 @@ export async function saveTigerSettings(payload: TigerSettingsUpsert): Promise<T
 
 export async function testTigerConnection(): Promise<BrokerConnectionStatus> {
   return fetchApi<BrokerConnectionStatus>('/api/settings/brokers/tiger/test', {
+    method: 'POST',
+  });
+}
+
+export async function getIbkrSettings(): Promise<IBKRSettings> {
+  return fetchApi<IBKRSettings>('/api/settings/brokers/ibkr');
+}
+
+export async function saveIbkrSettings(payload: IBKRSettingsUpsert): Promise<IBKRSettings> {
+  return fetchApi<IBKRSettings>('/api/settings/brokers/ibkr', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function testIbkrConnection(): Promise<BrokerConnectionStatus> {
+  return fetchApi<BrokerConnectionStatus>('/api/settings/brokers/ibkr/test', {
     method: 'POST',
   });
 }

@@ -130,3 +130,23 @@ class TigerSettingsResponse(BaseModel):
     sandbox: bool = False
     has_private_key: bool = False
     updated_at: Optional[str] = None
+
+
+class IBKRSettingsRequest(BaseModel):
+    """IBKR Client Portal Gateway settings payload."""
+
+    gateway_url: str = Field(
+        default="https://localhost:5000",
+        description="Client Portal Gateway base URL",
+    )
+    account_id: Optional[str] = Field(
+        None, description="IBKR account ID (auto-discovered if empty)"
+    )
+
+
+class IBKRSettingsResponse(BaseModel):
+    """IBKR broker settings payload safe for UI."""
+
+    gateway_url: Optional[str] = None
+    account_id: Optional[str] = None
+    updated_at: Optional[str] = None

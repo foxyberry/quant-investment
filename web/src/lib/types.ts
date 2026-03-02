@@ -344,6 +344,17 @@ export interface TigerSettingsUpsert {
   sandbox: boolean;
 }
 
+export interface IBKRSettings {
+  gateway_url: string | null;
+  account_id: string | null;
+  updated_at: string | null;
+}
+
+export interface IBKRSettingsUpsert {
+  gateway_url: string;
+  account_id?: string | null;
+}
+
 // Execution history types
 export interface ExecutionHistorySummary {
   id: string;

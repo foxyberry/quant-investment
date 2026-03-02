@@ -144,6 +144,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             get_broker_settings_service().apply_tiger_settings_to_runtime()
         except Exception as e:
             print(f"WARNING: Tiger settings runtime apply failed: {e}")
+        try:
+            get_broker_settings_service().apply_ibkr_settings_to_runtime()
+        except Exception as e:
+            print(f"WARNING: IBKR settings runtime apply failed: {e}")
     except Exception as e:
         print(f"WARNING: Database initialization failed: {e}")
         print("Strategy persistence will be unavailable until DB is reachable.")
