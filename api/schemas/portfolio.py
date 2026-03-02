@@ -82,6 +82,9 @@ class HoldingResponse(BaseModel):
     pnl_pct: Optional[float] = Field(default=None, description="Profit/Loss percentage")
     currency: str = Field(default="KRW", description="Currency code")
     sector: Optional[str] = Field(default=None, description="Stock sector classification")
+    industry: Optional[str] = Field(default=None, description="Industry classification")
+    country: Optional[str] = Field(default=None, description="Country of origin")
+    exchange: Optional[str] = Field(default=None, description="Stock exchange")
     bought_at: Optional[date] = Field(default=None, description="Purchase date")
     note: Optional[str] = Field(default=None, description="Optional note")
 

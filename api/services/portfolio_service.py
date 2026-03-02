@@ -92,6 +92,10 @@ class PortfolioService:
             "currency": row.currency,
             "note": row.note,
             "bought_at": row.bought_at,
+            "sector": row.sector,
+            "industry": row.industry,
+            "country": row.country,
+            "exchange": row.exchange,
         }
 
     @staticmethod
@@ -336,6 +340,40 @@ class PortfolioService:
 
         return sectors
 
+    @staticmethod
+    def _fetch_static_metadata(ticker: str) -> Dict[str, Optional[str]]:
+        """Fetch static metadata (sector/industry/country/exchange) for a ticker. Called once at creation."""
+        result = {"sector": None, "industry": None, "country": None, "exchange": None}
+        try:
+            if ticker.endswith(".KS") or ticker.endswith(".KQ"):
+                # Korean stock
+                suffix = ticker[-3:]  # .KS or .KQ
+                result["country"] = "South Korea"
+                result["exchange"] = "KOSPI" if suffix == ".KS" else "KOSDAQ"
+                # Sector from SectorFetcher
+                try:
+                    from screener.sector_fetcher import get_sector_fetcher
+                    fetcher = get_sector_fetcher()
+                    market = "KOSPI" if suffix == ".KS" else "KOSDAQ"
+                    sector_map = fetcher.get_all_sector_classifications(market)
+                    result["sector"] = sector_map.get(ticker)
+                except Exception as e:
+                    logger.warning(f"Failed to fetch KR sector for {ticker}: {e}")
+            else:
+                # US/Other: yfinance
+                try:
+                    import yfinance as yf
+                    info = yf.Ticker(ticker).info
+                    result["sector"] = info.get("sector")
+                    result["industry"] = info.get("industry")
+                    result["country"] = info.get("country")
+                    result["exchange"] = info.get("exchange")
+                except Exception as e:
+                    logger.warning(f"Failed to fetch metadata for {ticker}: {e}")
+        except Exception as e:
+            logger.warning(f"Unexpected error fetching metadata for {ticker}: {e}")
+        return result
+
     def _holding_to_response(
         self,
         holding: Dict[str, Any],
@@ -390,6 +428,9 @@ class PortfolioService:
             pnl_pct=pnl_pct,
             currency=holding.get("currency", "KRW"),
             sector=sector,
+            industry=holding.get("industry"),
+            country=holding.get("country"),
+            exchange=holding.get("exchange"),
             bought_at=bought_at,
             note=holding.get("note")
         )
@@ -412,32 +453,26 @@ class PortfolioService:
             db.close()
 
         prices: Dict[str, float] = {}
-        sectors: Dict[str, Optional[str]] = {}
         changes: Dict[str, float] = {}
         if with_prices and holdings_dicts:
             tickers = [h["ticker"] for h in holdings_dicts]
 
-            # Run all three enrichment calls in parallel.
-            with ThreadPoolExecutor(max_workers=3) as outer:
+            # Run price and change enrichment in parallel (sector is now in DB).
+            with ThreadPoolExecutor(max_workers=2) as outer:
                 f_prices = outer.submit(self._get_current_prices, tickers)
                 f_changes = outer.submit(self._get_daily_changes, tickers)
-                f_sectors = outer.submit(self._get_sectors, tickers)
 
                 prices = f_prices.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
                 try:
                     changes = f_changes.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
                 except Exception as e:
                     logger.warning(f"Daily change enrichment failed: {e}")
-                try:
-                    sectors = f_sectors.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
-                except Exception as e:
-                    logger.warning(f"Sector enrichment failed: {e}")
 
         return [
             self._holding_to_response(
                 h,
                 prices.get(h["ticker"]),
-                sector=sectors.get(h["ticker"]),
+                sector=h.get("sector"),
                 change_pct=changes.get(h["ticker"]),
             )
             for h in holdings_dicts
@@ -464,22 +499,16 @@ class PortfolioService:
             db.close()
 
         current_price = None
-        sector = None
         change_pct = None
         if with_price:
             current_price = self._get_current_price(ticker)
-            try:
-                sector_map = self._get_sectors([ticker])
-                sector = sector_map.get(ticker)
-            except Exception as e:
-                logger.warning(f"Sector enrichment failed for {ticker}: {e}")
             try:
                 changes = self._get_daily_changes([ticker])
                 change_pct = changes.get(ticker)
             except Exception as e:
                 logger.warning(f"Daily change enrichment failed for {ticker}: {e}")
 
-        return self._holding_to_response(holding, current_price, sector=sector, change_pct=change_pct)
+        return self._holding_to_response(holding, current_price, sector=holding.get("sector"), change_pct=change_pct)
 
     def add_holding(self, data: HoldingCreate) -> HoldingResponse:
         """
@@ -516,6 +545,7 @@ class PortfolioService:
                 logger.info(f"Updated holding: {ticker} (qty: {total_quantity}, avg: {new_avg_price:.2f})")
             else:
                 # Create new holding
+                meta = self._fetch_static_metadata(ticker)
                 existing = Holding(
                     ticker=ticker,
                     name=data.name or ticker,
@@ -524,6 +554,10 @@ class PortfolioService:
                     currency=data.currency,
                     note=data.note,
                     bought_at=date.today(),
+                    sector=meta.get("sector"),
+                    industry=meta.get("industry"),
+                    country=meta.get("country"),
+                    exchange=meta.get("exchange"),
                 )
                 db.add(existing)
                 logger.info(f"Added holding: {ticker} (qty: {data.quantity}, avg: {data.avg_price:.2f})")
@@ -538,7 +572,7 @@ class PortfolioService:
             db.close()
 
         current_price = self._get_current_price(ticker)
-        return self._holding_to_response(holding, current_price)
+        return self._holding_to_response(holding, current_price, sector=holding.get("sector"), change_pct=None)
 
     def update_holding(self, ticker: str, data: HoldingUpdate) -> Optional[HoldingResponse]:
         """
@@ -871,6 +905,31 @@ class PortfolioService:
             db.close()
 
         logger.info(f"CSV import: imported={imported}, updated={updated}, skipped={len(errors)}")
+
+        # Backfill metadata for newly imported holdings in background
+        if imported > 0:
+            import threading
+
+            def _backfill_csv_imports():
+                db2 = SessionLocal()
+                try:
+                    null_rows = db2.query(Holding).filter(Holding.sector.is_(None)).all()
+                    for row in null_rows:
+                        meta = self._fetch_static_metadata(row.ticker)
+                        row.sector = meta.get("sector")
+                        row.industry = meta.get("industry")
+                        row.country = meta.get("country")
+                        row.exchange = meta.get("exchange")
+                    if null_rows:
+                        db2.commit()
+                        logger.info(f"Backfilled metadata for {len(null_rows)} CSV-imported holdings")
+                except Exception as e:
+                    db2.rollback()
+                    logger.warning(f"CSV import metadata backfill failed: {e}")
+                finally:
+                    db2.close()
+
+            threading.Thread(target=_backfill_csv_imports, daemon=True).start()
 
         return {
             "imported": imported,
