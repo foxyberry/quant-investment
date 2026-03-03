@@ -2755,7 +2755,19 @@
     "rsiThreshold": "RSI Threshold",
     "active": "Active",
     "inactive": "Inactive",
-    "signals": "Signals"
+    "signals": "Signals",
+    "manualInput": "Manual Input",
+    "savedTemplates": "Saved Templates",
+    "noTemplates": "No saved templates yet",
+    "linkTemplate": "Link",
+    "alreadyLinked": "Linked",
+    "templateInactive": "Inactive",
+    "linkedCount": "{count} linked",
+    "invalidValue": "Enter a valid positive number",
+    "addRuleFailed": "Failed to add rule",
+    "linkFailed": "Failed to link template",
+    "loadFailed": "Failed to load templates",
+    "retry": "Retry"
   },
   "settings": {
     "title": "Settings",

@@ -465,11 +465,24 @@ export type BuyRuleType = 'target_price' | 'rsi_oversold';
 export interface BuyRule {
   id: number;
   watchlist_item_id: number;
+  template_id: number | null;
   rule_type: BuyRuleType;
   params: Record<string, unknown>;
   state_json: Record<string, unknown> | null;
   is_active: boolean;
   triggered_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface BuyRuleTemplate {
+  id: number;
+  name: string;
+  rule_type: BuyRuleType;
+  params: Record<string, unknown>;
+  description: string | null;
+  is_active: boolean;
+  linked_rules_count: number;
   created_at: string | null;
   updated_at: string | null;
 }

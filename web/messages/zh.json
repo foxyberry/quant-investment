@@ -2755,7 +2755,19 @@
     "rsiThreshold": "RSI阈值",
     "active": "启用",
     "inactive": "停用",
-    "signals": "信号"
+    "signals": "信号",
+    "manualInput": "手动输入",
+    "savedTemplates": "已保存规则",
+    "noTemplates": "暂无已保存的规则模板",
+    "linkTemplate": "关联",
+    "alreadyLinked": "已关联",
+    "templateInactive": "未启用",
+    "linkedCount": "{count}个关联",
+    "invalidValue": "请输入有效的正数",
+    "addRuleFailed": "添加规则失败",
+    "linkFailed": "关联模板失败",
+    "loadFailed": "加载模板失败",
+    "retry": "重试"
   },
   "settings": {
     "title": "设置",

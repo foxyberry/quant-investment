@@ -2755,7 +2755,19 @@
     "rsiThreshold": "RSI 임계값",
     "active": "활성",
     "inactive": "비활성",
-    "signals": "신호"
+    "signals": "신호",
+    "manualInput": "직접 입력",
+    "savedTemplates": "저장된 규칙",
+    "noTemplates": "저장된 규칙 템플릿이 없습니다",
+    "linkTemplate": "연결",
+    "alreadyLinked": "연결됨",
+    "templateInactive": "비활성",
+    "linkedCount": "{count}개 연결",
+    "invalidValue": "유효한 양수를 입력하세요",
+    "addRuleFailed": "규칙 추가에 실패했습니다",
+    "linkFailed": "템플릿 연결에 실패했습니다",
+    "loadFailed": "템플릿을 불러오지 못했습니다",
+    "retry": "다시 시도"
   },
   "settings": {
     "title": "설정",
