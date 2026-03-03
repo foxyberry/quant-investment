@@ -47,7 +47,7 @@ function SortButton({ field, currentField, direction, children, onSort, align = 
     <button
       type="button"
       onClick={() => onSort(field)}
-      className={`flex items-center gap-1 font-semibold text-[var(--foreground)] hover:text-[var(--color-primary)] transition-colors ${
+      className={`flex items-center gap-1 text-[13px] font-semibold text-[var(--foreground)] hover:text-[var(--color-primary)] transition-colors ${
         align === 'right' ? 'ml-auto' : ''
       }`}
     >
@@ -195,55 +195,55 @@ export default function HoldingsTable({
   return (
     <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] overflow-hidden">
       <div className="hidden lg:block overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--background)]/50">
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-2.5 text-left">
                 <SortButton field="name" currentField={sortField} direction={sortDirection} onSort={handleSort}>
                   {t('name')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-2.5 text-left">
                 <SortButton field="sector" currentField={sortField} direction={sortDirection} onSort={handleSort}>
                   {t('sector')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-2.5 text-left">
                 <SortButton field="market" currentField={sortField} direction={sortDirection} onSort={handleSort}>
                   {t('market')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-4 py-2.5 text-right">
                 <SortButton field="quantity" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('qty')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-4 py-2.5 text-right">
                 <SortButton field="avg_price" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('avgPrice')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-4 py-2.5 text-right">
                 <SortButton field="current_price" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('currentPrice')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-4 py-2.5 text-right">
                 <SortButton field="market_value" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('value')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-4 py-2.5 text-right">
                 <SortButton field="pnl" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('pnl')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-right">
+              <th className="px-4 py-2.5 text-right">
                 <SortButton field="pnl_pct" currentField={sortField} direction={sortDirection} onSort={handleSort} align="right">
                   {t('pnlPct')}
                 </SortButton>
               </th>
-              <th className="px-4 py-3 text-center text-sm font-semibold text-[var(--foreground)]">
+              <th className="px-4 py-2.5 text-center text-[13px] font-semibold text-[var(--foreground)]">
                 {t('actions')}
               </th>
             </tr>
@@ -255,29 +255,29 @@ export default function HoldingsTable({
                 onClick={() => onRowClick?.(holding)}
                 className={`border-b border-[var(--border)] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
               >
-                <td className="px-4 py-3 text-[var(--foreground)]">
+                <td className="px-4 py-2.5 text-[var(--foreground)]">
                   {holding.name || holding.ticker}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-2.5">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--background)] px-2.5 py-0.5 text-xs text-[var(--foreground-muted)]">
                     <span className="inline-block h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: SECTOR_COLORS[normalizeSector(holding.sector)] ?? '#94a3b8' }} />
                     {ta(sectorI18nKey(normalizeSector(holding.sector)))}
                   </span>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-2.5">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--background)] px-2.5 py-0.5 text-xs text-[var(--foreground-muted)]">
                     <span className="inline-block h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: MARKET_COLORS[classifyMarket(holding.ticker)] ?? '#94a3b8' }} />
                     {ta(marketI18nKey(classifyMarket(holding.ticker)))}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td className="px-4 py-2.5 text-right font-mono text-[var(--foreground)]">
                   {formatQuantity(holding.quantity)}
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td className="px-4 py-2.5 text-right font-mono text-[var(--foreground)]">
                   {formatCurrency(holding.avg_price, holding.currency)}
                 </td>
                 <td
-                  className={`px-4 py-3 text-right font-mono transition-colors ${getPnlColorClass(holding.change_pct)} ${
+                  className={`px-4 py-2.5 text-right font-mono transition-colors ${getPnlColorClass(holding.change_pct)} ${
                     priceChangeDirection?.[holding.ticker] === 'up'
                       ? 'bg-red-100/70 dark:bg-red-900/30'
                       : priceChangeDirection?.[holding.ticker] === 'down'
@@ -296,25 +296,25 @@ export default function HoldingsTable({
                     {formatCurrency(holding.current_price, holding.currency)}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td className="px-4 py-2.5 text-right font-mono text-[var(--foreground)]">
                   {formatCurrency(holding.market_value, holding.currency)}
                 </td>
-                <td className={`px-4 py-3 text-right font-mono ${getPnlColorClass(holding.pnl)}`}>
+                <td className={`px-4 py-2.5 text-right font-mono ${getPnlColorClass(holding.pnl)}`}>
                   <span className="flex items-center justify-end gap-1">
                     {holding.pnl !== null && holding.pnl !== 0 && (
                       holding.pnl > 0 ? (
-                        <TrendingUp className="h-4 w-4" />
+                        <TrendingUp className="h-3.5 w-3.5" />
                       ) : (
-                        <TrendingDown className="h-4 w-4" />
+                        <TrendingDown className="h-3.5 w-3.5" />
                       )
                     )}
                     {formatCurrency(holding.pnl, holding.currency)}
                   </span>
                 </td>
-                <td className={`px-4 py-3 text-right font-mono ${getPnlColorClass(holding.pnl_pct)}`}>
+                <td className={`px-4 py-2.5 text-right font-mono ${getPnlColorClass(holding.pnl_pct)}`}>
                   {formatPercent(holding.pnl_pct)}
                 </td>
-                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-center gap-2">
                     {onEdit && (
                       <button
