@@ -12,7 +12,7 @@ import math
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, date
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 
 from api.database import SessionLocal
 from api.models.portfolio import Holding, SellRule, Trade
@@ -1283,13 +1283,44 @@ class PortfolioService:
 
     # ── Sell-rule CRUD ───────────────────────────────────────────────
 
+    @staticmethod
+    def _ticker_aliases(ticker: str) -> List[str]:
+        """Build candidate ticker aliases for legacy/non-suffixed rows."""
+        normalized = (ticker or "").strip().upper()
+        if not normalized:
+            return []
+
+        aliases: Set[str] = {normalized}
+        if normalized.endswith(".KS") or normalized.endswith(".KQ"):
+            aliases.add(normalized.split(".")[0])
+        elif "." not in normalized:
+            aliases.add(f"{normalized}.KS")
+            aliases.add(f"{normalized}.KQ")
+        return list(aliases)
+
+    def _resolve_holding_ticker(self, db, ticker: str) -> Optional[str]:
+        """Resolve input ticker to an existing Holding.ticker value."""
+        aliases = self._ticker_aliases(ticker)
+        if not aliases:
+            return None
+
+        holding = db.query(Holding).filter(Holding.ticker == ticker).first()
+        if holding is not None:
+            return holding.ticker
+
+        holding = db.query(Holding).filter(Holding.ticker.in_(aliases)).first()
+        return holding.ticker if holding is not None else None
+
     def get_sell_rules(self, ticker: str) -> List[SellRuleResponse]:
         """Get all sell rules for a holding."""
         db = SessionLocal()
         try:
+            aliases = self._ticker_aliases(ticker)
+            if not aliases:
+                return []
             rules = (
                 db.query(SellRule)
-                .filter(SellRule.ticker == ticker)
+                .filter(SellRule.ticker.in_(aliases))
                 .order_by(SellRule.created_at)
                 .all()
             )
@@ -1309,12 +1340,12 @@ class PortfolioService:
         """Create a sell rule for a holding. Raises ValueError if holding not found."""
         db = SessionLocal()
         try:
-            holding = db.query(Holding).filter(Holding.ticker == ticker).first()
-            if holding is None:
+            resolved_ticker = self._resolve_holding_ticker(db, ticker)
+            if resolved_ticker is None:
                 raise ValueError(f"Holding not found: {ticker}")
 
             rule = SellRule(
-                ticker=ticker,
+                ticker=resolved_ticker,
                 rule_type=data.rule_type,
                 params=data.params,
                 is_active=data.is_active,
@@ -1418,7 +1449,10 @@ class PortfolioService:
                 SellRule.triggered_at.is_(None),
             )
             if ticker:
-                q = q.filter(SellRule.ticker == ticker)
+                aliases = self._ticker_aliases(ticker)
+                if not aliases:
+                    return SellRuleEvaluateResponse(results=[])
+                q = q.filter(SellRule.ticker.in_(aliases))
             rules: List[SellRule] = q.all()
 
             if not rules:
