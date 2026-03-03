@@ -1,12 +1,28 @@
 """
-SQLAlchemy models for the portfolio tables (holdings + trades).
+SQLAlchemy models for the portfolio tables (holdings, trades, sell_rules).
 """
 
 from datetime import date, datetime
 
-from sqlalchemy import Column, Date, DateTime, Float, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
 
 from api.database import Base
+
+_JSON = JSON().with_variant(JSONB, "postgresql")
 
 
 class Holding(Base):
@@ -26,6 +42,11 @@ class Holding(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    sell_rules = relationship(
+        "SellRule", back_populates="holding", cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
 
 class Trade(Base):
     __tablename__ = "trades"
@@ -44,3 +65,33 @@ class Trade(Base):
     note = Column(Text, nullable=True)
     traded_at = Column(Date, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SellRule(Base):
+    __tablename__ = "sell_rules"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ticker = Column(
+        String(32),
+        ForeignKey("holdings.ticker", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    rule_type = Column(
+        String(32), nullable=False,
+    )  # stop_loss | take_profit | trailing_stop | holding_period
+    params = Column(_JSON, nullable=False)  # {"pct": -10} etc.
+    state_json = Column(_JSON, nullable=True)  # runtime state (e.g. trailing_stop high_watermark)
+
+    __table_args__ = (
+        CheckConstraint(
+            "rule_type IN ('stop_loss', 'take_profit', 'trailing_stop', 'holding_period')",
+            name="ck_sell_rule_type",
+        ),
+    )
+    is_active = Column(Boolean, nullable=False, default=True)
+    triggered_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    holding = relationship("Holding", back_populates="sell_rules")
