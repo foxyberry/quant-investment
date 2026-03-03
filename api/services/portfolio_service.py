@@ -15,7 +15,7 @@ from datetime import datetime, date
 from typing import List, Dict, Any, Optional
 
 from api.database import SessionLocal
-from api.models.portfolio import Holding, Trade
+from api.models.portfolio import Holding, SellRule, Trade
 from api.schemas.portfolio import (
     AdditionalPurchaseRequest,
     HoldingCreate,
@@ -24,8 +24,17 @@ from api.schemas.portfolio import (
     PortfolioSummary,
     SellSignal,
     SellRecordCreate,
+    SellRuleEvaluateResult,
+    SellRuleEvaluateResponse,
     TradeResponse,
     TradeHistoryResponse,
+)
+from portfolio.conditions import (
+    TradingContext,
+    StopLossCondition,
+    TakeProfitCondition,
+    TrailingStopCondition,
+    HoldingPeriodCondition,
 )
 from api.services.exchange_rate_service import ExchangeRateService, get_exchange_rate_service
 
@@ -1240,6 +1249,167 @@ class PortfolioService:
                 signals.append(signal)
 
         return signals
+
+    # ── Sell-rule evaluation engine ────────────────────────────────
+
+    # Map rule_type → condition factory.  Each factory accepts the
+    # rule's params dict and returns a BaseTradingCondition instance.
+    _RULE_FACTORIES = {
+        "stop_loss": lambda p: StopLossCondition(pct=abs(p["pct"]) / 100),
+        "take_profit": lambda p: TakeProfitCondition(pct=abs(p["pct"]) / 100),
+        "trailing_stop": lambda p: TrailingStopCondition(pct=abs(p["pct"]) / 100),
+        "holding_period": lambda p: HoldingPeriodCondition(max_days=p["max_days"]),
+    }
+
+    def evaluate_sell_rules(
+        self, ticker: Optional[str] = None
+    ) -> SellRuleEvaluateResponse:
+        """Evaluate active sell rules against current market data.
+
+        Args:
+            ticker: If given, evaluate rules for this ticker only.
+                    Otherwise evaluate all active rules.
+
+        Returns:
+            SellRuleEvaluateResponse with per-rule results.
+        """
+        db = SessionLocal()
+        try:
+            # 1. Load active, non-triggered rules
+            q = db.query(SellRule).filter(
+                SellRule.is_active.is_(True),
+                SellRule.triggered_at.is_(None),
+            )
+            if ticker:
+                q = q.filter(SellRule.ticker == ticker)
+            rules: List[SellRule] = q.all()
+
+            if not rules:
+                return SellRuleEvaluateResponse(results=[])
+
+            # 2. Gather unique tickers and fetch current prices + holdings
+            tickers = list({r.ticker for r in rules})
+            prices = self._get_current_prices(tickers)
+
+            # Load holdings for avg_price / bought_at
+            holdings_map: Dict[str, Holding] = {}
+            for h in db.query(Holding).filter(Holding.ticker.in_(tickers)).all():
+                holdings_map[h.ticker] = h
+
+            # 3. Evaluate each rule
+            results: List[SellRuleEvaluateResult] = []
+            now = datetime.utcnow()
+
+            for rule in rules:
+                try:
+                    result = self._evaluate_single_rule(
+                        rule, prices, holdings_map, now,
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to evaluate sell rule %d (%s/%s): %s",
+                        rule.id, rule.ticker, rule.rule_type, exc,
+                    )
+                    result = SellRuleEvaluateResult(
+                        rule_id=rule.id,
+                        ticker=rule.ticker,
+                        rule_type=rule.rule_type,
+                        triggered=False,
+                        reason=f"Evaluation error: {exc}",
+                    )
+                results.append(result)
+
+            db.commit()
+            return SellRuleEvaluateResponse(results=results)
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def _evaluate_single_rule(
+        self,
+        rule: SellRule,
+        prices: Dict[str, float],
+        holdings_map: Dict[str, Holding],
+        now: datetime,
+    ) -> SellRuleEvaluateResult:
+        """Evaluate one sell rule.  Raises on bad params so caller can isolate."""
+        current_price = prices.get(rule.ticker)
+        holding = holdings_map.get(rule.ticker)
+        if current_price is None or holding is None:
+            return SellRuleEvaluateResult(
+                rule_id=rule.id,
+                ticker=rule.ticker,
+                rule_type=rule.rule_type,
+                triggered=False,
+                reason="Price or holding data unavailable",
+            )
+
+        # Build TradingContext
+        state = rule.state_json or {}
+        old_hwm = state.get("high_watermark")
+        high_watermark = old_hwm
+        if rule.rule_type == "trailing_stop":
+            if high_watermark is None or current_price > high_watermark:
+                high_watermark = current_price
+
+        ctx = TradingContext(
+            ticker=rule.ticker,
+            current_price=current_price,
+            avg_price=holding.avg_price,
+            quantity=holding.quantity,
+            high_since_buy=high_watermark,
+            bought_at=datetime.combine(holding.bought_at, datetime.min.time())
+            if holding.bought_at else None,
+        )
+
+        factory = self._RULE_FACTORIES.get(rule.rule_type)
+        if factory is None:
+            return SellRuleEvaluateResult(
+                rule_id=rule.id,
+                ticker=rule.ticker,
+                rule_type=rule.rule_type,
+                triggered=False,
+                reason=f"Unknown rule_type: {rule.rule_type}",
+            )
+
+        condition = factory(rule.params)
+        triggered = condition.should_sell(ctx)
+        reason = condition.get_reason() if triggered else None
+
+        # Persist trailing_stop state only when high_watermark actually changed
+        if rule.rule_type == "trailing_stop" and high_watermark != old_hwm:
+            rule.state_json = {**state, "high_watermark": high_watermark}
+
+        if triggered:
+            rule.triggered_at = now
+
+        return SellRuleEvaluateResult(
+            rule_id=rule.id,
+            ticker=rule.ticker,
+            rule_type=rule.rule_type,
+            triggered=triggered,
+            reason=reason,
+            current_price=current_price,
+            trigger_value=self._compute_trigger_value(rule, holding, high_watermark),
+        )
+
+    @staticmethod
+    def _compute_trigger_value(
+        rule: SellRule, holding: Holding, high_watermark: Optional[float]
+    ) -> Optional[float]:
+        """Compute the price threshold that triggered (or would trigger) the rule."""
+        params = rule.params or {}
+        if rule.rule_type == "stop_loss":
+            # pct is negative (e.g. -10), threshold = avg * (1 - abs(pct)/100)
+            return holding.avg_price * (1 - abs(params.get("pct", 0)) / 100)
+        if rule.rule_type == "take_profit":
+            # pct is positive (e.g. 20), threshold = avg * (1 + pct/100)
+            return holding.avg_price * (1 + abs(params.get("pct", 0)) / 100)
+        if rule.rule_type == "trailing_stop" and high_watermark:
+            return high_watermark * (1 - abs(params.get("pct", 0)) / 100)
+        return None
 
 
 # Singleton instance
