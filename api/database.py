@@ -54,6 +54,7 @@ def init_db() -> None:
     import api.models.portfolio  # noqa: F401 — register model with Base
     import api.models.screening_result  # noqa: F401 — register model with Base
     import api.models.strategy  # noqa: F401 — register model with Base
+    import api.models.watchlist  # noqa: F401 — register model with Base
 
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables ensured")

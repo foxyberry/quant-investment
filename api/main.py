@@ -21,6 +21,7 @@ from api.routers.search import router as search_router
 from api.routers.agent_task import router as agent_task_router
 from api.routers.kiwoom import router as kiwoom_router
 from api.routers.strategy import router as strategy_router
+from api.routers.watchlist import router as watchlist_router
 
 
 def _backfill_metadata():
@@ -205,6 +206,7 @@ def create_app() -> FastAPI:
     app.include_router(kiwoom_router)
     app.include_router(broker_router)
     app.include_router(execution_history_router)
+    app.include_router(watchlist_router)
 
     # Future routers (추후 추가될 라우터)
     # app.include_router(news_router, prefix="/api/v1")
