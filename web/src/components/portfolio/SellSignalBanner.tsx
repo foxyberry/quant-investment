@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { SellSignal } from '@/lib/types';
 
 interface SellSignalBannerProps {
@@ -14,22 +15,44 @@ interface SellSignalBannerProps {
  * Format signal type for display
  */
 function formatSignalType(type: SellSignal['signal_type']): string {
-  const labels: Record<SellSignal['signal_type'], string> = {
-    stop_loss: 'Stop Loss',
-    take_profit: 'Take Profit',
-    trailing_stop: 'Trailing Stop',
-    manual: 'Manual',
-  };
-  return labels[type] || type;
+  return type;
 }
 
 /**
  * Banner component displaying sell signals as warnings
  */
 export default function SellSignalBanner({ signals, onDismiss }: SellSignalBannerProps) {
+  const t = useTranslations('portfolio');
+
   if (signals.length === 0) {
     return null;
   }
+
+  const signalTypeLabel = (type: SellSignal['signal_type']) => {
+    const labels: Record<SellSignal['signal_type'], string> = {
+      stop_loss: t('stopLoss'),
+      take_profit: t('takeProfit'),
+      trailing_stop: t('trailingStop'),
+      manual: t('manual'),
+    };
+    return labels[type] || type;
+  };
+
+  const signalReasonLabel = (signal: SellSignal) => {
+    if (signal.signal_type === 'take_profit') {
+      return t('sellSignalReasonTakeProfit', {
+        target: 20,
+        current: signal.pnl_pct.toFixed(1),
+      });
+    }
+    if (signal.signal_type === 'stop_loss') {
+      return t('sellSignalReasonStopLoss', {
+        threshold: 10,
+        current: signal.pnl_pct.toFixed(1),
+      });
+    }
+    return signal.reason;
+  };
 
   return (
     <div
@@ -41,7 +64,7 @@ export default function SellSignalBanner({ signals, onDismiss }: SellSignalBanne
         <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
         <div className="flex-1">
           <h3 className="font-semibold text-red-800 dark:text-red-200">
-            Sell Signal Alert ({signals.length})
+            {t('sellSignalAlertTitle', { count: signals.length })}
           </h3>
           <div className="mt-2 space-y-2">
             {signals.map((signal) => (
@@ -54,9 +77,9 @@ export default function SellSignalBanner({ signals, onDismiss }: SellSignalBanne
                   <span className="text-red-600 dark:text-red-400">{signal.name}</span>
                 )}
                 <span className="rounded bg-red-200 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-800 dark:text-red-200">
-                  {formatSignalType(signal.signal_type)}
+                  {signalTypeLabel(formatSignalType(signal.signal_type))}
                 </span>
-                <span className="text-red-600 dark:text-red-400">{signal.reason}</span>
+                <span className="text-red-600 dark:text-red-400">{signalReasonLabel(signal)}</span>
               </div>
             ))}
           </div>
@@ -66,7 +89,7 @@ export default function SellSignalBanner({ signals, onDismiss }: SellSignalBanne
             type="button"
             onClick={onDismiss}
             className="rounded p-1 text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
-            aria-label="Dismiss alert"
+            aria-label={t('dismissAlert')}
           >
             <X className="h-4 w-4" />
           </button>
