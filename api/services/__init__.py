@@ -21,6 +21,7 @@ from api.services.backtest_service import (
     STRATEGY_META,
 )
 from api.services.kiwoom_service import KiwoomService
+from api.services.korean_search_service import KoreanSearchService, get_korean_search_service
 from api.services.strategy_service import (
     execute_strategy,
     get_available_conditions,
@@ -51,6 +52,9 @@ __all__ = [
     "STRATEGY_META",
     # Kiwoom
     "KiwoomService",
+    # Korean Search
+    "KoreanSearchService",
+    "get_korean_search_service",
     # Strategy
     "execute_strategy",
     "get_available_conditions",
