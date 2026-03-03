@@ -270,14 +270,14 @@ export default function HoldingsTable({
                     {ta(marketI18nKey(classifyMarket(holding.ticker)))}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td className="px-4 py-3 text-right font-mono text-sm text-[var(--foreground)]">
                   {formatQuantity(holding.quantity)}
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td className="px-4 py-3 text-right font-mono text-sm text-[var(--foreground)]">
                   {formatCurrency(holding.avg_price, holding.currency)}
                 </td>
                 <td
-                  className={`px-4 py-3 text-right font-mono transition-colors ${getPnlColorClass(holding.change_pct)} ${
+                  className={`px-4 py-3 text-right font-mono text-sm transition-colors ${getPnlColorClass(holding.change_pct)} ${
                     priceChangeDirection?.[holding.ticker] === 'up'
                       ? 'bg-red-100/70 dark:bg-red-900/30'
                       : priceChangeDirection?.[holding.ticker] === 'down'
@@ -296,10 +296,10 @@ export default function HoldingsTable({
                     {formatCurrency(holding.current_price, holding.currency)}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right font-mono text-[var(--foreground)]">
+                <td className="px-4 py-3 text-right font-mono text-sm text-[var(--foreground)]">
                   {formatCurrency(holding.market_value, holding.currency)}
                 </td>
-                <td className={`px-4 py-3 text-right font-mono ${getPnlColorClass(holding.pnl)}`}>
+                <td className={`px-4 py-3 text-right font-mono text-sm ${getPnlColorClass(holding.pnl)}`}>
                   <span className="flex items-center justify-end gap-1">
                     {holding.pnl !== null && holding.pnl !== 0 && (
                       holding.pnl > 0 ? (
@@ -311,7 +311,7 @@ export default function HoldingsTable({
                     {formatCurrency(holding.pnl, holding.currency)}
                   </span>
                 </td>
-                <td className={`px-4 py-3 text-right font-mono ${getPnlColorClass(holding.pnl_pct)}`}>
+                <td className={`px-4 py-3 text-right font-mono text-sm ${getPnlColorClass(holding.pnl_pct)}`}>
                   {formatPercent(holding.pnl_pct)}
                 </td>
                 <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
