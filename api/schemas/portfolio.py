@@ -6,9 +6,50 @@ Defines Pydantic models for portfolio management operations.
 
 import math
 from datetime import datetime, date
-from typing import List, Optional, Self
+from typing import Any, Dict, List, Optional, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+SELL_RULE_TYPES = {"stop_loss", "take_profit", "trailing_stop", "holding_period"}
+
+
+def _is_finite_number(v: object) -> bool:
+    """Return True if *v* is a finite int or float (not bool, NaN, or Inf)."""
+    if isinstance(v, bool):
+        return False
+    if not isinstance(v, (int, float)):
+        return False
+    return math.isfinite(v)
+
+
+def _validate_sell_rule_params(rule_type: str, params: Dict[str, Any]) -> None:
+    """Validate params dict for a given sell rule type."""
+    if rule_type == "stop_loss":
+        pct = params.get("pct")
+        if not _is_finite_number(pct):
+            raise ValueError("stop_loss rule requires finite numeric 'pct' param")
+        if pct >= 0:  # type: ignore[operator]
+            raise ValueError("stop_loss 'pct' must be negative (e.g. -10)")
+    elif rule_type == "take_profit":
+        pct = params.get("pct")
+        if not _is_finite_number(pct):
+            raise ValueError("take_profit rule requires finite numeric 'pct' param")
+        if pct <= 0:  # type: ignore[operator]
+            raise ValueError("take_profit 'pct' must be positive (e.g. 20)")
+    elif rule_type == "trailing_stop":
+        pct = params.get("pct")
+        if not _is_finite_number(pct):
+            raise ValueError("trailing_stop rule requires finite numeric 'pct' param")
+        if pct <= 0:  # type: ignore[operator]
+            raise ValueError("trailing_stop 'pct' must be positive (e.g. 8)")
+    elif rule_type == "holding_period":
+        max_days = params.get("max_days")
+        if isinstance(max_days, bool) or not isinstance(max_days, int):
+            raise ValueError("holding_period rule requires integer 'max_days' param")
+        if max_days <= 0:
+            raise ValueError("holding_period 'max_days' must be positive (e.g. 30)")
+    else:
+        raise ValueError(f"Unknown rule_type: {rule_type}. Allowed: {sorted(SELL_RULE_TYPES)}")
 
 
 class HoldingCreate(BaseModel):
@@ -265,6 +306,59 @@ class SellSignal(BaseModel):
             if math.isnan(val) or math.isinf(val):
                 object.__setattr__(self, field_name, 0.0)
         return self
+
+
+# ── SellRule schemas ───────────────────────────────────────────────
+
+
+class SellRuleCreate(BaseModel):
+    rule_type: str = Field(..., description="Rule type", examples=["stop_loss", "take_profit", "trailing_stop", "holding_period"])
+    params: Dict[str, Any] = Field(..., description="Rule parameters")
+    is_active: bool = Field(default=True, description="Whether the rule is active")
+
+    @field_validator("rule_type")
+    @classmethod
+    def validate_rule_type(cls, v: str) -> str:
+        if v not in SELL_RULE_TYPES:
+            raise ValueError(f"Invalid rule_type: {v}. Allowed: {sorted(SELL_RULE_TYPES)}")
+        return v
+
+    @model_validator(mode="after")
+    def _validate_params(self) -> "Self":
+        _validate_sell_rule_params(self.rule_type, self.params)
+        return self
+
+
+class SellRuleUpdate(BaseModel):
+    params: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+
+
+class SellRuleResponse(BaseModel):
+    id: int
+    ticker: str
+    rule_type: str
+    params: Dict[str, Any]
+    state_json: Optional[Dict[str, Any]] = None
+    is_active: bool
+    triggered_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class SellRuleEvaluateResult(BaseModel):
+    rule_id: int
+    ticker: str
+    rule_type: str
+    triggered: bool
+    reason: Optional[str] = None
+    current_price: Optional[float] = None
+    trigger_value: Optional[float] = None
+
+
+class SellRuleEvaluateResponse(BaseModel):
+    results: List[SellRuleEvaluateResult] = Field(default_factory=list)
+    checked_at: datetime = Field(default_factory=datetime.now)
 
 
 class PortfolioResponse(BaseModel):
