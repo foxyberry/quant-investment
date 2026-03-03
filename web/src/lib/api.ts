@@ -40,6 +40,7 @@ import type {
   BuyRule,
   BuyRuleCreate,
   BuyRuleUpdate,
+  BuyRuleTemplate,
   BuySignal,
 } from './types';
 
@@ -898,6 +899,18 @@ export async function updateBuyRule(ruleId: number, data: BuyRuleUpdate): Promis
 export async function deleteBuyRule(ruleId: number): Promise<void> {
   return fetchApi<void>(`/api/watchlist/buy-rules/${ruleId}`, {
     method: 'DELETE',
+  });
+}
+
+// Buy Rule Template API
+export async function getBuyRuleTemplates(): Promise<BuyRuleTemplate[]> {
+  return fetchApi<BuyRuleTemplate[]>('/api/watchlist/buy-rule-templates');
+}
+
+export async function createRuleFromTemplate(itemId: number, templateId: number): Promise<BuyRule> {
+  return fetchApi<BuyRule>(`/api/watchlist/items/${itemId}/buy-rules/from-template`, {
+    method: 'POST',
+    body: JSON.stringify({ template_id: templateId }),
   });
 }
 
