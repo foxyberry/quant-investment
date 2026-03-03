@@ -24,6 +24,10 @@ from api.schemas.portfolio import (
     PortfolioResponse,
     SellSignal,
     SellSignalsResponse,
+    SellRuleCreate,
+    SellRuleUpdate,
+    SellRuleResponse,
+    SellRuleEvaluateResponse,
     SellRecordCreate,
     TradeResponse,
     TradeHistoryResponse,
@@ -569,6 +573,82 @@ async def get_sell_signals(
             status_code=500,
             detail=f"Failed to get sell signals: {str(e)}"
         )
+
+
+# ── Sell Rules CRUD + Evaluate ──────────────────────────────────────
+
+
+@router.get(
+    "/holdings/{ticker}/sell-rules",
+    response_model=List[SellRuleResponse],
+    summary="List Sell Rules",
+    description="Get all sell rules for a holding.",
+)
+async def list_sell_rules(ticker: str) -> List[SellRuleResponse]:
+    service = get_portfolio_service()
+    return service.get_sell_rules(ticker)
+
+
+@router.post(
+    "/holdings/{ticker}/sell-rules",
+    response_model=SellRuleResponse,
+    status_code=201,
+    summary="Create Sell Rule",
+    description="Add a sell rule to a holding.",
+)
+async def create_sell_rule(ticker: str, data: SellRuleCreate) -> SellRuleResponse:
+    service = get_portfolio_service()
+    try:
+        return service.create_sell_rule(ticker, data)
+    except ValueError as e:
+        msg = str(e)
+        status = 404 if "not found" in msg.lower() else 400
+        raise HTTPException(status_code=status, detail=msg)
+
+
+@router.put(
+    "/sell-rules/{rule_id}",
+    response_model=SellRuleResponse,
+    summary="Update Sell Rule",
+    description="Update a sell rule's params or active status.",
+)
+async def update_sell_rule(rule_id: int, data: SellRuleUpdate) -> SellRuleResponse:
+    service = get_portfolio_service()
+    try:
+        return service.update_sell_rule(rule_id, data)
+    except ValueError as e:
+        msg = str(e)
+        status = 404 if "not found" in msg.lower() else 400
+        raise HTTPException(status_code=status, detail=msg)
+
+
+@router.delete(
+    "/sell-rules/{rule_id}",
+    status_code=204,
+    summary="Delete Sell Rule",
+    description="Remove a sell rule.",
+)
+async def delete_sell_rule(rule_id: int) -> None:
+    service = get_portfolio_service()
+    if not service.delete_sell_rule(rule_id):
+        raise HTTPException(status_code=404, detail=f"Sell rule not found: {rule_id}")
+
+
+@router.post(
+    "/sell-rules/evaluate",
+    response_model=SellRuleEvaluateResponse,
+    summary="Evaluate Sell Rules",
+    description="Evaluate all active sell rules against current market data.",
+)
+async def evaluate_sell_rules(
+    ticker: Optional[str] = Query(default=None, description="Evaluate rules for this ticker only"),
+) -> SellRuleEvaluateResponse:
+    service = get_portfolio_service()
+    try:
+        return service.evaluate_sell_rules(ticker=ticker)
+    except Exception as e:
+        logger.error(f"Failed to evaluate sell rules: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to evaluate sell rules: {str(e)}")
 
 
 # ── Realtime websocket ─────────────────────────────────────────────
