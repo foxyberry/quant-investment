@@ -9,3 +9,4 @@ export { default as BrokerOrderDesk } from './BrokerOrderDesk';
 export { default as SellModal } from './SellModal';
 export { default as TradeHistory } from './TradeHistory';
 export { default as AllocationCharts } from './AllocationCharts';
+export { default as SellRuleModal } from './SellRuleModal';

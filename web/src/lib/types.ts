@@ -429,6 +429,42 @@ export interface SellRecordCreate {
   note?: string;
 }
 
+// Sell rule types
+export type SellRuleType = 'stop_loss' | 'take_profit' | 'trailing_stop' | 'holding_period';
+
+export interface SellRule {
+  id: number;
+  ticker: string;
+  rule_type: SellRuleType;
+  params: Record<string, unknown>;
+  state_json: Record<string, unknown> | null;
+  is_active: boolean;
+  triggered_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface SellRuleCreate {
+  rule_type: SellRuleType;
+  params: Record<string, unknown>;
+  is_active?: boolean;
+}
+
+export interface SellRuleUpdate {
+  params?: Record<string, unknown>;
+  is_active?: boolean;
+}
+
+export interface SellRuleEvaluateResult {
+  rule_id: number;
+  ticker: string;
+  rule_type: string;
+  triggered: boolean;
+  reason: string | null;
+  current_price: number | null;
+  trigger_value: number | null;
+}
+
 // Watchlist types
 export interface WatchlistItem {
   id: number;

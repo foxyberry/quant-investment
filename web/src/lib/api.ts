@@ -42,6 +42,10 @@ import type {
   BuyRuleUpdate,
   BuyRuleTemplate,
   BuySignal,
+  SellRule,
+  SellRuleCreate,
+  SellRuleUpdate,
+  SellRuleEvaluateResult,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -329,6 +333,39 @@ export async function recordSell(data: SellRecordCreate): Promise<Trade> {
 export async function getTradeHistory(ticker?: string): Promise<TradeHistoryResponse> {
   const params = ticker ? `?ticker=${encodeURIComponent(ticker)}` : '';
   return fetchApi<TradeHistoryResponse>(`/api/portfolio/trades${params}`);
+}
+
+// Sell Rule API functions
+
+export async function getSellRules(ticker: string): Promise<SellRule[]> {
+  return fetchApi<SellRule[]>(`/api/portfolio/holdings/${encodeURIComponent(ticker)}/sell-rules`);
+}
+
+export async function createSellRule(ticker: string, data: SellRuleCreate): Promise<SellRule> {
+  return fetchApi<SellRule>(`/api/portfolio/holdings/${encodeURIComponent(ticker)}/sell-rules`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateSellRule(ruleId: number, data: SellRuleUpdate): Promise<SellRule> {
+  return fetchApi<SellRule>(`/api/portfolio/sell-rules/${ruleId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteSellRule(ruleId: number): Promise<void> {
+  return fetchApi<void>(`/api/portfolio/sell-rules/${ruleId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function evaluateSellRules(ticker?: string): Promise<{ results: SellRuleEvaluateResult[]; checked_at: string }> {
+  const params = ticker ? `?ticker=${encodeURIComponent(ticker)}` : '';
+  return fetchApi<{ results: SellRuleEvaluateResult[]; checked_at: string }>(`/api/portfolio/sell-rules/evaluate${params}`, {
+    method: 'POST',
+  });
 }
 
 /**

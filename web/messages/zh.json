@@ -408,7 +408,21 @@
     "preview": "预览",
     "updateHolding": "更新持仓",
     "addPurchaseSubmit": "追加买入",
-    "cancel": "取消"
+    "cancel": "取消",
+    "sellRulesTitle": "卖出规则",
+    "noSellRules": "尚未配置卖出规则。",
+    "addSellRule": "添加卖出规则",
+    "sellRuleType": "规则类型",
+    "sellRulePercent": "百分比 (%)",
+    "sellRuleMaxDays": "最大天数",
+    "sellRuleInvalidValue": "请输入有效数字。",
+    "sellRuleMaxDaysPositive": "最大天数必须为正整数。",
+    "sellRuleAddFailed": "添加卖出规则失败。",
+    "sellRuleActive": "活跃",
+    "sellRuleInactive": "未激活",
+    "sellRuleTriggered": "已触发",
+    "sellRuleDays": "天",
+    "sellRuleHint": "止损: 负百分比, 止盈/追踪止损: 正百分比, 持仓期限: 天数"
   },
   "brokerOrderDesk": {
     "title": "统一下单台",

@@ -408,7 +408,21 @@
     "preview": "Preview",
     "updateHolding": "Update Holding",
     "addPurchaseSubmit": "Add Purchase",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "sellRulesTitle": "Sell Rules",
+    "noSellRules": "No sell rules configured yet.",
+    "addSellRule": "Add Sell Rule",
+    "sellRuleType": "Rule Type",
+    "sellRulePercent": "Percentage (%)",
+    "sellRuleMaxDays": "Max Days",
+    "sellRuleInvalidValue": "Please enter a valid number.",
+    "sellRuleMaxDaysPositive": "Max days must be a positive integer.",
+    "sellRuleAddFailed": "Failed to add sell rule.",
+    "sellRuleActive": "Active",
+    "sellRuleInactive": "Inactive",
+    "sellRuleTriggered": "Triggered",
+    "sellRuleDays": "days",
+    "sellRuleHint": "Stop loss: negative %, Take profit / Trailing stop: positive %, Holding period: days"
   },
   "brokerOrderDesk": {
     "title": "Broker Order Desk",
