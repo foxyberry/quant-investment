@@ -408,7 +408,21 @@
     "preview": "미리보기",
     "updateHolding": "수정 완료",
     "addPurchaseSubmit": "추가 매수",
-    "cancel": "취소"
+    "cancel": "취소",
+    "sellRulesTitle": "매도 규칙",
+    "noSellRules": "설정된 매도 규칙이 없습니다.",
+    "addSellRule": "매도 규칙 추가",
+    "sellRuleType": "규칙 유형",
+    "sellRulePercent": "비율 (%)",
+    "sellRuleMaxDays": "최대 보유일",
+    "sellRuleInvalidValue": "유효한 숫자를 입력해주세요.",
+    "sellRuleMaxDaysPositive": "최대 보유일은 양의 정수여야 합니다.",
+    "sellRuleAddFailed": "매도 규칙 추가에 실패했습니다.",
+    "sellRuleActive": "활성",
+    "sellRuleInactive": "비활성",
+    "sellRuleTriggered": "발동됨",
+    "sellRuleDays": "일",
+    "sellRuleHint": "손절: 음수 %, 익절 / 추적 손절: 양수 %, 보유 기간: 일수"
   },
   "brokerOrderDesk": {
     "title": "통합 주문 데스크",
