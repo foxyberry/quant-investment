@@ -943,6 +943,7 @@ export interface StrategyResultItem {
   ticker: string;
   name: string;
   current_price: number | null;
+  market?: string | null;
   matched: boolean;
   conditions: Array<Record<string, unknown>>;
 }

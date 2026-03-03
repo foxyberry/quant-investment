@@ -454,6 +454,7 @@
     "ticker": "Ticker",
     "name": "Name",
     "price": "Price",
+    "market": "Market",
     "status": "Status",
     "inputBadge": "Input",
     "screeningBadge": "Screening",

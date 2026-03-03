@@ -454,6 +454,7 @@
     "ticker": "종목코드",
     "name": "종목명",
     "price": "가격",
+    "market": "시장",
     "status": "상태",
     "inputBadge": "입력",
     "screeningBadge": "스크리닝",

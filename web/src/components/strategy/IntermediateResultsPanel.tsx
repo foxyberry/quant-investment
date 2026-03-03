@@ -365,6 +365,7 @@ export default function IntermediateResultsPanel({
                   <th className="px-4 py-2 w-10">#</th>
                   <th className="px-4 py-2">{t('ticker')}</th>
                   <th className="px-4 py-2">{t('name')}</th>
+                  <th className="px-3 py-2">{t('market')}</th>
                   <th className="px-4 py-2 text-right">{t('price')}</th>
                   {metricColumns.map((col) => (
                     <th key={col} className="px-3 py-2 text-right">
@@ -390,6 +391,17 @@ export default function IntermediateResultsPanel({
                       </td>
                       <td className="px-4 py-1.5 text-gray-700 dark:text-gray-200 truncate max-w-[120px]">
                         {stock.name}
+                      </td>
+                      <td className="px-3 py-1.5">
+                        {stock.market && (
+                          <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                            stock.market === 'KOSDAQ'
+                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                          }`}>
+                            {stock.market}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-1.5 text-right text-gray-700 dark:text-gray-200">
                         {stock.current_price?.toLocaleString() ?? '-'}

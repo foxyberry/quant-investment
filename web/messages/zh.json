@@ -454,6 +454,7 @@
     "ticker": "代码",
     "name": "名称",
     "price": "价格",
+    "market": "市场",
     "status": "状态",
     "inputBadge": "输入",
     "screeningBadge": "筛选",
