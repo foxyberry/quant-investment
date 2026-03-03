@@ -6,10 +6,11 @@ Provides endpoint for searching tickers by name or symbol.
 
 import logging
 import re
-from typing import List
+from typing import List, Optional
 
 import yfinance as yf
 from fastapi import APIRouter, Query
+from pydantic import BaseModel
 
 from api.schemas.analysis import SearchResult
 from api.services.korean_search_service import get_korean_search_service
@@ -117,3 +118,39 @@ def _search_yfinance(q: str) -> List[SearchResult]:
         logger.warning(f"yfinance search failed: {e}")
 
     return results[:20]
+
+
+class TickerPrice(BaseModel):
+    ticker: str
+    price: Optional[float] = None
+
+
+@router.get(
+    "/price/{ticker}",
+    response_model=TickerPrice,
+    summary="Get Current Price",
+    description="Get current price for a single ticker.",
+)
+async def get_ticker_price(ticker: str) -> TickerPrice:
+    """Get current price from OHLCV cache or yfinance."""
+    try:
+        from utils.data_cache import get_cache
+        cache = get_cache()
+        data = cache.get(ticker, days=5, force_refresh=False)
+        if data is not None and not data.empty:
+            valid = data["close"].dropna()
+            if not valid.empty:
+                return TickerPrice(ticker=ticker, price=float(valid.iloc[-1]))
+    except Exception as e:
+        logger.warning(f"Cache price lookup failed for {ticker}: {e}")
+
+    # Fallback: yfinance
+    try:
+        info = yf.Ticker(ticker).fast_info
+        price = getattr(info, "last_price", None)
+        if price is not None:
+            return TickerPrice(ticker=ticker, price=float(price))
+    except Exception:
+        pass
+
+    return TickerPrice(ticker=ticker, price=None)

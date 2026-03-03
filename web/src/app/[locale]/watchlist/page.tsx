@@ -10,6 +10,7 @@ import {
   createWatchlistItem,
   updateWatchlistItem,
   deleteWatchlistItem,
+  getTickerPrice,
 } from '@/lib/api';
 import type { WatchlistItem, WatchlistItemCreate, WatchlistItemUpdate } from '@/lib/types';
 import { formatCurrency } from '@/lib/format';
@@ -302,7 +303,22 @@ export default function WatchlistPage() {
                 <label className="block text-sm font-medium text-[var(--foreground-muted)] mb-1">{t('ticker')}</label>
                 <TickerSearchInput
                   value={addForm.ticker}
-                  onChange={(ticker, name) => setAddForm({ ...addForm, ticker, name: name || addForm.name })}
+                  onChange={(ticker, name) => {
+                    setAddForm((prev) => ({ ...prev, ticker, name: name || prev.name }));
+                    // Auto-fill target price with current price on ticker selection
+                    if (ticker && /^[A-Za-z0-9.^-]+$/.test(ticker)) {
+                      getTickerPrice(ticker)
+                        .then(({ price }) => {
+                          if (price != null) {
+                            setAddForm((prev) => prev.ticker === ticker
+                              ? { ...prev, target_price: String(price) }
+                              : prev
+                            );
+                          }
+                        })
+                        .catch(() => {});
+                    }
+                  }}
                   placeholder={t('tickerPlaceholder') + ' / 삼성전자'}
                   autoFocus
                 />

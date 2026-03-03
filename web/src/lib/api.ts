@@ -366,6 +366,13 @@ export async function searchTickers(query: string): Promise<Array<{ ticker: stri
 }
 
 /**
+ * Get current price for a single ticker
+ */
+export async function getTickerPrice(ticker: string): Promise<{ ticker: string; price: number | null }> {
+  return fetchApi<{ ticker: string; price: number | null }>(`/api/price/${encodeURIComponent(ticker)}`);
+}
+
+/**
  * Run AI analysis on a stock (Claude API, may take 30+ seconds)
  */
 export async function analyzeStock(ticker: string, includeNews = true): Promise<AIAnalysisResult> {

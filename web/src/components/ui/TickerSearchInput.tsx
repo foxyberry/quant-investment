@@ -43,7 +43,7 @@ export default function TickerSearchInput({
   const containerRef = useRef<HTMLDivElement>(null);
   const internalRef = useRef<HTMLInputElement>(null);
   const inputElement = externalRef || internalRef;
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   // Sync external value changes
   useEffect(() => {
