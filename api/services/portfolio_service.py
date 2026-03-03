@@ -177,7 +177,11 @@ class PortfolioService:
         try:
             data = self._cache.get(ticker, days=5, force_refresh=False)
             if data is not None and not data.empty:
-                price = float(data["close"].iloc[-1])
+                # Drop NaN close rows (e.g. pre-market placeholder for today)
+                valid = data["close"].dropna()
+                if valid.empty:
+                    return None
+                price = float(valid.iloc[-1])
                 return self._sanitize_float(price, default=None)
         except Exception as e:
             logger.warning(f"Failed to get current price for {ticker}: {e}")
@@ -396,28 +400,56 @@ class PortfolioService:
 
     @staticmethod
     def _fetch_static_metadata(ticker: str) -> Dict[str, Optional[str]]:
-        """Fetch static metadata (sector/industry/country/exchange) for a ticker. Called once at creation."""
-        result = {"sector": None, "industry": None, "country": None, "exchange": None}
+        """Fetch static metadata (name/sector/industry/country/exchange) for a ticker. Called once at creation."""
+        result: Dict[str, Optional[str]] = {
+            "name": None, "sector": None, "industry": None, "country": None, "exchange": None,
+        }
         try:
             if ticker.endswith(".KS") or ticker.endswith(".KQ"):
                 # Korean stock
                 suffix = ticker[-3:]  # .KS or .KQ
                 result["country"] = "South Korea"
                 result["exchange"] = "KOSPI" if suffix == ".KS" else "KOSDAQ"
-                # Sector from SectorFetcher
+                # Name + Sector from master CSV via KospiListFetcher
                 try:
-                    from screener.sector_fetcher import get_sector_fetcher
-                    fetcher = get_sector_fetcher()
-                    market = "KOSPI" if suffix == ".KS" else "KOSDAQ"
-                    sector_map = fetcher.get_all_sector_classifications(market)
-                    result["sector"] = sector_map.get(ticker)
+                    from screener.kospi_fetcher import KospiListFetcher
+                    kf = KospiListFetcher(use_cache=True)
+                    symbols = (
+                        kf.get_kospi_symbols()
+                        if suffix == ".KS"
+                        else kf.get_kosdaq_symbols()
+                    )
+                    for s in symbols:
+                        if s["symbol"] == ticker:
+                            result["name"] = s["name"]
+                            result["sector"] = s.get("sector") or None
+                            break
                 except Exception as e:
-                    logger.warning(f"Failed to fetch KR sector for {ticker}: {e}")
+                    logger.warning(f"Failed to fetch KR metadata for {ticker}: {e}")
+                # Fallback name from pykrx if master CSV didn't have it
+                if not result["name"]:
+                    try:
+                        from pykrx import stock as pykrx_stock
+                        code = ticker.split(".")[0]
+                        result["name"] = pykrx_stock.get_market_ticker_name(code) or None
+                    except Exception:
+                        pass
+                # Fallback sector from SectorFetcher if not found above
+                if not result["sector"]:
+                    try:
+                        from screener.sector_fetcher import get_sector_fetcher
+                        sf = get_sector_fetcher()
+                        market = "KOSPI" if suffix == ".KS" else "KOSDAQ"
+                        sector_map = sf.get_all_sector_classifications(market)
+                        result["sector"] = sector_map.get(ticker)
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch KR sector for {ticker}: {e}")
             else:
                 # US/Other: yfinance
                 try:
                     import yfinance as yf
                     info = yf.Ticker(ticker).info
+                    result["name"] = info.get("shortName") or info.get("longName")
                     result["sector"] = info.get("sector")
                     result["industry"] = info.get("industry")
                     result["country"] = info.get("country")
@@ -601,7 +633,7 @@ class PortfolioService:
                 meta = self._fetch_static_metadata(ticker)
                 existing = Holding(
                     ticker=ticker,
-                    name=data.name or ticker,
+                    name=data.name or meta.get("name") or ticker,
                     quantity=data.quantity,
                     avg_price=data.avg_price,
                     currency=data.currency,

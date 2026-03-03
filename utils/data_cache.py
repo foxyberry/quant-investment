@@ -122,10 +122,12 @@ class OHLCVCache:
             else:
                 latest_date = pd.to_datetime(latest).date()
 
-            # Capture close price
+            # Capture close price (skip NaN rows, e.g. pre-market placeholder)
             close_val = None
             if "close" in data.columns:
-                close_val = float(data["close"].iloc[-1])
+                valid_close = data["close"].dropna()
+                if not valid_close.empty:
+                    close_val = float(valid_close.iloc[-1])
 
             with self._meta_lock:
                 self._latest_date_cache[cache_key] = (mtime, latest_date, close_val)
@@ -195,6 +197,12 @@ class OHLCVCache:
             data = data.reset_index()
             data['date'] = pd.to_datetime(data['date'])
             data = data.set_index('date')
+
+            # Drop rows where close is NaN (e.g. pre-market placeholder for today)
+            data = data.dropna(subset=['close'])
+
+            if data.empty:
+                return None
 
             # 티커 컬럼 추가
             data['ticker'] = ticker
