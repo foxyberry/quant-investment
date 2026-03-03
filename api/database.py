@@ -60,10 +60,33 @@ def init_db() -> None:
     logger.info("Database tables ensured")
     _migrate_trade_columns()
     _migrate_holding_metadata_columns()
+    _migrate_buy_rule_template_id()
 
     _migrate_json_data()
     _migrate_portfolio_json()
     _migrate_saved_screening_to_execution_history()
+
+
+def _get_column_names(conn, table_name: str):
+    """Return a set of column names for *table_name*, or None if the table
+    does not exist.  Works with both SQLite and PostgreSQL."""
+    dialect = engine.dialect.name
+    if dialect == "sqlite":
+        rows = conn.execute(text(f"PRAGMA table_info({table_name})")).fetchall()
+        if not rows:
+            return None
+        return {row[1] for row in rows}
+    # PostgreSQL / other dialects
+    rows = conn.execute(
+        text(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_schema = current_schema() AND table_name = :tbl"
+        ),
+        {"tbl": table_name},
+    ).fetchall()
+    if not rows:
+        return None
+    return {row[0] for row in rows}
 
 
 def _migrate_trade_columns() -> None:
@@ -99,6 +122,27 @@ def _migrate_holding_metadata_columns() -> None:
                 logger.info("Added missing holdings.exchange column for legacy DB compatibility")
     except Exception as e:
         logger.warning("Holding schema compatibility migration skipped: %s", e)
+
+
+def _migrate_buy_rule_template_id() -> None:
+    """Add template_id column to buy_rules for existing databases.
+
+    Uses dialect-aware column introspection: PRAGMA for SQLite,
+    information_schema for PostgreSQL.
+    """
+    try:
+        with engine.begin() as conn:
+            existing_columns = _get_column_names(conn, "buy_rules")
+            if existing_columns is None:
+                return  # table does not exist yet; create_all will handle it
+            if "template_id" not in existing_columns:
+                conn.execute(
+                    text("ALTER TABLE buy_rules ADD COLUMN template_id INTEGER REFERENCES buy_rule_templates(id) ON DELETE SET NULL")
+                )
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_buy_rules_template_id ON buy_rules (template_id)"))
+                logger.info("Added buy_rules.template_id column")
+    except Exception as e:
+        logger.warning("buy_rules template_id migration skipped: %s", e)
 
 
 def _migrate_json_data() -> None:
