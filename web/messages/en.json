@@ -464,6 +464,7 @@
     "loadingSectors": "Loading sectors...",
     "marketSelection": "Market Selection",
     "composite": "{universe} Composite",
+    "selectedUniverseTotal": "Total {count} stocks",
     "condition": "Condition",
     "finalSelection": "Final Selection",
     "estimatedItems": "{count} estimated items",
