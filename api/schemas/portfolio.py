@@ -293,6 +293,7 @@ class SellSignal(BaseModel):
     avg_price: float = Field(..., description="Average purchase price")
     pnl_pct: float = Field(..., description="Current profit/loss percentage")
     currency: str = Field(..., description="Holding currency code")
+    rule_id: Optional[int] = Field(default=None, description="Sell rule ID (if rule-based)")
 
     @model_validator(mode="after")
     def _sanitize_nan(self) -> "Self":
