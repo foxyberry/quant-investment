@@ -74,6 +74,52 @@ class PortfolioService:
                         max_workers=self.EXECUTOR_MAX_WORKERS
                     )
         self._executor = self.__class__._shared_executor
+        self._backfill_null_sectors()
+
+    def _backfill_null_sectors(self):
+        """Backfill sector/industry/country/exchange for holdings with null sector (runs once at init)."""
+        import threading
+
+        def _do_backfill():
+            # Phase 1: read ticker list (short DB session)
+            db = SessionLocal()
+            try:
+                tickers = [r.ticker for r in db.query(Holding.ticker).filter(Holding.sector.is_(None)).all()]
+            finally:
+                db.close()
+
+            if not tickers:
+                return
+
+            # Phase 2: fetch metadata outside DB session (network I/O)
+            meta_map = {}
+            for ticker in tickers:
+                meta = self._fetch_static_metadata(ticker)
+                if meta.get("sector"):
+                    meta_map[ticker] = meta
+
+            if not meta_map:
+                return
+
+            # Phase 3: batch update (short DB session)
+            db = SessionLocal()
+            try:
+                for ticker, meta in meta_map.items():
+                    row = db.query(Holding).filter(Holding.ticker == ticker).first()
+                    if row and row.sector is None:
+                        row.sector = meta["sector"]
+                        row.industry = meta.get("industry") or row.industry
+                        row.country = meta.get("country") or row.country
+                        row.exchange = meta.get("exchange") or row.exchange
+                db.commit()
+                logger.info(f"Backfilled sector metadata for {len(meta_map)}/{len(tickers)} holdings")
+            except Exception as e:
+                db.rollback()
+                logger.warning(f"Sector backfill failed: {e}")
+            finally:
+                db.close()
+
+        threading.Thread(target=_do_backfill, daemon=True).start()
 
     @staticmethod
     def _convert_to_base(
