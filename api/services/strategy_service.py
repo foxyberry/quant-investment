@@ -1211,10 +1211,16 @@ def execute_strategy(
     resolve_elapsed_ms = (time.perf_counter() - resolve_started_at) * 1000.0
 
     fetch_started_at = time.perf_counter()
-    tickers = screening_service.get_tickers_for_universes(
+    symbols_dict, resolved_universes_from_fetch, failed_errors, ticker_to_market = screening_service._get_symbols_for_universes(
         universe_input=resolved_universes,
         fail_fast=False,
     )
+    if not symbols_dict:
+        if failed_errors:
+            details = ", ".join(f"{k}: {v}" for k, v in failed_errors.items())
+            raise ValueError(f"Failed to fetch all universes ({details})")
+        raise ValueError(f"No tickers available for universes: {resolved_universes_from_fetch}")
+    tickers = list(symbols_dict.keys())
     fetch_elapsed_ms = (time.perf_counter() - fetch_started_at) * 1000.0
     total_count = len(tickers)
 
@@ -1313,6 +1319,7 @@ def execute_strategy(
                     ticker=r.ticker,
                     name=r.name,
                     current_price=r.current_price,
+                    market=ticker_to_market.get(r.ticker),
                     matched=True,
                     conditions=cond_details,
                 )
@@ -1345,6 +1352,7 @@ def execute_strategy(
                         ticker=result.ticker,
                         name=result.name,
                         current_price=result.current_price,
+                        market=ticker_to_market.get(result.ticker),
                         matched=result.matched,
                         conditions=cond_details,
                     )

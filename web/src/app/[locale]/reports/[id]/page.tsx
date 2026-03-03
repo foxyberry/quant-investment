@@ -9,6 +9,7 @@ import { getExecution } from '@/lib/api';
 import type { ExecutionHistoryDetail, ScreeningResult } from '@/lib/types';
 import {
   ArrowLeft,
+  CalendarDays,
   Clock,
   RefreshCw,
   Play,
@@ -157,8 +158,9 @@ export default function ExecutionDetailPage() {
               </span>
             ))}
             {execution.reference_date && (
-              <span className="inline-flex items-center rounded-full bg-[var(--background)] border border-[var(--border)] px-2.5 py-0.5 text-xs text-[var(--foreground-muted)]">
-                {execution.reference_date}
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300">
+                <CalendarDays className="h-3 w-3" />
+                {t('referenceDate')}: {execution.reference_date}
               </span>
             )}
             <span className="text-sm text-[var(--foreground-muted)]">
@@ -178,7 +180,13 @@ export default function ExecutionDetailPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <StatCard
+          icon={<CalendarDays className="h-5 w-5" />}
+          label={t('referenceDate')}
+          value={execution.reference_date ?? 'N/A'}
+          accent={execution.reference_date ? 'amber' : undefined}
+        />
         <StatCard
           icon={<Database className="h-5 w-5" />}
           label={t('totalCount')}
@@ -237,8 +245,14 @@ function StatCard({
   icon: React.ReactNode;
   label: string;
   value: string;
-  accent?: 'green';
+  accent?: 'green' | 'amber';
 }) {
+  const valueColor =
+    accent === 'green'
+      ? 'text-green-600 dark:text-green-400'
+      : accent === 'amber'
+        ? 'text-amber-600 dark:text-amber-400'
+        : 'text-[var(--foreground)]';
   return (
     <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-3 backdrop-blur-sm">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
@@ -248,13 +262,7 @@ function StatCard({
         <p className="text-xs text-[var(--foreground-muted)] truncate">
           {label}
         </p>
-        <p
-          className={`text-lg font-semibold tabular-nums ${
-            accent === 'green'
-              ? 'text-green-600 dark:text-green-400'
-              : 'text-[var(--foreground)]'
-          }`}
-        >
+        <p className={`text-lg font-semibold tabular-nums ${valueColor}`}>
           {value}
         </p>
       </div>
