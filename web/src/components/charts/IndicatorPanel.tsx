@@ -1,6 +1,6 @@
 'use client';
 
-import { TrendingUp, TrendingDown, Minus, Activity, BarChart2, Waves, Info } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, BarChart2, Waves, Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui';
 import type { TechnicalIndicators } from '@/lib/types';

@@ -113,7 +113,7 @@ function ConditionNode({ data, selected }: NodeProps) {
             const nd = n.data as Record<string, unknown>;
             if (nd.intermediateResult === undefined && nd.resultCount === undefined)
               return n;
-            const { intermediateResult, resultCount, ...rest } = nd;
+            const { intermediateResult: _ir, resultCount: _rc, ...rest } = nd;
             return { ...n, data: rest };
           }
           return n;

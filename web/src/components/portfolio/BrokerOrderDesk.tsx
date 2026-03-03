@@ -198,6 +198,7 @@ export default function BrokerOrderDesk() {
     }
 
     await submitOrder(request);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- submitOrder is defined below, stable ref
   }, [isPaperTrading, orderType, price, quantity, selectedBroker, side, t, tPortfolio, ticker]);
 
   const submitOrder = useCallback(

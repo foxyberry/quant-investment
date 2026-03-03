@@ -24,8 +24,8 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import {
-  Loader2, Zap, RotateCcw, Save, TestTube, Download, FolderOpen, X,
-  ChevronRight, Home, Calendar, FileSpreadsheet,
+  Loader2, Zap, RotateCcw, Save, TestTube, FolderOpen, X,
+  ChevronRight, Home, Calendar,
 } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
@@ -268,7 +268,7 @@ function loadResultsFromSession(): ResultsSnapshot | null {
 
 function StrategyPageInner() {
   const t = useTranslations('strategy');
-  const locale = useLocale();
+  useLocale(); // force re-render on locale switch for sessionStorage persistence
   const { getDefaultParams } = useConditions();
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -472,7 +472,7 @@ function StrategyPageInner() {
               const nd = n.data as Record<string, unknown>;
               if (nd.intermediateResult === undefined && nd.resultCount === undefined)
                 return n;
-              const { intermediateResult, resultCount, ...rest } = nd;
+              const { intermediateResult: _ir, resultCount: _rc, ...rest } = nd;
               return { ...n, data: rest as StrategyNodeData };
             })
           );
@@ -592,8 +592,6 @@ function StrategyPageInner() {
           const childrenInGroup = nodes.filter(
             (n) => n.parentId === targetGroup.id
           );
-          const childIndex = childrenInGroup.length;
-          const childHeight = nodeType === 'groupNode' ? GROUP_MIN_HEIGHT : CHILD_HEIGHT;
           const relativePosition = {
             x: GROUP_PADDING_X,
             y: GROUP_PADDING_TOP + childrenInGroup.reduce((acc, child) => {
@@ -621,7 +619,6 @@ function StrategyPageInner() {
           // Auto-create internal "Then" edge from previous child
           if (childrenInGroup.length > 0) {
             const prevChild = childrenInGroup[childrenInGroup.length - 1];
-            const isLast = true; // new node is always last
             setEdges((eds) => [
               ...eds,
               {
@@ -656,7 +653,7 @@ function StrategyPageInner() {
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [reactFlowInstance, setNodes, findGroupAtPosition, nodes, showToast, t]
+    [reactFlowInstance, setNodes, setEdges, findGroupAtPosition, nodes, getDefaultParams, showToast, t]
   );
 
   // Auto-resize group nodes when children change (only expand, never shrink)
@@ -964,7 +961,7 @@ function StrategyPageInner() {
     });
 
     streamAbortRef.current = stream;
-  }, [nodes, edges, setNodes, showToast, t]);
+  }, [nodes, edges, setNodes, currentStrategyId, strategyName, showToast, t]);
 
   const handleClear = useCallback(() => {
     setNodes(initialNodes);
