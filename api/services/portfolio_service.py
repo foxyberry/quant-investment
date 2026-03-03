@@ -24,10 +24,14 @@ from api.schemas.portfolio import (
     PortfolioSummary,
     SellSignal,
     SellRecordCreate,
+    SellRuleCreate,
+    SellRuleUpdate,
+    SellRuleResponse,
     SellRuleEvaluateResult,
     SellRuleEvaluateResponse,
     TradeResponse,
     TradeHistoryResponse,
+    _validate_sell_rule_params,
 )
 from portfolio.conditions import (
     TradingContext,
@@ -1249,6 +1253,109 @@ class PortfolioService:
                 signals.append(signal)
 
         return signals
+
+    # ── Sell-rule CRUD ───────────────────────────────────────────────
+
+    def get_sell_rules(self, ticker: str) -> List[SellRuleResponse]:
+        """Get all sell rules for a holding."""
+        db = SessionLocal()
+        try:
+            rules = (
+                db.query(SellRule)
+                .filter(SellRule.ticker == ticker)
+                .order_by(SellRule.created_at)
+                .all()
+            )
+            return [
+                SellRuleResponse(
+                    id=r.id, ticker=r.ticker, rule_type=r.rule_type,
+                    params=r.params, state_json=r.state_json, is_active=r.is_active,
+                    triggered_at=r.triggered_at, created_at=r.created_at,
+                    updated_at=r.updated_at,
+                )
+                for r in rules
+            ]
+        finally:
+            db.close()
+
+    def create_sell_rule(self, ticker: str, data: SellRuleCreate) -> SellRuleResponse:
+        """Create a sell rule for a holding. Raises ValueError if holding not found."""
+        db = SessionLocal()
+        try:
+            holding = db.query(Holding).filter(Holding.ticker == ticker).first()
+            if holding is None:
+                raise ValueError(f"Holding not found: {ticker}")
+
+            rule = SellRule(
+                ticker=ticker,
+                rule_type=data.rule_type,
+                params=data.params,
+                is_active=data.is_active,
+            )
+            db.add(rule)
+            db.commit()
+            db.refresh(rule)
+            return SellRuleResponse(
+                id=rule.id, ticker=rule.ticker, rule_type=rule.rule_type,
+                params=rule.params, state_json=rule.state_json, is_active=rule.is_active,
+                triggered_at=rule.triggered_at, created_at=rule.created_at,
+                updated_at=rule.updated_at,
+            )
+        except ValueError:
+            db.rollback()
+            raise
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def update_sell_rule(self, rule_id: int, data: SellRuleUpdate) -> SellRuleResponse:
+        """Update a sell rule. Raises ValueError if not found or invalid params."""
+        db = SessionLocal()
+        try:
+            rule = db.query(SellRule).filter(SellRule.id == rule_id).first()
+            if rule is None:
+                raise ValueError(f"Sell rule not found: {rule_id}")
+
+            if data.params is not None:
+                _validate_sell_rule_params(rule.rule_type, data.params)
+                rule.params = data.params
+            if data.is_active is not None:
+                rule.is_active = data.is_active
+
+            db.commit()
+            db.refresh(rule)
+            return SellRuleResponse(
+                id=rule.id, ticker=rule.ticker, rule_type=rule.rule_type,
+                params=rule.params, state_json=rule.state_json, is_active=rule.is_active,
+                triggered_at=rule.triggered_at, created_at=rule.created_at,
+                updated_at=rule.updated_at,
+            )
+        except ValueError:
+            db.rollback()
+            raise
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def delete_sell_rule(self, rule_id: int) -> bool:
+        """Delete a sell rule. Returns True if deleted, False if not found."""
+        db = SessionLocal()
+        try:
+            rule = db.query(SellRule).filter(SellRule.id == rule_id).first()
+            if rule is None:
+                return False
+            db.delete(rule)
+            db.commit()
+            return True
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
     # ── Sell-rule evaluation engine ────────────────────────────────
 
