@@ -427,3 +427,71 @@ export interface SellRecordCreate {
   traded_at: string; // YYYY-MM-DD
   note?: string;
 }
+
+// Watchlist types
+export interface WatchlistItem {
+  id: number;
+  ticker: string;
+  name: string | null;
+  target_price: number | null;
+  current_price: number | null;
+  change_pct: number | null;
+  currency: string | null;
+  note: string | null;
+  tags: string[] | null;
+  buy_rules_count: number;
+  added_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface WatchlistItemCreate {
+  ticker: string;
+  name?: string;
+  target_price?: number;
+  note?: string;
+  tags?: string[];
+}
+
+export interface WatchlistItemUpdate {
+  name?: string;
+  target_price?: number | null;
+  note?: string;
+  tags?: string[];
+}
+
+export type BuyRuleType = 'target_price' | 'rsi_oversold';
+
+export interface BuyRule {
+  id: number;
+  watchlist_item_id: number;
+  rule_type: BuyRuleType;
+  params: Record<string, unknown>;
+  state_json: Record<string, unknown> | null;
+  is_active: boolean;
+  triggered_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface BuyRuleCreate {
+  rule_type: BuyRuleType;
+  params: Record<string, unknown>;
+  is_active?: boolean;
+}
+
+export interface BuyRuleUpdate {
+  params?: Record<string, unknown>;
+  is_active?: boolean;
+}
+
+export interface BuySignal {
+  ticker: string;
+  name: string | null;
+  signal_type: string;
+  reason: string;
+  current_price: number | null;
+  target_price: number | null;
+  currency: string | null;
+  rule_id: number | null;
+}

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui';
 import {
   PortfolioSummaryCard,
   SellSignalsCard,
+  BuySignalsCard,
   RecentExecutionsCard,
   QuickActionsCard,
 } from '@/components/dashboard';
@@ -92,6 +93,7 @@ export default function Home() {
       <div className="grid gap-6 lg:grid-cols-2">
         <PortfolioSummaryCard />
         <SellSignalsCard />
+        <BuySignalsCard />
         <RecentExecutionsCard />
         <QuickActionsCard />
       </div>

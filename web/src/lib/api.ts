@@ -34,6 +34,13 @@ import type {
   Trade,
   TradeHistoryResponse,
   SellRecordCreate,
+  WatchlistItem,
+  WatchlistItemCreate,
+  WatchlistItemUpdate,
+  BuyRule,
+  BuyRuleCreate,
+  BuyRuleUpdate,
+  BuySignal,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -831,6 +838,65 @@ export async function triggerBrokerKillSwitch(
     `/api/brokers/${encodeURIComponent(broker)}/kill-switch`,
     { method: 'POST' }
   );
+}
+
+// Watchlist API functions
+
+export async function getWatchlistItems(): Promise<WatchlistItem[]> {
+  return fetchApi<WatchlistItem[]>('/api/watchlist/items');
+}
+
+export async function getWatchlistItem(itemId: number): Promise<WatchlistItem> {
+  return fetchApi<WatchlistItem>(`/api/watchlist/items/${itemId}`);
+}
+
+export async function createWatchlistItem(data: WatchlistItemCreate): Promise<WatchlistItem> {
+  return fetchApi<WatchlistItem>('/api/watchlist/items', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateWatchlistItem(itemId: number, data: WatchlistItemUpdate): Promise<WatchlistItem> {
+  return fetchApi<WatchlistItem>(`/api/watchlist/items/${itemId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteWatchlistItem(itemId: number): Promise<void> {
+  return fetchApi<void>(`/api/watchlist/items/${itemId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getBuyRules(itemId: number): Promise<BuyRule[]> {
+  return fetchApi<BuyRule[]>(`/api/watchlist/items/${itemId}/buy-rules`);
+}
+
+export async function createBuyRule(itemId: number, data: BuyRuleCreate): Promise<BuyRule> {
+  return fetchApi<BuyRule>(`/api/watchlist/items/${itemId}/buy-rules`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateBuyRule(ruleId: number, data: BuyRuleUpdate): Promise<BuyRule> {
+  return fetchApi<BuyRule>(`/api/watchlist/buy-rules/${ruleId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteBuyRule(ruleId: number): Promise<void> {
+  return fetchApi<void>(`/api/watchlist/buy-rules/${ruleId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getBuySignals(): Promise<BuySignal[]> {
+  const response = await fetchApi<{ signals: BuySignal[]; checked_at: string }>('/api/watchlist/buy-signals');
+  return response.signals;
 }
 
 // Strategy API functions
