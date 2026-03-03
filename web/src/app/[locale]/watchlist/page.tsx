@@ -20,6 +20,18 @@ export default function WatchlistPage() {
   const t = useTranslations('watchlist');
   const tCommon = useTranslations('common');
   const locale = useLocale();
+
+  const openPopup = useCallback((ticker: string) => {
+    const width = 900;
+    const height = 700;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    window.open(
+      `/${locale}/analysis/${encodeURIComponent(ticker)}?popup=true`,
+      `analysis_${ticker}`,
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+  }, [locale]);
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -226,7 +238,13 @@ export default function WatchlistPage() {
                   return (
                     <tr key={item.id} className="hover:bg-[var(--background)] transition-colors">
                       <td className="px-4 py-3">
-                        <span className="font-semibold text-[var(--foreground)]">{item.ticker}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openPopup(item.ticker); }}
+                          className="font-semibold text-[#1313ec] dark:text-blue-400 hover:underline cursor-pointer"
+                        >
+                          {item.ticker}
+                        </button>
                       </td>
                       <td className="px-4 py-3 text-[var(--foreground-muted)]">
                         {item.name || '--'}
