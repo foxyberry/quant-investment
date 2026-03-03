@@ -245,7 +245,7 @@ function StockListPopup({
 }
 
 function LabeledEdge({
-  id,
+  id: _id,
   source,
   sourceX,
   sourceY,
