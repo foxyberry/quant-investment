@@ -13,8 +13,12 @@ from fastapi import APIRouter, HTTPException
 from api.schemas.watchlist import (
     BuyRuleCreate,
     BuyRuleResponse,
+    BuyRuleTemplateCreate,
+    BuyRuleTemplateResponse,
+    BuyRuleTemplateUpdate,
     BuyRuleUpdate,
     BuySignalsResponse,
+    CreateRuleFromTemplate,
     WatchlistItemCreate,
     WatchlistItemResponse,
     WatchlistItemUpdate,
@@ -198,6 +202,124 @@ async def delete_buy_rule(rule_id: int) -> None:
         raise
     except Exception as e:
         logger.error("Failed to delete buy rule %d: %s", rule_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# ── BuyRuleTemplate endpoints ─────────────────────────────────────
+
+
+@router.get(
+    "/buy-rule-templates",
+    response_model=List[BuyRuleTemplateResponse],
+    summary="List Buy Rule Templates",
+)
+async def list_templates() -> List[BuyRuleTemplateResponse]:
+    """Get all buy rule templates."""
+    service = get_watchlist_service()
+    try:
+        return service.list_templates()
+    except Exception as e:
+        logger.error("Failed to list templates: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post(
+    "/buy-rule-templates",
+    response_model=BuyRuleTemplateResponse,
+    status_code=201,
+    summary="Create Buy Rule Template",
+)
+async def create_template(data: BuyRuleTemplateCreate) -> BuyRuleTemplateResponse:
+    """Create a new buy rule template."""
+    service = get_watchlist_service()
+    try:
+        return service.create_template(data)
+    except ValueError as e:
+        msg = str(e)
+        if "already exists" in msg:
+            raise HTTPException(status_code=409, detail=msg)
+        raise HTTPException(status_code=422, detail=msg)
+    except Exception as e:
+        logger.error("Failed to create template: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.put(
+    "/buy-rule-templates/{template_id}",
+    response_model=BuyRuleTemplateResponse,
+    summary="Update Buy Rule Template",
+)
+async def update_template(
+    template_id: int, data: BuyRuleTemplateUpdate
+) -> BuyRuleTemplateResponse:
+    """Update a buy rule template."""
+    service = get_watchlist_service()
+    try:
+        result = service.update_template(template_id, data)
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Template {template_id} not found")
+        return result
+    except HTTPException:
+        raise
+    except ValueError as e:
+        msg = str(e)
+        if "already exists" in msg:
+            raise HTTPException(status_code=409, detail=msg)
+        raise HTTPException(status_code=422, detail=msg)
+    except Exception as e:
+        logger.error("Failed to update template %d: %s", template_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.delete(
+    "/buy-rule-templates/{template_id}",
+    status_code=204,
+    summary="Delete Buy Rule Template",
+)
+async def delete_template(template_id: int) -> None:
+    """Delete a buy rule template. Linked rules will have template_id set to NULL."""
+    service = get_watchlist_service()
+    try:
+        success = service.delete_template(template_id)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Template {template_id} not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to delete template %d: %s", template_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# ── From-template rule creation ───────────────────────────────────
+
+
+@router.post(
+    "/items/{item_id}/buy-rules/from-template",
+    response_model=BuyRuleResponse,
+    status_code=201,
+    summary="Create Rule from Template",
+)
+async def create_rule_from_template(
+    item_id: int, data: CreateRuleFromTemplate
+) -> BuyRuleResponse:
+    """Create a buy rule by copying params from a template."""
+    service = get_watchlist_service()
+    try:
+        return service.create_rule_from_template(
+            item_id, data.template_id, data.is_active
+        )
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg:
+            raise HTTPException(status_code=404, detail=msg)
+        if "already linked" in msg:
+            raise HTTPException(status_code=409, detail=msg)
+        raise HTTPException(status_code=422, detail=msg)
+    except Exception as e:
+        logger.error(
+            "Failed to create rule from template for item %d: %s",
+            item_id, e, exc_info=True,
+        )
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

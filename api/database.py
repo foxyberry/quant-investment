@@ -141,6 +141,10 @@ def _migrate_buy_rule_template_id() -> None:
                 )
                 conn.execute(text("CREATE INDEX IF NOT EXISTS ix_buy_rules_template_id ON buy_rules (template_id)"))
                 logger.info("Added buy_rules.template_id column")
+            # Ensure unique constraint exists (safe for re-runs)
+            conn.execute(
+                text("CREATE UNIQUE INDEX IF NOT EXISTS uq_buy_rules_item_template ON buy_rules (watchlist_item_id, template_id)")
+            )
     except Exception as e:
         logger.warning("buy_rules template_id migration skipped: %s", e)
 

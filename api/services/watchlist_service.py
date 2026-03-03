@@ -8,13 +8,18 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from api.database import SessionLocal
-from api.models.watchlist import BuyRule, WatchlistItem
+from api.models.watchlist import BuyRule, BuyRuleTemplate, WatchlistItem
 from api.schemas.watchlist import (
     BuyRuleCreate,
     BuyRuleResponse,
+    BuyRuleTemplateCreate,
+    BuyRuleTemplateResponse,
+    BuyRuleTemplateUpdate,
     BuyRuleUpdate,
     BuySignal,
     WatchlistItemCreate,
@@ -243,6 +248,184 @@ class WatchlistService:
         finally:
             db.close()
 
+    # ── BuyRuleTemplate CRUD ──────────────────────────────────────
+
+    def list_templates(self) -> List[BuyRuleTemplateResponse]:
+        """Return all buy rule templates with linked rule counts."""
+        db: Session = SessionLocal()
+        try:
+            rows = (
+                db.query(BuyRuleTemplate)
+                .order_by(BuyRuleTemplate.created_at.desc())
+                .all()
+            )
+            if not rows:
+                return []
+
+            # Batch count to avoid N+1
+            count_rows = (
+                db.query(BuyRule.template_id, func.count(BuyRule.id))
+                .filter(BuyRule.template_id.isnot(None))
+                .group_by(BuyRule.template_id)
+                .all()
+            )
+            count_map = {tid: cnt for tid, cnt in count_rows}
+
+            return [
+                self._template_to_response(t, linked_count=count_map.get(t.id, 0))
+                for t in rows
+            ]
+        finally:
+            db.close()
+
+    def create_template(self, data: BuyRuleTemplateCreate) -> BuyRuleTemplateResponse:
+        """Create a new buy rule template."""
+        _validate_buy_rule_params(data.rule_type, data.params)
+
+        db: Session = SessionLocal()
+        try:
+            existing = (
+                db.query(BuyRuleTemplate)
+                .filter(BuyRuleTemplate.name == data.name)
+                .first()
+            )
+            if existing:
+                raise ValueError(f"Template name '{data.name}' already exists")
+
+            row = BuyRuleTemplate(
+                name=data.name,
+                rule_type=data.rule_type,
+                params=data.params,
+                description=data.description,
+            )
+            db.add(row)
+            db.commit()
+            db.refresh(row)
+            return self._template_to_response(row, db)
+        except IntegrityError:
+            db.rollback()
+            raise ValueError(f"Template name '{data.name}' already exists")
+        except ValueError:
+            db.rollback()
+            raise
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def update_template(
+        self, template_id: int, data: BuyRuleTemplateUpdate
+    ) -> Optional[BuyRuleTemplateResponse]:
+        """Update a template. Returns None if not found."""
+        db: Session = SessionLocal()
+        try:
+            row = db.query(BuyRuleTemplate).filter(BuyRuleTemplate.id == template_id).first()
+            if row is None:
+                return None
+
+            update_data = data.model_dump(exclude_unset=True)
+            if "params" in update_data and update_data["params"] is not None:
+                _validate_buy_rule_params(row.rule_type, update_data["params"])
+            if "name" in update_data and update_data["name"] is not None:
+                dup = (
+                    db.query(BuyRuleTemplate)
+                    .filter(BuyRuleTemplate.name == update_data["name"], BuyRuleTemplate.id != template_id)
+                    .first()
+                )
+                if dup:
+                    raise ValueError(f"Template name '{update_data['name']}' already exists")
+
+            for key, val in update_data.items():
+                setattr(row, key, val)
+
+            db.commit()
+            db.refresh(row)
+            return self._template_to_response(row, db)
+        except IntegrityError:
+            db.rollback()
+            raise ValueError(f"Template name '{data.name}' already exists")
+        except ValueError:
+            db.rollback()
+            raise
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def delete_template(self, template_id: int) -> bool:
+        """Delete a template. Returns False if not found."""
+        db: Session = SessionLocal()
+        try:
+            row = db.query(BuyRuleTemplate).filter(BuyRuleTemplate.id == template_id).first()
+            if row is None:
+                return False
+            db.delete(row)
+            db.commit()
+            return True
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def create_rule_from_template(
+        self, item_id: int, template_id: int, is_active: bool = True
+    ) -> BuyRuleResponse:
+        """Create a buy rule from a template, copying params and linking template_id."""
+        db: Session = SessionLocal()
+        try:
+            item = db.query(WatchlistItem).filter(WatchlistItem.id == item_id).first()
+            if item is None:
+                raise ValueError(f"Watchlist item {item_id} not found")
+
+            template = db.query(BuyRuleTemplate).filter(BuyRuleTemplate.id == template_id).first()
+            if template is None:
+                raise ValueError(f"Template {template_id} not found")
+
+            if not template.is_active:
+                raise ValueError(f"Template {template_id} is inactive")
+
+            # Prevent duplicate: same item + same template (app-level guard)
+            existing = (
+                db.query(BuyRule)
+                .filter(
+                    BuyRule.watchlist_item_id == item_id,
+                    BuyRule.template_id == template_id,
+                )
+                .first()
+            )
+            if existing:
+                raise ValueError(
+                    f"Template {template_id} is already linked to item {item_id} (rule #{existing.id})"
+                )
+
+            rule = BuyRule(
+                watchlist_item_id=item_id,
+                template_id=template_id,
+                rule_type=template.rule_type,
+                params=dict(template.params),  # copy params
+                is_active=is_active,
+            )
+            db.add(rule)
+            db.commit()
+            db.refresh(rule)
+            return self._rule_to_response(rule)
+        except IntegrityError:
+            db.rollback()
+            raise ValueError(
+                f"Template {template_id} is already linked to item {item_id}"
+            )
+        except ValueError:
+            db.rollback()
+            raise
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
     # ── Buy Signal Evaluation ──────────────────────────────────────
 
     def evaluate_buy_signals(self) -> List[BuySignal]:
@@ -441,6 +624,7 @@ class WatchlistService:
         return BuyRuleResponse(
             id=rule.id,
             watchlist_item_id=rule.watchlist_item_id,
+            template_id=rule.template_id,
             rule_type=rule.rule_type,
             params=rule.params or {},
             state_json=rule.state_json,
@@ -448,6 +632,31 @@ class WatchlistService:
             triggered_at=rule.triggered_at,
             created_at=rule.created_at,
             updated_at=rule.updated_at,
+        )
+
+    @staticmethod
+    def _template_to_response(
+        template: BuyRuleTemplate,
+        db: Optional[Session] = None,
+        linked_count: Optional[int] = None,
+    ) -> BuyRuleTemplateResponse:
+        """Convert ORM BuyRuleTemplate to response schema."""
+        if linked_count is None and db is not None:
+            linked_count = (
+                db.query(BuyRule)
+                .filter(BuyRule.template_id == template.id)
+                .count()
+            )
+        return BuyRuleTemplateResponse(
+            id=template.id,
+            name=template.name,
+            rule_type=template.rule_type,
+            params=template.params or {},
+            description=template.description,
+            is_active=template.is_active,
+            linked_rules_count=linked_count or 0,
+            created_at=template.created_at,
+            updated_at=template.updated_at,
         )
 
 
