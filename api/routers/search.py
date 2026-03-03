@@ -5,12 +5,14 @@ Provides endpoint for searching tickers by name or symbol.
 """
 
 import logging
+import re
 from typing import List
 
 import yfinance as yf
 from fastapi import APIRouter, Query
 
 from api.schemas.analysis import SearchResult
+from api.services.korean_search_service import get_korean_search_service
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,17 @@ router = APIRouter(
     prefix="/api",
     tags=["Search"],
 )
+
+_KOREAN_RE = re.compile(r"[\uAC00-\uD7AF]")
+_KR_CODE_RE = re.compile(r"^\d{6}$")
+
+
+def _contains_korean(text: str) -> bool:
+    return bool(_KOREAN_RE.search(text))
+
+
+def _is_korean_code(text: str) -> bool:
+    return bool(_KR_CODE_RE.match(text.strip()))
 
 
 @router.get(
@@ -37,6 +50,8 @@ async def search_tickers(
     Search for tickers matching the query.
 
     Searches by ticker symbol prefix and company name substring.
+    Korean queries (hangul or 6-digit code) use local CSV data;
+    other queries use yfinance.
     Returns up to 20 results.
 
     Args:
@@ -45,6 +60,34 @@ async def search_tickers(
     Returns:
         List of matching SearchResult objects
     """
+    if _contains_korean(q):
+        return _search_korean(q)
+
+    if _is_korean_code(q):
+        results = _search_korean(q)
+        if results:
+            return results
+        # Fallback to yfinance if code not found in local data
+        return _search_yfinance(q)
+
+    return _search_yfinance(q)
+
+
+def _search_korean(q: str) -> List[SearchResult]:
+    """Search Korean stocks from local CSV data."""
+    service = get_korean_search_service()
+    entries = service.search(q, limit=20)
+
+    results: List[SearchResult] = []
+    for entry in entries:
+        display = f"{entry.name} ({entry.sector})" if entry.sector else entry.name
+        results.append(SearchResult(ticker=entry.symbol, name=display))
+
+    return results
+
+
+def _search_yfinance(q: str) -> List[SearchResult]:
+    """Search using yfinance API (existing behavior)."""
     results: List[SearchResult] = []
     query_upper = q.upper()
 
