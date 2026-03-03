@@ -198,10 +198,35 @@ class ScreeningService:
             else:
                 return 0
 
+            # Sanity check: if count is suspiciously low, keep last-known-good
+            min_expected = defaults.get(universe_upper, 0) // 2
+            if count < min_expected:
+                prev = self._universe_count_cache.get(universe_upper)
+                if prev:
+                    _, prev_count = prev
+                    logger.warning(
+                        f"{universe} count ({count}) below minimum ({min_expected}), "
+                        f"keeping previous count ({prev_count})"
+                    )
+                    self._universe_count_cache[universe_upper] = (time.time(), prev_count)
+                    return prev_count
+                fallback = defaults.get(universe_upper, 0)
+                logger.warning(
+                    f"{universe} count ({count}) below minimum ({min_expected}), "
+                    f"using default ({fallback})"
+                )
+                self._universe_count_cache[universe_upper] = (time.time(), fallback)
+                return fallback
+
             self._universe_count_cache[universe_upper] = (time.time(), count)
             return count
         except Exception as e:
             logger.warning(f"Failed to get stock count for {universe}: {e}")
+            prev = self._universe_count_cache.get(universe_upper)
+            if prev:
+                _, prev_count = prev
+                self._universe_count_cache[universe_upper] = (time.time(), prev_count)
+                return prev_count
             return defaults.get(universe_upper, 0)
 
     def _get_universe_tickers(self, universe: str) -> List[str]:
