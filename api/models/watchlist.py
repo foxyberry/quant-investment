@@ -1,11 +1,13 @@
 """
-SQLAlchemy models for the watchlist tables (watchlist_items + buy_rules).
+SQLAlchemy models for the watchlist tables
+(watchlist_items, buy_rules, buy_rule_templates).
 """
 
 from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     Float,
@@ -53,6 +55,12 @@ class BuyRule(Base):
         nullable=False,
         index=True,
     )
+    template_id = Column(
+        Integer,
+        ForeignKey("buy_rule_templates.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     rule_type = Column(String(32), nullable=False)  # target_price, rsi_oversold
     params = Column(_JSON, nullable=False)  # e.g. {"price": 50000} or {"rsi": 30}
     state_json = Column(_JSON, nullable=True)  # evaluation state
@@ -62,3 +70,28 @@ class BuyRule(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     watchlist_item = relationship("WatchlistItem", back_populates="buy_rules")
+    template = relationship("BuyRuleTemplate", back_populates="linked_rules")
+
+
+class BuyRuleTemplate(Base):
+    __tablename__ = "buy_rule_templates"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), unique=True, nullable=False)
+    rule_type = Column(String(32), nullable=False)
+    params = Column(_JSON, nullable=False)
+    description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    linked_rules = relationship(
+        "BuyRule", back_populates="template", passive_deletes=True,
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "rule_type IN ('target_price', 'rsi_oversold')",
+            name="ck_buy_rule_template_type",
+        ),
+    )
