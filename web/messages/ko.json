@@ -454,6 +454,7 @@
     "loadingSectors": "업종 목록 로딩 중...",
     "marketSelection": "시장 선택",
     "composite": "{universe} 종합",
+    "selectedUniverseTotal": "총 {count}개 종목",
     "condition": "조건",
     "finalSelection": "최종 선택",
     "estimatedItems": "예상 {count}개",

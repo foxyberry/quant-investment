@@ -4,7 +4,7 @@ import { memo, useCallback } from 'react';
 import { Handle, Position, useNodeId, useReactFlow } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { Globe, Eye } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   SUPPORTED_UNIVERSES,
   parseUniverseSelection,
@@ -12,14 +12,32 @@ import {
   type SupportedUniverse,
   type StrategyNodeData,
 } from '@/lib/strategy/graphSerializer';
+import { useUniverses } from '@/hooks/useScreening';
 import NodeEditPopup, { FieldLabel } from './NodeEditPopup';
 
 function UniverseNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
+  const locale = useLocale();
   const nodeData = data as unknown as StrategyNodeData;
   const nodeId = useNodeId()!;
   const { updateNodeData, deleteElements } = useReactFlow();
   const selectedUniverses = parseUniverseSelection(nodeData.universe);
+  const universesQuery = useUniverses();
+
+  const stockCountMap: Record<string, number> = {};
+  for (const universe of universesQuery.data ?? []) {
+    stockCountMap[universe.name] = universe.stock_count;
+  }
+  const selectedCountText = selectedUniverses.map((u) => {
+    const count = stockCountMap[u];
+    return count !== undefined
+      ? `${u} (${count.toLocaleString(locale)})`
+      : u;
+  });
+  const totalSelectedCount = selectedUniverses.reduce(
+    (sum, u) => sum + (stockCountMap[u] ?? 0),
+    0
+  );
 
   const handleUniverseToggle = useCallback(
     (value: SupportedUniverse) => {
@@ -64,7 +82,12 @@ function UniverseNode({ data, selected }: NodeProps) {
           {t('marketSelection')}
         </div>
         <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          {t('composite', { universe: selectedUniverses.join(' + ') })}
+          {t('composite', { universe: selectedCountText.join(' + ') })}
+        </div>
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+          {t('selectedUniverseTotal', {
+            count: totalSelectedCount.toLocaleString(locale),
+          })}
         </div>
       </div>
 
@@ -101,6 +124,11 @@ function UniverseNode({ data, selected }: NodeProps) {
                   className="rounded border-[#d0d4d9] text-[#1313ec] focus:ring-[#1313ec]/20"
                 />
                 <span>{universe}</span>
+                {stockCountMap[universe] !== undefined && (
+                  <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                    {stockCountMap[universe].toLocaleString(locale)} {t('stockCount')}
+                  </span>
+                )}
               </label>
             ))}
           </div>

@@ -454,6 +454,7 @@
     "loadingSectors": "正在加载行业列表...",
     "marketSelection": "市场选择",
     "composite": "{universe} 综合",
+    "selectedUniverseTotal": "共 {count} 只股票",
     "condition": "条件",
     "finalSelection": "最终选择",
     "estimatedItems": "预计 {count} 项",
