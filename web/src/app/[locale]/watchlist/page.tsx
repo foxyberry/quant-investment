@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Plus, RefreshCw, Star, Trash2, Edit3, Shield, TrendingDown, TrendingUp } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
+import TickerSearchInput from '@/components/ui/TickerSearchInput';
 import {
   getWatchlistItems,
   createWatchlistItem,
@@ -299,12 +300,10 @@ export default function WatchlistPage() {
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground-muted)] mb-1">{t('ticker')}</label>
-                <input
-                  type="text"
+                <TickerSearchInput
                   value={addForm.ticker}
-                  onChange={(e) => setAddForm({ ...addForm, ticker: e.target.value })}
-                  placeholder={t('tickerPlaceholder')}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+                  onChange={(ticker, name) => setAddForm({ ...addForm, ticker, name: name || addForm.name })}
+                  placeholder={t('tickerPlaceholder') + ' / 삼성전자'}
                   autoFocus
                 />
               </div>

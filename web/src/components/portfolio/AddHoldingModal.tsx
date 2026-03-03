@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui';
+import TickerSearchInput from '@/components/ui/TickerSearchInput';
 import type { HoldingCreate } from '@/lib/types';
 
 interface AddHoldingModalProps {
@@ -64,8 +65,8 @@ export default function AddHoldingModal({ isOpen, onClose, onAdd }: AddHoldingMo
 
     if (!ticker.trim()) {
       newErrors.ticker = 'Ticker is required';
-    } else if (!/^[A-Za-z0-9.-]+$/.test(ticker.trim())) {
-      newErrors.ticker = 'Invalid ticker format';
+    } else if (!/^[A-Za-z0-9.^-]+$/.test(ticker.trim())) {
+      newErrors.ticker = 'Select a stock from the search results';
     }
 
     const qty = parseFloat(quantity);
@@ -156,16 +157,16 @@ export default function AddHoldingModal({ isOpen, onClose, onAdd }: AddHoldingMo
               <label htmlFor="ticker" className="block text-sm font-medium text-[var(--foreground)] mb-1">
                 Ticker <span className="text-red-500">*</span>
               </label>
-              <input
-                ref={tickerInputRef}
-                type="text"
+              <TickerSearchInput
+                inputRef={tickerInputRef}
                 id="ticker"
                 value={ticker}
-                onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                placeholder="e.g., AAPL"
-                className={`w-full rounded-lg border px-3 py-2 text-[var(--foreground)] placeholder-[var(--foreground-muted)] bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
-                  errors.ticker ? 'border-red-500' : 'border-[var(--border)]'
-                }`}
+                onChange={(t) => {
+                  setTicker(t.toUpperCase());
+                  if (t.endsWith('.KS') || t.endsWith('.KQ')) setCurrency('KRW');
+                }}
+                placeholder="e.g., AAPL or 삼성전자"
+                hasError={!!errors.ticker}
                 disabled={isSubmitting}
               />
               {errors.ticker && (
