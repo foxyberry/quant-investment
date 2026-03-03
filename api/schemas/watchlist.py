@@ -95,6 +95,7 @@ class BuyRuleUpdate(BaseModel):
 class BuyRuleResponse(BaseModel):
     id: int
     watchlist_item_id: int
+    template_id: Optional[int] = None
     rule_type: str
     params: Dict[str, Any]
     state_json: Optional[Dict[str, Any]] = None
@@ -102,6 +103,47 @@ class BuyRuleResponse(BaseModel):
     triggered_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+
+# ── BuyRuleTemplate schemas ───────────────────────────────────────
+
+
+class BuyRuleTemplateCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255, description="Template name")
+    rule_type: str = Field(..., description="Rule type", examples=["target_price", "rsi_oversold"])
+    params: Dict[str, Any] = Field(..., description="Default rule parameters")
+    description: Optional[str] = Field(default=None, description="Optional description")
+
+    @field_validator("rule_type")
+    @classmethod
+    def validate_rule_type(cls, v: str) -> str:
+        if v not in BUY_RULE_TYPES:
+            raise ValueError(f"Invalid rule_type: {v}. Allowed: {BUY_RULE_TYPES}")
+        return v
+
+
+class BuyRuleTemplateUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    params: Optional[Dict[str, Any]] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class BuyRuleTemplateResponse(BaseModel):
+    id: int
+    name: str
+    rule_type: str
+    params: Dict[str, Any]
+    description: Optional[str] = None
+    is_active: bool
+    linked_rules_count: int = 0
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class CreateRuleFromTemplate(BaseModel):
+    template_id: int = Field(..., description="Template ID to create rule from")
+    is_active: bool = Field(default=True, description="Whether the created rule is active")
 
 
 # ── Evaluation schemas ─────────────────────────────────────────────

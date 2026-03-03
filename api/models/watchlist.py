@@ -16,6 +16,7 @@ from sqlalchemy import (
     JSON,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
@@ -71,6 +72,13 @@ class BuyRule(Base):
 
     watchlist_item = relationship("WatchlistItem", back_populates="buy_rules")
     template = relationship("BuyRuleTemplate", back_populates="linked_rules")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "watchlist_item_id", "template_id",
+            name="uq_buy_rules_item_template",
+        ),
+    )
 
 
 class BuyRuleTemplate(Base):
