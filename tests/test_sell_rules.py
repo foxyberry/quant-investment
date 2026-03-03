@@ -303,6 +303,31 @@ class TestSellRuleCRUD:
         with pytest.raises(ValueError, match="Holding not found"):
             service.create_sell_rule("NONEXISTENT", data)
 
+    def test_create_with_market_suffix_alias(self, service, db_session):
+        """Legacy holdings without suffix should accept .KS/.KQ ticker input."""
+        h = Holding(
+            ticker="021240",
+            name="코웨이",
+            quantity=10,
+            avg_price=50000,
+            currency="KRW",
+            bought_at=date(2025, 1, 15),
+        )
+        db_session.add(h)
+        db_session.commit()
+
+        created = service.create_sell_rule(
+            "021240.KS",
+            SellRuleCreate(rule_type="stop_loss", params={"pct": -10}),
+        )
+        assert created.ticker == "021240"
+
+        by_alias = service.get_sell_rules("021240.KS")
+        by_raw = service.get_sell_rules("021240")
+        assert len(by_alias) == 1
+        assert len(by_raw) == 1
+        assert by_alias[0].id == by_raw[0].id
+
     def test_create_multiple_rules(self, service, holding, db_session):
         service.create_sell_rule(holding.ticker, SellRuleCreate(
             rule_type="stop_loss", params={"pct": -10},
