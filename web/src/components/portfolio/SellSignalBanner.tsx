@@ -14,7 +14,7 @@ interface SellSignalBannerProps {
 /**
  * Format signal type for display
  */
-function formatSignalType(type: SellSignal['signal_type']): string {
+function formatSignalType(type: SellSignal['signal_type']): SellSignal['signal_type'] {
   return type;
 }
 
@@ -33,12 +33,18 @@ export default function SellSignalBanner({ signals, onDismiss }: SellSignalBanne
       stop_loss: t('stopLoss'),
       take_profit: t('takeProfit'),
       trailing_stop: t('trailingStop'),
+      holding_period: t('holdingPeriod'),
       manual: t('manual'),
     };
     return labels[type] || type;
   };
 
   const signalReasonLabel = (signal: SellSignal) => {
+    // Rule-based signals have accurate reason from backend
+    if (signal.rule_id != null) {
+      return signal.reason;
+    }
+    // Global threshold signals use hardcoded values
     if (signal.signal_type === 'take_profit') {
       return t('sellSignalReasonTakeProfit', {
         target: 20,
@@ -67,9 +73,9 @@ export default function SellSignalBanner({ signals, onDismiss }: SellSignalBanne
             {t('sellSignalAlertTitle', { count: signals.length })}
           </h3>
           <div className="mt-2 space-y-2">
-            {signals.map((signal) => (
+            {signals.map((signal, index) => (
               <div
-                key={`${signal.ticker}-${signal.signal_type}`}
+                key={`${signal.ticker}-${signal.rule_id ?? signal.signal_type}-${index}`}
                 className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-red-700 dark:text-red-300"
               >
                 <span className="font-mono font-medium">{signal.ticker}</span>

@@ -1199,12 +1199,14 @@ class PortfolioService:
         stop_loss_pct: float = None,
         take_profit_pct: float = None
     ) -> List[SellSignal]:
-        """
-        Get sell signals based on P&L thresholds.
+        """Get sell signals combining DB rules and global thresholds.
+
+        For holdings with active DB rules: evaluate those rules.
+        For holdings without rules: fall back to global stop_loss/take_profit.
 
         Args:
-            stop_loss_pct: Stop loss threshold percentage (default: -10%)
-            take_profit_pct: Take profit threshold percentage (default: +20%)
+            stop_loss_pct: Global stop loss threshold (default: -10%)
+            take_profit_pct: Global take profit threshold (default: +20%)
 
         Returns:
             List of SellSignal objects
@@ -1212,16 +1214,43 @@ class PortfolioService:
         stop_loss = stop_loss_pct if stop_loss_pct is not None else self.STOP_LOSS_PCT
         take_profit = take_profit_pct if take_profit_pct is not None else self.TAKE_PROFIT_PCT
 
-        signals = []
+        signals: List[SellSignal] = []
         holdings = self.get_all_holdings(with_prices=True)
 
+        # Load DB rule evaluation results (read-only, no state mutation)
+        rule_eval = self.evaluate_sell_rules(dry_run=True)
+        # Only skip global fallback for tickers where evaluation succeeded
+        tickers_with_rules: set[str] = set()
+        for result in rule_eval.results:
+            # Skip fallback only for successful evaluations (not errors/unavailable)
+            if not (result.reason and result.reason.startswith("Evaluation error")):
+                tickers_with_rules.add(result.ticker)
+            if result.triggered:
+                # Find matching holding for name/avg_price
+                h = next((h for h in holdings if h.ticker == result.ticker), None)
+                if h is None:
+                    continue
+                signals.append(SellSignal(
+                    ticker=result.ticker,
+                    name=h.name or h.ticker,
+                    signal_type=result.rule_type,
+                    reason=result.reason or "",
+                    current_price=result.current_price or 0.0,
+                    trigger_price=result.trigger_value,
+                    avg_price=h.avg_price,
+                    pnl_pct=h.pnl_pct or 0.0,
+                    currency=h.currency,
+                    rule_id=result.rule_id,
+                ))
+
+        # Fall back to global thresholds for holdings without DB rules
         for h in holdings:
+            if h.ticker in tickers_with_rules:
+                continue
             if h.pnl_pct is None or h.current_price is None:
                 continue
 
             signal = None
-
-            # Check stop loss
             if h.pnl_pct <= stop_loss:
                 signal = SellSignal(
                     ticker=h.ticker,
@@ -1234,8 +1263,6 @@ class PortfolioService:
                     pnl_pct=h.pnl_pct,
                     currency=h.currency,
                 )
-
-            # Check take profit
             elif h.pnl_pct >= take_profit:
                 signal = SellSignal(
                     ticker=h.ticker,
@@ -1369,13 +1396,16 @@ class PortfolioService:
     }
 
     def evaluate_sell_rules(
-        self, ticker: Optional[str] = None
+        self, ticker: Optional[str] = None, *, dry_run: bool = False
     ) -> SellRuleEvaluateResponse:
         """Evaluate active sell rules against current market data.
 
         Args:
             ticker: If given, evaluate rules for this ticker only.
                     Otherwise evaluate all active rules.
+            dry_run: If True, do not persist state changes (triggered_at,
+                     high_watermark).  Used by get_sell_signals for read-only
+                     evaluation.
 
         Returns:
             SellRuleEvaluateResponse with per-rule results.
@@ -1426,7 +1456,10 @@ class PortfolioService:
                     )
                 results.append(result)
 
-            db.commit()
+            if not dry_run:
+                db.commit()
+            else:
+                db.rollback()  # discard any ORM-level mutations
             return SellRuleEvaluateResponse(results=results)
         except Exception:
             db.rollback()

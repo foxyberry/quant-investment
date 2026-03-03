@@ -166,13 +166,14 @@ export interface PortfolioSummary {
 export interface SellSignal {
   ticker: string;
   name: string | null;
-  signal_type: 'stop_loss' | 'take_profit' | 'trailing_stop' | 'manual';
+  signal_type: 'stop_loss' | 'take_profit' | 'trailing_stop' | 'holding_period' | 'manual';
   reason: string;
   current_price: number | null;
   trigger_price: number | null;
   avg_price: number;
   pnl_pct: number;
   currency: string;
+  rule_id: number | null;
 }
 
 // CSV import types
