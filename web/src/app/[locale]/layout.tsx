@@ -8,6 +8,7 @@ import '../globals.css';
 import MainLayout from '@/components/layout/MainLayout';
 import QueryProvider from '@/providers/QueryProvider';
 import { UserSettingsProvider } from '@/contexts/UserSettingsContext';
+import AgentationProvider from '@/components/dev/AgentationProvider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -52,6 +53,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <QueryProvider>
             <UserSettingsProvider>
               <MainLayout>{children}</MainLayout>
+              <AgentationProvider />
             </UserSettingsProvider>
           </QueryProvider>
         </NextIntlClientProvider>
