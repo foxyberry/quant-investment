@@ -38,45 +38,167 @@ Universe → [Sector] → Condition(s) → [Logic groups] → Output
 - Explain why certain conditions work well together
 - Keep responses concise and actionable
 - Match the language of the user's message (Korean → Korean, English → English)
+- Only recommend parameters explicitly listed below. \
+If a parameter is not listed, answer "not available" instead of guessing.
 """
 
 # Cached system prompt with conditions section
 _cached_system_prompt: Optional[str] = None
 
 
+def _get_detail_keys() -> set:
+    """Return condition keys that deserve detailed info in the prompt.
+
+    Includes recommended conditions and those used by presets.
+    """
+    from screener.conditions.registry import get_condition_metadata, get_condition_class_map
+    from screener.presets import PRESET_REGISTRY
+    from screener.conditions.composite import AndCondition, OrCondition, NotCondition
+
+    metadata = get_condition_metadata()
+    class_map = get_condition_class_map()
+
+    # Reverse map: class -> key (skip aliases not in metadata)
+    class_to_key = {cls: key for key, cls in class_map.items() if key in metadata}
+
+    def _flatten(conditions) -> set:
+        keys = set()
+        for c in conditions:
+            if isinstance(c, (AndCondition, OrCondition)):
+                keys.update(_flatten(c.conditions))
+            elif isinstance(c, NotCondition):
+                keys.update(_flatten([c.condition]))
+            else:
+                cls = type(c)
+                if cls in class_to_key:
+                    keys.add(class_to_key[cls])
+        return keys
+
+    preset_keys = set()
+    for name, func in PRESET_REGISTRY.items():
+        try:
+            preset_keys.update(_flatten(func()))
+        except Exception as e:
+            logger.warning("Failed to extract conditions from preset %s: %s", name, e)
+
+    recommended_keys = {k for k, m in metadata.items() if m.get("recommended")}
+    return preset_keys | recommended_keys
+
+
 def _build_conditions_section() -> str:
-    """Build the Available Conditions section from the condition registry."""
+    """Build the Available Conditions section from the condition registry.
+
+    Key/recommended conditions get description + params detail.
+    Others get name only to keep the prompt compact.
+    """
     from screener.conditions.registry import get_condition_metadata
 
     metadata = get_condition_metadata()
     if not metadata:
         return ""
 
+    detail_keys = _get_detail_keys()
+
     # Group by category
-    cats: Dict[str, List[str]] = {}
+    cats: Dict[str, List[Dict]] = {}
     for key, meta in metadata.items():
         cat = meta.get("category", "other")
-        label = meta.get("label", key)
-        cats.setdefault(cat, []).append(f"{key} ({label})")
+        cats.setdefault(cat, []).append({"key": key, **meta})
 
     lines = [f"\n## Available Conditions ({len(metadata)} total)\n"]
     for cat in sorted(cats):
-        items = sorted(cats[cat])
-        lines.append(f"- **{cat}** ({len(items)}): {', '.join(items)}")
+        items = sorted(cats[cat], key=lambda x: x["key"])
+        lines.append(f"### {cat} ({len(items)})")
+        for item in items:
+            key = item["key"]
+            label = item.get("label", key)
+            if key in detail_keys:
+                desc = item.get("description", "")
+                params = item.get("params", [])
+                param_str = ", ".join(
+                    f"{p['name']}({p['type']}, default={p.get('default', '?')})"
+                    for p in params
+                )
+                lines.append(f"- **{key}** ({label}): {desc}")
+                if param_str:
+                    lines.append(f"  params: {param_str}")
+            else:
+                lines.append(f"- {key} ({label})")
+
+    return "\n".join(lines)
+
+
+def _build_presets_section() -> str:
+    """Build the Strategy Presets section from the preset registry."""
+    from screener.presets import PRESET_REGISTRY
+    from screener.conditions.registry import get_condition_class_map, get_condition_metadata
+    from screener.conditions.composite import AndCondition, OrCondition, NotCondition
+
+    if not PRESET_REGISTRY:
+        return ""
+
+    class_map = get_condition_class_map()
+    metadata = get_condition_metadata()
+    class_to_key = {cls: key for key, cls in class_map.items() if key in metadata}
+
+    def _describe_conditions(conditions, depth=0) -> List[str]:
+        parts = []
+        for c in conditions:
+            if isinstance(c, OrCondition):
+                sub = _describe_conditions(c.conditions, depth + 1)
+                parts.append(f"OR({', '.join(sub)})")
+            elif isinstance(c, AndCondition):
+                sub = _describe_conditions(c.conditions, depth + 1)
+                parts.append(f"AND({', '.join(sub)})")
+            elif isinstance(c, NotCondition):
+                sub = _describe_conditions([c.condition], depth + 1)
+                parts.append(f"NOT({sub[0]})")
+            else:
+                cls = type(c)
+                key = class_to_key.get(cls, cls.__name__)
+                # Extract instance params
+                meta_params = metadata.get(key, {}).get("params", [])
+                param_vals = []
+                for p in meta_params:
+                    val = getattr(c, p["name"], None)
+                    if val is not None:
+                        param_vals.append(f"{p['name']}={val}")
+                if param_vals:
+                    parts.append(f"{key}({', '.join(param_vals)})")
+                else:
+                    parts.append(key)
+        return parts
+
+    lines = ["\n## Strategy Presets (ready-to-use templates)\n"]
+    for name, func in PRESET_REGISTRY.items():
+        try:
+            conditions = func()
+        except Exception as e:
+            logger.warning("Failed to build preset %s for prompt: %s", name, e)
+            continue
+        # Get docstring as description
+        doc = (func.__doc__ or "").strip()
+        summary = doc.split("\n")[0] if doc else name
+        cond_parts = _describe_conditions(conditions)
+
+        lines.append(f"- **{name}**: {summary}")
+        lines.append(f"  conditions: {' + '.join(cond_parts)}")
 
     return "\n".join(lines)
 
 
 def _get_system_prompt() -> str:
-    """Return system prompt with dynamically injected condition list.
+    """Return system prompt with dynamically injected conditions and presets.
 
-    The condition list is built once from the registry and cached for the
-    lifetime of the process.
+    Built once from the registry/presets and cached for the process lifetime.
     """
     global _cached_system_prompt
     if _cached_system_prompt is None:
         conditions_section = _build_conditions_section()
-        _cached_system_prompt = _SYSTEM_PROMPT_BASE + conditions_section
+        presets_section = _build_presets_section()
+        _cached_system_prompt = (
+            _SYSTEM_PROMPT_BASE + conditions_section + presets_section
+        )
     return _cached_system_prompt
 
 
