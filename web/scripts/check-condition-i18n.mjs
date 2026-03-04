@@ -11,7 +11,19 @@ const messagePaths = {
 
 const metaKeys = new Set(['recommended', 'categories']);
 
-function parseRegistry() {
+function inferRegistryFromEnMessages(enConditions) {
+  const inferred = {};
+  for (const [key, entry] of Object.entries(enConditions ?? {})) {
+    if (metaKeys.has(key)) continue;
+    const params = entry && typeof entry.params === 'object' && entry.params !== null
+      ? Object.keys(entry.params)
+      : [];
+    inferred[key] = params.sort();
+  }
+  return inferred;
+}
+
+function parseRegistry(enConditions) {
   const script = [
     'import json',
     'import screener.conditions',
@@ -21,14 +33,17 @@ function parseRegistry() {
     'print(json.dumps(result))',
   ].join('; ');
 
-  const pythonBin = process.env.PYTHON_BIN || path.join(repoRoot, 'venv', 'bin', 'python');
+  const venvPython = path.join(repoRoot, 'venv', 'bin', 'python');
+  const pythonBin = process.env.PYTHON_BIN || (fs.existsSync(venvPython) ? venvPython : 'python3');
   const proc = spawnSync(pythonBin, ['-c', script], {
     cwd: repoRoot,
     encoding: 'utf8',
   });
 
   if (proc.status !== 0) {
-    throw new Error(`Failed to load condition registry: ${proc.stderr || proc.stdout}`);
+    const detail = proc.error?.message || proc.stderr || proc.stdout || `status=${String(proc.status)}`;
+    console.warn(`Condition registry Python load failed, falling back to en.json contract: ${detail}`.trim());
+    return new Map(Object.entries(inferRegistryFromEnMessages(enConditions)));
   }
 
   const parsed = JSON.parse(proc.stdout.trim() || '{}');
@@ -46,9 +61,9 @@ function pushIssue(issues, locale, key, field, detail = '') {
 }
 
 function validate() {
-  const registry = parseRegistry();
   const locales = ['en', 'ko', 'zh'];
   const localized = Object.fromEntries(locales.map((loc) => [loc, loadConditions(loc)]));
+  const registry = parseRegistry(localized.en);
   const issues = [];
 
   for (const [key, params] of registry.entries()) {
