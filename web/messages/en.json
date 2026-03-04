@@ -422,7 +422,20 @@
     "sellRuleInactive": "Inactive",
     "sellRuleTriggered": "Triggered",
     "sellRuleDays": "days",
-    "sellRuleHint": "Stop loss: negative %, Take profit / Trailing stop: positive %, Holding period: days"
+    "sellRuleHint": "Stop loss: negative %, Take profit / Trailing stop: positive %, Holding period: days",
+    "sellRulePresets": "Presets",
+    "sellRuleManualInput": "Manual Input",
+    "noSellRulePresets": "No presets available.",
+    "applySellRulePreset": "Apply",
+    "sellRulePresetApplied": "Applied",
+    "sellRulePresetInactive": "Inactive",
+    "sellRulePresetApplyFailed": "Failed to apply preset.",
+    "sellRuleFromPreset": "From preset",
+    "sellRulePresetRules": "rules",
+    "saveAsPreset": "Save as Preset",
+    "saveAsPresetName": "Enter preset name:",
+    "saveAsPresetSuccess": "Preset saved successfully.",
+    "saveAsPresetFailed": "Failed to save preset."
   },
   "brokerOrderDesk": {
     "title": "Broker Order Desk",

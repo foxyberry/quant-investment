@@ -25,6 +25,20 @@ from api.database import Base
 _JSON = JSON().with_variant(JSONB, "postgresql")
 
 
+class SellRulePreset(Base):
+    __tablename__ = "sell_rule_presets"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), unique=True, nullable=False)
+    description = Column(Text, nullable=True)
+    rules = Column(_JSON, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    linked_sell_rules = relationship("SellRule", back_populates="preset", passive_deletes=True)
+
+
 class Holding(Base):
     __tablename__ = "holdings"
 
@@ -82,6 +96,12 @@ class SellRule(Base):
     )  # stop_loss | take_profit | trailing_stop | holding_period
     params = Column(_JSON, nullable=False)  # {"pct": -10} etc.
     state_json = Column(_JSON, nullable=True)  # runtime state (e.g. trailing_stop high_watermark)
+    preset_id = Column(
+        Integer,
+        ForeignKey("sell_rule_presets.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     __table_args__ = (
         CheckConstraint(
@@ -95,3 +115,4 @@ class SellRule(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     holding = relationship("Holding", back_populates="sell_rules")
+    preset = relationship("SellRulePreset", back_populates="linked_sell_rules")

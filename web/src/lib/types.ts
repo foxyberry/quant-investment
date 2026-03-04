@@ -438,6 +438,7 @@ export interface SellRule {
   rule_type: SellRuleType;
   params: Record<string, unknown>;
   state_json: Record<string, unknown> | null;
+  preset_id: number | null;
   is_active: boolean;
   triggered_at: string | null;
   created_at: string | null;
@@ -453,6 +454,22 @@ export interface SellRuleCreate {
 export interface SellRuleUpdate {
   params?: Record<string, unknown>;
   is_active?: boolean;
+}
+
+export interface SellRulePresetItem {
+  rule_type: SellRuleType;
+  params: Record<string, unknown>;
+}
+
+export interface SellRulePreset {
+  id: number;
+  name: string;
+  description: string | null;
+  rules: SellRulePresetItem[];
+  is_active: boolean;
+  linked_rules_count: number;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface SellRuleEvaluateResult {

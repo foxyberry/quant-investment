@@ -342,9 +342,82 @@ class SellRuleResponse(BaseModel):
     params: Dict[str, Any]
     state_json: Optional[Dict[str, Any]] = None
     is_active: bool
+    preset_id: Optional[int] = None
     triggered_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+
+# ── SellRulePreset schemas ────────────────────────────────────────
+
+
+class SellRulePresetItem(BaseModel):
+    rule_type: str
+    params: Dict[str, Any]
+
+    @field_validator("rule_type")
+    @classmethod
+    def validate_rule_type(cls, v: str) -> str:
+        if v not in SELL_RULE_TYPES:
+            raise ValueError(f"Invalid rule_type: {v}. Allowed: {sorted(SELL_RULE_TYPES)}")
+        return v
+
+    @model_validator(mode="after")
+    def _validate_params(self) -> "Self":
+        _validate_sell_rule_params(self.rule_type, self.params)
+        return self
+
+
+class SellRulePresetCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    rules: List[SellRulePresetItem] = Field(..., min_length=1)
+
+    @field_validator("rules")
+    @classmethod
+    def no_duplicate_rule_types(cls, v: List[SellRulePresetItem]) -> List[SellRulePresetItem]:
+        types = [item.rule_type for item in v]
+        if len(types) != len(set(types)):
+            raise ValueError("Duplicate rule_type in preset rules")
+        return v
+
+
+class SellRulePresetUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    rules: Optional[List[SellRulePresetItem]] = None
+    is_active: Optional[bool] = None
+
+    @field_validator("rules")
+    @classmethod
+    def no_duplicate_rule_types(cls, v: Optional[List[SellRulePresetItem]]) -> Optional[List[SellRulePresetItem]]:
+        if v is not None:
+            if len(v) == 0:
+                raise ValueError("rules cannot be empty")
+            types = [item.rule_type for item in v]
+            if len(types) != len(set(types)):
+                raise ValueError("Duplicate rule_type in preset rules")
+        return v
+
+
+class SellRulePresetResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    rules: List[SellRulePresetItem]
+    is_active: bool
+    linked_rules_count: int = 0
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class ApplyPresetToHolding(BaseModel):
+    preset_id: int
+
+
+class SavePresetFromHolding(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
 
 
 class SellRuleEvaluateResult(BaseModel):

@@ -422,7 +422,20 @@
     "sellRuleInactive": "未激活",
     "sellRuleTriggered": "已触发",
     "sellRuleDays": "天",
-    "sellRuleHint": "止损: 负百分比, 止盈/追踪止损: 正百分比, 持仓期限: 天数"
+    "sellRuleHint": "止损: 负百分比, 止盈/追踪止损: 正百分比, 持仓期限: 天数",
+    "sellRulePresets": "预设",
+    "sellRuleManualInput": "手动输入",
+    "noSellRulePresets": "暂无可用预设。",
+    "applySellRulePreset": "应用",
+    "sellRulePresetApplied": "已应用",
+    "sellRulePresetInactive": "未激活",
+    "sellRulePresetApplyFailed": "应用预设失败。",
+    "sellRuleFromPreset": "来自预设",
+    "sellRulePresetRules": "条规则",
+    "saveAsPreset": "保存为预设",
+    "saveAsPresetName": "请输入预设名称：",
+    "saveAsPresetSuccess": "预设保存成功。",
+    "saveAsPresetFailed": "保存预设失败。"
   },
   "brokerOrderDesk": {
     "title": "统一下单台",

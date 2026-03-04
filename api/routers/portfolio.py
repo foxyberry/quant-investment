@@ -16,18 +16,23 @@ from fastapi.responses import StreamingResponse
 
 from api.schemas.portfolio import (
     AdditionalPurchaseRequest,
+    ApplyPresetToHolding,
     CsvImportResponse,
     HoldingCreate,
     HoldingUpdate,
     HoldingResponse,
     PortfolioSummary,
     PortfolioResponse,
+    SavePresetFromHolding,
     SellSignal,
     SellSignalsResponse,
     SellRuleCreate,
     SellRuleUpdate,
     SellRuleResponse,
     SellRuleEvaluateResponse,
+    SellRulePresetCreate,
+    SellRulePresetUpdate,
+    SellRulePresetResponse,
     SellRecordCreate,
     TradeResponse,
     TradeHistoryResponse,
@@ -573,6 +578,106 @@ async def get_sell_signals(
             status_code=500,
             detail=f"Failed to get sell signals: {str(e)}"
         )
+
+
+# ── Sell Rule Presets ──────────────────────────────────────────────
+
+
+@router.get(
+    "/sell-rule-presets",
+    response_model=List[SellRulePresetResponse],
+    summary="List Sell Rule Presets",
+)
+async def list_sell_rule_presets() -> List[SellRulePresetResponse]:
+    service = get_portfolio_service()
+    return service.list_sell_rule_presets()
+
+
+@router.post(
+    "/sell-rule-presets",
+    response_model=SellRulePresetResponse,
+    status_code=201,
+    summary="Create Sell Rule Preset",
+)
+async def create_sell_rule_preset(data: SellRulePresetCreate) -> SellRulePresetResponse:
+    service = get_portfolio_service()
+    try:
+        return service.create_sell_rule_preset(data)
+    except ValueError as e:
+        msg = str(e)
+        status = 409 if "already exists" in msg.lower() else 422
+        raise HTTPException(status_code=status, detail=msg)
+
+
+@router.put(
+    "/sell-rule-presets/{preset_id}",
+    response_model=SellRulePresetResponse,
+    summary="Update Sell Rule Preset",
+)
+async def update_sell_rule_preset(preset_id: int, data: SellRulePresetUpdate) -> SellRulePresetResponse:
+    service = get_portfolio_service()
+    try:
+        return service.update_sell_rule_preset(preset_id, data)
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            raise HTTPException(status_code=404, detail=msg)
+        if "already exists" in msg.lower():
+            raise HTTPException(status_code=409, detail=msg)
+        raise HTTPException(status_code=422, detail=msg)
+
+
+@router.delete(
+    "/sell-rule-presets/{preset_id}",
+    status_code=204,
+    summary="Delete Sell Rule Preset",
+)
+async def delete_sell_rule_preset(preset_id: int) -> None:
+    service = get_portfolio_service()
+    if not service.delete_sell_rule_preset(preset_id):
+        raise HTTPException(status_code=404, detail=f"Preset not found: {preset_id}")
+
+
+@router.post(
+    "/holdings/{ticker}/sell-rules/from-preset",
+    response_model=List[SellRuleResponse],
+    status_code=201,
+    summary="Apply Preset to Holding",
+)
+async def apply_preset_to_holding(ticker: str, data: ApplyPresetToHolding) -> List[SellRuleResponse]:
+    service = get_portfolio_service()
+    try:
+        return service.apply_preset_to_holding(ticker, data.preset_id)
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            raise HTTPException(status_code=404, detail=msg)
+        if "already applied" in msg.lower():
+            raise HTTPException(status_code=409, detail=msg)
+        if "inactive" in msg.lower():
+            raise HTTPException(status_code=409, detail=msg)
+        raise HTTPException(status_code=422, detail=msg)
+
+
+@router.post(
+    "/holdings/{ticker}/sell-rules/save-as-preset",
+    response_model=SellRulePresetResponse,
+    status_code=201,
+    summary="Save Holding Rules as Preset",
+)
+async def save_preset_from_holding(ticker: str, data: SavePresetFromHolding) -> SellRulePresetResponse:
+    service = get_portfolio_service()
+    try:
+        return service.save_preset_from_holding(ticker, data.name, data.description)
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            raise HTTPException(status_code=404, detail=msg)
+        if "already exists" in msg.lower():
+            raise HTTPException(status_code=409, detail=msg)
+        if "no sell rules" in msg.lower():
+            raise HTTPException(status_code=422, detail=msg)
+        raise HTTPException(status_code=400, detail=msg)
 
 
 # ── Sell Rules CRUD + Evaluate ──────────────────────────────────────

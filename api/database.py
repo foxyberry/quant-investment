@@ -61,6 +61,7 @@ def init_db() -> None:
     _migrate_trade_columns()
     _migrate_holding_metadata_columns()
     _migrate_buy_rule_template_id()
+    _migrate_sell_rule_preset_id()
 
     _migrate_json_data()
     _migrate_portfolio_json()
@@ -147,6 +148,28 @@ def _migrate_buy_rule_template_id() -> None:
             )
     except Exception as e:
         logger.warning("buy_rules template_id migration skipped: %s", e)
+
+
+def _migrate_sell_rule_preset_id() -> None:
+    """Add preset_id column to sell_rules for existing databases."""
+    try:
+        with engine.begin() as conn:
+            existing_columns = _get_column_names(conn, "sell_rules")
+            if existing_columns is None:
+                return  # table does not exist yet; create_all will handle it
+            if "preset_id" not in existing_columns:
+                conn.execute(
+                    text(
+                        "ALTER TABLE sell_rules ADD COLUMN preset_id INTEGER "
+                        "REFERENCES sell_rule_presets(id) ON DELETE SET NULL"
+                    )
+                )
+                conn.execute(
+                    text("CREATE INDEX IF NOT EXISTS ix_sell_rules_preset_id ON sell_rules (preset_id)")
+                )
+                logger.info("Added sell_rules.preset_id column")
+    except Exception as e:
+        logger.warning("sell_rules preset_id migration skipped: %s", e)
 
 
 def _migrate_json_data() -> None:

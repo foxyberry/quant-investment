@@ -422,7 +422,20 @@
     "sellRuleInactive": "비활성",
     "sellRuleTriggered": "발동됨",
     "sellRuleDays": "일",
-    "sellRuleHint": "손절: 음수 %, 익절 / 추적 손절: 양수 %, 보유 기간: 일수"
+    "sellRuleHint": "손절: 음수 %, 익절 / 추적 손절: 양수 %, 보유 기간: 일수",
+    "sellRulePresets": "프리셋",
+    "sellRuleManualInput": "직접 입력",
+    "noSellRulePresets": "사용 가능한 프리셋이 없습니다.",
+    "applySellRulePreset": "적용",
+    "sellRulePresetApplied": "적용됨",
+    "sellRulePresetInactive": "비활성",
+    "sellRulePresetApplyFailed": "프리셋 적용에 실패했습니다.",
+    "sellRuleFromPreset": "프리셋에서",
+    "sellRulePresetRules": "규칙",
+    "saveAsPreset": "프리셋으로 저장",
+    "saveAsPresetName": "프리셋 이름을 입력하세요:",
+    "saveAsPresetSuccess": "프리셋이 저장되었습니다.",
+    "saveAsPresetFailed": "프리셋 저장에 실패했습니다."
   },
   "brokerOrderDesk": {
     "title": "통합 주문 데스크",
