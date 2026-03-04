@@ -7,14 +7,14 @@ Provides streaming chat with Claude for strategy building assistance.
 import json
 import logging
 import os
-from typing import Any, Generator, Optional
+from typing import Any, Dict, Generator, List, Optional
 
 logger = logging.getLogger(__name__)
 
 # Max characters for graph JSON injected into system prompt
 _MAX_GRAPH_CHARS = 4000
 
-SYSTEM_PROMPT = """\
+_SYSTEM_PROMPT_BASE = """\
 You are a quant strategy assistant for QuantCanvas, a visual strategy builder.
 
 ## Your Role
@@ -25,8 +25,7 @@ in a clear, practical way.
 ## Node Types
 - **Universe**: Market selection (KOSPI, KOSDAQ, SP500, NASDAQ100)
 - **Sector**: Filter by industry sector
-- **Condition**: Screening filter (48 types across categories: \
-valuation, profitability, growth, momentum, stability, technical, volume)
+- **Condition**: Screening filter (see Available Conditions below)
 - **Logic**: Combine conditions with AND / OR / NOT operators
 - **Output**: Final result node (connects to the end of the pipeline)
 
@@ -39,6 +38,45 @@ Universe → [Sector] → Condition(s) → [Logic groups] → Output
 - Keep responses concise and actionable
 - Match the language of the user's message (Korean → Korean, English → English)
 """
+
+# Cached system prompt with conditions section
+_cached_system_prompt: Optional[str] = None
+
+
+def _build_conditions_section() -> str:
+    """Build the Available Conditions section from the condition registry."""
+    from screener.conditions.registry import get_condition_metadata
+
+    metadata = get_condition_metadata()
+    if not metadata:
+        return ""
+
+    # Group by category
+    cats: Dict[str, List[str]] = {}
+    for key, meta in metadata.items():
+        cat = meta.get("category", "other")
+        label = meta.get("label", key)
+        cats.setdefault(cat, []).append(f"{key} ({label})")
+
+    lines = [f"\n## Available Conditions ({len(metadata)} total)\n"]
+    for cat in sorted(cats):
+        items = sorted(cats[cat])
+        lines.append(f"- **{cat}** ({len(items)}): {', '.join(items)}")
+
+    return "\n".join(lines)
+
+
+def _get_system_prompt() -> str:
+    """Return system prompt with dynamically injected condition list.
+
+    The condition list is built once from the registry and cached for the
+    lifetime of the process.
+    """
+    global _cached_system_prompt
+    if _cached_system_prompt is None:
+        conditions_section = _build_conditions_section()
+        _cached_system_prompt = _SYSTEM_PROMPT_BASE + conditions_section
+    return _cached_system_prompt
 
 
 class StrategyChatService:
@@ -78,7 +116,7 @@ class StrategyChatService:
         """
         import anthropic
 
-        system = SYSTEM_PROMPT
+        system = _get_system_prompt()
         if graph:
             graph_json = json.dumps(graph, ensure_ascii=False, indent=2)
             if len(graph_json) > _MAX_GRAPH_CHARS:
