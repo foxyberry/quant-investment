@@ -24,10 +24,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from api.database import Base
-from api.models.portfolio import Holding, SellRule
+from api.models.portfolio import Holding, SellRule, SellRulePreset
 from api.schemas.portfolio import (
     SELL_RULE_TYPES,
     SellRuleCreate,
+    SellRulePresetCreate,
+    SellRulePresetItem,
+    SellRulePresetUpdate,
     SellRuleUpdate,
     SellSignal,
     _is_finite_number,
@@ -761,3 +764,397 @@ class TestSellRuleAPIEndpoints:
         data = resp.json()
         assert "results" in data
         assert "checked_at" in data
+
+
+# =========================================================================
+# 7. Preset schema validation tests
+# =========================================================================
+
+
+class TestSellRulePresetSchemaValidation:
+    """Test SellRulePresetCreate / Update Pydantic schema validation."""
+
+    def test_valid_preset_create(self):
+        preset = SellRulePresetCreate(
+            name="Conservative",
+            rules=[
+                SellRulePresetItem(rule_type="stop_loss", params={"pct": -10}),
+                SellRulePresetItem(rule_type="take_profit", params={"pct": 20}),
+            ],
+        )
+        assert preset.name == "Conservative"
+        assert len(preset.rules) == 2
+
+    def test_empty_rules_rejected(self):
+        with pytest.raises(ValidationError):
+            SellRulePresetCreate(name="Empty", rules=[])
+
+    def test_duplicate_rule_types_rejected(self):
+        with pytest.raises(ValidationError, match="Duplicate"):
+            SellRulePresetCreate(
+                name="Dup",
+                rules=[
+                    SellRulePresetItem(rule_type="stop_loss", params={"pct": -10}),
+                    SellRulePresetItem(rule_type="stop_loss", params={"pct": -20}),
+                ],
+            )
+
+    def test_invalid_rule_params_rejected(self):
+        with pytest.raises(ValidationError, match="must be negative"):
+            SellRulePresetCreate(
+                name="Bad",
+                rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": 10})],
+            )
+
+    def test_empty_name_rejected(self):
+        with pytest.raises(ValidationError):
+            SellRulePresetCreate(
+                name="",
+                rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": -10})],
+            )
+
+    def test_update_empty_rules_rejected(self):
+        with pytest.raises(ValidationError, match="cannot be empty"):
+            SellRulePresetUpdate(rules=[])
+
+
+# =========================================================================
+# 8. Preset service CRUD tests
+# =========================================================================
+
+
+class TestSellRulePresetCRUD:
+    """Test sell rule preset CRUD via PortfolioService."""
+
+    def test_create_and_list(self, service, db_session):
+        data = SellRulePresetCreate(
+            name="Test Preset",
+            description="A test preset",
+            rules=[
+                SellRulePresetItem(rule_type="stop_loss", params={"pct": -10}),
+                SellRulePresetItem(rule_type="take_profit", params={"pct": 20}),
+            ],
+        )
+        result = service.create_sell_rule_preset(data)
+        assert result.name == "Test Preset"
+        assert result.description == "A test preset"
+        assert len(result.rules) == 2
+        assert result.is_active is True
+        assert result.linked_rules_count == 0
+
+        presets = service.list_sell_rule_presets()
+        assert len(presets) == 1
+        assert presets[0].id == result.id
+
+    def test_create_duplicate_name_raises(self, service, db_session):
+        data = SellRulePresetCreate(
+            name="Unique Name",
+            rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": -10})],
+        )
+        service.create_sell_rule_preset(data)
+        with pytest.raises(ValueError, match="already exists"):
+            service.create_sell_rule_preset(data)
+
+    def test_update_preset(self, service, db_session):
+        data = SellRulePresetCreate(
+            name="Original",
+            rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": -10})],
+        )
+        created = service.create_sell_rule_preset(data)
+
+        updated = service.update_sell_rule_preset(
+            created.id,
+            SellRulePresetUpdate(name="Renamed", is_active=False),
+        )
+        assert updated.name == "Renamed"
+        assert updated.is_active is False
+
+    def test_update_name_conflict_raises(self, service, db_session):
+        service.create_sell_rule_preset(SellRulePresetCreate(
+            name="A",
+            rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": -10})],
+        ))
+        b = service.create_sell_rule_preset(SellRulePresetCreate(
+            name="B",
+            rules=[SellRulePresetItem(rule_type="take_profit", params={"pct": 20})],
+        ))
+        with pytest.raises(ValueError, match="already exists"):
+            service.update_sell_rule_preset(b.id, SellRulePresetUpdate(name="A"))
+
+    def test_update_nonexistent_raises(self, service, db_session):
+        with pytest.raises(ValueError, match="not found"):
+            service.update_sell_rule_preset(9999, SellRulePresetUpdate(name="X"))
+
+    def test_delete_preset(self, service, db_session):
+        created = service.create_sell_rule_preset(SellRulePresetCreate(
+            name="ToDelete",
+            rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": -10})],
+        ))
+        assert service.delete_sell_rule_preset(created.id) is True
+        assert service.list_sell_rule_presets() == []
+
+    def test_delete_nonexistent_returns_false(self, service, db_session):
+        assert service.delete_sell_rule_preset(9999) is False
+
+    def test_delete_preset_nullifies_linked_rules(self, service, holding, db_session):
+        preset = service.create_sell_rule_preset(SellRulePresetCreate(
+            name="LinkTest",
+            rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": -10})],
+        ))
+        rules = service.apply_preset_to_holding(holding.ticker, preset.id)
+        assert len(rules) == 1
+        assert rules[0].preset_id == preset.id
+
+        service.delete_sell_rule_preset(preset.id)
+
+        # Rules should remain but preset_id should be NULL
+        remaining = service.get_sell_rules(holding.ticker)
+        assert len(remaining) == 1
+        assert remaining[0].preset_id is None
+
+
+# =========================================================================
+# 9. Apply / Save preset tests
+# =========================================================================
+
+
+class TestApplyAndSavePreset:
+    """Test apply_preset_to_holding and save_preset_from_holding."""
+
+    def test_apply_creates_rules(self, service, holding, db_session):
+        preset = service.create_sell_rule_preset(SellRulePresetCreate(
+            name="Full",
+            rules=[
+                SellRulePresetItem(rule_type="stop_loss", params={"pct": -20}),
+                SellRulePresetItem(rule_type="take_profit", params={"pct": 30}),
+                SellRulePresetItem(rule_type="holding_period", params={"max_days": 90}),
+            ],
+        ))
+        rules = service.apply_preset_to_holding(holding.ticker, preset.id)
+        assert len(rules) == 3
+        types = {r.rule_type for r in rules}
+        assert types == {"stop_loss", "take_profit", "holding_period"}
+        for r in rules:
+            assert r.preset_id == preset.id
+            assert r.is_active is True
+
+    def test_apply_nonexistent_holding_raises(self, service, db_session):
+        preset = service.create_sell_rule_preset(SellRulePresetCreate(
+            name="P",
+            rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": -10})],
+        ))
+        with pytest.raises(ValueError, match="Holding not found"):
+            service.apply_preset_to_holding("NOPE", preset.id)
+
+    def test_apply_nonexistent_preset_raises(self, service, holding, db_session):
+        with pytest.raises(ValueError, match="Preset not found"):
+            service.apply_preset_to_holding(holding.ticker, 9999)
+
+    def test_apply_inactive_preset_raises(self, service, holding, db_session):
+        preset = service.create_sell_rule_preset(SellRulePresetCreate(
+            name="Inactive",
+            rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": -10})],
+        ))
+        service.update_sell_rule_preset(preset.id, SellRulePresetUpdate(is_active=False))
+        with pytest.raises(ValueError, match="inactive"):
+            service.apply_preset_to_holding(holding.ticker, preset.id)
+
+    def test_apply_duplicate_raises(self, service, holding, db_session):
+        preset = service.create_sell_rule_preset(SellRulePresetCreate(
+            name="Once",
+            rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": -10})],
+        ))
+        service.apply_preset_to_holding(holding.ticker, preset.id)
+        with pytest.raises(ValueError, match="already applied"):
+            service.apply_preset_to_holding(holding.ticker, preset.id)
+
+    def test_apply_updates_linked_count(self, service, holding, db_session):
+        preset = service.create_sell_rule_preset(SellRulePresetCreate(
+            name="Count",
+            rules=[SellRulePresetItem(rule_type="stop_loss", params={"pct": -10})],
+        ))
+        service.apply_preset_to_holding(holding.ticker, preset.id)
+        presets = service.list_sell_rule_presets()
+        assert presets[0].linked_rules_count == 1
+
+    def test_save_from_holding(self, service, holding, db_session):
+        service.create_sell_rule(holding.ticker, SellRuleCreate(
+            rule_type="stop_loss", params={"pct": -15},
+        ))
+        service.create_sell_rule(holding.ticker, SellRuleCreate(
+            rule_type="take_profit", params={"pct": 25},
+        ))
+        preset = service.save_preset_from_holding(holding.ticker, "Saved", "from holding")
+        assert preset.name == "Saved"
+        assert preset.description == "from holding"
+        assert len(preset.rules) == 2
+        types = {r.rule_type for r in preset.rules}
+        assert types == {"stop_loss", "take_profit"}
+
+    def test_save_from_holding_no_rules_raises(self, service, holding, db_session):
+        with pytest.raises(ValueError, match="No sell rules"):
+            service.save_preset_from_holding(holding.ticker, "Empty")
+
+    def test_save_from_holding_duplicate_name_raises(self, service, holding, db_session):
+        service.create_sell_rule(holding.ticker, SellRuleCreate(
+            rule_type="stop_loss", params={"pct": -10},
+        ))
+        service.save_preset_from_holding(holding.ticker, "Taken")
+        with pytest.raises(ValueError, match="already exists"):
+            service.save_preset_from_holding(holding.ticker, "Taken")
+
+
+# =========================================================================
+# 10. Preset API endpoint tests
+# =========================================================================
+
+
+class TestSellRulePresetAPIEndpoints:
+    """Integration tests for sell rule preset HTTP endpoints."""
+
+    @pytest.fixture(autouse=True)
+    def setup_client(self, db_session):
+        """Create FastAPI test client with test DB."""
+        from fastapi.testclient import TestClient
+        from api.routers.portfolio import router
+        from fastapi import FastAPI
+
+        app = FastAPI()
+        app.include_router(router)
+
+        with patch("api.services.portfolio_service.SessionLocal", return_value=db_session), \
+             patch.object(PortfolioService, "_backfill_null_sectors"):
+            svc = PortfolioService()
+
+        with patch("api.services.portfolio_service.SessionLocal", return_value=db_session), \
+             patch("api.routers.portfolio.get_portfolio_service", return_value=svc), \
+             TestClient(app) as client:
+            self.client = client
+            self.db = db_session
+            yield
+
+    def _create_holding(self, ticker="AAPL"):
+        h = Holding(
+            ticker=ticker, name="Apple", quantity=100,
+            avg_price=150.0, currency="USD",
+        )
+        self.db.add(h)
+        self.db.commit()
+        return h
+
+    def _create_preset(self, name="Test", rules=None):
+        if rules is None:
+            rules = [{"rule_type": "stop_loss", "params": {"pct": -10}}]
+        resp = self.client.post(
+            "/api/portfolio/sell-rule-presets",
+            json={"name": name, "rules": rules},
+        )
+        assert resp.status_code == 201
+        return resp.json()
+
+    def test_list_presets_empty(self):
+        resp = self.client.get("/api/portfolio/sell-rule-presets")
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_create_preset(self):
+        data = self._create_preset("My Preset", [
+            {"rule_type": "stop_loss", "params": {"pct": -10}},
+            {"rule_type": "take_profit", "params": {"pct": 20}},
+        ])
+        assert data["name"] == "My Preset"
+        assert len(data["rules"]) == 2
+        assert data["is_active"] is True
+
+    def test_create_preset_duplicate_name(self):
+        self._create_preset("Dup")
+        resp = self.client.post(
+            "/api/portfolio/sell-rule-presets",
+            json={"name": "Dup", "rules": [{"rule_type": "stop_loss", "params": {"pct": -10}}]},
+        )
+        assert resp.status_code == 409
+
+    def test_update_preset(self):
+        created = self._create_preset("Edit Me")
+        resp = self.client.put(
+            f"/api/portfolio/sell-rule-presets/{created['id']}",
+            json={"name": "Edited", "is_active": False},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["name"] == "Edited"
+        assert resp.json()["is_active"] is False
+
+    def test_update_preset_not_found(self):
+        resp = self.client.put(
+            "/api/portfolio/sell-rule-presets/9999",
+            json={"name": "Nope"},
+        )
+        assert resp.status_code == 404
+
+    def test_delete_preset(self):
+        created = self._create_preset("Delete Me")
+        resp = self.client.delete(f"/api/portfolio/sell-rule-presets/{created['id']}")
+        assert resp.status_code == 204
+
+    def test_delete_preset_not_found(self):
+        resp = self.client.delete("/api/portfolio/sell-rule-presets/9999")
+        assert resp.status_code == 404
+
+    def test_apply_preset(self):
+        self._create_holding()
+        preset = self._create_preset("Apply", [
+            {"rule_type": "stop_loss", "params": {"pct": -10}},
+            {"rule_type": "take_profit", "params": {"pct": 20}},
+        ])
+        resp = self.client.post(
+            "/api/portfolio/holdings/AAPL/sell-rules/from-preset",
+            json={"preset_id": preset["id"]},
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert len(data) == 2
+        assert all(r["preset_id"] == preset["id"] for r in data)
+
+    def test_apply_preset_duplicate(self):
+        self._create_holding()
+        preset = self._create_preset("Once")
+        self.client.post(
+            "/api/portfolio/holdings/AAPL/sell-rules/from-preset",
+            json={"preset_id": preset["id"]},
+        )
+        resp = self.client.post(
+            "/api/portfolio/holdings/AAPL/sell-rules/from-preset",
+            json={"preset_id": preset["id"]},
+        )
+        assert resp.status_code == 409
+
+    def test_apply_preset_not_found(self):
+        self._create_holding()
+        resp = self.client.post(
+            "/api/portfolio/holdings/AAPL/sell-rules/from-preset",
+            json={"preset_id": 9999},
+        )
+        assert resp.status_code == 404
+
+    def test_save_as_preset(self):
+        self._create_holding()
+        self.client.post(
+            "/api/portfolio/holdings/AAPL/sell-rules",
+            json={"rule_type": "stop_loss", "params": {"pct": -10}},
+        )
+        resp = self.client.post(
+            "/api/portfolio/holdings/AAPL/sell-rules/save-as-preset",
+            json={"name": "From AAPL", "description": "Saved from AAPL"},
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["name"] == "From AAPL"
+        assert len(data["rules"]) == 1
+
+    def test_save_as_preset_no_rules(self):
+        self._create_holding()
+        resp = self.client.post(
+            "/api/portfolio/holdings/AAPL/sell-rules/save-as-preset",
+            json={"name": "Empty"},
+        )
+        assert resp.status_code == 422

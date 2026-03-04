@@ -1,22 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus, Trash2, X, Shield } from 'lucide-react';
+import { Plus, Trash2, X, Shield, Save, BookMarked } from 'lucide-react';
 import { Button } from '@/components/ui';
 import {
   getSellRules,
   createSellRule,
   updateSellRule,
   deleteSellRule,
+  getSellRulePresets,
+  applySellRulePreset,
+  saveAsPreset,
 } from '@/lib/api';
-import type { Holding, SellRule, SellRuleCreate, SellRuleType } from '@/lib/types';
+import type { Holding, SellRule, SellRuleCreate, SellRuleType, SellRulePreset } from '@/lib/types';
 
 interface SellRuleModalProps {
   holding: Holding;
   onClose: () => void;
   onUpdate: () => void;
 }
+
+type TabMode = 'manual' | 'preset';
 
 const RULE_TYPES: SellRuleType[] = ['stop_loss', 'take_profit', 'trailing_stop', 'holding_period'];
 
@@ -25,13 +30,25 @@ export default function SellRuleModal({ holding, onClose, onUpdate }: SellRuleMo
   const [rules, setRules] = useState<SellRule[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<TabMode>('manual');
+
+  // Preset state
+  const [presets, setPresets] = useState<SellRulePreset[]>([]);
+  const [presetsLoading, setPresetsLoading] = useState(false);
+  const [presetsLoaded, setPresetsLoaded] = useState(false);
+  const [presetError, setPresetError] = useState<string | null>(null);
+
   // New rule form
   const [newRuleType, setNewRuleType] = useState<SellRuleType>('stop_loss');
   const [newRuleValue, setNewRuleValue] = useState('');
   const [addError, setAddError] = useState<string | null>(null);
   const [isMutating, setIsMutating] = useState(false);
 
-  const fetchRules = async () => {
+  // Save-as-preset feedback
+  const [savePresetMsg, setSavePresetMsg] = useState<string | null>(null);
+
+  const fetchRules = useCallback(async () => {
     try {
       const data = await getSellRules(holding.ticker);
       setRules(data);
@@ -40,12 +57,32 @@ export default function SellRuleModal({ holding, onClose, onUpdate }: SellRuleMo
     } finally {
       setLoading(false);
     }
-  };
+  }, [holding.ticker]);
 
   useEffect(() => {
     fetchRules();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [holding.ticker]);
+  }, [fetchRules]);
+
+  const fetchPresets = useCallback(async () => {
+    if (presetsLoaded) return;
+    setPresetsLoading(true);
+    try {
+      const data = await getSellRulePresets();
+      setPresets(data);
+      setPresetsLoaded(true);
+    } catch {
+      // Fail silently
+    } finally {
+      setPresetsLoading(false);
+    }
+  }, [presetsLoaded]);
+
+  // Lazy-load presets when preset tab is first selected
+  useEffect(() => {
+    if (activeTab === 'preset') {
+      fetchPresets();
+    }
+  }, [activeTab, fetchPresets]);
 
   const paramLabel = (type: SellRuleType): string => {
     if (type === 'holding_period') return t('sellRuleMaxDays');
@@ -128,6 +165,43 @@ export default function SellRuleModal({ holding, onClose, onUpdate }: SellRuleMo
     }
   };
 
+  const handleApplyPreset = async (presetId: number) => {
+    setIsMutating(true);
+    setPresetError(null);
+    try {
+      await applySellRulePreset(holding.ticker, presetId);
+      await fetchRules();
+      onUpdate();
+    } catch {
+      setPresetError(t('sellRulePresetApplyFailed'));
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleSaveAsPreset = async () => {
+    const name = window.prompt(t('saveAsPresetName'));
+    if (!name || !name.trim()) return;
+
+    setIsMutating(true);
+    setSavePresetMsg(null);
+    try {
+      await saveAsPreset(holding.ticker, name.trim());
+      setSavePresetMsg(t('saveAsPresetSuccess'));
+      // Refresh presets if they were loaded
+      if (presetsLoaded) {
+        setPresetsLoaded(false);
+        const data = await getSellRulePresets();
+        setPresets(data);
+        setPresetsLoaded(true);
+      }
+    } catch {
+      setSavePresetMsg(t('saveAsPresetFailed'));
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
   const ruleTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       stop_loss: t('stopLoss'),
@@ -155,6 +229,10 @@ export default function SellRuleModal({ holding, onClose, onUpdate }: SellRuleMo
     }
     const pct = rule.params?.pct;
     return pct != null ? `${Number(pct) > 0 ? '+' : ''}${pct}%` : '--';
+  };
+
+  const isPresetApplied = (presetId: number): boolean => {
+    return rules.some((r) => r.preset_id === presetId);
   };
 
   return (
@@ -205,13 +283,19 @@ export default function SellRuleModal({ holding, onClose, onUpdate }: SellRuleMo
                   key={rule.id}
                   className="flex items-center justify-between rounded-lg border border-[var(--border)] px-3 py-2"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ruleTypeColor(rule.rule_type)}`}>
                       {ruleTypeLabel(rule.rule_type)}
                     </span>
                     <span className="text-sm font-mono text-[var(--foreground)]">
                       {formatRuleValue(rule)}
                     </span>
+                    {rule.preset_id != null && (
+                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <BookMarked className="inline h-3 w-3 mr-0.5" />
+                        {t('sellRuleFromPreset')}
+                      </span>
+                    )}
                     {rule.triggered_at && (
                       <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                         {t('sellRuleTriggered')}
@@ -246,50 +330,174 @@ export default function SellRuleModal({ holding, onClose, onUpdate }: SellRuleMo
           )}
         </div>
 
-        {/* Add Rule Form */}
-        <div className="border-t border-[var(--border)] px-6 py-4">
-          <p className="text-sm font-medium text-[var(--foreground)] mb-2">{t('addSellRule')}</p>
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <label className="block text-xs text-[var(--foreground-muted)] mb-1">{t('sellRuleType')}</label>
-              <select
-                value={newRuleType}
-                onChange={(e) => {
-                  setNewRuleType(e.target.value as SellRuleType);
-                  setNewRuleValue('');
-                  setAddError(null);
-                }}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
-              >
-                {RULE_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {ruleTypeLabel(type)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs text-[var(--foreground-muted)] mb-1">
-                {paramLabel(newRuleType)}
-              </label>
-              <input
-                type="number"
-                value={newRuleValue}
-                onChange={(e) => setNewRuleValue(e.target.value)}
-                placeholder={paramPlaceholder(newRuleType)}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
-                step="any"
-              />
-            </div>
-            <Button size="sm" onClick={handleAdd} disabled={isMutating}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          {addError && <p className="mt-1 text-xs text-red-500">{addError}</p>}
-          <p className="mt-2 text-xs text-[var(--foreground-muted)]">
-            {t('sellRuleHint')}
-          </p>
+        {/* Tab Buttons */}
+        <div className="flex border-t border-[var(--border)] px-6 pt-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab('manual')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === 'manual'
+                ? 'bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)] border-b-transparent'
+                : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+            }`}
+          >
+            <Plus className="inline h-3.5 w-3.5 mr-1" />
+            {t('sellRuleManualInput')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('preset')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              activeTab === 'preset'
+                ? 'bg-[var(--background)] text-[var(--foreground)] border border-[var(--border)] border-b-transparent'
+                : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+            }`}
+          >
+            <BookMarked className="inline h-3.5 w-3.5 mr-1" />
+            {t('sellRulePresets')}
+          </button>
         </div>
+
+        {/* Tab Content */}
+        <div className="px-6 py-4">
+          {activeTab === 'manual' ? (
+            /* Manual Input Tab */
+            <div>
+              <p className="text-sm font-medium text-[var(--foreground)] mb-2">{t('addSellRule')}</p>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="block text-xs text-[var(--foreground-muted)] mb-1">{t('sellRuleType')}</label>
+                  <select
+                    value={newRuleType}
+                    onChange={(e) => {
+                      setNewRuleType(e.target.value as SellRuleType);
+                      setNewRuleValue('');
+                      setAddError(null);
+                    }}
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+                  >
+                    {RULE_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {ruleTypeLabel(type)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs text-[var(--foreground-muted)] mb-1">
+                    {paramLabel(newRuleType)}
+                  </label>
+                  <input
+                    type="number"
+                    value={newRuleValue}
+                    onChange={(e) => setNewRuleValue(e.target.value)}
+                    placeholder={paramPlaceholder(newRuleType)}
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+                    step="any"
+                  />
+                </div>
+                <Button size="sm" onClick={handleAdd} disabled={isMutating}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {addError && <p className="mt-1 text-xs text-red-500">{addError}</p>}
+              <p className="mt-2 text-xs text-[var(--foreground-muted)]">
+                {t('sellRuleHint')}
+              </p>
+            </div>
+          ) : (
+            /* Presets Tab */
+            <div>
+              {presetsLoading ? (
+                <div className="space-y-2 animate-pulse py-2">
+                  <div className="h-16 rounded bg-[var(--border)]" />
+                  <div className="h-16 rounded bg-[var(--border)]" />
+                </div>
+              ) : presets.length === 0 ? (
+                <p className="text-center text-sm text-[var(--foreground-muted)] py-4">
+                  {t('noSellRulePresets')}
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {presets.map((preset) => {
+                    const applied = isPresetApplied(preset.id);
+                    const inactive = !preset.is_active;
+                    return (
+                      <div
+                        key={preset.id}
+                        className="rounded-lg border border-[var(--border)] px-3 py-2.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-[var(--foreground)] truncate">
+                              {preset.name}
+                            </p>
+                            {preset.description && (
+                              <p className="text-xs text-[var(--foreground-muted)] truncate mt-0.5">
+                                {preset.description}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {preset.rules.map((rule, idx) => (
+                                <span
+                                  key={idx}
+                                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${ruleTypeColor(rule.rule_type)}`}
+                                >
+                                  {ruleTypeLabel(rule.rule_type)}
+                                </span>
+                              ))}
+                              <span className="text-xs text-[var(--foreground-muted)] self-center">
+                                {preset.rules.length} {t('sellRulePresetRules')}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="ml-3 flex-shrink-0">
+                            {inactive ? (
+                              <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-500">
+                                {t('sellRulePresetInactive')}
+                              </span>
+                            ) : applied ? (
+                              <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                                {t('sellRulePresetApplied')}
+                              </span>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={() => handleApplyPreset(preset.id)}
+                                disabled={isMutating}
+                              >
+                                {t('applySellRulePreset')}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {presetError && <p className="mt-2 text-xs text-red-500">{presetError}</p>}
+            </div>
+          )}
+        </div>
+
+        {/* Footer: Save as Preset */}
+        {rules.length > 0 && (
+          <div className="border-t border-[var(--border)] px-6 py-3 flex items-center justify-between">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSaveAsPreset}
+              disabled={isMutating}
+            >
+              <Save className="h-3.5 w-3.5 mr-1" />
+              {t('saveAsPreset')}
+            </Button>
+            {savePresetMsg && (
+              <span className="text-xs text-[var(--foreground-muted)]">{savePresetMsg}</span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -44,8 +44,10 @@ import type {
   BuySignal,
   SellRule,
   SellRuleCreate,
+  SellRuleType,
   SellRuleUpdate,
   SellRuleEvaluateResult,
+  SellRulePreset,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -366,6 +368,47 @@ export async function evaluateSellRules(ticker?: string): Promise<{ results: Sel
   return fetchApi<{ results: SellRuleEvaluateResult[]; checked_at: string }>(`/api/portfolio/sell-rules/evaluate${params}`, {
     method: 'POST',
   });
+}
+
+// Sell Rule Preset API functions
+
+export async function getSellRulePresets(): Promise<SellRulePreset[]> {
+  return fetchApi<SellRulePreset[]>('/api/portfolio/sell-rule-presets');
+}
+
+export async function createSellRulePreset(data: {
+  name: string;
+  description?: string;
+  rules: Array<{ rule_type: SellRuleType; params: Record<string, unknown> }>;
+}): Promise<SellRulePreset> {
+  return fetchApi<SellRulePreset>('/api/portfolio/sell-rule-presets', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function applySellRulePreset(ticker: string, presetId: number): Promise<SellRule[]> {
+  return fetchApi<SellRule[]>(
+    `/api/portfolio/holdings/${encodeURIComponent(ticker)}/sell-rules/from-preset`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ preset_id: presetId }),
+    }
+  );
+}
+
+export async function saveAsPreset(
+  ticker: string,
+  name: string,
+  description?: string
+): Promise<SellRulePreset> {
+  return fetchApi<SellRulePreset>(
+    `/api/portfolio/holdings/${encodeURIComponent(ticker)}/sell-rules/save-as-preset`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ name, description }),
+    }
+  );
 }
 
 /**
