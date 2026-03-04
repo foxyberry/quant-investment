@@ -397,7 +397,7 @@ async def strategy_chat(request: StrategyChatRequest):
     if not service.is_available():
         raise HTTPException(
             status_code=503,
-            detail="Strategy chat not available. Set ANTHROPIC_API_KEY.",
+            detail="Strategy chat not available. Set ANTHROPIC_API_KEY or OPENAI_API_KEY.",
         )
 
     def event_stream():
