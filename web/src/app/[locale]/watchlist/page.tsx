@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Plus, RefreshCw, Star, Trash2, Edit3, Shield, TrendingDown, TrendingUp } from 'lucide-react';
+import { Plus, RefreshCw, Star, Trash2, Edit3, Shield, TrendingDown, TrendingUp, ArrowUpDown } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import TickerSearchInput from '@/components/ui/TickerSearchInput';
 import {
@@ -42,6 +42,8 @@ export default function WatchlistPage() {
   const [editTarget, setEditTarget] = useState<WatchlistItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<WatchlistItem | null>(null);
   const [buyRuleTarget, setBuyRuleTarget] = useState<WatchlistItem | null>(null);
+  const [sortField, setSortField] = useState<'ticker' | 'name' | 'current_price' | 'change_pct' | 'target_price' | 'buy_rules_count'>('ticker');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Add form state
   const [addForm, setAddForm] = useState({ ticker: '', name: '', target_price: '', note: '', tags: '' });
@@ -142,6 +144,55 @@ export default function WatchlistPage() {
     return formatCurrency(price, currency || 'USD', locale);
   };
 
+  const handleSort = (field: 'ticker' | 'name' | 'current_price' | 'change_pct' | 'target_price' | 'buy_rules_count') => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortField(field);
+    setSortDirection('asc');
+  };
+
+  const sortedItems = useMemo(() => {
+    const compareStrings = (a: string | null | undefined, b: string | null | undefined): number =>
+      (a ?? '').localeCompare(b ?? '', locale);
+    const compareNullableNumbers = (a: number | null | undefined, b: number | null | undefined): number => {
+      const aNull = a === null || a === undefined;
+      const bNull = b === null || b === undefined;
+      if (aNull && bNull) return 0;
+      if (aNull) return 1;
+      if (bNull) return -1;
+      return a - b;
+    };
+
+    const next = [...items].sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'ticker':
+          cmp = compareStrings(a.ticker, b.ticker);
+          break;
+        case 'name':
+          cmp = compareStrings(a.name, b.name);
+          break;
+        case 'current_price':
+          cmp = compareNullableNumbers(a.current_price, b.current_price);
+          break;
+        case 'change_pct':
+          cmp = compareNullableNumbers(a.change_pct, b.change_pct);
+          break;
+        case 'target_price':
+          cmp = compareNullableNumbers(a.target_price, b.target_price);
+          break;
+        case 'buy_rules_count':
+          cmp = (a.buy_rules_count ?? 0) - (b.buy_rules_count ?? 0);
+          break;
+      }
+      return sortDirection === 'asc' ? cmp : -cmp;
+    });
+
+    return next;
+  }, [items, locale, sortDirection, sortField]);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -219,17 +270,47 @@ export default function WatchlistPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--border)] bg-[var(--background-secondary)]">
-                  <th className="px-4 py-3 text-left font-medium text-[var(--foreground-muted)]">{t('ticker')}</th>
-                  <th className="px-4 py-3 text-left font-medium text-[var(--foreground-muted)]">{t('name')}</th>
-                  <th className="px-4 py-3 text-right font-medium text-[var(--foreground-muted)]">{t('currentPrice')}</th>
-                  <th className="px-4 py-3 text-right font-medium text-[var(--foreground-muted)]">{t('changePct')}</th>
-                  <th className="px-4 py-3 text-right font-medium text-[var(--foreground-muted)]">{t('targetPrice')}</th>
-                  <th className="px-4 py-3 text-center font-medium text-[var(--foreground-muted)]">{t('rules')}</th>
+                  <th className="px-4 py-3 text-left font-medium text-[var(--foreground-muted)]">
+                    <button type="button" onClick={() => handleSort('ticker')} className="inline-flex items-center gap-1 hover:text-[var(--foreground)] transition-colors">
+                      {t('ticker')}
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'ticker' ? 'text-[var(--color-primary)]' : ''} ${sortField === 'ticker' && sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-[var(--foreground-muted)]">
+                    <button type="button" onClick={() => handleSort('name')} className="inline-flex items-center gap-1 hover:text-[var(--foreground)] transition-colors">
+                      {t('name')}
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'name' ? 'text-[var(--color-primary)]' : ''} ${sortField === 'name' && sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-[var(--foreground-muted)]">
+                    <button type="button" onClick={() => handleSort('current_price')} className="inline-flex items-center gap-1 hover:text-[var(--foreground)] transition-colors ml-auto">
+                      {t('currentPrice')}
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'current_price' ? 'text-[var(--color-primary)]' : ''} ${sortField === 'current_price' && sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-[var(--foreground-muted)]">
+                    <button type="button" onClick={() => handleSort('change_pct')} className="inline-flex items-center gap-1 hover:text-[var(--foreground)] transition-colors ml-auto">
+                      {t('changePct')}
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'change_pct' ? 'text-[var(--color-primary)]' : ''} ${sortField === 'change_pct' && sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium text-[var(--foreground-muted)]">
+                    <button type="button" onClick={() => handleSort('target_price')} className="inline-flex items-center gap-1 hover:text-[var(--foreground)] transition-colors ml-auto">
+                      {t('targetPrice')}
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'target_price' ? 'text-[var(--color-primary)]' : ''} ${sortField === 'target_price' && sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium text-[var(--foreground-muted)]">
+                    <button type="button" onClick={() => handleSort('buy_rules_count')} className="inline-flex items-center gap-1 hover:text-[var(--foreground)] transition-colors">
+                      {t('rules')}
+                      <ArrowUpDown className={`h-3.5 w-3.5 ${sortField === 'buy_rules_count' ? 'text-[var(--color-primary)]' : ''} ${sortField === 'buy_rules_count' && sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                    </button>
+                  </th>
                   <th className="px-4 py-3 text-right font-medium text-[var(--foreground-muted)]">{t('actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
-                {items.map((item) => {
+                {sortedItems.map((item) => {
                   const changePct = item.change_pct;
                   const isUp = changePct !== null && changePct > 0;
                   const isDown = changePct !== null && changePct < 0;
