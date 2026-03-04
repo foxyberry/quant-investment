@@ -69,7 +69,13 @@ const CHILD_HEIGHT = 80;
 const GROUP_MIN_WIDTH = 380;
 const GROUP_MIN_HEIGHT = 220;
 
-function estimateNodeSize(node: { data: StrategyNodeData }): { width: number; height: number } {
+type LayoutNodeData = {
+  node_type: string;
+  condition_type?: string;
+  params?: Record<string, unknown>;
+};
+
+function estimateNodeSize(node: { data: LayoutNodeData }): { width: number; height: number } {
   const data = node.data;
   if (data.node_type === 'universe') {
     return { width: 340, height: 92 };
@@ -97,7 +103,7 @@ function estimateNodeSize(node: { data: StrategyNodeData }): { width: number; he
  * Uses estimated node sizes so long condition cards do not overlap after loading.
  */
 function computeAutoLayout(
-  nodes: Array<{ id: string; data: StrategyNodeData }>,
+  nodes: Array<{ id: string; data: LayoutNodeData }>,
   edges: Array<{ source: string; target: string }>
 ): Map<string, { x: number; y: number }> {
   const NODE_GAP_X = 140;
