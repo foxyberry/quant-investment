@@ -225,7 +225,7 @@ class ExecutionHistoryService:
             if row is None:
                 return None
             if name is not None:
-                row.name = name
+                row.name = name.strip()
             db.commit()
             db.refresh(row)
             return _row_to_detail(row)

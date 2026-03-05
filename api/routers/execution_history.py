@@ -107,7 +107,7 @@ def get_execution(execution_id: str = _ID_PATH) -> ExecutionHistoryDetail:
 
 class ExecutionUpdateRequest(BaseModel):
     """Request body for partial execution update."""
-    name: str = Field(..., max_length=255, description="New name for the execution")
+    name: str = Field(..., min_length=1, max_length=255, description="New name for the execution")
 
 
 @router.patch(

@@ -767,6 +767,7 @@
     "executionTime": "소요시간",
     "viewDetail": "상세보기",
     "rerun": "재실행",
+    "clickToEdit": "클릭하여 편집",
     "delete": "삭제",
     "deleteConfirm": "이 실행 기록을 삭제하시겠습니까?",
     "deleted": "실행 기록이 삭제되었습니다",

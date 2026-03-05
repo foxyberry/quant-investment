@@ -77,17 +77,24 @@ export default function ExecutionDetailPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const savingRef = useRef(false);
 
   const handleNameSave = useCallback(async () => {
-    if (!execution) return;
+    if (!execution || savingRef.current) return;
+    savingRef.current = true;
     const trimmed = editName.trim();
     setIsEditingName(false);
-    if (!trimmed || trimmed === (execution.name || execution.preset)) return;
+    if (!trimmed || trimmed === (execution.name || execution.preset)) {
+      savingRef.current = false;
+      return;
+    }
     try {
       const updated = await updateExecution(id, { name: trimmed });
       setExecution(updated);
     } catch {
       // Revert on failure — name stays as-is in UI
+    } finally {
+      savingRef.current = false;
     }
   }, [execution, editName, id]);
 
@@ -185,7 +192,7 @@ export default function ExecutionDetailPage() {
                 type="button"
                 onClick={startEditing}
                 className="group flex items-center gap-2 text-2xl font-bold text-[var(--foreground)] hover:text-[var(--color-primary)] transition-colors"
-                title="Click to edit"
+                title={t('clickToEdit')}
               >
                 {execution.name || execution.preset}
                 <Pencil className="h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />
