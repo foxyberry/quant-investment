@@ -1195,10 +1195,10 @@ function StrategyPageInner() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-var(--header-height))]">
+    <div className="flex flex-col h-[calc(100vh-var(--header-height))] p-3 gap-3">
       <h1 className="sr-only">{t('title')}</h1>
       {/* Toolbar - Stitch-style */}
-      <div className="flex flex-wrap items-center gap-3 px-4 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c]">
+      <div className="flex flex-wrap items-center gap-3 px-4 py-2 border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] rounded-xl">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm">
           <Home className="h-4 w-4 text-[#1313ec]" />
@@ -1291,7 +1291,7 @@ function StrategyPageInner() {
       </div>
 
       {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden rounded-xl border border-[#e1e3e5] dark:border-[#2e2e30]">
         {/* Left palette */}
         <NodePalette nodeCount={nodeCount} />
 
