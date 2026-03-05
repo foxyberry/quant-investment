@@ -11,6 +11,8 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query
 
+from pydantic import BaseModel, Field
+
 from api.schemas.execution_history import (
     ExecutionHistoryCreate,
     ExecutionHistoryDetail,
@@ -98,6 +100,29 @@ def get_execution(execution_id: str = _ID_PATH) -> ExecutionHistoryDetail:
     """Get execution detail by ID."""
     svc = get_execution_history_service()
     result = svc.get_execution(execution_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Execution not found")
+    return result
+
+
+class ExecutionUpdateRequest(BaseModel):
+    """Request body for partial execution update."""
+    name: str = Field(..., max_length=255, description="New name for the execution")
+
+
+@router.patch(
+    "/{execution_id}",
+    response_model=ExecutionHistoryDetail,
+    summary="Update Execution",
+    description="Partially update an execution history record (e.g., rename).",
+)
+def update_execution(
+    data: ExecutionUpdateRequest,
+    execution_id: str = _ID_PATH,
+) -> ExecutionHistoryDetail:
+    """Update execution name."""
+    svc = get_execution_history_service()
+    result = svc.update_execution(execution_id, name=data.name)
     if result is None:
         raise HTTPException(status_code=404, detail="Execution not found")
     return result

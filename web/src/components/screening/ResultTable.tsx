@@ -46,22 +46,23 @@ interface SortButtonProps {
 
 function SortButton({ field, currentField, currentDirection, children, onSort, className = '' }: SortButtonProps) {
   const isActive = currentField === field;
+  const isRightAligned = className.includes('justify-end');
+  const icon = isActive ? (
+    currentDirection === 'asc' ? (
+      <ChevronUp className="h-3.5 w-3.5 shrink-0 text-[var(--color-primary)]" />
+    ) : (
+      <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[var(--color-primary)]" />
+    )
+  ) : (
+    <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-[var(--foreground-muted)]" />
+  );
   return (
     <button
       type="button"
       onClick={() => onSort(field)}
       className={`flex items-center gap-1 whitespace-nowrap text-sm font-semibold leading-5 text-[var(--foreground)] hover:text-[var(--color-primary)] transition-colors ${className}`}
     >
-      {children}
-      {isActive ? (
-        currentDirection === 'asc' ? (
-          <ChevronUp className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-        ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-[var(--color-primary)]" />
-        )
-      ) : (
-        <ArrowUpDown className="h-3.5 w-3.5 text-[var(--foreground-muted)]" />
-      )}
+      {isRightAligned ? <>{icon}{children}</> : <>{children}{icon}</>}
     </button>
   );
 }
