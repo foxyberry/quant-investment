@@ -274,6 +274,7 @@ function loadResultsFromSession(): ResultsSnapshot | null {
 
 function StrategyPageInner() {
   const t = useTranslations('strategy');
+  const tScreening = useTranslations('screening');
   useLocale(); // force re-render on locale switch for sessionStorage persistence
   const { getDefaultParams } = useConditions();
 
@@ -1484,12 +1485,16 @@ function StrategyPageInner() {
                     className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors mb-1"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{sample.name}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {tScreening.has(`samplePresetNames.${sample.key}`) ? tScreening(`samplePresetNames.${sample.key}` as never) : sample.name}
+                      </span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded border border-[#1313ec]/30 text-[#1313ec] bg-[#1313ec]/5">
                         {t('builtInSample')}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5 truncate">{sample.description}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">
+                      {tScreening.has(`samplePresetDescriptions.${sample.key}`) ? tScreening(`samplePresetDescriptions.${sample.key}` as never) : sample.description}
+                    </p>
                   </button>
                 ))}
               </div>
