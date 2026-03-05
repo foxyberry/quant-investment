@@ -116,9 +116,27 @@ export default function FilterPanel({
   const presetLabel = (preset: PresetInfo): string => {
     const i18nKey = `presetNames.${preset.name}`;
     if (t.has(i18nKey)) return t(i18nKey as never);
+    if (preset.source === 'sample') {
+      const sampleKey = preset.name.replace(/^sample:/, '');
+      const sampleI18nKey = `samplePresetNames.${sampleKey}`;
+      if (t.has(sampleI18nKey)) return t(sampleI18nKey as never);
+      const sample = SAMPLE_STRATEGY_PRESETS.find((s) => s.key === sampleKey);
+      return sample?.name || toTitleCaseFromKey(sampleKey);
+    }
     if (preset.source === 'custom') return preset.description || toTitleCaseFromKey(preset.name);
-    if (preset.source === 'sample') return preset.description || toTitleCaseFromKey(preset.name);
     return toTitleCaseFromKey(preset.name);
+  };
+
+  const presetDescription = (preset: PresetInfo): string => {
+    if (preset.source === 'sample') {
+      const sampleKey = preset.name.replace(/^sample:/, '');
+      const descKey = `samplePresetDescriptions.${sampleKey}`;
+      if (t.has(descKey)) return t(descKey as never);
+    } else {
+      const descKey = `presetDescriptions.${preset.name}`;
+      if (t.has(descKey)) return t(descKey as never);
+    }
+    return preset.description || '';
   };
 
   const conditionLabel = (condition: string): string => {
@@ -202,9 +220,9 @@ export default function FilterPanel({
               </>
             )}
           </select>
-          {selectedPresetInfo && (
+          {selectedPresetInfo && presetDescription(selectedPresetInfo) && (
             <p className="mt-1.5 text-sm text-[var(--foreground-muted)]">
-              {selectedPresetInfo.description}
+              {presetDescription(selectedPresetInfo)}
             </p>
           )}
         </div>
