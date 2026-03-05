@@ -684,6 +684,17 @@
     "builtInSample": "Built-in",
     "sampleStrategyLoaded": "Sample strategy loaded. Save it to copy into your own strategies.",
     "savedStrategies": "Saved Strategies",
+    "searchPresets": "Search presets...",
+    "presetCategories": {
+      "trend_following": "Trend Following",
+      "momentum": "Momentum",
+      "mean_reversion": "Mean Reversion",
+      "breakout": "Breakout",
+      "volume_flow": "Volume Flow",
+      "volatility": "Volatility",
+      "ichimoku": "Ichimoku",
+      "fundamental": "Fundamental"
+    },
     "loadSelected": "Load",
     "deleteConfirm": "Delete this strategy?",
     "unsavedChanges": "You have unsaved changes",

@@ -25,7 +25,7 @@ import '@xyflow/react/dist/style.css';
 
 import {
   Loader2, Zap, RotateCcw, Save, TestTube, FolderOpen, X,
-  ChevronRight, Home, Calendar,
+  ChevronRight, ChevronDown, Home, Calendar, Search,
 } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
@@ -43,7 +43,7 @@ import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph, getDownstreamNodeIds } from '@/lib/strategy/graphSerializer';
 import { validateGraph } from '@/lib/strategy/graphValidator';
-import { SAMPLE_STRATEGY_PRESETS, type SampleStrategyPreset } from '@/lib/strategy/sampleStrategies';
+import { SAMPLE_STRATEGY_PRESETS, PRESET_CATEGORY_ORDER, type SampleStrategyPreset, type PresetCategory } from '@/lib/strategy/sampleStrategies';
 import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
 import { useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
 import type { StrategyResultItem, SavedStrategy, NodeIntermediateResult } from '@/lib/api';
@@ -298,6 +298,8 @@ function StrategyPageInner() {
   // Save/Load state
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [presetSearch, setPresetSearch] = useState('');
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<PresetCategory>>(new Set());
   const [strategyName, setStrategyName] = useState('');
   const [strategyDescription, setStrategyDescription] = useState('');
   const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(null);
@@ -1461,42 +1463,96 @@ function StrategyPageInner() {
       )}
 
       {/* Load dialog */}
-      {showLoadDialog && (
+      {showLoadDialog && (() => {
+        const searchLower = presetSearch.toLowerCase();
+        const filteredPresets = presetSearch
+          ? SAMPLE_STRATEGY_PRESETS.filter((s) => {
+              const name = tScreening.has(`samplePresetNames.${s.key}`) ? tScreening(`samplePresetNames.${s.key}` as never) : s.name;
+              const desc = tScreening.has(`samplePresetDescriptions.${s.key}`) ? tScreening(`samplePresetDescriptions.${s.key}` as never) : s.description;
+              return name.toLowerCase().includes(searchLower) || desc.toLowerCase().includes(searchLower);
+            })
+          : SAMPLE_STRATEGY_PRESETS;
+        const grouped = PRESET_CATEGORY_ORDER.reduce<Record<PresetCategory, SampleStrategyPreset[]>>((acc, cat) => {
+          const items = filteredPresets.filter((p) => p.category === cat);
+          if (items.length > 0) acc[cat] = items;
+          return acc;
+        }, {} as Record<PresetCategory, SampleStrategyPreset[]>);
+        return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white dark:bg-[#1e1e1f] rounded-xl shadow-2xl border border-[#e1e3e5] dark:border-[#2e2e30] w-full max-w-lg mx-4">
             <div className="flex items-center justify-between px-5 py-3 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                {t('savedStrategies')}
+                {t('loadStrategy')}
               </h3>
-              <button type="button" onClick={() => setShowLoadDialog(false)} className="text-gray-400 hover:text-gray-600">
+              <button type="button" onClick={() => { setShowLoadDialog(false); setPresetSearch(''); }} className="text-gray-400 hover:text-gray-600">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="px-5 py-4 max-h-80 overflow-y-auto">
+            <div className="px-5 py-3 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  value={presetSearch}
+                  onChange={(e) => setPresetSearch(e.target.value)}
+                  placeholder={t('searchPresets')}
+                  className="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg border border-[#e1e3e5] dark:border-[#2e2e30] bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#1313ec]/40"
+                />
+              </div>
+            </div>
+            <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
               <div className="mb-4">
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
                   {t('sampleStrategies')}
                 </h4>
-                {SAMPLE_STRATEGY_PRESETS.map((sample) => (
-                  <button
-                    key={sample.key}
-                    type="button"
-                    onClick={() => handleLoadSampleStrategy(sample)}
-                    className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors mb-1"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {tScreening.has(`samplePresetNames.${sample.key}`) ? tScreening(`samplePresetNames.${sample.key}` as never) : sample.name}
-                      </span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded border border-[#1313ec]/30 text-[#1313ec] bg-[#1313ec]/5">
-                        {t('builtInSample')}
-                      </span>
+                {(Object.keys(grouped) as PresetCategory[]).map((cat) => {
+                  const items = grouped[cat];
+                  const isCollapsed = collapsedCategories.has(cat);
+                  return (
+                    <div key={cat} className="mb-2">
+                      <button
+                        type="button"
+                        onClick={() => setCollapsedCategories((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(cat)) next.delete(cat); else next.add(cat);
+                          return next;
+                        })}
+                        className="flex items-center gap-1.5 w-full text-left px-2 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                      >
+                        {isCollapsed
+                          ? <ChevronRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                          : <ChevronDown className="h-3.5 w-3.5 text-gray-400 shrink-0" />}
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          {t(`presetCategories.${cat}` as never)}
+                        </span>
+                        <span className="text-[10px] text-gray-400 ml-auto">{items.length}</span>
+                      </button>
+                      {!isCollapsed && items.map((sample) => (
+                        <button
+                          key={sample.key}
+                          type="button"
+                          onClick={() => handleLoadSampleStrategy(sample)}
+                          className="w-full text-left pl-7 pr-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors mb-0.5"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {tScreening.has(`samplePresetNames.${sample.key}`) ? tScreening(`samplePresetNames.${sample.key}` as never) : sample.name}
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded border border-[#1313ec]/30 text-[#1313ec] bg-[#1313ec]/5 shrink-0">
+                              {t('builtInSample')}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5 truncate">
+                            {tScreening.has(`samplePresetDescriptions.${sample.key}`) ? tScreening(`samplePresetDescriptions.${sample.key}` as never) : sample.description}
+                          </p>
+                        </button>
+                      ))}
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5 truncate">
-                      {tScreening.has(`samplePresetDescriptions.${sample.key}`) ? tScreening(`samplePresetDescriptions.${sample.key}` as never) : sample.description}
-                    </p>
-                  </button>
-                ))}
+                  );
+                })}
+                {Object.keys(grouped).length === 0 && presetSearch && (
+                  <p className="text-sm text-gray-400 text-center py-4">{t('noSavedStrategies')}</p>
+                )}
               </div>
               <div className="h-px bg-[#e1e3e5] dark:bg-[#2e2e30] mb-3" />
               <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
@@ -1531,7 +1587,8 @@ function StrategyPageInner() {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Side inspection panel (double-click a node) */}
       <SideInspectionPanel
