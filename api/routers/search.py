@@ -102,10 +102,10 @@ def _search_yfinance(q: str) -> List[SearchResult]:
     except Exception:
         pass
 
-    # Search using yfinance search
+    # Search using yfinance Search class
     try:
-        search_results = yf.search(q, max_results=20)
-        quotes = search_results.get("quotes", [])
+        search_obj = yf.Search(q, max_results=20)
+        quotes = search_obj.quotes if hasattr(search_obj, "quotes") else []
         seen_tickers = {r.ticker for r in results}
 
         for item in quotes:
