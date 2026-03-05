@@ -78,13 +78,13 @@ function UniverseNode({ data, selected }: NodeProps) {
       </div>
       {/* Content */}
       <div className="p-3">
-        <div className="text-[13px] font-bold text-gray-900 dark:text-gray-100">
+        <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
           {t('marketSelection')}
         </div>
-        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        <div className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
           {t('composite', { universe: selectedCountText.join(' + ') })}
         </div>
-        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {t('selectedUniverseTotal', {
             count: totalSelectedCount.toLocaleString(locale),
           })}

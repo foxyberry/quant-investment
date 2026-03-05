@@ -169,14 +169,16 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
     const q = searchQuery.toLowerCase();
     const result: Record<string, StrategyConditionInfo[]> = {};
     for (const [cat, conditions] of Object.entries(conditionsByCategory)) {
-      const filtered = conditions.filter(
-        (c) =>
-          c.label.toLowerCase().includes(q) ||
-          c.description.toLowerCase().includes(q)
-      );
+      const filtered = conditions.filter((c) => {
+        const label = getConditionLabel(c).toLowerCase();
+        const desc = getConditionDesc(c).toLowerCase();
+        const key = c.key.toLowerCase();
+        return label.includes(q) || desc.includes(q) || key.includes(q);
+      });
       if (filtered.length > 0) result[cat] = filtered;
     }
     return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, conditionsByCategory]);
 
   return (
