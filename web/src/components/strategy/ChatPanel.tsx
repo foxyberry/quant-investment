@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import MarkdownMessage from './chat/MarkdownMessage';
-import { normalizeStreamText } from './chat/streamTextFormatter';
+import { normalizeChunk, finalizeStreamText } from './chat/streamTextFormatter';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -94,7 +94,7 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                 if (last?.role === 'assistant') {
                   updated[updated.length - 1] = {
                     ...last,
-                    content: normalizeStreamText(last.content + data.content),
+                    content: last.content + normalizeChunk(data.content),
                   };
                 }
                 return updated;
@@ -128,6 +128,14 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
         return updated;
       });
     } finally {
+      setMessages(prev => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        if (last?.role === 'assistant' && last.content) {
+          updated[updated.length - 1] = { ...last, content: finalizeStreamText(last.content) };
+        }
+        return updated;
+      });
       setIsStreaming(false);
     }
   }, [input, isStreaming, messages, graph, chatError]);
