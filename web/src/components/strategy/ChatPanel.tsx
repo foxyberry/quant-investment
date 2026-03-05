@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import MarkdownMessage from './chat/MarkdownMessage';
+import { normalizeStreamText } from './chat/streamTextFormatter';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -92,7 +94,7 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                 if (last?.role === 'assistant') {
                   updated[updated.length - 1] = {
                     ...last,
-                    content: last.content + data.content,
+                    content: normalizeStreamText(last.content + data.content),
                   };
                 }
                 return updated;
@@ -190,13 +192,17 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] whitespace-pre-wrap rounded-lg p-3 text-sm leading-relaxed ${
+                    className={`max-w-[80%] rounded-lg p-3 text-sm leading-relaxed ${
                       msg.role === 'user'
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-blue-600 text-white whitespace-pre-wrap'
                         : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
                     }`}
                   >
-                    {msg.content}
+                    {msg.role === 'user' ? (
+                      msg.content
+                    ) : (
+                      <MarkdownMessage content={msg.content} />
+                    )}
                     {msg.role === 'assistant' &&
                       i === messages.length - 1 &&
                       isStreaming && (
