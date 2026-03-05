@@ -401,12 +401,21 @@ async def strategy_chat(request: StrategyChatRequest):
         )
 
     def event_stream():
+        from api.services.strategy_chat_service import parse_structured_payload
+
         try:
+            full_text = ""
             for chunk in service.stream_chat(
                 [{"role": m.role, "content": m.content} for m in request.messages],
                 request.graph,
             ):
+                full_text += chunk
                 yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+
+            clean_text, payload = parse_structured_payload(full_text)
+            if payload:
+                yield f"data: {json.dumps({'type': 'structured_payload', 'payload': payload, 'clean_text': clean_text})}\n\n"
+
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
         except Exception as e:
             logger.exception("Strategy chat failed")

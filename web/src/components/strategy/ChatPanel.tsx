@@ -8,9 +8,22 @@ import { normalizeChunk, finalizeStreamText } from './chat/streamTextFormatter';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+interface StructuredSuggestion {
+  condition_type: string;
+  params: Record<string, unknown>;
+  rationale: string;
+}
+
+interface StructuredPayload {
+  summary?: string;
+  suggestions?: StructuredSuggestion[];
+  warnings?: string[];
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  structuredPayload?: StructuredPayload;
 }
 
 interface ChatPanelProps {
@@ -95,6 +108,19 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                   updated[updated.length - 1] = {
                     ...last,
                     content: last.content + normalizeChunk(data.content),
+                  };
+                }
+                return updated;
+              });
+            } else if (data.type === 'structured_payload' && data.payload) {
+              setMessages(prev => {
+                const updated = [...prev];
+                const last = updated[updated.length - 1];
+                if (last?.role === 'assistant') {
+                  updated[updated.length - 1] = {
+                    ...last,
+                    content: data.clean_text || last.content.replace(/<!--\s*STRUCTURED_JSON[\s\S]*?-->/g, '').trimEnd(),
+                    structuredPayload: data.payload,
                   };
                 }
                 return updated;
@@ -223,6 +249,30 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                         <Loader2 className="inline h-3 w-3 animate-spin text-gray-400" />
                       )}
                   </div>
+                  {msg.structuredPayload?.suggestions && msg.structuredPayload.suggestions.length > 0 && (
+                    <div className="mt-1.5 max-w-[80%] space-y-1">
+                      {msg.structuredPayload.suggestions.map((s, j) => (
+                        <div
+                          key={j}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200/60 dark:border-blue-500/20 text-xs"
+                        >
+                          <span className="font-mono font-semibold text-blue-700 dark:text-blue-300">
+                            {s.condition_type}
+                          </span>
+                          {Object.entries(s.params).map(([k, v]) => (
+                            <span key={k} className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-800/30 text-blue-600 dark:text-blue-400 text-[10px]">
+                              {k}={String(v)}
+                            </span>
+                          ))}
+                        </div>
+                      ))}
+                      {msg.structuredPayload.warnings?.map((w, j) => (
+                        <div key={j} className="px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-500/20 text-xs text-amber-700 dark:text-amber-300">
+                          {w}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               <div ref={messagesEndRef} />

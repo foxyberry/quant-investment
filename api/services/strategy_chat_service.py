@@ -8,6 +8,7 @@ Supports Anthropic (preferred) and OpenAI (fallback) providers.
 import json
 import logging
 import os
+import re
 from typing import Any, Dict, Generator, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,32 @@ Universe → [Sector] → Condition(s) → [Logic groups] → Output
 - Match the language of the user's message (Korean → Korean, English → English)
 - Only recommend parameters explicitly listed below. \
 If a parameter is not listed, answer "not available" instead of guessing.
+
+## Response Format
+When recommending conditions or strategies, end your response with a structured \
+JSON block wrapped in an HTML comment. This helps the UI render interactive cards.
+
+Format:
+<!-- STRUCTURED_JSON
+{
+  "summary": "Brief strategy description",
+  "suggestions": [
+    {
+      "condition_type": "condition_key",
+      "params": {"param_name": value},
+      "rationale": "Why this condition"
+    }
+  ],
+  "warnings": ["Any cautions or limitations"]
+}
+-->
+
+Rules for the structured block:
+- Only include it when you recommend specific conditions or strategies
+- Do not include it for general questions or explanations
+- The JSON must be valid
+- condition_type must be an exact key from Available Conditions
+- params must use exact parameter names from the condition definition
 """
 
 # Cached system prompt with conditions section
@@ -323,6 +350,29 @@ class StrategyChatService:
         except openai.APIStatusError as e:
             logger.error("Strategy chat: OpenAI API error %s", e.status_code)
             raise
+
+
+_STRUCTURED_RE = re.compile(
+    r"<!--\s*STRUCTURED_JSON\s*\n(.*?)\n\s*-->",
+    re.DOTALL,
+)
+
+
+def parse_structured_payload(text: str) -> tuple[str, Optional[dict]]:
+    """Extract structured JSON payload from assistant response.
+
+    Returns (clean_text, payload_dict_or_None).
+    """
+    match = _STRUCTURED_RE.search(text)
+    if not match:
+        return text, None
+    try:
+        payload = json.loads(match.group(1))
+    except (json.JSONDecodeError, ValueError):
+        logger.warning("Failed to parse structured payload from chat response")
+        return text, None
+    clean = text[: match.start()].rstrip()
+    return clean, payload
 
 
 _instance: Optional[StrategyChatService] = None
