@@ -684,6 +684,17 @@
     "builtInSample": "内置",
     "sampleStrategyLoaded": "已加载示例策略。保存后会复制到你的策略中。",
     "savedStrategies": "已保存策略",
+    "searchPresets": "搜索预设...",
+    "presetCategories": {
+      "trend_following": "趋势跟踪",
+      "momentum": "动量",
+      "mean_reversion": "均值回归",
+      "breakout": "突破",
+      "volume_flow": "量价分析",
+      "volatility": "波动率",
+      "ichimoku": "一目均衡表",
+      "fundamental": "基本面"
+    },
     "loadSelected": "加载",
     "deleteConfirm": "删除该策略？",
     "unsavedChanges": "您有未保存的更改",

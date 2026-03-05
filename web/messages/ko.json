@@ -684,6 +684,17 @@
     "builtInSample": "기본 제공",
     "sampleStrategyLoaded": "샘플 전략을 불러왔습니다. 저장하면 내 전략으로 복사됩니다.",
     "savedStrategies": "저장된 전략",
+    "searchPresets": "프리셋 검색...",
+    "presetCategories": {
+      "trend_following": "추세추종",
+      "momentum": "모멘텀",
+      "mean_reversion": "평균회귀",
+      "breakout": "돌파",
+      "volume_flow": "거래량 흐름",
+      "volatility": "변동성",
+      "ichimoku": "일목균형표",
+      "fundamental": "펀더멘탈"
+    },
     "loadSelected": "불러오기",
     "deleteConfirm": "이 전략을 삭제할까요?",
     "unsavedChanges": "저장되지 않은 변경 사항이 있습니다",
