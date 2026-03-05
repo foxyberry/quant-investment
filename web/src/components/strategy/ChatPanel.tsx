@@ -22,17 +22,26 @@ interface StructuredPayload {
   warnings?: string[];
 }
 
+export interface NodeMapping {
+  condition_type: string;
+  node_type: string;
+  params: Record<string, unknown>;
+  label: string;
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   structuredPayload?: StructuredPayload;
+  nodeMappings?: NodeMapping[];
 }
 
 interface ChatPanelProps {
   graph: { nodes: unknown[]; edges: unknown[] } | null;
+  onAddNodes?: (nodes: NodeMapping[]) => void;
 }
 
-export default function ChatPanel({ graph }: ChatPanelProps) {
+export default function ChatPanel({ graph, onAddNodes }: ChatPanelProps) {
   const t = useTranslations('strategy');
 
   const [isOpen, setIsOpen] = useState(false);
@@ -123,6 +132,7 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                     ...last,
                     content: data.clean_text || last.content.replace(/<!--\s*STRUCTURED_JSON[\s\S]*?-->/g, '').trimEnd(),
                     structuredPayload: data.payload,
+                    nodeMappings: data.node_mappings || undefined,
                   };
                 }
                 return updated;
@@ -237,7 +247,12 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                     {msg.role === 'user' ? (
                       msg.content
                     ) : msg.structuredPayload ? (
-                      <SectionedMessage content={msg.content} payload={msg.structuredPayload} />
+                      <SectionedMessage
+                        content={msg.content}
+                        payload={msg.structuredPayload}
+                        nodeMappings={msg.nodeMappings}
+                        onAddNodes={onAddNodes}
+                      />
                     ) : (
                       <MarkdownMessage content={msg.content} />
                     )}

@@ -406,6 +406,7 @@ async def strategy_chat(request: StrategyChatRequest):
 
     def event_stream():
         from api.services.strategy_chat_service import parse_structured_payload
+        from api.services.strategy_node_mapper import map_suggestions_to_nodes
 
         try:
             full_text = ""
@@ -418,7 +419,13 @@ async def strategy_chat(request: StrategyChatRequest):
 
             clean_text, payload = parse_structured_payload(full_text)
             if payload:
-                yield f"data: {json.dumps({'type': 'structured_payload', 'payload': payload, 'clean_text': clean_text})}\n\n"
+                node_mappings = []
+                if payload.get("suggestions"):
+                    try:
+                        node_mappings = map_suggestions_to_nodes(payload["suggestions"])
+                    except Exception:
+                        logger.warning("Failed to map suggestions to nodes")
+                yield f"data: {json.dumps({'type': 'structured_payload', 'payload': payload, 'clean_text': clean_text, 'node_mappings': node_mappings})}\n\n"
 
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
         except Exception as e:

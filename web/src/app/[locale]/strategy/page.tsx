@@ -36,7 +36,7 @@ import LabeledEdge from '@/components/strategy/edges/LabeledEdge';
 import NodePalette from '@/components/strategy/NodePalette';
 import IntermediateResultsPanel from '@/components/strategy/IntermediateResultsPanel';
 import SideInspectionPanel from '@/components/strategy/SideInspectionPanel';
-import ChatPanel from '@/components/strategy/ChatPanel';
+import ChatPanel, { type NodeMapping } from '@/components/strategy/ChatPanel';
 
 import BacktestPanel from '@/components/backtest/BacktestPanel';
 import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
@@ -663,6 +663,24 @@ function StrategyPageInner() {
       setNodes((nds) => [...nds, newNode]);
     },
     [reactFlowInstance, setNodes, setEdges, findGroupAtPosition, nodes, getDefaultParams, showToast, t]
+  );
+
+  // Add condition nodes from chat assistant suggestions
+  const handleAddNodesFromChat = useCallback(
+    (mappings: NodeMapping[]) => {
+      const newNodes: Node[] = mappings.map((m, i) => ({
+        id: getNodeId(),
+        type: 'conditionNode',
+        position: { x: 100 + i * 50, y: 200 + i * 80 },
+        data: {
+          node_type: 'condition' as const,
+          condition_type: m.condition_type,
+          params: m.params,
+        } as unknown as Record<string, unknown>,
+      }));
+      setNodes((nds) => [...nds, ...newNodes]);
+    },
+    [setNodes],
   );
 
   // Auto-resize group nodes when children change (only expand, never shrink)
@@ -1340,7 +1358,10 @@ function StrategyPageInner() {
               className="dark:!opacity-20"
             />
           </ReactFlow>
-          <ChatPanel graph={serializeGraph(nodes as Node<StrategyNodeData>[], edges)} />
+          <ChatPanel
+            graph={serializeGraph(nodes as Node<StrategyNodeData>[], edges)}
+            onAddNodes={handleAddNodesFromChat}
+          />
         </div>
       </div>
 
