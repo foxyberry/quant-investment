@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import MarkdownMessage from './chat/MarkdownMessage';
+import MessageActions from './chat/MessageActions';
 import SectionedMessage from './chat/SectionedMessage';
 import { normalizeChunk, finalizeStreamText } from './chat/streamTextFormatter';
 
@@ -252,6 +253,14 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                         <Loader2 className="inline h-3 w-3 animate-spin text-gray-400" />
                       )}
                   </div>
+                  {msg.role === 'assistant' &&
+                    msg.content &&
+                    !(i === messages.length - 1 && isStreaming) && (
+                      <MessageActions
+                        content={msg.content}
+                        payload={msg.structuredPayload}
+                      />
+                    )}
                 </div>
               ))}
               <div ref={messagesEndRef} />
