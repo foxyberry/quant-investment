@@ -30,11 +30,12 @@ function MarkdownMessage({ content }: MarkdownMessageProps) {
           <ol className="list-decimal pl-4 mb-1.5 space-y-0.5">{children}</ol>
         ),
         li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-        code: ({ children, className }) => {
-          const isBlock = className?.startsWith('language-');
+        code: ({ children, className, node }) => {
+          const isBlock = className?.startsWith('language-') ||
+            node?.position?.start.column === 1;
           if (isBlock) {
             return (
-              <code className="block bg-black/10 dark:bg-white/10 rounded px-2 py-1.5 text-xs font-mono overflow-x-auto my-1.5">
+              <code className="block bg-black/10 dark:bg-white/10 rounded px-2 py-1.5 text-xs font-mono overflow-x-auto">
                 {children}
               </code>
             );
