@@ -8,6 +8,7 @@ Supports Anthropic (preferred) and OpenAI (fallback) providers.
 import json
 import logging
 import os
+import re
 from typing import Any, Dict, Generator, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,32 @@ Universe → [Sector] → Condition(s) → [Logic groups] → Output
 - Match the language of the user's message (Korean → Korean, English → English)
 - Only recommend parameters explicitly listed below. \
 If a parameter is not listed, answer "not available" instead of guessing.
+
+## Response Format
+When recommending conditions or strategies, end your response with a structured \
+JSON block wrapped in an HTML comment. This helps the UI render interactive cards.
+
+Format:
+<!-- STRUCTURED_JSON
+{
+  "summary": "Brief strategy description",
+  "suggestions": [
+    {
+      "condition_type": "condition_key",
+      "params": {"param_name": value},
+      "rationale": "Why this condition"
+    }
+  ],
+  "warnings": ["Any cautions or limitations"]
+}
+-->
+
+Rules for the structured block:
+- Only include it when you recommend specific conditions or strategies
+- Do not include it for general questions or explanations
+- The JSON must be valid
+- condition_type must be an exact key from Available Conditions
+- params must use exact parameter names from the condition definition
 """
 
 # Cached system prompt with conditions section
@@ -323,6 +350,63 @@ class StrategyChatService:
         except openai.APIStatusError as e:
             logger.error("Strategy chat: OpenAI API error %s", e.status_code)
             raise
+
+
+_STRUCTURED_RE = re.compile(
+    r"<!--\s*STRUCTURED_JSON\s*?\r?\n?(.*?)\r?\n?\s*-->",
+    re.DOTALL,
+)
+
+
+def _validate_payload(payload: dict) -> Optional[dict]:
+    """Validate and sanitize structured payload shape.
+
+    Returns sanitized payload or None if invalid.
+    """
+    if not isinstance(payload, dict):
+        return None
+    result: dict = {}
+    if "summary" in payload and isinstance(payload["summary"], str):
+        result["summary"] = payload["summary"]
+    if "suggestions" in payload and isinstance(payload["suggestions"], list):
+        valid_suggestions = []
+        for s in payload["suggestions"]:
+            if not isinstance(s, dict):
+                continue
+            if not isinstance(s.get("condition_type"), str):
+                continue
+            params = s.get("params", {})
+            if not isinstance(params, dict):
+                params = {}
+            valid_suggestions.append({
+                "condition_type": s["condition_type"],
+                "params": params,
+                "rationale": str(s.get("rationale", "")),
+            })
+        if valid_suggestions:
+            result["suggestions"] = valid_suggestions
+    if "warnings" in payload and isinstance(payload["warnings"], list):
+        result["warnings"] = [str(w) for w in payload["warnings"] if isinstance(w, str)]
+    return result if result else None
+
+
+def parse_structured_payload(text: str) -> tuple[str, Optional[dict]]:
+    """Extract structured JSON payload from assistant response.
+
+    Returns (clean_text, payload_dict_or_None).
+    Always removes the structured block from text, even on parse failure.
+    """
+    match = _STRUCTURED_RE.search(text)
+    if not match:
+        return text, None
+    clean = text[: match.start()].rstrip()
+    try:
+        raw = json.loads(match.group(1))
+    except (json.JSONDecodeError, ValueError):
+        logger.warning("Failed to parse structured payload from chat response")
+        return clean, None
+    payload = _validate_payload(raw)
+    return clean, payload
 
 
 _instance: Optional[StrategyChatService] = None
