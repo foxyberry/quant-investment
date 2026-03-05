@@ -13,7 +13,11 @@ import time
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from api.schemas.strategy_chat import StrategyChatRequest
+from api.schemas.strategy_chat import (
+    StrategyChatRequest,
+    ValidatePayloadRequest,
+    ValidatePayloadResponse,
+)
 from api.schemas.strategy import (
     ConditionsListResponse,
     SavedStrategiesListResponse,
@@ -428,4 +432,25 @@ async def strategy_chat(request: StrategyChatRequest):
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",
         },
+    )
+
+
+@router.post(
+    "/chat/validate",
+    response_model=ValidatePayloadResponse,
+    summary="Validate assistant suggestions",
+    description="Validate condition suggestions from the AI assistant against the registry.",
+)
+async def validate_chat_payload(
+    request: ValidatePayloadRequest,
+) -> ValidatePayloadResponse:
+    """Validate structured suggestions against condition registry."""
+    from api.services.strategy_chat_service import validate_suggestions
+
+    results = validate_suggestions(
+        [s.model_dump() for s in request.suggestions]
+    )
+    return ValidatePayloadResponse(
+        results=results,
+        all_valid=all(r["valid"] for r in results),
     )

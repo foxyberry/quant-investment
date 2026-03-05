@@ -30,3 +30,42 @@ class StrategyChatRequest(BaseModel):
         None,
         description="Current strategy graph (serialized nodes and edges)",
     )
+
+
+class SuggestionValidation(BaseModel):
+    """A single condition suggestion to validate."""
+
+    condition_type: str = Field(..., description="Condition key from registry")
+    params: dict[str, Any] = Field(
+        default_factory=dict, description="Parameter key-value pairs"
+    )
+
+
+class ValidatePayloadRequest(BaseModel):
+    """Request to validate a structured payload from the assistant."""
+
+    suggestions: list[SuggestionValidation] = Field(
+        ..., max_length=20, description="Conditions to validate"
+    )
+
+
+class ParamError(BaseModel):
+    """A single parameter validation error."""
+
+    param: str
+    message: str
+
+
+class SuggestionResult(BaseModel):
+    """Validation result for one suggestion."""
+
+    condition_type: str
+    valid: bool
+    errors: list[ParamError] = Field(default_factory=list)
+
+
+class ValidatePayloadResponse(BaseModel):
+    """Response from payload validation."""
+
+    results: list[SuggestionResult]
+    all_valid: bool
