@@ -409,6 +409,61 @@ def parse_structured_payload(text: str) -> tuple[str, Optional[dict]]:
     return clean, payload
 
 
+def validate_suggestions(
+    suggestions: list[dict],
+) -> list[dict]:
+    """Validate condition suggestions against the condition registry.
+
+    Returns a list of result dicts with 'condition_type', 'valid', 'errors'.
+    """
+    from screener.conditions.registry import get_condition_metadata
+
+    metadata = get_condition_metadata()
+    results = []
+
+    for s in suggestions:
+        ctype = s.get("condition_type", "")
+        params = s.get("params", {})
+        errors: list[dict] = []
+
+        if ctype not in metadata:
+            results.append({
+                "condition_type": ctype,
+                "valid": False,
+                "errors": [{"param": "condition_type", "message": f"Unknown condition: {ctype}"}],
+            })
+            continue
+
+        meta = metadata[ctype]
+        param_defs = {p["name"]: p for p in meta.get("params", [])}
+
+        for pname, pval in params.items():
+            if pname not in param_defs:
+                errors.append({"param": pname, "message": f"Unknown parameter: {pname}"})
+                continue
+            pdef = param_defs[pname]
+            ptype = pdef.get("type", "")
+            if ptype in ("int", "integer") and not isinstance(pval, (int, float)):
+                errors.append({"param": pname, "message": f"Expected number, got {type(pval).__name__}"})
+            elif ptype == "float" and not isinstance(pval, (int, float)):
+                errors.append({"param": pname, "message": f"Expected number, got {type(pval).__name__}"})
+            elif ptype == "bool" and not isinstance(pval, bool):
+                errors.append({"param": pname, "message": f"Expected boolean, got {type(pval).__name__}"})
+
+            if "min" in pdef and isinstance(pval, (int, float)) and pval < pdef["min"]:
+                errors.append({"param": pname, "message": f"Value {pval} below minimum {pdef['min']}"})
+            if "max" in pdef and isinstance(pval, (int, float)) and pval > pdef["max"]:
+                errors.append({"param": pname, "message": f"Value {pval} above maximum {pdef['max']}"})
+
+        results.append({
+            "condition_type": ctype,
+            "valid": len(errors) == 0,
+            "errors": errors,
+        })
+
+    return results
+
+
 _instance: Optional[StrategyChatService] = None
 
 

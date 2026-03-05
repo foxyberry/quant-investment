@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import MarkdownMessage from './chat/MarkdownMessage';
+import SectionedMessage from './chat/SectionedMessage';
 import { normalizeChunk, finalizeStreamText } from './chat/streamTextFormatter';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -234,6 +235,8 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                   >
                     {msg.role === 'user' ? (
                       msg.content
+                    ) : msg.structuredPayload ? (
+                      <SectionedMessage content={msg.content} payload={msg.structuredPayload} />
                     ) : (
                       <MarkdownMessage content={msg.content} />
                     )}
@@ -249,30 +252,6 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                         <Loader2 className="inline h-3 w-3 animate-spin text-gray-400" />
                       )}
                   </div>
-                  {msg.structuredPayload?.suggestions && msg.structuredPayload.suggestions.length > 0 && (
-                    <div className="mt-1.5 max-w-[80%] space-y-1">
-                      {msg.structuredPayload.suggestions.map((s, j) => (
-                        <div
-                          key={j}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200/60 dark:border-blue-500/20 text-xs"
-                        >
-                          <span className="font-mono font-semibold text-blue-700 dark:text-blue-300">
-                            {s.condition_type}
-                          </span>
-                          {s.params && typeof s.params === 'object' && !Array.isArray(s.params) && Object.entries(s.params).map(([k, v]) => (
-                            <span key={k} className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-800/30 text-blue-600 dark:text-blue-400 text-[10px]">
-                              {k}={String(v)}
-                            </span>
-                          ))}
-                        </div>
-                      ))}
-                      {msg.structuredPayload.warnings?.map((w, j) => (
-                        <div key={j} className="px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-500/20 text-xs text-amber-700 dark:text-amber-300">
-                          {w}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))}
               <div ref={messagesEndRef} />
