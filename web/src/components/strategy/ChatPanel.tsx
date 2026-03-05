@@ -259,7 +259,7 @@ export default function ChatPanel({ graph }: ChatPanelProps) {
                           <span className="font-mono font-semibold text-blue-700 dark:text-blue-300">
                             {s.condition_type}
                           </span>
-                          {Object.entries(s.params).map(([k, v]) => (
+                          {s.params && typeof s.params === 'object' && !Array.isArray(s.params) && Object.entries(s.params).map(([k, v]) => (
                             <span key={k} className="px-1 py-0.5 rounded bg-blue-100 dark:bg-blue-800/30 text-blue-600 dark:text-blue-400 text-[10px]">
                               {k}={String(v)}
                             </span>

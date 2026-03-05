@@ -353,25 +353,59 @@ class StrategyChatService:
 
 
 _STRUCTURED_RE = re.compile(
-    r"<!--\s*STRUCTURED_JSON\s*\n(.*?)\n\s*-->",
+    r"<!--\s*STRUCTURED_JSON\s*?\r?\n?(.*?)\r?\n?\s*-->",
     re.DOTALL,
 )
+
+
+def _validate_payload(payload: dict) -> Optional[dict]:
+    """Validate and sanitize structured payload shape.
+
+    Returns sanitized payload or None if invalid.
+    """
+    if not isinstance(payload, dict):
+        return None
+    result: dict = {}
+    if "summary" in payload and isinstance(payload["summary"], str):
+        result["summary"] = payload["summary"]
+    if "suggestions" in payload and isinstance(payload["suggestions"], list):
+        valid_suggestions = []
+        for s in payload["suggestions"]:
+            if not isinstance(s, dict):
+                continue
+            if not isinstance(s.get("condition_type"), str):
+                continue
+            params = s.get("params", {})
+            if not isinstance(params, dict):
+                params = {}
+            valid_suggestions.append({
+                "condition_type": s["condition_type"],
+                "params": params,
+                "rationale": str(s.get("rationale", "")),
+            })
+        if valid_suggestions:
+            result["suggestions"] = valid_suggestions
+    if "warnings" in payload and isinstance(payload["warnings"], list):
+        result["warnings"] = [str(w) for w in payload["warnings"] if isinstance(w, str)]
+    return result if result else None
 
 
 def parse_structured_payload(text: str) -> tuple[str, Optional[dict]]:
     """Extract structured JSON payload from assistant response.
 
     Returns (clean_text, payload_dict_or_None).
+    Always removes the structured block from text, even on parse failure.
     """
     match = _STRUCTURED_RE.search(text)
     if not match:
         return text, None
+    clean = text[: match.start()].rstrip()
     try:
-        payload = json.loads(match.group(1))
+        raw = json.loads(match.group(1))
     except (json.JSONDecodeError, ValueError):
         logger.warning("Failed to parse structured payload from chat response")
-        return text, None
-    clean = text[: match.start()].rstrip()
+        return clean, None
+    payload = _validate_payload(raw)
     return clean, payload
 
 
