@@ -1,8 +1,7 @@
 'use client';
 
-import { memo } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { memo, useState } from 'react';
+import { ChevronDown, ChevronRight, Plus, Check } from 'lucide-react';
 import MarkdownMessage from './MarkdownMessage';
 
 interface StructuredSuggestion {
@@ -17,19 +16,35 @@ interface StructuredPayload {
   warnings?: string[];
 }
 
+interface NodeMapping {
+  condition_type: string;
+  node_type: string;
+  params: Record<string, unknown>;
+  label: string;
+}
+
 interface SectionedMessageProps {
   content: string;
   payload: StructuredPayload;
+  nodeMappings?: NodeMapping[];
+  onAddNodes?: (nodes: NodeMapping[]) => void;
 }
 
-function SectionedMessage({ content, payload }: SectionedMessageProps) {
+function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: SectionedMessageProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     suggestions: true,
     warnings: true,
   });
+  const [added, setAdded] = useState(false);
 
   const toggle = (key: string) =>
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const handleAddAll = () => {
+    if (!nodeMappings?.length || !onAddNodes) return;
+    onAddNodes(nodeMappings);
+    setAdded(true);
+  };
 
   return (
     <div className="space-y-2">
@@ -47,18 +62,41 @@ function SectionedMessage({ content, payload }: SectionedMessageProps) {
       {/* Suggestions section */}
       {payload.suggestions && payload.suggestions.length > 0 && (
         <div className="rounded-lg border border-gray-200/80 dark:border-gray-700/60">
-          <button
-            type="button"
-            onClick={() => toggle('suggestions')}
-            className="flex w-full items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300"
-          >
-            {expandedSections.suggestions ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronRight className="h-3 w-3" />
+          <div className="flex items-center justify-between px-3 py-1.5">
+            <button
+              type="button"
+              onClick={() => toggle('suggestions')}
+              className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300"
+            >
+              {expandedSections.suggestions ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
+              Conditions ({payload.suggestions.length})
+            </button>
+            {/* Add to Canvas button */}
+            {nodeMappings && nodeMappings.length > 0 && onAddNodes && (
+              <button
+                type="button"
+                onClick={handleAddAll}
+                disabled={added}
+                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-blue-600 transition-colors hover:bg-blue-50 disabled:text-green-600 disabled:hover:bg-transparent dark:text-blue-400 dark:hover:bg-blue-900/20 dark:disabled:text-green-400"
+              >
+                {added ? (
+                  <>
+                    <Check className="h-3 w-3" />
+                    Added
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-3 w-3" />
+                    Add to Canvas
+                  </>
+                )}
+              </button>
             )}
-            Conditions ({payload.suggestions.length})
-          </button>
+          </div>
           {expandedSections.suggestions && (
             <div className="space-y-1 px-3 pb-2">
               {payload.suggestions.map((s, j) => (
