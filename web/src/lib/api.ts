@@ -491,6 +491,19 @@ export async function getExecution(id: string): Promise<ExecutionHistoryDetail> 
 }
 
 /**
+ * Update an execution (e.g., rename)
+ */
+export async function updateExecution(
+  id: string,
+  data: { name: string },
+): Promise<ExecutionHistoryDetail> {
+  return fetchApi<ExecutionHistoryDetail>(
+    `/api/reports/executions/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(data) },
+  );
+}
+
+/**
  * Save an execution result to history
  */
 export async function saveExecution(data: {

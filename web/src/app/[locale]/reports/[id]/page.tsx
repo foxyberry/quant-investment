@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { ResultTable } from '@/components/screening';
-import { getExecution } from '@/lib/api';
+import { getExecution, updateExecution } from '@/lib/api';
 import type { ExecutionHistoryDetail, ScreeningResult } from '@/lib/types';
 import {
   ArrowLeft,
@@ -15,6 +15,7 @@ import {
   Play,
   Database,
   CheckCircle,
+  Pencil,
   PieChart,
 } from 'lucide-react';
 
@@ -73,6 +74,36 @@ export default function ExecutionDetailPage() {
   const [execution, setExecution] = useState<ExecutionHistoryDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const savingRef = useRef(false);
+
+  const handleNameSave = useCallback(async () => {
+    if (!execution || savingRef.current) return;
+    savingRef.current = true;
+    const trimmed = editName.trim();
+    setIsEditingName(false);
+    if (!trimmed || trimmed === (execution.name || execution.preset)) {
+      savingRef.current = false;
+      return;
+    }
+    try {
+      const updated = await updateExecution(id, { name: trimmed });
+      setExecution(updated);
+    } catch {
+      // Revert on failure — name stays as-is in UI
+    } finally {
+      savingRef.current = false;
+    }
+  }, [execution, editName, id]);
+
+  const startEditing = useCallback(() => {
+    if (!execution) return;
+    setEditName(execution.name || execution.preset || '');
+    setIsEditingName(true);
+    setTimeout(() => nameInputRef.current?.select(), 0);
+  }, [execution]);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -144,9 +175,29 @@ export default function ExecutionDetailPage() {
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
             <TypeBadge type={execution.execution_type} t={t} />
-            <h1 className="text-2xl font-bold text-[var(--foreground)]">
-              {execution.name || execution.preset}
-            </h1>
+            {isEditingName ? (
+              <input
+                ref={nameInputRef}
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                onBlur={handleNameSave}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleNameSave();
+                  if (e.key === 'Escape') setIsEditingName(false);
+                }}
+                className="text-2xl font-bold text-[var(--foreground)] bg-transparent border-b-2 border-[var(--color-primary)] outline-none px-0 py-0 w-full max-w-md"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={startEditing}
+                className="group flex items-center gap-2 text-2xl font-bold text-[var(--foreground)] hover:text-[var(--color-primary)] transition-colors"
+                title={t('clickToEdit')}
+              >
+                {execution.name || execution.preset}
+                <Pencil className="h-4 w-4 opacity-0 group-hover:opacity-50 transition-opacity" />
+              </button>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {execution.universes.map((universe) => (
@@ -163,7 +214,10 @@ export default function ExecutionDetailPage() {
                 {t('referenceDate')}: {execution.reference_date}
               </span>
             )}
-            <span className="text-sm text-[var(--foreground-muted)]">
+            <span
+              className="text-sm text-[var(--foreground-muted)]"
+              title={new Date(execution.created_at).toLocaleString()}
+            >
               {formatRelativeDate(execution.created_at, t)}
             </span>
           </div>

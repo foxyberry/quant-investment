@@ -767,6 +767,7 @@
     "executionTime": "耗时",
     "viewDetail": "查看详情",
     "rerun": "重新执行",
+    "clickToEdit": "点击编辑",
     "delete": "删除",
     "deleteConfirm": "确定要删除此执行记录吗？",
     "deleted": "执行记录已删除",

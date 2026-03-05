@@ -767,6 +767,7 @@
     "executionTime": "Time",
     "viewDetail": "View Detail",
     "rerun": "Rerun",
+    "clickToEdit": "Click to edit",
     "delete": "Delete",
     "deleteConfirm": "Are you sure you want to delete this execution record?",
     "deleted": "Execution record deleted",

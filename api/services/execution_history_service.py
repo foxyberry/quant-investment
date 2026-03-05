@@ -215,6 +215,26 @@ class ExecutionHistoryService:
         finally:
             db.close()
 
+    def update_execution(
+        self, execution_id: str, name: Optional[str] = None
+    ) -> Optional[ExecutionHistoryDetail]:
+        """Update mutable fields of an execution record."""
+        db = SessionLocal()
+        try:
+            row = db.get(ExecutionHistory, execution_id)
+            if row is None:
+                return None
+            if name is not None:
+                row.name = name.strip()
+            db.commit()
+            db.refresh(row)
+            return _row_to_detail(row)
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
     def delete_execution(self, execution_id: str) -> bool:
         """
         Delete an execution history record by ID.
