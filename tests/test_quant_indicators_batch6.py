@@ -67,11 +67,13 @@ def test_quant_indicator_conditions_compute():
 
 def test_turnover_ratio_missing_shares_yfinance_fallback():
     """When shares_outstanding is absent from DataFrame, yfinance info API
-    is used as fallback. With a real ticker like 'T', this should succeed."""
+    is used as fallback."""
+    from unittest.mock import patch
     data = _df().drop(columns=["shares_outstanding"])
-    result = TurnoverRatioMinCondition(min_turnover_ratio=0).evaluate("T", data)
-    # yfinance fallback fetches sharesOutstanding for real ticker "T" (AT&T)
+    with patch("screener.conditions.fundamental._get_info", return_value={"sharesOutstanding": 1_000_000_000}):
+        result = TurnoverRatioMinCondition(min_turnover_ratio=0).evaluate("AAPL", data)
     assert "turnover_ratio" in result.details
+    assert result.matched is True
 
 
 def test_turnover_ratio_missing_shares_failsafe():
