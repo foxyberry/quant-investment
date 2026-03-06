@@ -423,6 +423,20 @@ class SavePresetFromHolding(BaseModel):
 class BulkApplyPresetRequest(BaseModel):
     tickers: List[str] = Field(..., min_length=1)
 
+    @field_validator("tickers", mode="before")
+    @classmethod
+    def normalize_tickers(cls, v: List[str]) -> List[str]:
+        seen: set[str] = set()
+        result: List[str] = []
+        for t in v:
+            cleaned = t.strip().upper()
+            if cleaned and cleaned not in seen:
+                seen.add(cleaned)
+                result.append(cleaned)
+        if not result:
+            raise ValueError("tickers must contain at least one non-empty value")
+        return result
+
 
 class BulkApplyPresetResultItem(BaseModel):
     ticker: str

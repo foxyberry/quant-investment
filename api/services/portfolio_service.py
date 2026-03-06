@@ -56,6 +56,14 @@ logger = logging.getLogger(__name__)
 ENRICHMENT_TIMEOUT_SECONDS = 30
 
 
+class PresetNotFoundError(Exception):
+    """Raised when a sell rule preset does not exist."""
+
+
+class PresetInactiveError(Exception):
+    """Raised when a sell rule preset is deactivated."""
+
+
 class PortfolioService:
     """
     Portfolio service for managing holdings.
@@ -1583,6 +1591,10 @@ class PortfolioService:
 
         Returns a BulkApplyPresetResponse with per-ticker results.
         Individual failures do not abort the entire operation.
+
+        Raises:
+            PresetNotFoundError: if preset does not exist.
+            PresetInactiveError: if preset is deactivated.
         """
         from api.schemas.portfolio import BulkApplyPresetResponse, BulkApplyPresetResultItem
 
@@ -1590,9 +1602,9 @@ class PortfolioService:
         try:
             preset = db.query(SellRulePreset).filter(SellRulePreset.id == preset_id).first()
             if preset is None:
-                raise ValueError(f"Preset not found: {preset_id}")
+                raise PresetNotFoundError(f"Preset not found: {preset_id}")
             if not preset.is_active:
-                raise ValueError(f"Preset is inactive: {preset.name}")
+                raise PresetInactiveError(f"Preset is inactive: {preset.name}")
         finally:
             db.close()
 
@@ -1611,11 +1623,12 @@ class PortfolioService:
                     success=False,
                     error=str(e),
                 ))
-            except Exception as e:
+            except Exception:
+                logger.exception("Unexpected error applying preset %d to %s", preset_id, ticker)
                 results.append(BulkApplyPresetResultItem(
                     ticker=ticker,
                     success=False,
-                    error=str(e),
+                    error="Internal error",
                 ))
 
         succeeded = sum(1 for r in results if r.success)
