@@ -27,6 +27,7 @@ import {
   Loader2, Zap, RotateCcw, Save, TestTube, FolderOpen, X,
   ChevronRight, ChevronDown, Home, Calendar, Search,
   AlignHorizontalSpaceAround, AlignVerticalSpaceAround,
+  PanelLeftClose, PanelLeftOpen, ChevronUp,
 } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
@@ -327,6 +328,8 @@ function StrategyPageInner() {
   const [deployProgress, setDeployProgress] = useState(0);
   const [progressDetail, setProgressDetail] = useState<{ processed: number; total: number; matched: number } | null>(null);
   const [streamStatus, setStreamStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [showMiniMap, setShowMiniMap] = useState(true);
+  const [showPalette, setShowPalette] = useState(true);
   const streamAbortRef = useRef<{ abort: () => void } | null>(null);
 
   // Restore from sessionStorage after mount (locale-switch persistence)
@@ -1360,14 +1363,35 @@ function StrategyPageInner() {
           ) : (
             <Zap className="h-4 w-4" />
           )}
-          {t('deployStrategy')}
+          {t('executeStrategy')}
         </button>
       </div>
 
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden rounded-xl border border-[#e1e3e5] dark:border-[#2e2e30]">
         {/* Left palette */}
-        <NodePalette nodeCount={nodeCount} />
+        {showPalette ? (
+          <div className="relative">
+            <NodePalette nodeCount={nodeCount} />
+            <button
+              type="button"
+              onClick={() => setShowPalette(false)}
+              className="absolute top-2 right-2 z-10 flex items-center justify-center w-6 h-6 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 dark:text-gray-500"
+              title={t('hidePalette')}
+            >
+              <PanelLeftClose className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowPalette(true)}
+            className="flex items-center justify-center w-8 border-r border-[#e1e3e5] dark:border-[#2e2e30] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-400 dark:text-gray-500"
+            title={t('showPalette')}
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </button>
+        )}
 
         {/* Canvas */}
         <div className="relative flex-1" ref={reactFlowWrapper}>
@@ -1401,11 +1425,21 @@ function StrategyPageInner() {
             }}
           >
             <Controls className="!bg-white dark:!bg-[#1e1e1f] !border-[#e1e3e5] dark:!border-[#2e2e30] !shadow-sm !rounded-lg [&>button]:!bg-white dark:[&>button]:!bg-[#1e1e1f] [&>button]:!border-[#e1e3e5] dark:[&>button]:!border-[#2e2e30] [&>button]:!text-gray-600 dark:[&>button]:!text-gray-300 [&>button:hover]:!bg-gray-50 dark:[&>button:hover]:!bg-gray-800" />
-            <MiniMap
-              className="!bg-white dark:!bg-[#1e1e1f] !border-[#e1e3e5] dark:!border-[#2e2e30] !rounded-lg !shadow-sm"
-              nodeColor={() => '#1313ec'}
-              maskColor="rgba(0, 0, 0, 0.08)"
-            />
+            {showMiniMap && (
+              <MiniMap
+                className="!bg-white dark:!bg-[#1e1e1f] !border-[#e1e3e5] dark:!border-[#2e2e30] !rounded-lg !shadow-sm"
+                nodeColor={() => '#1313ec'}
+                maskColor="rgba(0, 0, 0, 0.08)"
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => setShowMiniMap((v) => !v)}
+              className="absolute bottom-2 right-2 z-10 flex items-center justify-center w-7 h-7 rounded-md bg-white dark:bg-[#1e1e1f] border border-[#e1e3e5] dark:border-[#2e2e30] shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-500 dark:text-gray-400"
+              title={showMiniMap ? t('hideMiniMap') : t('showMiniMap')}
+            >
+              {showMiniMap ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronUp className="h-3.5 w-3.5" />}
+            </button>
             <Background
               variant={BackgroundVariant.Dots}
               gap={24}
