@@ -3,18 +3,16 @@ L2: Differential tests — compare our indicator implementations against pandas_
 
 Tests verify numeric agreement within documented tolerances.
 
-Known algorithmic differences:
-- RSI: We use SMA smoothing; pandas_ta uses Wilder's EMA. Values diverge significantly.
-  For RSI we verify self-consistency (our compute matches manual SMA reference).
-- ATR: We use SMA of True Range; pandas_ta uses Wilder's EMA.
-  For ATR we verify self-consistency.
+All core indicators now use industry-standard algorithms:
+- RSI: Wilder's smoothing (matches pandas_ta)
+- ATR: Wilder's smoothing (matches pandas_ta)
+- SMA/EMA/MACD/Stochastic: Standard implementations (match pandas_ta)
+
+Known minor difference:
 - Bollinger Bands: We use ddof=0 (population std); pandas_ta uses ddof=1 (sample std).
-  Verified by passing ddof=0 to pandas manually.
+  This is intentional; impact is negligible.
 - Stochastic: We compute raw (fast) %K; pandas_ta smooth_k=3 by default.
   Matched exactly when using smooth_k=1.
-
-For indicators that SHOULD match pandas_ta (SMA, EMA, MACD, Stochastic):
-we assert tight numeric tolerances.
 """
 
 from __future__ import annotations
@@ -136,36 +134,34 @@ class TestStochasticDifferential:
 
 
 # ---------------------------------------------------------------------------
-# Self-consistency tests (RSI, ATR, Bollinger)
-# These use SMA-based algorithms intentionally different from pandas_ta.
-# We verify correctness against a manual reference with the SAME algorithm.
+# Wilder's-based indicators (RSI, ATR) — now matching pandas_ta standard
 # ---------------------------------------------------------------------------
 
 
-class TestRSISelfConsistency:
-    """RSI: verify our SMA-based RSI matches manual SMA reference exactly."""
+class TestRSIDifferential:
+    """RSI: Wilder's smoothing must match pandas_ta reference."""
 
     @pytest.mark.parametrize("period", [7, 14, 21])
-    def test_rsi_matches_manual_sma_reference(self, period: int):
-        """Our calculate_rsi must match hand-coded SMA-based RSI."""
+    def test_rsi_matches_pandas_ta(self, period: int):
+        """Our Wilder's RSI should closely match pandas_ta.rsi."""
         ours = calculate_rsi(_CLOSE, period)
-        # Manual reference (same SMA algorithm)
+        ref = ta.rsi(_CLOSE, length=period)
+        # Both use Wilder's EMA; tail values should converge tightly
+        diff = (ours.tail(50) - ref.tail(50)).dropna().abs()
+        assert diff.max() < 0.01, f"RSI({period}) diff: {diff.max()}"
+
+    @pytest.mark.parametrize("period", [7, 14, 21])
+    def test_rsi_matches_manual_wilder(self, period: int):
+        """Verify against hand-coded Wilder's reference."""
+        ours = calculate_rsi(_CLOSE, period)
         delta = _CLOSE.diff()
-        gain = delta.where(delta > 0, 0).rolling(window=period).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-        manual = 100 - (100 / (1 + gain / loss))
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+        avg_gain = gain.ewm(alpha=1 / period, adjust=False).mean()
+        avg_loss = loss.ewm(alpha=1 / period, adjust=False).mean()
+        manual = 100 - (100 / (1 + avg_gain / avg_loss))
         diff = (ours - manual).dropna().abs()
         assert diff.max() < 1e-12, f"RSI({period}) self-consistency diff: {diff.max()}"
-
-    def test_rsi_diverges_from_wilder(self):
-        """Document that SMA-based RSI differs from Wilder's (pandas_ta default)."""
-        ours = calculate_rsi(_CLOSE, 14)
-        ref = ta.rsi(_CLOSE, length=14)
-        # They should NOT match — this proves the implementations differ
-        diff = (ours - ref).dropna().abs()
-        assert diff.max() > 1.0, (
-            "RSI unexpectedly matches pandas_ta Wilder's — implementation may have changed"
-        )
 
     @pytest.mark.parametrize("period", [7, 14, 21])
     def test_rsi_range_0_to_100(self, period: int):
@@ -175,13 +171,21 @@ class TestRSISelfConsistency:
         assert (rsi <= 100).all(), f"RSI({period}) has values > 100"
 
 
-class TestATRSelfConsistency:
-    """ATR: verify our SMA-based ATR matches manual SMA of True Range."""
+class TestATRDifferential:
+    """ATR: Wilder's smoothing must match pandas_ta reference."""
 
     @pytest.mark.parametrize("period", [7, 14, 21])
-    def test_atr_matches_manual_sma_reference(self, period: int):
+    def test_atr_matches_pandas_ta(self, period: int):
+        """Our Wilder's ATR should closely match pandas_ta.atr."""
         ours = _atr(_DATA, period)
-        # Manual reference: SMA of True Range
+        ref = ta.atr(_HIGH, _LOW, _CLOSE, length=period)
+        diff = (ours.tail(50) - ref.tail(50)).dropna().abs()
+        assert diff.max() < 0.01, f"ATR({period}) diff: {diff.max()}"
+
+    @pytest.mark.parametrize("period", [7, 14, 21])
+    def test_atr_matches_manual_wilder(self, period: int):
+        """Verify against hand-coded Wilder's reference."""
+        ours = _atr(_DATA, period)
         prev_close = _CLOSE.shift(1)
         tr = pd.concat(
             [
@@ -191,18 +195,9 @@ class TestATRSelfConsistency:
             ],
             axis=1,
         ).max(axis=1)
-        manual = tr.rolling(period).mean()
+        manual = tr.ewm(alpha=1 / period, adjust=False).mean()
         diff = (ours - manual).dropna().abs()
         assert diff.max() < 1e-12, f"ATR({period}) self-consistency diff: {diff.max()}"
-
-    def test_atr_diverges_from_wilder(self):
-        """Document that SMA-based ATR differs from Wilder's (pandas_ta default)."""
-        ours = _atr(_DATA, 14)
-        ref = ta.atr(_HIGH, _LOW, _CLOSE, length=14)
-        diff = (ours - ref).dropna().abs()
-        assert diff.max() > 0.05, (
-            "ATR unexpectedly matches pandas_ta Wilder's — implementation may have changed"
-        )
 
     @pytest.mark.parametrize("period", [7, 14, 21])
     def test_atr_always_positive(self, period: int):
@@ -284,13 +279,10 @@ class TestCrossShapeDifferential:
         assert diff.max() < 1e-10, f"Stoch K on {shape} diff: {diff.max()}"
 
     @pytest.mark.parametrize("shape", _SHAPES)
-    def test_rsi_self_consistent_across_shapes(self, shape: str):
+    def test_rsi_matches_pandas_ta_across_shapes(self, shape: str):
         data = build_fixture(shape, 200, "price_volume")
         close = data["close"]
         ours = calculate_rsi(close, 14)
-        delta = close.diff()
-        gain = delta.where(delta > 0, 0).rolling(14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
-        manual = 100 - (100 / (1 + gain / loss))
-        diff = (ours - manual).dropna().abs()
-        assert diff.max() < 1e-12, f"RSI self-check on {shape} diff: {diff.max()}"
+        ref = ta.rsi(close, length=14)
+        diff = (ours.tail(50) - ref.tail(50)).dropna().abs()
+        assert diff.max() < 0.01, f"RSI vs pandas_ta on {shape} diff: {diff.max()}"

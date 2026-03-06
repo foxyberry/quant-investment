@@ -17,6 +17,7 @@ def _insufficient(name: str) -> ConditionResult:
 
 
 def _atr(data: pd.DataFrame, period: int) -> pd.Series:
+    """ATR using Wilder's smoothing (industry standard)."""
     prev_close = data["close"].shift(1)
     tr = pd.concat(
         [
@@ -26,7 +27,7 @@ def _atr(data: pd.DataFrame, period: int) -> pd.Series:
         ],
         axis=1,
     ).max(axis=1)
-    return tr.rolling(period).mean()
+    return tr.ewm(alpha=1 / period, adjust=False).mean()
 
 
 def _adx(data: pd.DataFrame, period: int = 14):

@@ -43,12 +43,13 @@ def _ema(s: pd.Series, period: int) -> pd.Series:
 
 
 def _atr(data: pd.DataFrame, period: int) -> pd.Series:
+    """ATR using Wilder's smoothing (industry standard)."""
     h = data["high"]
     l = data["low"]
     c = data["close"]
     prev_close = c.shift(1)
     tr = pd.concat([(h - l).abs(), (h - prev_close).abs(), (l - prev_close).abs()], axis=1).max(axis=1)
-    return tr.rolling(period).mean()
+    return tr.ewm(alpha=1 / period, adjust=False).mean()
 
 
 def _supertrend(data: pd.DataFrame, period: int, multiplier: float) -> pd.Series:

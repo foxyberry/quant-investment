@@ -87,7 +87,7 @@
     "atr_percentile_filter": {
       "matched": true,
       "details": {
-        "percentile": 7.5
+        "percentile": 16.666666666666664
       }
     },
     "avg_trading_value": {
@@ -477,7 +477,7 @@
     "keltner_channel_breakout": {
       "matched": false,
       "details": {
-        "upper": 97.14436957729225,
+        "upper": 97.19577289301829,
         "close": 91.37630646769311
       }
     },
@@ -601,7 +601,7 @@
     "natr_filter": {
       "matched": true,
       "details": {
-        "natr_pct": 2.1575448312474017
+        "natr_pct": 2.3489248023984897
       }
     },
     "net_debt_to_ebitda": {
@@ -925,15 +925,15 @@
     "rsi_overbought": {
       "matched": false,
       "details": {
-        "rsi": 27.20248688540056,
+        "rsi": 41.39099523586766,
         "threshold": 70,
         "period": 14
       }
     },
     "rsi_oversold": {
-      "matched": true,
+      "matched": false,
       "details": {
-        "rsi": 27.20248688540056,
+        "rsi": 41.39099523586766,
         "threshold": 35,
         "period": 14
       }
@@ -941,7 +941,7 @@
     "rsi_range": {
       "matched": false,
       "details": {
-        "rsi": 27.20248688540056,
+        "rsi": 41.39099523586766,
         "lower": 50,
         "upper": 70,
         "period": 14
@@ -1020,7 +1020,7 @@
         "period": 10,
         "multiplier": 3.0,
         "latest_close": 91.37630646769311,
-        "latest_supertrend": 89.03994435223017
+        "latest_supertrend": 89.07231591929202
       }
     },
     "support_retest_signal": {
