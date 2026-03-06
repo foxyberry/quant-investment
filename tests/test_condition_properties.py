@@ -231,5 +231,7 @@ def test_rsi_negation_consistency(oversold_threshold: float, overbought_threshol
     oversold = RSIOversoldCondition(threshold=oversold_threshold, period=14).evaluate("TEST", data)
     overbought = RSIOverboughtCondition(threshold=overbought_threshold, period=14).evaluate("TEST", data)
 
-    if oversold.matched:
-        assert not overbought.matched
+    assert not (oversold.matched and overbought.matched), (
+        f"RSI cannot be both oversold (<{oversold_threshold}) and "
+        f"overbought (>{overbought_threshold}) at the same time"
+    )

@@ -214,21 +214,26 @@ class TestBollingerSelfConsistency:
     """Bollinger Bands: verify our ddof=0 implementation."""
 
     @pytest.mark.parametrize("period,std_mult", [(20, 2.0), (10, 1.5), (50, 2.5)])
-    def test_bollinger_matches_manual_ddof0(self, period: int, std_mult: float):
-        """Our Bollinger uses population std (ddof=0). Verify manual match."""
-        ma = _CLOSE.rolling(period).mean()
-        std = _CLOSE.rolling(period).std(ddof=0)
-        upper_manual = ma + std_mult * std
-        lower_manual = ma - std_mult * std
+    def test_bollinger_percent_b_matches_manual(self, period: int, std_mult: float):
+        """Verify BollingerPercentBCondition.evaluate() matches manual ddof=0 calc."""
+        from screener.conditions.quant_oscillators import BollingerPercentBCondition
 
-        # Replicate what BollingerPercentBCondition does at last index
-        ma_last = ma.iloc[-1]
-        std_last = std.iloc[-1]
-        upper_last = ma_last + std_mult * std_last
-        lower_last = ma_last - std_mult * std_last
+        cond = BollingerPercentBCondition(
+            period=period, std_mult=std_mult, min_percent_b=-1.0, max_percent_b=2.0
+        )
+        result = cond.evaluate("TEST", _DATA)
 
-        assert abs(upper_last - float(upper_manual.iloc[-1])) < 1e-12
-        assert abs(lower_last - float(lower_manual.iloc[-1])) < 1e-12
+        # Manual reference using same ddof=0
+        ma = _CLOSE.rolling(period).mean().iloc[-1]
+        std = _CLOSE.rolling(period).std(ddof=0).iloc[-1]
+        upper = ma + std_mult * std
+        lower = ma - std_mult * std
+        expected_pct_b = float((_CLOSE.iloc[-1] - lower) / (upper - lower))
+
+        assert abs(result.details["percent_b"] - expected_pct_b) < 1e-9, (
+            f"BollingerPercentB({period},{std_mult}): "
+            f"got {result.details['percent_b']}, expected {expected_pct_b}"
+        )
 
     def test_bollinger_ddof0_differs_from_ddof1(self):
         """Document that our ddof=0 differs from pandas_ta's ddof=1."""

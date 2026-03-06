@@ -68,6 +68,7 @@ def test_or_composition_above_ma_or_rsi_oversold():
 
     assert "UP" in matched
     assert "DOWN" in matched
+    assert "FLAT" not in matched, "FLAT should not match above_ma or rsi_oversold"
 
 
 def test_empty_dataframe_returns_false_without_error():

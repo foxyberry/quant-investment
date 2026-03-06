@@ -199,16 +199,21 @@ class TestGoldenSnapshot:
         )
 
     def test_all_conditions_present(self):
-        """Every currently registered condition must be in the snapshot."""
+        """Snapshot keys must exactly match current registered conditions."""
         if not _GOLDEN_FILE.exists():
             pytest.skip("Golden file does not exist yet; run --regen-golden first")
         snapshot = _load_snapshot()
         snapshot_keys = set(snapshot["conditions"].keys())
         current_keys = set(_CONDITION_KEYS)
         missing = current_keys - snapshot_keys
+        extra = snapshot_keys - current_keys
         assert not missing, (
             f"{len(missing)} condition(s) missing from golden snapshot: "
             f"{sorted(missing)}. Run --regen-golden to update."
+        )
+        assert not extra, (
+            f"{len(extra)} stale condition(s) in golden snapshot: "
+            f"{sorted(extra)}. Run --regen-golden to update."
         )
 
     @pytest.mark.parametrize("key", _CONDITION_KEYS, ids=lambda k: k)
