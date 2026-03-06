@@ -65,8 +65,23 @@ def test_quant_indicator_conditions_compute():
     assert "cross_day" in IchimokuTenkanKijunCrossCondition(lookback_days=20).evaluate("T", data).details
 
 
-def test_turnover_ratio_missing_shares_failsafe():
+def test_turnover_ratio_missing_shares_yfinance_fallback():
+    """When shares_outstanding is absent from DataFrame, yfinance info API
+    is used as fallback."""
+    from unittest.mock import patch
     data = _df().drop(columns=["shares_outstanding"])
-    result = TurnoverRatioMinCondition().evaluate("T", data)
+    with patch("screener.conditions.fundamental._get_info", return_value={"sharesOutstanding": 1_000_000_000}):
+        result = TurnoverRatioMinCondition(min_turnover_ratio=0).evaluate("AAPL", data)
+    assert "turnover_ratio" in result.details
+    assert result.matched is True
+
+
+def test_turnover_ratio_missing_shares_failsafe():
+    """When shares_outstanding is absent and yfinance also fails,
+    should return matched=False with error."""
+    from unittest.mock import patch
+    data = _df().drop(columns=["shares_outstanding"])
+    with patch("screener.conditions.fundamental._get_info", return_value={}):
+        result = TurnoverRatioMinCondition().evaluate("FAKE_TICKER_XYZ", data)
     assert result.matched is False
-    assert result.details.get("error") == "Insufficient data"
+    assert "error" in result.details

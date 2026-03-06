@@ -193,12 +193,36 @@ class TurnoverRatioMinCondition(BaseCondition):
     def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
         if len(data) < 1:
             return _insufficient(self.name)
-        if "shares_outstanding" not in data.columns:
+        vol = pd.to_numeric(data["volume"].iloc[-1], errors="coerce")
+        if pd.isna(vol):
             return _insufficient(self.name)
-        vol = data["volume"].iloc[-1]
-        shares = data["shares_outstanding"].iloc[-1]
-        if pd.isna(vol) or pd.isna(shares) or shares == 0:
-            return _insufficient(self.name)
+
+        # Try DataFrame column first (for tests / pre-enriched data),
+        # then fall back to yfinance info API (cached via @lru_cache).
+        shares = None
+        if "shares_outstanding" in data.columns:
+            shares = pd.to_numeric(data["shares_outstanding"].iloc[-1], errors="coerce")
+
+        if shares is None or pd.isna(shares) or shares <= 0:
+            try:
+                from .fundamental import _get_info
+                info = _get_info(ticker)
+                raw = info.get("sharesOutstanding")
+                if raw is not None:
+                    shares = pd.to_numeric(raw, errors="coerce")
+            except Exception as exc:
+                import logging
+                logging.getLogger(__name__).debug(
+                    "yfinance fallback failed for %s: %s", ticker, exc,
+                )
+
+        if shares is None or pd.isna(shares) or shares <= 0:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "No shares outstanding data"},
+            )
+
         ratio = float(vol / shares)
         return ConditionResult(matched=ratio >= self.min_turnover_ratio, condition_name=self.name, details={"turnover_ratio": ratio})
 
