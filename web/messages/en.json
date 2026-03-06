@@ -733,7 +733,12 @@
       "title": "AI Strategy Assistant",
       "placeholder": "Ask about your strategy...",
       "empty": "Ask me anything about building your strategy.",
-      "error": "Failed to get response. Please try again."
+      "error": "Failed to get response. Please try again.",
+      "summary": "Summary",
+      "conditions": "Conditions ({count})",
+      "warnings": "Warnings ({count})",
+      "addToCanvas": "Add to Canvas",
+      "added": "Added"
     }
   },
   "analysis": {

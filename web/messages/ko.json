@@ -733,7 +733,12 @@
       "title": "AI 전략 어시스턴트",
       "placeholder": "전략에 대해 질문하세요...",
       "empty": "전략 구성에 대해 무엇이든 물어보세요.",
-      "error": "응답을 받지 못했습니다. 다시 시도해주세요."
+      "error": "응답을 받지 못했습니다. 다시 시도해주세요.",
+      "summary": "요약",
+      "conditions": "조건 ({count})",
+      "warnings": "주의사항 ({count})",
+      "addToCanvas": "캔버스에 추가",
+      "added": "추가됨"
     }
   },
   "analysis": {
