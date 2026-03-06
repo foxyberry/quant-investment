@@ -139,18 +139,18 @@ def _build_conditions_section() -> str:
         for item in items:
             key = item["key"]
             label = item.get("label", key)
+            desc = item.get("description", "")
+            params = item.get("params", [])
+            param_str = ", ".join(
+                f"{p['name']}({p['type']}, default={p.get('default', '?')})"
+                for p in params
+            )
             if key in detail_keys:
-                desc = item.get("description", "")
-                params = item.get("params", [])
-                param_str = ", ".join(
-                    f"{p['name']}({p['type']}, default={p.get('default', '?')})"
-                    for p in params
-                )
                 lines.append(f"- **{key}** ({label}): {desc}")
-                if param_str:
-                    lines.append(f"  params: {param_str}")
             else:
-                lines.append(f"- {key} ({label})")
+                lines.append(f"- {key} ({label}): {desc}" if desc else f"- {key} ({label})")
+            if param_str:
+                lines.append(f"  params: {param_str}")
 
     return "\n".join(lines)
 
