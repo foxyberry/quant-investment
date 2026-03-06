@@ -547,7 +547,18 @@
     "saveAsPreset": "프리셋으로 저장",
     "saveAsPresetName": "프리셋 이름을 입력하세요:",
     "saveAsPresetSuccess": "프리셋이 저장되었습니다.",
-    "saveAsPresetFailed": "프리셋 저장에 실패했습니다."
+    "saveAsPresetFailed": "프리셋 저장에 실패했습니다.",
+    "bulkSelectMode": "선택",
+    "bulkExitSelectMode": "선택 취소",
+    "bulkSelectedCount": "{count}개 선택됨",
+    "bulkApplyPreset": "프리셋 일괄 적용",
+    "bulkApplyConfirm": "선택한 {count}개 종목에 프리셋을 적용하시겠습니까?",
+    "bulkApplySuccess": "{total}개 중 {succeeded}개 적용 완료",
+    "bulkApplyPartial": "{succeeded}개 성공, {failed}개 실패",
+    "bulkCancel": "취소",
+    "bulkSelectPreset": "프리셋 선택",
+    "bulkApplyButton": "적용",
+    "bulkNoPresets": "사용 가능한 프리셋이 없습니다"
   },
   "brokerOrderDesk": {
     "title": "통합 주문 데스크",

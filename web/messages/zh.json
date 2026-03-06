@@ -547,7 +547,18 @@
     "saveAsPreset": "保存为预设",
     "saveAsPresetName": "请输入预设名称：",
     "saveAsPresetSuccess": "预设保存成功。",
-    "saveAsPresetFailed": "保存预设失败。"
+    "saveAsPresetFailed": "保存预设失败。",
+    "bulkSelectMode": "选择",
+    "bulkExitSelectMode": "取消选择",
+    "bulkSelectedCount": "已选择{count}个",
+    "bulkApplyPreset": "批量应用预设",
+    "bulkApplyConfirm": "确定要将预设应用到所选的{count}个持仓吗？",
+    "bulkApplySuccess": "{total}个中{succeeded}个应用成功",
+    "bulkApplyPartial": "{succeeded}个成功，{failed}个失败",
+    "bulkCancel": "取消",
+    "bulkSelectPreset": "选择预设",
+    "bulkApplyButton": "应用",
+    "bulkNoPresets": "没有可用的预设"
   },
   "brokerOrderDesk": {
     "title": "统一下单台",

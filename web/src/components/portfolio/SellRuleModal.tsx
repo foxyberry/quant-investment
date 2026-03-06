@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { Plus, Trash2, X, Shield, Save, BookMarked } from 'lucide-react';
+import { Plus, Trash2, X, Shield, BookMarked } from 'lucide-react';
 import { Button } from '@/components/ui';
 import {
   getSellRules,
@@ -11,7 +11,6 @@ import {
   deleteSellRule,
   getSellRulePresets,
   applySellRulePreset,
-  saveAsPreset,
 } from '@/lib/api';
 import type { Holding, SellRule, SellRuleCreate, SellRuleType, SellRulePreset } from '@/lib/types';
 
@@ -44,9 +43,6 @@ export default function SellRuleModal({ holding, onClose, onUpdate }: SellRuleMo
   const [newRuleValue, setNewRuleValue] = useState('');
   const [addError, setAddError] = useState<string | null>(null);
   const [isMutating, setIsMutating] = useState(false);
-
-  // Save-as-preset feedback
-  const [savePresetMsg, setSavePresetMsg] = useState<string | null>(null);
 
   const fetchRules = useCallback(async () => {
     try {
@@ -174,29 +170,6 @@ export default function SellRuleModal({ holding, onClose, onUpdate }: SellRuleMo
       onUpdate();
     } catch {
       setPresetError(t('sellRulePresetApplyFailed'));
-    } finally {
-      setIsMutating(false);
-    }
-  };
-
-  const handleSaveAsPreset = async () => {
-    const name = window.prompt(t('saveAsPresetName'));
-    if (!name || !name.trim()) return;
-
-    setIsMutating(true);
-    setSavePresetMsg(null);
-    try {
-      await saveAsPreset(holding.ticker, name.trim());
-      setSavePresetMsg(t('saveAsPresetSuccess'));
-      // Refresh presets if they were loaded
-      if (presetsLoaded) {
-        setPresetsLoaded(false);
-        const data = await getSellRulePresets();
-        setPresets(data);
-        setPresetsLoaded(true);
-      }
-    } catch {
-      setSavePresetMsg(t('saveAsPresetFailed'));
     } finally {
       setIsMutating(false);
     }
@@ -481,23 +454,6 @@ export default function SellRuleModal({ holding, onClose, onUpdate }: SellRuleMo
           )}
         </div>
 
-        {/* Footer: Save as Preset */}
-        {rules.length > 0 && (
-          <div className="border-t border-[var(--border)] px-6 py-3 flex items-center justify-between">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleSaveAsPreset}
-              disabled={isMutating}
-            >
-              <Save className="h-3.5 w-3.5 mr-1" />
-              {t('saveAsPreset')}
-            </Button>
-            {savePresetMsg && (
-              <span className="text-xs text-[var(--foreground-muted)]">{savePresetMsg}</span>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

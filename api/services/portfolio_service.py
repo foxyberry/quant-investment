@@ -56,6 +56,14 @@ logger = logging.getLogger(__name__)
 ENRICHMENT_TIMEOUT_SECONDS = 30
 
 
+class PresetNotFoundError(Exception):
+    """Raised when a sell rule preset does not exist."""
+
+
+class PresetInactiveError(Exception):
+    """Raised when a sell rule preset is deactivated."""
+
+
 class PortfolioService:
     """
     Portfolio service for managing holdings.
@@ -1577,6 +1585,60 @@ class PortfolioService:
             raise
         finally:
             db.close()
+
+    def bulk_apply_preset(self, preset_id: int, tickers: List[str]):
+        """Apply a preset to multiple holdings at once.
+
+        Returns a BulkApplyPresetResponse with per-ticker results.
+        Individual failures do not abort the entire operation.
+
+        Raises:
+            PresetNotFoundError: if preset does not exist.
+            PresetInactiveError: if preset is deactivated.
+        """
+        from api.schemas.portfolio import BulkApplyPresetResponse, BulkApplyPresetResultItem
+
+        db = SessionLocal()
+        try:
+            preset = db.query(SellRulePreset).filter(SellRulePreset.id == preset_id).first()
+            if preset is None:
+                raise PresetNotFoundError(f"Preset not found: {preset_id}")
+            if not preset.is_active:
+                raise PresetInactiveError(f"Preset is inactive: {preset.name}")
+        finally:
+            db.close()
+
+        results: List[BulkApplyPresetResultItem] = []
+        for ticker in tickers:
+            try:
+                created_rules = self.apply_preset_to_holding(ticker, preset_id)
+                results.append(BulkApplyPresetResultItem(
+                    ticker=ticker,
+                    success=True,
+                    rules_created=len(created_rules),
+                ))
+            except ValueError as e:
+                results.append(BulkApplyPresetResultItem(
+                    ticker=ticker,
+                    success=False,
+                    error=str(e),
+                ))
+            except Exception:
+                logger.exception("Unexpected error applying preset %d to %s", preset_id, ticker)
+                results.append(BulkApplyPresetResultItem(
+                    ticker=ticker,
+                    success=False,
+                    error="Internal error",
+                ))
+
+        succeeded = sum(1 for r in results if r.success)
+        return BulkApplyPresetResponse(
+            preset_id=preset_id,
+            total=len(results),
+            succeeded=succeeded,
+            failed=len(results) - succeeded,
+            results=results,
+        )
 
     def save_preset_from_holding(self, ticker: str, name: str, description: Optional[str] = None) -> SellRulePresetResponse:
         """Save current sell rules of a holding as a new preset.

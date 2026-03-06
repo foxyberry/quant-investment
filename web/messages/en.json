@@ -547,7 +547,18 @@
     "saveAsPreset": "Save as Preset",
     "saveAsPresetName": "Enter preset name:",
     "saveAsPresetSuccess": "Preset saved successfully.",
-    "saveAsPresetFailed": "Failed to save preset."
+    "saveAsPresetFailed": "Failed to save preset.",
+    "bulkSelectMode": "Select",
+    "bulkExitSelectMode": "Cancel Selection",
+    "bulkSelectedCount": "{count} selected",
+    "bulkApplyPreset": "Apply Preset",
+    "bulkApplyConfirm": "Apply preset to {count} selected holdings?",
+    "bulkApplySuccess": "{succeeded} of {total} applied successfully",
+    "bulkApplyPartial": "{succeeded} succeeded, {failed} failed",
+    "bulkCancel": "Cancel",
+    "bulkSelectPreset": "Select Preset",
+    "bulkApplyButton": "Apply",
+    "bulkNoPresets": "No active presets available"
   },
   "brokerOrderDesk": {
     "title": "Broker Order Desk",
