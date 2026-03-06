@@ -643,7 +643,6 @@
     "collapsePanel": "Collapse panel",
     "searchPlaceholder": "Search components...",
     "coreNodes": "Core Nodes",
-    "market": "Market",
     "sector": "Sector",
     "result": "Result",
     "inputNodes": "Input Nodes",
@@ -757,7 +756,10 @@
       "warnings": "Warnings ({count})",
       "addToCanvas": "Add to Canvas",
       "added": "Added"
-    }
+    },
+    "logicAndShort": "All match",
+    "logicOrShort": "Any match",
+    "logicNotShort": "Invert"
   },
   "analysis": {
     "title": "Charts & Analysis",
@@ -3041,7 +3043,7 @@
     "belowBand": "Below Band",
     "withinBand": "Within Band",
     "neutral": "Neutral",
-    "rsiExplain": "RSI measures momentum on a 0\u2013100 scale. Below 30 signals oversold (buy opportunity), above 70 signals overbought (sell opportunity).",
+    "rsiExplain": "RSI measures momentum on a 0–100 scale. Below 30 signals oversold (buy opportunity), above 70 signals overbought (sell opportunity).",
     "macdExplain": "MACD tracks trend direction. When MACD crosses above the Signal line, it suggests upward momentum (bullish). Below means bearish.",
     "rsiSubtitle": "Relative Strength Index",
     "macdSubtitle": "Trend Following Momentum",

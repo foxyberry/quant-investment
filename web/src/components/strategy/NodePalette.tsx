@@ -18,19 +18,16 @@ import { useTranslations } from 'next-intl';
 import { useConditions } from '@/contexts/ConditionsContext';
 import type { StrategyConditionInfo } from '@/lib/api';
 
-const INPUT_NODES = [
-  { type: 'universe', labelKey: 'marketSelection', shortKey: 'market', icon: Globe, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' },
-  { type: 'sector', labelKey: 'sectorFilter', shortKey: 'sector', icon: Building2, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20' },
+const IO_NODES = [
+  { type: 'universe', shortKey: 'market', icon: Globe, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' },
+  { type: 'sector', shortKey: 'sector', icon: Building2, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20' },
+  { type: 'output', shortKey: 'result', icon: Flag, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20' },
 ];
 
 const LOGIC_NODES = [
-  { type: 'logic_and', labelKey: 'andGroup', shortKey: 'AND', icon: GitMerge, color: 'text-[#1313ec] dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20' },
-  { type: 'logic_or', labelKey: 'orGroup', shortKey: 'OR', icon: GitMerge, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20' },
-  { type: 'logic_not', labelKey: 'notGroup', shortKey: 'NOT', icon: GitMerge, color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20' },
-];
-
-const OUTPUT_NODES = [
-  { type: 'output', labelKey: 'finalOutput', shortKey: 'result', icon: Flag, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/20' },
+  { type: 'logic_and', shortKey: 'AND', hintKey: 'logicAndShort', icon: GitMerge, color: 'text-[#1313ec] dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20', hoverBg: 'hover:bg-blue-100 dark:hover:bg-blue-500/20' },
+  { type: 'logic_or', shortKey: 'OR', hintKey: 'logicOrShort', icon: GitMerge, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/20', hoverBg: 'hover:bg-purple-100 dark:hover:bg-purple-500/20' },
+  { type: 'logic_not', shortKey: 'NOT', hintKey: 'logicNotShort', icon: GitMerge, color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20', hoverBg: 'hover:bg-red-100 dark:hover:bg-red-500/20' },
 ];
 
 function toTitleCaseFromKey(value: string): string {
@@ -84,6 +81,41 @@ function DraggableChip({
     >
       <Icon className={`h-3.5 w-3.5 ${color} flex-shrink-0`} />
       <span className={`${color} truncate`}>{label}</span>
+    </div>
+  );
+}
+
+function LogicCard({
+  type,
+  label,
+  hint,
+  icon: Icon,
+  color,
+  bgColor,
+  hoverBg,
+}: {
+  type: string;
+  label: string;
+  hint: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  bgColor: string;
+  hoverBg: string;
+}) {
+  const onDragStart = (event: React.DragEvent) => {
+    event.dataTransfer.setData('application/reactflow-type', type);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
+  return (
+    <div
+      className={`flex flex-col items-center gap-0.5 px-1 py-2 rounded-lg cursor-grab border ${bgColor} ${hoverBg} hover:shadow-sm transition-all text-center flex-1 min-w-0`}
+      draggable
+      onDragStart={onDragStart}
+    >
+      <Icon className={`h-4 w-4 ${color}`} />
+      <span className={`text-[11px] font-bold ${color} leading-tight`}>{label}</span>
+      <span className="text-[9px] text-gray-400 dark:text-gray-500 leading-tight truncate w-full px-0.5">{hint}</span>
     </div>
   );
 }
@@ -166,7 +198,6 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
   const { categories, getConditionsByCategory, isLoading } = useConditions();
-  // Track collapsed categories (all expanded by default)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const conditionsByCategory = useMemo(() => getConditionsByCategory(), [getConditionsByCategory]);
@@ -237,41 +268,14 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
         </div>
       </div>
 
-      {/* Core Nodes — sticky quick access */}
-      {!searchQuery && (
+      {/* Input/Output nodes — compact row */}
+      {!searchQuery.trim() && (
         <div className="px-3 pb-2 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
           <div className="px-0 py-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-            {t('coreNodes')}
+            {t('inputNodes')}
           </div>
-          {/* Input row */}
-          <div className="flex gap-1.5 mb-1.5">
-            {INPUT_NODES.map((node) => (
-              <DraggableChip
-                key={node.type}
-                type={node.type}
-                label={t(node.shortKey)}
-                icon={node.icon}
-                color={node.color}
-                bgColor={node.bgColor}
-              />
-            ))}
-          </div>
-          {/* Logic row */}
-          <div className="flex gap-1.5 mb-1.5">
-            {LOGIC_NODES.map((node) => (
-              <DraggableChip
-                key={node.type}
-                type={node.type}
-                label={node.shortKey}
-                icon={node.icon}
-                color={node.color}
-                bgColor={node.bgColor}
-              />
-            ))}
-          </div>
-          {/* Output row */}
-          <div className="flex gap-1.5">
-            {OUTPUT_NODES.map((node) => (
+          <div className="flex gap-1.5 flex-wrap">
+            {IO_NODES.map((node) => (
               <DraggableChip
                 key={node.type}
                 type={node.type}
@@ -288,7 +292,7 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
       {/* Scrollable filter conditions */}
       <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-1">
         <div className="mb-2">
-          {!searchQuery && (
+          {!searchQuery.trim() && (
             <div className="px-2 py-1.5 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
               {t('filterNodes')}
             </div>
@@ -302,7 +306,7 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
             categories.map((category) => {
               const conditions = filteredConditions[category] || [];
               if (conditions.length === 0) return null;
-              const isExpanded = !collapsedCategories.has(category) || !!searchQuery;
+              const isExpanded = !collapsedCategories.has(category) || !!searchQuery.trim();
 
               return (
                 <div key={category} className="mb-1">
@@ -339,6 +343,27 @@ export default function NodePalette({ nodeCount }: NodePaletteProps) {
               );
             })
           )}
+        </div>
+      </div>
+
+      {/* Pinned Logic Operators — always visible */}
+      <div className="px-3 py-2 border-t border-[#e1e3e5] dark:border-[#2e2e30]">
+        <div className="px-0 py-1 text-[11px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+          {t('logicOperators')}
+        </div>
+        <div className="flex gap-1.5">
+          {LOGIC_NODES.map((node) => (
+            <LogicCard
+              key={node.type}
+              type={node.type}
+              label={node.shortKey}
+              hint={t(node.hintKey)}
+              icon={node.icon}
+              color={node.color}
+              bgColor={node.bgColor}
+              hoverBg={node.hoverBg}
+            />
+          ))}
         </div>
       </div>
 
