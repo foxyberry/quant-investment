@@ -25,7 +25,7 @@ import '@xyflow/react/dist/style.css';
 
 import {
   Loader2, Zap, RotateCcw, Save, TestTube, FolderOpen, X,
-  ChevronRight, ChevronDown, Home, Calendar, Search,
+  ChevronRight, ChevronDown, Home, Calendar, Search, AlignHorizontalSpaceAround,
 } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
@@ -1003,6 +1003,25 @@ function StrategyPageInner() {
     setIsSampleStrategy(false);
   }, [setNodes, setEdges]);
 
+  const handleAutoLayout = useCallback(() => {
+    const topLevelNodes = nodes.filter((n) => !n.parentId);
+    const layoutData = topLevelNodes.map((n) => ({
+      id: n.id,
+      data: n.data as LayoutNodeData,
+    }));
+    const autoPositions = computeAutoLayout(layoutData, edges);
+    setNodes((nds) =>
+      nds.map((n) => {
+        const pos = autoPositions.get(n.id);
+        if (pos) return { ...n, position: pos };
+        return n;
+      })
+    );
+    setTimeout(() => {
+      reactFlowInstance?.fitView({ duration: 300 });
+    }, 50);
+  }, [nodes, edges, setNodes, reactFlowInstance]);
+
   const handleExportJson = useCallback(() => {
     const typedNodes = nodes as unknown as Node<StrategyNodeData>[];
     const graph = serializeGraph(typedNodes, edges);
@@ -1266,6 +1285,14 @@ function StrategyPageInner() {
         >
           <RotateCcw className="h-3.5 w-3.5" />
           {t('reset')}
+        </button>
+        <button
+          type="button"
+          onClick={handleAutoLayout}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          <AlignHorizontalSpaceAround className="h-3.5 w-3.5" />
+          {t('autoLayout')}
         </button>
         <button
           type="button"

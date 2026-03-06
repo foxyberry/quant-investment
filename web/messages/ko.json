@@ -589,6 +589,7 @@
     "myStrategies": "내 전략",
     "untitled": "제목 없는 전략",
     "reset": "초기화",
+    "autoLayout": "자동 정렬",
     "saveStrategy": "전략 저장",
     "backtest": "백테스트",
     "deployStrategy": "전략 배포",

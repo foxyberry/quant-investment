@@ -589,6 +589,7 @@
     "myStrategies": "My Strategies",
     "untitled": "Untitled Strategy",
     "reset": "Reset",
+    "autoLayout": "Auto Layout",
     "saveStrategy": "Save Strategy",
     "backtest": "Backtest",
     "deployStrategy": "Deploy Strategy",
