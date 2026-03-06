@@ -420,6 +420,25 @@ class SavePresetFromHolding(BaseModel):
     description: Optional[str] = None
 
 
+class BulkApplyPresetRequest(BaseModel):
+    tickers: List[str] = Field(..., min_length=1)
+
+
+class BulkApplyPresetResultItem(BaseModel):
+    ticker: str
+    success: bool
+    rules_created: int = 0
+    error: Optional[str] = None
+
+
+class BulkApplyPresetResponse(BaseModel):
+    preset_id: int
+    total: int
+    succeeded: int
+    failed: int
+    results: List[BulkApplyPresetResultItem]
+
+
 class SellRuleEvaluateResult(BaseModel):
     rule_id: int
     ticker: str

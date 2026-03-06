@@ -42,6 +42,7 @@ import type {
   BuyRuleUpdate,
   BuyRuleTemplate,
   BuySignal,
+  BulkApplyPresetResponse,
   SellRule,
   SellRuleCreate,
   SellRuleType,
@@ -407,6 +408,16 @@ export async function saveAsPreset(
     {
       method: 'POST',
       body: JSON.stringify({ name, description }),
+    }
+  );
+}
+
+export async function bulkApplyPreset(presetId: number, tickers: string[]): Promise<BulkApplyPresetResponse> {
+  return fetchApi<BulkApplyPresetResponse>(
+    `/api/portfolio/sell-rule-presets/${presetId}/bulk-apply`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ tickers }),
     }
   );
 }

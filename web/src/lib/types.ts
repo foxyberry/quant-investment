@@ -482,6 +482,22 @@ export interface SellRuleEvaluateResult {
   trigger_value: number | null;
 }
 
+// Bulk apply preset types
+export interface BulkApplyResultItem {
+  ticker: string;
+  success: boolean;
+  rules_created: number;
+  error: string | null;
+}
+
+export interface BulkApplyPresetResponse {
+  preset_id: number;
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: BulkApplyResultItem[];
+}
+
 // Watchlist types
 export interface WatchlistItem {
   id: number;

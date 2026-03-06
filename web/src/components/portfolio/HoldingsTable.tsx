@@ -29,6 +29,12 @@ interface HoldingsTableProps {
   onSellRules?: (holding: Holding) => void;
   /** Per-ticker current price change direction for transient highlight */
   priceChangeDirection?: Record<string, 'up' | 'down'>;
+  /** Enable checkbox selection mode */
+  selectable?: boolean;
+  /** Currently selected tickers */
+  selectedTickers?: Set<string>;
+  /** Callback when selection changes */
+  onSelectionChange?: (tickers: Set<string>) => void;
 }
 
 interface SortButtonProps {
@@ -108,6 +114,9 @@ export default function HoldingsTable({
   onSell,
   onSellRules,
   priceChangeDirection,
+  selectable,
+  selectedTickers,
+  onSelectionChange,
 }: HoldingsTableProps) {
   const t = useTranslations('portfolio');
   const ta = useTranslations('allocation');
@@ -117,6 +126,29 @@ export default function HoldingsTable({
   const formatQuantity = (value: number) => formatQuantityUtil(value, locale);
   const [sortField, setSortField] = useState<SortField>('ticker');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const allSelected = selectable && holdings.length > 0 && selectedTickers?.size === holdings.length;
+  const someSelected = selectable && selectedTickers && selectedTickers.size > 0 && selectedTickers.size < holdings.length;
+
+  const toggleAll = useCallback(() => {
+    if (!onSelectionChange) return;
+    if (allSelected) {
+      onSelectionChange(new Set());
+    } else {
+      onSelectionChange(new Set(holdings.map((h) => h.ticker)));
+    }
+  }, [allSelected, holdings, onSelectionChange]);
+
+  const toggleOne = useCallback((ticker: string) => {
+    if (!onSelectionChange || !selectedTickers) return;
+    const next = new Set(selectedTickers);
+    if (next.has(ticker)) {
+      next.delete(ticker);
+    } else {
+      next.add(ticker);
+    }
+    onSelectionChange(next);
+  }, [selectedTickers, onSelectionChange]);
 
   const sortedHoldings = useMemo(() => {
     return [...holdings].sort((a, b) => {
@@ -201,6 +233,17 @@ export default function HoldingsTable({
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-[var(--border)] bg-[var(--background)]/50">
+              {selectable && (
+                <th className="w-10 px-2 py-2.5 text-center">
+                  <input
+                    type="checkbox"
+                    checked={!!allSelected}
+                    ref={(el) => { if (el) el.indeterminate = !!someSelected; }}
+                    onChange={toggleAll}
+                    className="h-4 w-4 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                  />
+                </th>
+              )}
               <th className="px-4 py-2.5 text-left">
                 <SortButton field="name" currentField={sortField} direction={sortDirection} onSort={handleSort}>
                   {t('name')}
@@ -255,9 +298,21 @@ export default function HoldingsTable({
             {sortedHoldings.map((holding) => (
               <tr
                 key={holding.ticker}
-                onClick={() => onRowClick?.(holding)}
-                className={`border-b border-[var(--border)] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                onClick={() => selectable ? toggleOne(holding.ticker) : onRowClick?.(holding)}
+                className={`border-b border-[var(--border)] hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors ${
+                  selectable && selectedTickers?.has(holding.ticker) ? 'bg-blue-50/70 dark:bg-blue-900/20' : ''
+                } ${selectable || onRowClick ? 'cursor-pointer' : ''}`}
               >
+                {selectable && (
+                  <td className="w-10 px-2 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedTickers?.has(holding.ticker) ?? false}
+                      onChange={() => toggleOne(holding.ticker)}
+                      className="h-4 w-4 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                    />
+                  </td>
+                )}
                 <td className="px-4 py-2.5 text-[var(--foreground)]">
                   {holding.name || holding.ticker}
                 </td>
@@ -392,6 +447,9 @@ export default function HoldingsTable({
             onSell={onSell}
             onSellRules={onSellRules}
             priceChangeDirection={priceChangeDirection}
+            selectable={selectable}
+            selected={selectedTickers?.has(holding.ticker)}
+            onToggle={() => toggleOne(holding.ticker)}
           />
         ))}
       </div>
@@ -408,12 +466,15 @@ interface MobileCardProps {
   onSell?: (holding: Holding) => void;
   onSellRules?: (holding: Holding) => void;
   priceChangeDirection?: Record<string, 'up' | 'down'>;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggle?: () => void;
 }
 
 /**
  * Mobile card component for responsive display
  */
-function MobileCard({ holding, onRowClick, onEdit, onDelete, onAnalyze, onSell, onSellRules, priceChangeDirection }: MobileCardProps) {
+function MobileCard({ holding, onRowClick, onEdit, onDelete, onAnalyze, onSell, onSellRules, priceChangeDirection, selectable, selected, onToggle }: MobileCardProps) {
   const t = useTranslations('portfolio');
   const locale = useLocale();
   const formatCurrency = (value: number | null, currency?: string) => formatCurrencyUtil(value, currency, locale);
@@ -422,24 +483,35 @@ function MobileCard({ holding, onRowClick, onEdit, onDelete, onAnalyze, onSell, 
 
   return (
     <div
-      className={`p-3 ${onRowClick ? 'cursor-pointer' : ''}`}
-      onClick={() => onRowClick?.(holding)}
+      className={`p-3 ${selectable && selected ? 'bg-blue-50/70 dark:bg-blue-900/20' : ''} ${selectable || onRowClick ? 'cursor-pointer' : ''}`}
+      onClick={() => selectable ? onToggle?.() : onRowClick?.(holding)}
     >
       <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-mono font-medium text-[var(--color-primary)]">
-              {holding.ticker}
-            </span>
-            {holding.change_pct !== null && holding.change_pct !== undefined && holding.change_pct !== 0 && (
-              holding.change_pct > 0 ? (
-                <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
-              ) : (
-                <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
-              )
-            )}
+        <div className="flex items-start gap-2">
+          {selectable && (
+            <input
+              type="checkbox"
+              checked={!!selected}
+              onChange={(e) => { e.stopPropagation(); onToggle?.(); }}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-1 h-4 w-4 rounded border-[var(--border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+            />
+          )}
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-medium text-[var(--color-primary)]">
+                {holding.ticker}
+              </span>
+              {holding.change_pct !== null && holding.change_pct !== undefined && holding.change_pct !== 0 && (
+                holding.change_pct > 0 ? (
+                  <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+                )
+              )}
+            </div>
+            <p className="mt-1 text-sm text-[var(--foreground)]">{holding.name || '-'}</p>
           </div>
-          <p className="mt-1 text-sm text-[var(--foreground)]">{holding.name || '-'}</p>
         </div>
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           {onEdit && (

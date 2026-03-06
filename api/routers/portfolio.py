@@ -17,6 +17,8 @@ from fastapi.responses import StreamingResponse
 from api.schemas.portfolio import (
     AdditionalPurchaseRequest,
     ApplyPresetToHolding,
+    BulkApplyPresetRequest,
+    BulkApplyPresetResponse,
     CsvImportResponse,
     HoldingCreate,
     HoldingUpdate,
@@ -654,6 +656,24 @@ async def apply_preset_to_holding(ticker: str, data: ApplyPresetToHolding) -> Li
             raise HTTPException(status_code=404, detail=msg)
         if "already applied" in msg.lower():
             raise HTTPException(status_code=409, detail=msg)
+        if "inactive" in msg.lower():
+            raise HTTPException(status_code=409, detail=msg)
+        raise HTTPException(status_code=422, detail=msg)
+
+
+@router.post(
+    "/sell-rule-presets/{preset_id}/bulk-apply",
+    response_model=BulkApplyPresetResponse,
+    summary="Bulk Apply Preset to Multiple Holdings",
+)
+async def bulk_apply_preset(preset_id: int, data: BulkApplyPresetRequest) -> BulkApplyPresetResponse:
+    service = get_portfolio_service()
+    try:
+        return service.bulk_apply_preset(preset_id, data.tickers)
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            raise HTTPException(status_code=404, detail=msg)
         if "inactive" in msg.lower():
             raise HTTPException(status_code=409, detail=msg)
         raise HTTPException(status_code=422, detail=msg)

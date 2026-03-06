@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download, Search, History } from 'lucide-react';
+import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download, Search, History, CheckSquare, X } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import {
   HoldingsTable,
@@ -28,8 +28,10 @@ import {
   getPortfolioSummary,
   getSellSignals,
   exportHoldingsCsv,
+  getSellRulePresets,
+  bulkApplyPreset,
 } from '@/lib/api';
-import type { Holding, HoldingCreate, HoldingUpdate, AdditionalPurchaseRequest, PortfolioSummary, SellSignal } from '@/lib/types';
+import type { Holding, HoldingCreate, HoldingUpdate, AdditionalPurchaseRequest, PortfolioSummary, SellSignal, SellRulePreset } from '@/lib/types';
 import { formatCurrency as formatCurrencyUtil, formatPercent as formatPercentUtil } from '@/lib/format';
 import { useUserSettings } from '@/contexts/UserSettingsContext';
 import type { BaseCurrency } from '@/lib/format';
@@ -131,6 +133,14 @@ export default function PortfolioPage() {
 
   // Trade history section state
   const [isTradeHistoryOpen, setIsTradeHistoryOpen] = useState(false);
+
+  // Bulk mode state
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedTickers, setSelectedTickers] = useState<Set<string>>(new Set());
+  const [bulkPresets, setBulkPresets] = useState<SellRulePreset[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<number | null>(null);
+  const [isBulkApplying, setIsBulkApplying] = useState(false);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
 
   // Sell signal banner state
   const [isBannerDismissed, setIsBannerDismissed] = useState(false);
@@ -584,6 +594,45 @@ export default function PortfolioPage() {
     );
   }, [locale]);
 
+  const handleEnterBulkMode = useCallback(async () => {
+    setBulkMode(true);
+    setSelectedTickers(new Set());
+    setSelectedPresetId(null);
+    try {
+      const presets = await getSellRulePresets();
+      setBulkPresets(presets.filter((p) => p.is_active));
+    } catch {
+      setBulkPresets([]);
+    }
+  }, []);
+
+  const handleExitBulkMode = useCallback(() => {
+    setBulkMode(false);
+    setSelectedTickers(new Set());
+    setSelectedPresetId(null);
+    setBulkConfirmOpen(false);
+  }, []);
+
+  const handleBulkApply = useCallback(async () => {
+    if (!selectedPresetId || selectedTickers.size === 0) return;
+    setBulkConfirmOpen(false);
+    setIsBulkApplying(true);
+    try {
+      const result = await bulkApplyPreset(selectedPresetId, Array.from(selectedTickers));
+      if (result.failed === 0) {
+        alert(t('bulkApplySuccess', { succeeded: result.succeeded, total: result.total }));
+      } else {
+        alert(t('bulkApplyPartial', { succeeded: result.succeeded, failed: result.failed }));
+      }
+      handleExitBulkMode();
+      fetchData(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to apply preset');
+    } finally {
+      setIsBulkApplying(false);
+    }
+  }, [selectedPresetId, selectedTickers, t, handleExitBulkMode, fetchData]);
+
   const getPnlTrend = (value: number): 'up' | 'down' | 'neutral' => {
     if (value > 0) return 'up';
     if (value < 0) return 'down';
@@ -687,12 +736,77 @@ export default function PortfolioPage() {
             <Download className="h-4 w-4 mr-2" />
             {t('exportCsv')}
           </Button>
+          {!bulkMode ? (
+            <Button variant="outline" onClick={handleEnterBulkMode} disabled={holdings.length === 0}>
+              <CheckSquare className="h-4 w-4 mr-2" />
+              {t('bulkSelectMode')}
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={handleExitBulkMode}>
+              <X className="h-4 w-4 mr-2" />
+              {t('bulkExitSelectMode')}
+            </Button>
+          )}
           <Button variant="primary" onClick={() => setIsAddModalOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             {t('addHolding')}
           </Button>
         </div>
       </div>
+
+      {/* Bulk Action Bar */}
+      {bulkMode && (
+        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/50">
+          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+            {t('bulkSelectedCount', { count: selectedTickers.size })}
+          </span>
+          <select
+            value={selectedPresetId ?? ''}
+            onChange={(e) => setSelectedPresetId(e.target.value ? Number(e.target.value) : null)}
+            className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          >
+            <option value="">{t('bulkSelectPreset')}</option>
+            {bulkPresets.length === 0 && (
+              <option value="" disabled>{t('bulkNoPresets')}</option>
+            )}
+            {bulkPresets.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} ({p.rules.length} {t('sellRulePresetRules')})
+              </option>
+            ))}
+          </select>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={selectedTickers.size === 0 || !selectedPresetId || isBulkApplying}
+            onClick={() => setBulkConfirmOpen(true)}
+          >
+            {isBulkApplying ? t('bulkApplyButton') + '...' : t('bulkApplyButton')}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExitBulkMode}>
+            {t('bulkCancel')}
+          </Button>
+        </div>
+      )}
+
+      {/* Bulk Confirm Dialog */}
+      {bulkConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-6 shadow-xl max-w-md w-full mx-4">
+            <p className="text-[var(--foreground)] mb-4">
+              {t('bulkApplyConfirm', { count: selectedTickers.size })}
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setBulkConfirmOpen(false)}>
+                {t('bulkCancel')}
+              </Button>
+              <Button variant="primary" onClick={handleBulkApply} disabled={isBulkApplying}>
+                {t('bulkApplyButton')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sell Signal Banner */}
       {!isBannerDismissed && sellSignals.length > 0 && (
@@ -823,13 +937,16 @@ export default function PortfolioPage() {
         <HoldingsTable
           holdings={filteredHoldings}
           isLoading={isLoading}
-          onRowClick={handleRowClick}
-          onAnalyze={handleAnalyzeClick}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
-          onSell={handleSellClick}
-          onSellRules={handleSellRulesClick}
+          onRowClick={bulkMode ? undefined : handleRowClick}
+          onAnalyze={bulkMode ? undefined : handleAnalyzeClick}
+          onEdit={bulkMode ? undefined : handleEditClick}
+          onDelete={bulkMode ? undefined : handleDeleteClick}
+          onSell={bulkMode ? undefined : handleSellClick}
+          onSellRules={bulkMode ? undefined : handleSellRulesClick}
           priceChangeDirection={priceChangeDirection}
+          selectable={bulkMode}
+          selectedTickers={selectedTickers}
+          onSelectionChange={setSelectedTickers}
         />
       </Card>
 

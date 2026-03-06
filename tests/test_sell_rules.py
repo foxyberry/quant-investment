@@ -1158,3 +1158,81 @@ class TestSellRulePresetAPIEndpoints:
             json={"name": "Empty"},
         )
         assert resp.status_code == 422
+
+    # ── Bulk Apply Preset ───────────────────────────────────────────
+
+    def test_bulk_apply_preset_success(self):
+        self._create_holding("AAPL")
+        self._create_holding("MSFT")
+        self._create_holding("GOOG")
+        preset = self._create_preset("Bulk", [
+            {"rule_type": "stop_loss", "params": {"pct": -10}},
+            {"rule_type": "take_profit", "params": {"pct": 20}},
+        ])
+        resp = self.client.post(
+            f"/api/portfolio/sell-rule-presets/{preset['id']}/bulk-apply",
+            json={"tickers": ["AAPL", "MSFT", "GOOG"]},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["preset_id"] == preset["id"]
+        assert data["total"] == 3
+        assert data["succeeded"] == 3
+        assert data["failed"] == 0
+        assert all(r["success"] for r in data["results"])
+        assert all(r["rules_created"] == 2 for r in data["results"])
+
+    def test_bulk_apply_preset_partial_failure(self):
+        self._create_holding("AAPL")
+        self._create_holding("MSFT")
+        preset = self._create_preset("Partial", [
+            {"rule_type": "stop_loss", "params": {"pct": -10}},
+        ])
+        # Apply to AAPL first (so it becomes a duplicate)
+        self.client.post(
+            "/api/portfolio/holdings/AAPL/sell-rules/from-preset",
+            json={"preset_id": preset["id"]},
+        )
+        resp = self.client.post(
+            f"/api/portfolio/sell-rule-presets/{preset['id']}/bulk-apply",
+            json={"tickers": ["AAPL", "MSFT"]},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 2
+        assert data["succeeded"] == 1
+        assert data["failed"] == 1
+        results_by_ticker = {r["ticker"]: r for r in data["results"]}
+        assert results_by_ticker["AAPL"]["success"] is False
+        assert "already applied" in results_by_ticker["AAPL"]["error"].lower()
+        assert results_by_ticker["MSFT"]["success"] is True
+
+    def test_bulk_apply_preset_not_found(self):
+        self._create_holding("AAPL")
+        resp = self.client.post(
+            "/api/portfolio/sell-rule-presets/9999/bulk-apply",
+            json={"tickers": ["AAPL"]},
+        )
+        assert resp.status_code == 404
+
+    def test_bulk_apply_preset_empty_tickers(self):
+        preset = self._create_preset("Empty Bulk")
+        resp = self.client.post(
+            f"/api/portfolio/sell-rule-presets/{preset['id']}/bulk-apply",
+            json={"tickers": []},
+        )
+        assert resp.status_code == 422
+
+    def test_bulk_apply_inactive_preset(self):
+        self._create_holding("AAPL")
+        preset = self._create_preset("Inactive Bulk")
+        # Deactivate the preset
+        self.client.put(
+            f"/api/portfolio/sell-rule-presets/{preset['id']}",
+            json={"is_active": False},
+        )
+        resp = self.client.post(
+            f"/api/portfolio/sell-rule-presets/{preset['id']}/bulk-apply",
+            json={"tickers": ["AAPL"]},
+        )
+        assert resp.status_code == 409
