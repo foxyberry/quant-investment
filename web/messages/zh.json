@@ -590,6 +590,8 @@
     "untitled": "未命名策略",
     "reset": "重置",
     "autoLayout": "自动排列",
+    "autoLayoutHorizontal": "水平排列",
+    "autoLayoutVertical": "垂直",
     "saveStrategy": "保存策略",
     "backtest": "回测",
     "deployStrategy": "部署策略",

@@ -25,7 +25,8 @@ import '@xyflow/react/dist/style.css';
 
 import {
   Loader2, Zap, RotateCcw, Save, TestTube, FolderOpen, X,
-  ChevronRight, ChevronDown, Home, Calendar, Search, AlignHorizontalSpaceAround,
+  ChevronRight, ChevronDown, Home, Calendar, Search,
+  AlignHorizontalSpaceAround, AlignVerticalSpaceAround,
 } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
@@ -99,15 +100,17 @@ function estimateNodeSize(node: { data: LayoutNodeData }): { width: number; heig
 }
 
 /**
- * Compute a clean left-to-right layout for strategy nodes using topological sort.
+ * Compute a clean layout for strategy nodes using topological sort.
+ * Supports both horizontal (left-to-right) and vertical (top-to-bottom) directions.
  * Uses estimated node sizes so long condition cards do not overlap after loading.
  */
 function computeAutoLayout(
   nodes: Array<{ id: string; data: LayoutNodeData }>,
-  edges: Array<{ source: string; target: string }>
+  edges: Array<{ source: string; target: string }>,
+  direction: 'horizontal' | 'vertical' = 'horizontal'
 ): Map<string, { x: number; y: number }> {
-  const NODE_GAP_X = 140;
-  const NODE_GAP_Y = 72;
+  const GAP_PRIMARY = direction === 'horizontal' ? 140 : 72;
+  const GAP_SECONDARY = direction === 'horizontal' ? 72 : 140;
   const START_X = 80;
   const START_Y = 120;
 
@@ -150,7 +153,7 @@ function computeAutoLayout(
     if (!depth.has(n.id)) depth.set(n.id, 0);
   }
 
-  // Group nodes by column
+  // Group nodes by depth level
   const columns = new Map<number, string[]>();
   for (const [id, col] of depth) {
     if (!columns.has(col)) columns.set(col, []);
@@ -160,36 +163,52 @@ function computeAutoLayout(
   const nodeIndex = new Map(nodes.map((n, idx) => [n.id, idx]));
   const sizeById = new Map(nodes.map((n) => [n.id, estimateNodeSize(n)]));
 
-  // Assign positions (column-aware widths + row-aware heights)
   const positions = new Map<string, { x: number; y: number }>();
   const sortedCols = Array.from(columns.keys()).sort((a, b) => a - b);
-  const columnMaxWidth = new Map<number, number>();
-  for (const col of sortedCols) {
-    const ids = columns.get(col)!;
-    const maxWidth = Math.max(
-      ...ids.map((id) => sizeById.get(id)?.width ?? 260),
-      260
-    );
-    columnMaxWidth.set(col, maxWidth);
-  }
 
-  const colX = new Map<number, number>();
-  let runningX = START_X;
-  for (const col of sortedCols) {
-    colX.set(col, runningX);
-    runningX += (columnMaxWidth.get(col) ?? 260) + NODE_GAP_X;
-  }
-
-  for (const col of sortedCols) {
-    const ids = [...columns.get(col)!].sort(
-      (a, b) => (nodeIndex.get(a) ?? 0) - (nodeIndex.get(b) ?? 0)
-    );
-    const x = colX.get(col) ?? START_X;
+  if (direction === 'horizontal') {
+    // Left-to-right: depth → x, siblings → y
+    const columnMaxWidth = new Map<number, number>();
+    for (const col of sortedCols) {
+      const ids = columns.get(col)!;
+      columnMaxWidth.set(col, Math.max(...ids.map((id) => sizeById.get(id)?.width ?? 260), 260));
+    }
+    let runningX = START_X;
+    const colX = new Map<number, number>();
+    for (const col of sortedCols) {
+      colX.set(col, runningX);
+      runningX += (columnMaxWidth.get(col) ?? 260) + GAP_PRIMARY;
+    }
+    for (const col of sortedCols) {
+      const ids = [...columns.get(col)!].sort((a, b) => (nodeIndex.get(a) ?? 0) - (nodeIndex.get(b) ?? 0));
+      const x = colX.get(col) ?? START_X;
+      let runningY = START_Y;
+      for (const id of ids) {
+        positions.set(id, { x, y: runningY });
+        runningY += (sizeById.get(id)?.height ?? 100) + GAP_SECONDARY;
+      }
+    }
+  } else {
+    // Top-to-bottom: depth → y, siblings → x
+    const rowMaxHeight = new Map<number, number>();
+    for (const col of sortedCols) {
+      const ids = columns.get(col)!;
+      rowMaxHeight.set(col, Math.max(...ids.map((id) => sizeById.get(id)?.height ?? 100), 100));
+    }
     let runningY = START_Y;
-    for (const id of ids) {
-      positions.set(id, { x, y: runningY });
-      const height = sizeById.get(id)?.height ?? 100;
-      runningY += height + NODE_GAP_Y;
+    const rowY = new Map<number, number>();
+    for (const col of sortedCols) {
+      rowY.set(col, runningY);
+      runningY += (rowMaxHeight.get(col) ?? 100) + GAP_PRIMARY;
+    }
+    for (const col of sortedCols) {
+      const ids = [...columns.get(col)!].sort((a, b) => (nodeIndex.get(a) ?? 0) - (nodeIndex.get(b) ?? 0));
+      const y = rowY.get(col) ?? START_Y;
+      let runningX = START_X;
+      for (const id of ids) {
+        positions.set(id, { x: runningX, y });
+        runningX += (sizeById.get(id)?.width ?? 260) + GAP_SECONDARY;
+      }
     }
   }
 
@@ -1003,13 +1022,13 @@ function StrategyPageInner() {
     setIsSampleStrategy(false);
   }, [setNodes, setEdges]);
 
-  const handleAutoLayout = useCallback(() => {
+  const handleAutoLayout = useCallback((direction: 'horizontal' | 'vertical') => {
     const topLevelNodes = nodes.filter((n) => !n.parentId);
     const layoutData = topLevelNodes.map((n) => ({
       id: n.id,
       data: n.data as LayoutNodeData,
     }));
-    const autoPositions = computeAutoLayout(layoutData, edges);
+    const autoPositions = computeAutoLayout(layoutData, edges, direction);
     setNodes((nds) =>
       nds.map((n) => {
         const pos = autoPositions.get(n.id);
@@ -1288,11 +1307,21 @@ function StrategyPageInner() {
         </button>
         <button
           type="button"
-          onClick={handleAutoLayout}
+          onClick={() => handleAutoLayout('horizontal')}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          title={t('autoLayoutHorizontal')}
         >
           <AlignHorizontalSpaceAround className="h-3.5 w-3.5" />
           {t('autoLayout')}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleAutoLayout('vertical')}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          title={t('autoLayoutVertical')}
+        >
+          <AlignVerticalSpaceAround className="h-3.5 w-3.5" />
+          {t('autoLayoutVertical')}
         </button>
         <button
           type="button"

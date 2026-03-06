@@ -590,6 +590,8 @@
     "untitled": "Untitled Strategy",
     "reset": "Reset",
     "autoLayout": "Auto Layout",
+    "autoLayoutHorizontal": "Horizontal layout",
+    "autoLayoutVertical": "Vertical",
     "saveStrategy": "Save Strategy",
     "backtest": "Backtest",
     "deployStrategy": "Deploy Strategy",
