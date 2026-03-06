@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import MarkdownMessage from './chat/MarkdownMessage';
 import MessageActions from './chat/MessageActions';
 import SectionedMessage from './chat/SectionedMessage';
@@ -43,6 +43,7 @@ interface ChatPanelProps {
 
 export default function ChatPanel({ graph, onAddNodes }: ChatPanelProps) {
   const t = useTranslations('strategy');
+  const locale = useLocale();
 
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -94,7 +95,7 @@ export default function ChatPanel({ graph, onAddNodes }: ChatPanelProps) {
       const response = await fetch(`${API_BASE_URL}/api/strategy/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, graph }),
+        body: JSON.stringify({ messages: newMessages, graph, locale }),
         signal: controller.signal,
       });
 
@@ -176,7 +177,7 @@ export default function ChatPanel({ graph, onAddNodes }: ChatPanelProps) {
       });
       setIsStreaming(false);
     }
-  }, [input, isStreaming, messages, graph, chatError]);
+  }, [input, isStreaming, messages, graph, locale, chatError]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

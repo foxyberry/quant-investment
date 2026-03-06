@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import re
+from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -69,8 +70,40 @@ Rules for the structured block:
 - params must use exact parameter names from the condition definition
 """
 
-# Cached system prompt with conditions section
-_cached_system_prompt: Optional[str] = None
+# Cached system prompt with conditions section — keyed by locale
+_cached_system_prompts: Dict[Optional[str], str] = {}
+
+# Cache of locale → {condition_key: localized_label}
+_i18n_label_cache: Dict[str, Dict[str, str]] = {}
+
+# Path to web/messages/ relative to project root
+_MESSAGES_DIR = Path(__file__).resolve().parent.parent.parent / "web" / "messages"
+
+
+def _load_i18n_labels(locale: Optional[str]) -> Dict[str, str]:
+    """Load condition labels from web/messages/{locale}.json.
+
+    Returns a dict of condition_key → localized label.
+    Falls back to empty dict on failure.
+    """
+    if not locale or locale == "en":
+        return {}
+    if locale in _i18n_label_cache:
+        return _i18n_label_cache[locale]
+
+    labels: Dict[str, str] = {}
+    msg_file = _MESSAGES_DIR / f"{locale}.json"
+    try:
+        data = json.loads(msg_file.read_text(encoding="utf-8"))
+        conditions = data.get("conditions", {})
+        for key, val in conditions.items():
+            if isinstance(val, dict) and "label" in val:
+                labels[key] = val["label"]
+    except Exception as e:
+        logger.warning("Failed to load i18n labels for %s: %s", locale, e)
+
+    _i18n_label_cache[locale] = labels
+    return labels
 
 
 def _get_detail_keys() -> set:
@@ -112,11 +145,12 @@ def _get_detail_keys() -> set:
     return preset_keys | recommended_keys
 
 
-def _build_conditions_section() -> str:
+def _build_conditions_section(locale: Optional[str] = None) -> str:
     """Build the Available Conditions section from the condition registry.
 
     Key/recommended conditions get description + params detail.
-    Others get name only to keep the prompt compact.
+    Others get name + params to keep the prompt compact.
+    When locale is provided, includes localized label for each condition.
     """
     from screener.conditions.registry import get_condition_metadata
 
@@ -125,6 +159,7 @@ def _build_conditions_section() -> str:
         return ""
 
     detail_keys = _get_detail_keys()
+    i18n_labels = _load_i18n_labels(locale)
 
     # Group by category
     cats: Dict[str, List[Dict]] = {}
@@ -133,6 +168,11 @@ def _build_conditions_section() -> str:
         cats.setdefault(cat, []).append({"key": key, **meta})
 
     lines = [f"\n## Available Conditions ({len(metadata)} total)\n"]
+    if i18n_labels:
+        lines.append(
+            "IMPORTANT: When mentioning conditions in your text response, "
+            "always use the localized name (shown after '→') instead of the key.\n"
+        )
     for cat in sorted(cats):
         items = sorted(cats[cat], key=lambda x: x["key"])
         lines.append(f"### {cat} ({len(items)})")
@@ -145,10 +185,13 @@ def _build_conditions_section() -> str:
                 f"{p['name']}({p['type']}, default={p.get('default', '?')})"
                 for p in params
             )
+            # Include localized name if available
+            i18n_name = i18n_labels.get(key)
+            name_part = f"{key} → {i18n_name}" if i18n_name else key
             if key in detail_keys:
-                lines.append(f"- **{key}** ({label}): {desc}")
+                lines.append(f"- **{name_part}** ({label}): {desc}")
             else:
-                lines.append(f"- {key} ({label}): {desc}" if desc else f"- {key} ({label})")
+                lines.append(f"- {name_part} ({label}): {desc}" if desc else f"- {name_part} ({label})")
             if param_str:
                 lines.append(f"  params: {param_str}")
 
@@ -214,24 +257,26 @@ def _build_presets_section() -> str:
     return "\n".join(lines)
 
 
-def _get_system_prompt() -> str:
+def _get_system_prompt(locale: Optional[str] = None) -> str:
     """Return system prompt with dynamically injected conditions and presets.
 
-    Built once from the registry/presets and cached for the process lifetime.
+    Cached per locale for the process lifetime.
     """
-    global _cached_system_prompt
-    if _cached_system_prompt is None:
-        conditions_section = _build_conditions_section()
+    if locale not in _cached_system_prompts:
+        conditions_section = _build_conditions_section(locale)
         presets_section = _build_presets_section()
-        _cached_system_prompt = (
+        _cached_system_prompts[locale] = (
             _SYSTEM_PROMPT_BASE + conditions_section + presets_section
         )
-    return _cached_system_prompt
+    return _cached_system_prompts[locale]
 
 
-def _build_system_with_graph(graph: Optional[dict[str, Any]] = None) -> str:
+def _build_system_with_graph(
+    graph: Optional[dict[str, Any]] = None,
+    locale: Optional[str] = None,
+) -> str:
     """Return system prompt, optionally appending the current graph context."""
-    system = _get_system_prompt()
+    system = _get_system_prompt(locale)
     if graph:
         graph_json = json.dumps(graph, ensure_ascii=False, indent=2)
         if len(graph_json) > _MAX_GRAPH_CHARS:
@@ -270,12 +315,14 @@ class StrategyChatService:
         self,
         messages: list[dict[str, str]],
         graph: Optional[dict[str, Any]] = None,
+        locale: Optional[str] = None,
     ) -> Generator[str, None, None]:
         """Stream chat response chunks.
 
         Args:
             messages: Conversation history [{"role": ..., "content": ...}]
             graph: Optional current strategy graph for context.
+            locale: Optional UI locale for localized condition names.
 
         Yields:
             Text chunks as they arrive from the API.
@@ -283,23 +330,24 @@ class StrategyChatService:
         api_messages = [{"role": m["role"], "content": m["content"]} for m in messages]
 
         logger.info(
-            "Strategy chat [%s]: %d messages, graph=%s",
-            self._provider, len(api_messages), bool(graph),
+            "Strategy chat [%s]: %d messages, graph=%s, locale=%s",
+            self._provider, len(api_messages), bool(graph), locale,
         )
 
         if self._provider == "anthropic":
-            yield from self._stream_anthropic(api_messages, graph)
+            yield from self._stream_anthropic(api_messages, graph, locale)
         else:
-            yield from self._stream_openai(api_messages, graph)
+            yield from self._stream_openai(api_messages, graph, locale)
 
     def _stream_anthropic(
         self,
         messages: list[dict[str, str]],
         graph: Optional[dict[str, Any]],
+        locale: Optional[str] = None,
     ) -> Generator[str, None, None]:
         import anthropic
 
-        system = _build_system_with_graph(graph)
+        system = _build_system_with_graph(graph, locale)
 
         try:
             with self.client.messages.stream(
@@ -324,10 +372,11 @@ class StrategyChatService:
         self,
         messages: list[dict[str, str]],
         graph: Optional[dict[str, Any]],
+        locale: Optional[str] = None,
     ) -> Generator[str, None, None]:
         import openai
 
-        system = _build_system_with_graph(graph)
+        system = _build_system_with_graph(graph, locale)
         oai_messages = [{"role": "system", "content": system}] + messages
 
         try:
