@@ -1,0 +1,1162 @@
+{
+  "version": 1,
+  "seed": 42,
+  "shape": "random_walk",
+  "days": 200,
+  "profile": "fundamental",
+  "conditions": {
+    "above_ma": {
+      "matched": false,
+      "details": {
+        "current_price": 91.37630646769311,
+        "ma_value": 93.70474207912505,
+        "ma_period": 20,
+        "distance_pct": -0.024848642232703572
+      }
+    },
+    "accruals_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "ad_line_trend": {
+      "matched": false,
+      "details": {
+        "ad_slope": -18701588.867534578
+      }
+    },
+    "adx_trend_strength": {
+      "matched": true,
+      "details": {
+        "adx": 34.06081720891211,
+        "+di": 8.452170598080876,
+        "-di": 27.166978323182466
+      }
+    },
+    "altman_zscore": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient financial data for Z-Score"
+      }
+    },
+    "analyst_revision_1m": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "analyst_revision_3m": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "aroon_oscillator_signal": {
+      "matched": true,
+      "details": {
+        "oscillator": 40.0
+      }
+    },
+    "aroon_trend_signal": {
+      "matched": false,
+      "details": {
+        "aroon_up": 44.0,
+        "aroon_down": 4.0
+      }
+    },
+    "asset_growth_rate": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "asset_turnover_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "atr_expansion_breakout": {
+      "matched": false,
+      "details": {
+        "atr_expanded": false,
+        "breakout": false
+      }
+    },
+    "atr_percentile_filter": {
+      "matched": true,
+      "details": {
+        "percentile": 7.5
+      }
+    },
+    "avg_trading_value": {
+      "matched": false,
+      "details": {
+        "avg_trading_value": 265416431,
+        "current_trading_value": 355134106,
+        "lookback_days": 20,
+        "min_value": 1500000000
+      }
+    },
+    "below_ma": {
+      "matched": true,
+      "details": {
+        "current_price": 91.37630646769311,
+        "ma_value": 93.70474207912505,
+        "ma_period": 20,
+        "distance_pct": -0.024848642232703572
+      }
+    },
+    "beta_to_benchmark": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "bollinger_percent_b": {
+      "matched": true,
+      "details": {
+        "percent_b": 0.034416850118710346
+      }
+    },
+    "bollinger_squeeze_breakout": {
+      "matched": false,
+      "details": {
+        "prev_width_pct": 5.010616949692999,
+        "breakout": false
+      }
+    },
+    "bollinger_width": {
+      "matched": true,
+      "details": {
+        "bb_width_pct": 5.475749931234203,
+        "max_width_pct": 15.0,
+        "period": 20
+      }
+    },
+    "book_to_market_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "bottom_breakout": {
+      "matched": false,
+      "details": {
+        "current_price": 91.37630646769311,
+        "bottom_price": 90.89329950250057,
+        "bottom_date": "2024-09-30 00:00:00",
+        "breakout_price": 95.4379644776256,
+        "price_from_bottom_pct": 0.5313999687944612,
+        "lookback_days": 20,
+        "breakout_pct": 5.0
+      }
+    },
+    "breakout_with_volume": {
+      "matched": false,
+      "details": {
+        "current_price": 91.37630646769311,
+        "bottom_price": 90.89329950250057,
+        "bottom_date": "2024-09-30 00:00:00",
+        "breakout_price": 95.4379644776256,
+        "price_from_bottom_pct": 0.5313999687944612,
+        "is_breakout_today": false,
+        "is_fresh": false,
+        "current_volume": 3886501.0,
+        "avg_volume": 2743828.3,
+        "volume_ratio": 1.4164519696804645,
+        "required_volume_ratio": 1.5,
+        "is_volume_spike": false
+      }
+    },
+    "buyback_yield_filter": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "calmar_ratio_filter": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "cash_conversion_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "cashflow_to_debt_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "cci_overbought_oversold": {
+      "matched": false,
+      "details": {
+        "cci": -78.66596206307138,
+        "mode": "oversold"
+      }
+    },
+    "chaikin_money_flow_signal": {
+      "matched": false,
+      "details": {
+        "cmf": -0.330125699730405
+      }
+    },
+    "chaikin_oscillator_signal": {
+      "matched": false,
+      "details": {
+        "chaikin_oscillator": -3877559.004852921
+      }
+    },
+    "correlation_to_benchmark": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "current_ratio": {
+      "matched": false,
+      "details": {
+        "error": "No current ratio data"
+      }
+    },
+    "day_of_week_seasonality": {
+      "matched": false,
+      "details": {
+        "avg_return_pct": -0.22451261667282726
+      }
+    },
+    "death_cross_50_200": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "debt_service_coverage_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "debt_to_equity": {
+      "matched": false,
+      "details": {
+        "error": "No D/E data"
+      }
+    },
+    "distance_from_200d_high": {
+      "matched": true,
+      "details": {
+        "distance_pct": 13.997164295736072
+      }
+    },
+    "distance_from_52w_high": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "distance_from_52w_low": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "dividend_growth_5y": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "dividend_yield": {
+      "matched": false,
+      "details": {
+        "error": "No dividend yield data"
+      }
+    },
+    "dmi_directional_cross": {
+      "matched": false,
+      "details": {
+        "cross_day": null
+      }
+    },
+    "donchian_channel_breakout": {
+      "matched": false,
+      "details": {
+        "upper_prev": 96.67224027402916,
+        "close": 91.37630646769311
+      }
+    },
+    "downside_volatility_filter": {
+      "matched": true,
+      "details": {
+        "downside_vol_pct": 6.739543338776345,
+        "max_downside_vol_pct": 20.0
+      }
+    },
+    "drawdown_from_high": {
+      "matched": false,
+      "details": {
+        "current_price": 91.37630646769311,
+        "rolling_high": 96.67224027402916,
+        "drop_pct": 5.48,
+        "lookback_days": 120,
+        "min_drop_pct": 20.0,
+        "price_field": "high"
+      }
+    },
+    "dso_trend_filter": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient receivables/revenue data for DSO trend"
+      }
+    },
+    "earnings_stability_score": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "earnings_surprise_filter": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "earnings_yield": {
+      "matched": false,
+      "details": {
+        "error": "Missing EPS or price data"
+      }
+    },
+    "ebit_ev": {
+      "matched": false,
+      "details": {
+        "error": "Missing EBIT or EV data"
+      }
+    },
+    "ema_cross": {
+      "matched": false,
+      "details": {
+        "direction": "bullish",
+        "fast": 92.75050899236463,
+        "slow": 92.76567718975971,
+        "cross_day": null
+      }
+    },
+    "ema_slope": {
+      "matched": false,
+      "details": {
+        "slope_pct": -0.444419509954681,
+        "min_slope_pct": 0.0
+      }
+    },
+    "eps_cagr_3y": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "eps_growth_yoy": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "ev_to_ebitda_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "ev_to_sales_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "fcf_yield": {
+      "matched": false,
+      "details": {
+        "error": "Missing FCF or market cap data"
+      }
+    },
+    "free_cash_flow_margin": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "fresh_breakout": {
+      "matched": false,
+      "details": {
+        "current_price": 91.37630646769311,
+        "bottom_price": 90.89329950250057,
+        "bottom_date": "2024-09-30 00:00:00",
+        "breakout_price": 95.4379644776256,
+        "price_from_bottom_pct": 0.5313999687944612,
+        "breakout_status": "BELOW",
+        "is_breakout_today": false,
+        "has_broken_before": true
+      }
+    },
+    "gap_down_exhaustion": {
+      "matched": false,
+      "details": {
+        "gap_down_pct": 0.48357533324268975,
+        "rebound": false
+      }
+    },
+    "gap_up_breakaway": {
+      "matched": false,
+      "details": {
+        "gap_pct": -2.7095980738219314
+      }
+    },
+    "golden_cross_50_200": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "gross_margin": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "gross_profitability": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "ichimoku_cloud_breakout": {
+      "matched": false,
+      "details": {
+        "cloud_top": 92.93332242217497,
+        "close": 91.37630646769311
+      }
+    },
+    "ichimoku_tenkan_kijun_cross": {
+      "matched": false,
+      "details": {
+        "cross_day": null
+      }
+    },
+    "insider_net_buying": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "interest_coverage_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "intraday_return_filter": {
+      "matched": false,
+      "details": {
+        "intraday_return_pct": -0.27909442880155755,
+        "threshold": 0.0
+      }
+    },
+    "inventory_turnover_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "keltner_channel_breakout": {
+      "matched": false,
+      "details": {
+        "upper": 97.14436957729225,
+        "close": 91.37630646769311
+      }
+    },
+    "linear_regression_angle_filter": {
+      "matched": true,
+      "details": {
+        "angle_deg": 6.776975065858645
+      }
+    },
+    "linear_regression_r2_filter": {
+      "matched": true,
+      "details": {
+        "r2": 0.6761255948233874
+      }
+    },
+    "linear_regression_slope_filter": {
+      "matched": true,
+      "details": {
+        "slope": 0.11883522528115165
+      }
+    },
+    "ma_cross_down": {
+      "matched": false,
+      "details": {
+        "short_ma": 93.70474207912505,
+        "long_ma": 91.09964064942392,
+        "short_period": 20,
+        "long_period": 60,
+        "cross_day": null
+      }
+    },
+    "ma_cross_up": {
+      "matched": false,
+      "details": {
+        "short_ma": 92.29701268739072,
+        "long_ma": 93.70474207912505,
+        "short_period": 5,
+        "long_period": 20,
+        "cross_day": null
+      }
+    },
+    "ma_ribbon_alignment": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "ma_touch": {
+      "matched": true,
+      "details": {
+        "current_price": 91.37630646769311,
+        "ma_value": 90.47225485617375,
+        "ma_period": 120,
+        "distance_pct": 0.009992584057472205,
+        "threshold": 0.02
+      }
+    },
+    "macd_histogram_slope": {
+      "matched": false,
+      "details": {
+        "hist": -0.39581225753408433,
+        "slope": -0.013128335240257472,
+        "min_slope": 0.0
+      }
+    },
+    "macd_signal_cross": {
+      "matched": false,
+      "details": {
+        "macd": -0.015168197395084348,
+        "signal": 0.380644060139,
+        "cross_day": null
+      }
+    },
+    "max_drawdown_window_filter": {
+      "matched": true,
+      "details": {
+        "max_drawdown_pct": 6.224758212632908,
+        "threshold": 20.0
+      }
+    },
+    "max_price": {
+      "matched": true,
+      "details": {
+        "current_price": 91.37630646769311,
+        "max_price": 100000
+      }
+    },
+    "min_price": {
+      "matched": false,
+      "details": {
+        "current_price": 91.37630646769311,
+        "min_price": 5000
+      }
+    },
+    "min_volume": {
+      "matched": true,
+      "details": {
+        "current_volume": 3886501,
+        "min_volume": 100000
+      }
+    },
+    "momentum_12_1": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "money_flow_index_signal": {
+      "matched": false,
+      "details": {
+        "mfi": 44.772746567724155,
+        "mode": "oversold"
+      }
+    },
+    "month_of_year_seasonality": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "natr_filter": {
+      "matched": true,
+      "details": {
+        "natr_pct": 2.1575448312474017
+      }
+    },
+    "net_debt_to_ebitda": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "net_margin": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "net_share_issuance_filter": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "obv_divergence": {
+      "matched": false,
+      "details": {
+        "price_range_pct": 6.167180703244251,
+        "price_flat": false,
+        "obv_change_pct": 45.39186670437078,
+        "obv_up": true,
+        "period": 20
+      }
+    },
+    "obv_trend": {
+      "matched": true,
+      "details": {
+        "obv_now": -5555808.0,
+        "obv_past": -10173957.0,
+        "obv_change": 4618149.0,
+        "obv_change_pct": 45.39186670437078,
+        "direction": "up",
+        "lookback": 20
+      }
+    },
+    "opening_range_breakout": {
+      "matched": false,
+      "details": {
+        "prev_high": 94.18405576506159,
+        "prev_low": 92.07730956075342
+      }
+    },
+    "operating_margin": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "overnight_return_filter": {
+      "matched": false,
+      "details": {
+        "overnight_return_pct": -0.8662936463330485
+      }
+    },
+    "parabolic_sar_flip": {
+      "matched": false,
+      "details": {
+        "flip_day": null
+      }
+    },
+    "payout_ratio_filter": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "pb_ratio": {
+      "matched": false,
+      "details": {
+        "error": "No valid P/B data"
+      }
+    },
+    "pcf_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Missing data for P/CF calculation"
+      }
+    },
+    "pe_ratio": {
+      "matched": false,
+      "details": {
+        "error": "No valid P/E data"
+      }
+    },
+    "peg_ratio": {
+      "matched": false,
+      "details": {
+        "error": "No PEG ratio data"
+      }
+    },
+    "piotroski_fscore": {
+      "matched": false,
+      "details": {
+        "f_score": 0,
+        "s1": 0,
+        "s2": 0,
+        "s3": 0,
+        "s4": 0,
+        "s5": 0,
+        "s6": 0,
+        "s7": 0,
+        "s8": 0,
+        "s9": 0,
+        "min_score": 7,
+        "max_score": null
+      }
+    },
+    "pivot_point_breakout": {
+      "matched": false,
+      "details": {
+        "pivot": 92.89805036004581,
+        "close": 91.37630646769311
+      }
+    },
+    "post_earnings_drift": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "ppo_signal_cross": {
+      "matched": false,
+      "details": {
+        "cross_day": null
+      }
+    },
+    "pre_earnings_drift": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "price_change": {
+      "matched": true,
+      "details": {
+        "current_price": 91.37630646769311,
+        "past_price": 92.43278575432244,
+        "change_pct": -1.1429702978306286,
+        "days": 1
+      }
+    },
+    "price_flat": {
+      "matched": true,
+      "details": {
+        "range_pct": 6.167180703244251,
+        "max_range_pct": 10.0,
+        "high_max": 96.67224027402916,
+        "low_min": 90.89329950250057,
+        "period": 20
+      }
+    },
+    "price_lag_compare": {
+      "matched": false,
+      "details": {
+        "field": "close",
+        "lag_a": 1,
+        "lag_b": 3,
+        "operator": "lt",
+        "left_value": 92.43278575432244,
+        "right_value": 92.23722134843622
+      }
+    },
+    "price_range": {
+      "matched": true,
+      "details": {
+        "current_price": 91.37630646769311,
+        "min_price": 0,
+        "max_price": 999999
+      }
+    },
+    "price_to_tangible_book": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "ps_ratio": {
+      "matched": false,
+      "details": {
+        "error": "No valid P/S data"
+      }
+    },
+    "quality_score": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "receivables_turnover_ratio": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "relative_strength_vs_benchmark": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "relative_volume_percentile": {
+      "matched": true,
+      "details": {
+        "percentile": 81.66666666666667
+      }
+    },
+    "resistance_breakout": {
+      "matched": false,
+      "details": {
+        "current_price": 91.37630646769311,
+        "resistance_price": 96.67224027402916,
+        "resistance_date": "2024-09-17 00:00:00",
+        "breakout_price": 96.67224027402916,
+        "distance_from_resistance_pct": -5.478236349260229,
+        "lookback_days": 20
+      }
+    },
+    "resistance_retest_signal": {
+      "matched": false,
+      "details": {
+        "resistance": 96.67224027402916,
+        "high": 93.01485255724589,
+        "close": 91.37630646769311,
+        "retested": false
+      }
+    },
+    "return_kurtosis_filter": {
+      "matched": true,
+      "details": {
+        "kurtosis": 0.208093835700645
+      }
+    },
+    "return_pct_range": {
+      "matched": true,
+      "details": {
+        "lookback_days": 5,
+        "return_pct": -1.430631055737305,
+        "min_return_pct": -5.0,
+        "max_return_pct": 5.0
+      }
+    },
+    "return_skewness_filter": {
+      "matched": true,
+      "details": {
+        "skewness": 0.3086719709641364
+      }
+    },
+    "return_turnaround": {
+      "matched": false,
+      "details": {
+        "current_price": 91.37630646769311,
+        "boundary_price": 92.7025377623783,
+        "prev_price": 93.13128296868169,
+        "recent_return_pct": -1.431,
+        "prev_return_pct": -0.46,
+        "period_days": 5,
+        "prev_max_return_pct": -2.0,
+        "min_return_pct": 2.0
+      }
+    },
+    "revenue_cagr_3y": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "revenue_growth_yoy": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "revenue_stability_score": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "roa_filter": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "roce_filter": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "roe": {
+      "matched": false,
+      "details": {
+        "error": "No ROE data"
+      }
+    },
+    "roic": {
+      "matched": false,
+      "details": {
+        "error": "No operating income data"
+      }
+    },
+    "rolling_sharpe_filter": {
+      "matched": true,
+      "details": {
+        "sharpe": 1.0682016390787346
+      }
+    },
+    "rolling_sortino_filter": {
+      "matched": true,
+      "details": {
+        "sortino": 2.2495919906256194
+      }
+    },
+    "rsi_overbought": {
+      "matched": false,
+      "details": {
+        "rsi": 27.20248688540056,
+        "threshold": 70,
+        "period": 14
+      }
+    },
+    "rsi_oversold": {
+      "matched": true,
+      "details": {
+        "rsi": 27.20248688540056,
+        "threshold": 35,
+        "period": 14
+      }
+    },
+    "rsi_range": {
+      "matched": false,
+      "details": {
+        "rsi": 27.20248688540056,
+        "lower": 50,
+        "upper": 70,
+        "period": 14
+      }
+    },
+    "semivariance_filter": {
+      "matched": true,
+      "details": {
+        "semivariance": 3.470272543541957e-05,
+        "max_semivariance": 0.0004
+      }
+    },
+    "shareholder_yield_filter": {
+      "matched": false,
+      "details": {
+        "error": "Insufficient data"
+      }
+    },
+    "short_float_pct_filter": {
+      "matched": true,
+      "details": {
+        "short_float_pct": 0.05
+      }
+    },
+    "short_interest_ratio_filter": {
+      "matched": true,
+      "details": {
+        "short_interest_ratio": 3.0
+      }
+    },
+    "sma_slope": {
+      "matched": false,
+      "details": {
+        "slope_pct": -0.16385890672443595,
+        "min_slope_pct": 0.0
+      }
+    },
+    "stochastic_cross_signal": {
+      "matched": true,
+      "details": {
+        "cross_day": 2
+      }
+    },
+    "stochastic_divergence": {
+      "matched": false,
+      "details": {
+        "price_low_first": 93.13128296868169,
+        "price_low_second": 91.37630646769311,
+        "stoch_low_first": 35.12885955412899,
+        "stoch_low_second": 8.960490388073776,
+        "price_lower_or_flat": true,
+        "stoch_higher": false,
+        "lookback": 20
+      }
+    },
+    "stochastic_level": {
+      "matched": true,
+      "details": {
+        "stoch_k": 8.960490388073776,
+        "stoch_d": 20.43639389082915,
+        "threshold": 20.0,
+        "condition": "below"
+      }
+    },
+    "stochrsi_signal": {
+      "matched": true,
+      "details": {
+        "stochrsi": 0.0
+      }
+    },
+    "supertrend_signal": {
+      "matched": false,
+      "details": {
+        "cross_day": null,
+        "direction": "bullish",
+        "period": 10,
+        "multiplier": 3.0,
+        "latest_close": 91.37630646769311,
+        "latest_supertrend": 89.03994435223017
+      }
+    },
+    "support_retest_signal": {
+      "matched": false,
+      "details": {
+        "support": 86.89414442887482,
+        "low": 91.30161800359559,
+        "close": 91.37630646769311,
+        "retested": false
+      }
+    },
+    "trix_cross": {
+      "matched": false,
+      "details": {
+        "cross_day": null
+      }
+    },
+    "turn_of_month_effect": {
+      "matched": true,
+      "details": {
+        "avg_return_pct": 0.028256182287343667
+      }
+    },
+    "turnover_ratio_min": {
+      "matched": false,
+      "details": {
+        "turnover_ratio": 0.003886501
+      }
+    },
+    "ulcer_index_filter": {
+      "matched": true,
+      "details": {
+        "ulcer_index": 1.9642307833560306
+      }
+    },
+    "ultimate_oscillator_signal": {
+      "matched": false,
+      "details": {
+        "ultimate_oscillator": 35.63850362635863
+      }
+    },
+    "volatility_n_day": {
+      "matched": true,
+      "details": {
+        "annualized_vol_pct": 14.193221729617674
+      }
+    },
+    "volume_above_avg": {
+      "matched": true,
+      "details": {
+        "current_volume": 3886501,
+        "avg_volume": 2832495.15,
+        "ratio": 1.3721121464232693,
+        "multiplier": 1.0,
+        "period": 20
+      }
+    },
+    "volume_below_avg": {
+      "matched": false,
+      "details": {
+        "current_volume": 3886501,
+        "avg_volume": 2866064.75,
+        "ratio": 1.3560408919582154,
+        "multiplier": 1.0,
+        "period": 20
+      }
+    },
+    "volume_lag_compare": {
+      "matched": true,
+      "details": {
+        "lag_a": 1,
+        "lag_b": 2,
+        "operator": "gt",
+        "left_value": 3624071.0,
+        "right_value": 1562729.0
+      }
+    },
+    "volume_ma_ratio": {
+      "matched": true,
+      "details": {
+        "short_period": 5,
+        "long_period": 20,
+        "short_avg": 2630881.0,
+        "long_avg": 2832495.15,
+        "ratio": 0.9288210078665096,
+        "min_ratio": 0.8,
+        "max_ratio": 3.0
+      }
+    },
+    "volume_spike": {
+      "matched": false,
+      "details": {
+        "current_volume": 3886501,
+        "avg_volume": 2866064.75,
+        "ratio": 1.3560408919582154,
+        "multiplier": 1.5
+      }
+    },
+    "vpci_divergence": {
+      "matched": false,
+      "details": {
+        "price_range_pct": 6.167180703244251,
+        "price_flat": false,
+        "vpci_now": -0.0005889589295065487,
+        "vpci_past": 0.15662182869099028,
+        "vpci_up": false,
+        "lookback": 20
+      }
+    },
+    "vpci_trend": {
+      "matched": false,
+      "details": {
+        "vpci_now": -0.0005889589295065487,
+        "vpci_past": 0.08021395607176211,
+        "vpci_change": -0.08080291500126865,
+        "direction": "up",
+        "lookback": 10
+      }
+    },
+    "vwap_cross_signal": {
+      "matched": false,
+      "details": {
+        "cross_day": null
+      }
+    },
+    "vwap_distance_pct": {
+      "matched": true,
+      "details": {
+        "distance_pct": 2.6982897233757472
+      }
+    },
+    "williams_r_reversal": {
+      "matched": false,
+      "details": {
+        "williams_r": -91.03950961192622
+      }
+    }
+  }
+}
