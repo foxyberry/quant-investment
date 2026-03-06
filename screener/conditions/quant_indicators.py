@@ -193,12 +193,31 @@ class TurnoverRatioMinCondition(BaseCondition):
     def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
         if len(data) < 1:
             return _insufficient(self.name)
-        if "shares_outstanding" not in data.columns:
-            return _insufficient(self.name)
         vol = data["volume"].iloc[-1]
-        shares = data["shares_outstanding"].iloc[-1]
-        if pd.isna(vol) or pd.isna(shares) or shares == 0:
+        if pd.isna(vol):
             return _insufficient(self.name)
+
+        # Try DataFrame column first (for tests / pre-enriched data),
+        # then fall back to yfinance info API.
+        shares = None
+        if "shares_outstanding" in data.columns:
+            shares = data["shares_outstanding"].iloc[-1]
+
+        if shares is None or pd.isna(shares) or shares == 0:
+            try:
+                from .fundamental import _get_info
+                info = _get_info(ticker)
+                shares = info.get("sharesOutstanding")
+            except Exception:
+                pass
+
+        if shares is None or (isinstance(shares, float) and pd.isna(shares)) or shares == 0:
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "No shares outstanding data"},
+            )
+
         ratio = float(vol / shares)
         return ConditionResult(matched=ratio >= self.min_turnover_ratio, condition_name=self.name, details={"turnover_ratio": ratio})
 
