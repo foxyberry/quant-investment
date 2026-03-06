@@ -10,6 +10,7 @@ import pandas as pd
 
 from .base import BaseCondition, ConditionResult
 from .registry import register_condition
+from .rsi import calculate_rsi
 
 
 def _insufficient(name: str) -> ConditionResult:
@@ -229,11 +230,7 @@ class StochRSISignalCondition(BaseCondition):
     def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
         if len(data) < self.required_days:
             return _insufficient(self.name)
-        delta = data["close"].diff()
-        gain = delta.where(delta > 0, 0).rolling(self.rsi_period).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(self.rsi_period).mean()
-        rs = gain / loss.replace(0, np.nan)
-        rsi = 100 - (100 / (1 + rs))
+        rsi = calculate_rsi(data["close"], self.rsi_period)
         min_rsi = rsi.rolling(self.stoch_period).min()
         max_rsi = rsi.rolling(self.stoch_period).max()
         stoch_rsi = (rsi - min_rsi) / (max_rsi - min_rsi).replace(0, np.nan)

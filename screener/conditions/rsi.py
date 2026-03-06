@@ -14,12 +14,15 @@ from .registry import register_condition
 
 
 def calculate_rsi(close: pd.Series, period: int = 14) -> pd.Series:
-    """RSI 계산"""
+    """RSI 계산 (Wilder's smoothing — 업계 표준)"""
     delta = close.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
 
-    rs = gain / loss
+    avg_gain = gain.ewm(alpha=1 / period, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1 / period, adjust=False).mean()
+
+    rs = avg_gain / avg_loss
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
