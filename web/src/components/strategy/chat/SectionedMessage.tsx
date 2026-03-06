@@ -2,6 +2,7 @@
 
 import { memo, useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import MarkdownMessage from './MarkdownMessage';
 
 interface StructuredSuggestion {
@@ -31,11 +32,27 @@ interface SectionedMessageProps {
 }
 
 function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: SectionedMessageProps) {
+  const t = useTranslations('strategy');
+  const tCond = useTranslations('conditions');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     suggestions: true,
     warnings: true,
   });
   const [added, setAdded] = useState(false);
+
+  const getConditionLabel = (key: string): string => {
+    const labelKey = `${key}.label`;
+    if (tCond.has(labelKey)) return tCond(labelKey);
+    return key
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  const getParamLabel = (condKey: string, paramKey: string): string => {
+    const pKey = `${condKey}.params.${paramKey}`;
+    if (tCond.has(pKey)) return tCond(pKey);
+    return paramKey;
+  };
 
   const toggle = (key: string) =>
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -54,7 +71,7 @@ function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: Sectio
       {/* Summary card */}
       {payload.summary && (
         <div className="rounded-lg border border-blue-200/60 bg-blue-50/50 px-3 py-2 text-xs text-blue-800 dark:border-blue-500/20 dark:bg-blue-900/10 dark:text-blue-200">
-          <span className="font-semibold">Summary: </span>
+          <span className="font-semibold">{t('chatbot.summary')}: </span>
           {payload.summary}
         </div>
       )}
@@ -73,7 +90,7 @@ function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: Sectio
               ) : (
                 <ChevronRight className="h-3 w-3" />
               )}
-              Conditions ({payload.suggestions.length})
+              {t('chatbot.conditions', { count: payload.suggestions.length })}
             </button>
             {/* Add to Canvas button */}
             {nodeMappings && nodeMappings.length > 0 && onAddNodes && (
@@ -86,12 +103,12 @@ function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: Sectio
                 {added ? (
                   <>
                     <Check className="h-3 w-3" />
-                    Added
+                    {t('chatbot.added')}
                   </>
                 ) : (
                   <>
                     <Plus className="h-3 w-3" />
-                    Add to Canvas
+                    {t('chatbot.addToCanvas')}
                   </>
                 )}
               </button>
@@ -105,8 +122,8 @@ function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: Sectio
                   className="rounded-lg border border-blue-200/60 bg-blue-50 px-2.5 py-1.5 dark:border-blue-500/20 dark:bg-blue-900/20"
                 >
                   <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                    <span className="font-mono font-semibold text-blue-700 dark:text-blue-300">
-                      {s.condition_type}
+                    <span className="font-semibold text-blue-700 dark:text-blue-300">
+                      {getConditionLabel(s.condition_type)}
                     </span>
                     {s.params &&
                       typeof s.params === 'object' &&
@@ -116,7 +133,7 @@ function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: Sectio
                           key={k}
                           className="rounded bg-blue-100 px-1 py-0.5 text-[10px] text-blue-600 dark:bg-blue-800/30 dark:text-blue-400"
                         >
-                          {k}={String(v)}
+                          {getParamLabel(s.condition_type, k)}={String(v)}
                         </span>
                       ))}
                   </div>
@@ -145,7 +162,7 @@ function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: Sectio
             ) : (
               <ChevronRight className="h-3 w-3" />
             )}
-            Warnings ({payload.warnings.length})
+            {t('chatbot.warnings', { count: payload.warnings.length })}
           </button>
           {expandedSections.warnings && (
             <div className="space-y-1 px-3 pb-2">

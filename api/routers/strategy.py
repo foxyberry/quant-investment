@@ -413,6 +413,7 @@ async def strategy_chat(request: StrategyChatRequest):
             for chunk in service.stream_chat(
                 [{"role": m.role, "content": m.content} for m in request.messages],
                 request.graph,
+                locale=request.locale,
             ):
                 full_text += chunk
                 yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"

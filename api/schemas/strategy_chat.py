@@ -30,6 +30,10 @@ class StrategyChatRequest(BaseModel):
         None,
         description="Current strategy graph (serialized nodes and edges)",
     )
+    locale: Optional[str] = Field(
+        None,
+        description="UI locale for localized condition names (e.g. 'ko', 'en', 'zh')",
+    )
 
 
 class SuggestionValidation(BaseModel):

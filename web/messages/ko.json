@@ -69,6 +69,11 @@
     "trailingStop": "트레일링 스톱",
     "holdingPeriod": "보유 기간",
     "manual": "수동",
+    "signalReason_stop_loss": "손절 트리거 (손익: {pnl}%)",
+    "signalReason_take_profit": "익절 목표 도달 (손익: {pnl}%)",
+    "signalReason_trailing_stop": "트레일링 스톱 트리거 (손익: {pnl}%)",
+    "signalReason_holding_period": "보유 기간 초과 (손익: {pnl}%)",
+    "signalReason_manual": "수동 매도 신호 (손익: {pnl}%)",
     "recentExecutions": "최근 실행",
     "viewAllExecutions": "전체 실행 보기",
     "noExecutions": "실행 이력 없음",
@@ -634,6 +639,10 @@
     "expandPanel": "패널 확대",
     "collapsePanel": "패널 축소",
     "searchPlaceholder": "컴포넌트 검색...",
+    "coreNodes": "핵심 노드",
+    "market": "마켓",
+    "sector": "섹터",
+    "result": "결과",
     "inputNodes": "입력 노드",
     "filterNodes": "필터 노드",
     "logicOperators": "논리 연산자",
@@ -735,7 +744,12 @@
       "title": "AI 전략 어시스턴트",
       "placeholder": "전략에 대해 질문하세요...",
       "empty": "전략 구성에 대해 무엇이든 물어보세요.",
-      "error": "응답을 받지 못했습니다. 다시 시도해주세요."
+      "error": "응답을 받지 못했습니다. 다시 시도해주세요.",
+      "summary": "요약",
+      "conditions": "조건 ({count})",
+      "warnings": "주의사항 ({count})",
+      "addToCanvas": "캔버스에 추가",
+      "added": "추가됨"
     }
   },
   "analysis": {

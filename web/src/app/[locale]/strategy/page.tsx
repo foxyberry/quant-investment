@@ -1206,14 +1206,14 @@ function StrategyPageInner() {
 
   if (!mounted) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-var(--header-height))]">
+      <div className="flex items-center justify-center h-[calc(100vh-var(--header-height)-2rem)] lg:h-[calc(100vh-var(--header-height)-3rem)]">
         <Loader2 className="h-8 w-8 animate-spin text-[#1313ec]" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-var(--header-height))] p-3 gap-3">
+    <div className="flex flex-col h-[calc(100vh-var(--header-height)-2rem)] lg:h-[calc(100vh-var(--header-height)-3rem)] p-3 gap-3">
       <h1 className="sr-only">{t('title')}</h1>
       {/* Toolbar - Stitch-style */}
       <div className="flex flex-wrap items-center gap-3 px-4 py-2 border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] rounded-xl">

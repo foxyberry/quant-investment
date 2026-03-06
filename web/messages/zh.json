@@ -69,6 +69,11 @@
     "trailingStop": "跟踪止损",
     "holdingPeriod": "持仓期限",
     "manual": "手动",
+    "signalReason_stop_loss": "止损触发 (盈亏: {pnl}%)",
+    "signalReason_take_profit": "止盈目标达成 (盈亏: {pnl}%)",
+    "signalReason_trailing_stop": "跟踪止损触发 (盈亏: {pnl}%)",
+    "signalReason_holding_period": "持仓期限超过 (盈亏: {pnl}%)",
+    "signalReason_manual": "手动卖出信号 (盈亏: {pnl}%)",
     "recentExecutions": "最近执行",
     "viewAllExecutions": "查看所有执行",
     "noExecutions": "暂无执行记录",
@@ -634,6 +639,10 @@
     "expandPanel": "展开面板",
     "collapsePanel": "收起面板",
     "searchPlaceholder": "搜索组件...",
+    "coreNodes": "核心节点",
+    "market": "市场",
+    "sector": "板块",
+    "result": "结果",
     "inputNodes": "输入节点",
     "filterNodes": "筛选节点",
     "logicOperators": "逻辑运算符",
@@ -735,7 +744,12 @@
       "title": "AI策略助手",
       "placeholder": "询问关于策略的问题...",
       "empty": "关于构建策略，可以随时问我任何问题。",
-      "error": "未能获取回复，请重试。"
+      "error": "未能获取回复，请重试。",
+      "summary": "摘要",
+      "conditions": "条件 ({count})",
+      "warnings": "注意事项 ({count})",
+      "addToCanvas": "添加到画布",
+      "added": "已添加"
     }
   },
   "analysis": {

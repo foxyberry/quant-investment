@@ -7,6 +7,7 @@ import { getSellSignals } from '@/lib/api';
 import type { SellSignal } from '@/lib/types';
 import { AlertTriangle, Clock, ShieldCheck, TrendingDown, Target, Activity } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
+import { Link } from '@/i18n/navigation';
 
 interface LoadingState {
   loading: boolean;
@@ -123,10 +124,16 @@ export default function SellSignalsCard() {
             const config = signalTypeConfig[signal.signal_type] || signalTypeConfig.manual;
             const Icon = config.icon;
 
+            const reasonKey = `signalReason_${signal.signal_type}` as const;
+            const localizedReason = t.has(reasonKey)
+              ? t(reasonKey, { pnl: signal.pnl_pct.toFixed(1) })
+              : signal.reason;
+
             return (
-              <div
+              <Link
                 key={`${signal.ticker}-${index}`}
-                className="flex items-start gap-3 px-6 py-4 hover:bg-[var(--background)] transition-colors"
+                href={`/portfolio?ticker=${encodeURIComponent(signal.ticker)}`}
+                className="flex items-start gap-3 px-6 py-4 hover:bg-[var(--background)] transition-colors cursor-pointer group"
               >
                 <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${config.colorClass}`}>
                   <Icon className="h-3 w-3" />
@@ -135,7 +142,7 @@ export default function SellSignalsCard() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-[var(--foreground)]">
+                    <span className="font-semibold text-[var(--foreground)] group-hover:text-[var(--color-primary)] transition-colors">
                       {signal.ticker}
                     </span>
                     {signal.name && (
@@ -145,7 +152,7 @@ export default function SellSignalsCard() {
                     )}
                   </div>
                   <p className="mt-1 text-sm text-[var(--foreground-muted)]">
-                    {signal.reason}
+                    {localizedReason}
                   </p>
                   <div className="mt-1 flex gap-4 text-xs text-[var(--foreground-muted)]">
                     <span>{t('current', { price: formatPrice(signal.current_price, signal.currency) })}</span>
@@ -154,7 +161,7 @@ export default function SellSignalsCard() {
                     )}
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

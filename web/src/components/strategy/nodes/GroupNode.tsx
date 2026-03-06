@@ -94,6 +94,11 @@ function GroupNode({ id, data, selected }: NodeProps) {
     return getNodes().filter((n) => n.parentId === id).length;
   }, [getNodes, id]);
 
+  const dynamicMinHeight = useMemo(() => {
+    if (childCount <= 1) return 220;
+    return 220 + (childCount - 1) * 120;
+  }, [childCount]);
+
   const handleOperatorChange = useCallback(
     (value: string) => {
       updateNodeData(nodeId, { logic_operator: value });
@@ -115,13 +120,13 @@ function GroupNode({ id, data, selected }: NodeProps) {
           ? 'shadow-xl ring-2 ring-[#1313ec]/20'
           : 'shadow-sm hover:shadow-md'
       }`}
-      style={{ width: '100%', height: '100%', minWidth: 380, minHeight: 220 }}
+      style={{ width: '100%', height: '100%', minWidth: 380, minHeight: dynamicMinHeight }}
       onDragOver={(e) => e.preventDefault()}
     >
       <NodeResizer
         isVisible={selected}
         minWidth={380}
-        minHeight={220}
+        minHeight={dynamicMinHeight}
         color={resizerColor}
         lineStyle={{ borderColor: resizerColor }}
       />

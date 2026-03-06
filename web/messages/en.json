@@ -69,6 +69,11 @@
     "trailingStop": "Trailing Stop",
     "holdingPeriod": "Holding Period",
     "manual": "Manual",
+    "signalReason_stop_loss": "Stop loss triggered (P&L: {pnl}%)",
+    "signalReason_take_profit": "Take profit target reached (P&L: {pnl}%)",
+    "signalReason_trailing_stop": "Trailing stop triggered (P&L: {pnl}%)",
+    "signalReason_holding_period": "Holding period exceeded (P&L: {pnl}%)",
+    "signalReason_manual": "Manual sell signal (P&L: {pnl}%)",
     "recentExecutions": "Recent Executions",
     "viewAllExecutions": "View All Executions",
     "noExecutions": "No executions yet",
@@ -634,6 +639,10 @@
     "expandPanel": "Expand panel",
     "collapsePanel": "Collapse panel",
     "searchPlaceholder": "Search components...",
+    "coreNodes": "Core Nodes",
+    "market": "Market",
+    "sector": "Sector",
+    "result": "Result",
     "inputNodes": "Input Nodes",
     "filterNodes": "Filter Nodes",
     "logicOperators": "Logic Operators",
@@ -735,7 +744,12 @@
       "title": "AI Strategy Assistant",
       "placeholder": "Ask about your strategy...",
       "empty": "Ask me anything about building your strategy.",
-      "error": "Failed to get response. Please try again."
+      "error": "Failed to get response. Please try again.",
+      "summary": "Summary",
+      "conditions": "Conditions ({count})",
+      "warnings": "Warnings ({count})",
+      "addToCanvas": "Add to Canvas",
+      "added": "Added"
     }
   },
   "analysis": {

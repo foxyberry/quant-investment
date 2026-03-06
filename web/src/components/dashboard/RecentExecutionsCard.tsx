@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Card } from '@/components/ui';
 import { getExecutions } from '@/lib/api';
 import type { ExecutionHistorySummary } from '@/lib/types';
-import { History, ArrowRight } from 'lucide-react';
+import { History, ArrowRight, Layers } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
 interface LoadingState {
@@ -41,7 +41,7 @@ export default function RecentExecutionsCard() {
   useEffect(() => {
     const fetchExecutions = async () => {
       try {
-        const data = await getExecutions({ limit: 3 });
+        const data = await getExecutions({ limit: 10 });
         setItems(data.items);
         setState({ loading: false, error: null });
       } catch (err) {
@@ -93,10 +93,25 @@ export default function RecentExecutionsCard() {
     );
   }
 
+  // Group items by execution_type + preset/name, keeping the most recent as representative
+  const grouped = items.reduce<Array<{ key: string; representative: ExecutionHistorySummary; count: number }>>((acc, item) => {
+    const key = `${item.execution_type}::${item.name || item.preset}`;
+    const existing = acc.find((g) => g.key === key);
+    if (existing) {
+      existing.count += 1;
+      if (new Date(item.created_at) > new Date(existing.representative.created_at)) {
+        existing.representative = item;
+      }
+    } else {
+      acc.push({ key, representative: item, count: 1 });
+    }
+    return acc;
+  }, []);
+
   return (
     <Card title={t('recentExecutions')} padding="none">
       <div className="divide-y divide-[var(--border)]">
-        {items.map((item) => (
+        {grouped.map(({ representative: item, count }) => (
           <Link
             key={item.id}
             href={`/reports/${item.id}`}
@@ -119,6 +134,12 @@ export default function RecentExecutionsCard() {
                 <span className="font-medium text-[var(--foreground)] truncate">
                   {item.name || item.preset}
                 </span>
+                {count > 1 && (
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] font-medium text-[var(--foreground-muted)]">
+                    <Layers className="h-2.5 w-2.5" />
+                    {count}
+                  </span>
+                )}
               </div>
               <div className="mt-1 flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
                 <span>
@@ -128,6 +149,9 @@ export default function RecentExecutionsCard() {
                   {' / '}
                   {item.total_count}
                 </span>
+                {item.reference_date && (
+                  <span className="text-xs">{item.reference_date}</span>
+                )}
                 <span>{formatRelativeDate(item.created_at, tReports)}</span>
               </div>
             </div>
