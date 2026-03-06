@@ -755,7 +755,10 @@
       "conditions": "条件 ({count})",
       "warnings": "注意事项 ({count})",
       "addToCanvas": "添加到画布",
-      "added": "已添加"
+      "added": "已添加",
+      "updateExisting": "更新节点",
+      "updated": "已更新",
+      "addNew": "新增"
     },
     "logicAndShort": "全部匹配",
     "logicOrShort": "任意匹配",

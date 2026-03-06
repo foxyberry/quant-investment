@@ -755,7 +755,10 @@
       "conditions": "조건 ({count})",
       "warnings": "주의사항 ({count})",
       "addToCanvas": "캔버스에 추가",
-      "added": "추가됨"
+      "added": "추가됨",
+      "updateExisting": "노드 수정",
+      "updated": "수정됨",
+      "addNew": "새로 추가"
     },
     "logicAndShort": "모두 일치",
     "logicOrShort": "하나 이상 일치",

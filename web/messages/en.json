@@ -755,7 +755,10 @@
       "conditions": "Conditions ({count})",
       "warnings": "Warnings ({count})",
       "addToCanvas": "Add to Canvas",
-      "added": "Added"
+      "added": "Added",
+      "updateExisting": "Update Node",
+      "updated": "Updated",
+      "addNew": "Add New"
     },
     "logicAndShort": "All match",
     "logicOrShort": "Any match",
