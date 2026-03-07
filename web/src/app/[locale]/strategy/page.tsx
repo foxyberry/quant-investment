@@ -26,8 +26,8 @@ import '@xyflow/react/dist/style.css';
 import {
   Loader2, Zap, RotateCcw, Save, TestTube, FolderOpen, X,
   ChevronRight, ChevronDown, Home, Calendar, Search,
-  AlignHorizontalSpaceAround, AlignVerticalSpaceAround,
-  PanelLeftClose, PanelLeftOpen, ChevronUp,
+  AlignHorizontalSpaceAround, AlignVerticalSpaceAround, Route,
+  ChevronLeft, ChevronUp,
 } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
@@ -108,12 +108,15 @@ function estimateNodeSize(node: { data: LayoutNodeData }): { width: number; heig
 function computeAutoLayout(
   nodes: Array<{ id: string; data: LayoutNodeData }>,
   edges: Array<{ source: string; target: string }>,
-  direction: 'horizontal' | 'vertical' = 'horizontal'
+  direction: 'horizontal' | 'vertical' | 'zigzag' = 'horizontal'
 ): Map<string, { x: number; y: number }> {
-  const GAP_PRIMARY = direction === 'horizontal' ? 140 : 72;
-  const GAP_SECONDARY = direction === 'horizontal' ? 72 : 140;
+  const isZigzag = direction === 'zigzag';
+  const baseDir = isZigzag ? 'horizontal' : direction;
+  const GAP_PRIMARY = baseDir === 'horizontal' ? 140 : 72;
+  const GAP_SECONDARY = baseDir === 'horizontal' ? 72 : 140;
   const START_X = 80;
   const START_Y = 120;
+  const ZIGZAG_COLS_PER_ROW = 3;
 
   // Build adjacency + in-degree
   const inDegree = new Map<string, number>();
@@ -167,7 +170,66 @@ function computeAutoLayout(
   const positions = new Map<string, { x: number; y: number }>();
   const sortedCols = Array.from(columns.keys()).sort((a, b) => a - b);
 
-  if (direction === 'horizontal') {
+  if (isZigzag) {
+    // Zigzag: serpentine left-to-right then right-to-left every N columns
+    const columnMaxWidth = new Map<number, number>();
+    const columnMaxHeight = new Map<number, number>();
+    for (const col of sortedCols) {
+      const ids = columns.get(col)!;
+      columnMaxWidth.set(col, Math.max(...ids.map((id) => sizeById.get(id)?.width ?? 260), 260));
+      let colHeight = 0;
+      for (const id of ids) colHeight += (sizeById.get(id)?.height ?? 100) + GAP_SECONDARY;
+      columnMaxHeight.set(col, colHeight - GAP_SECONDARY);
+    }
+
+    // Pre-compute x offsets within each row-of-columns
+    const colX = new Map<number, number>();
+    let rowStartIdx = 0;
+    while (rowStartIdx < sortedCols.length) {
+      const rowEnd = Math.min(rowStartIdx + ZIGZAG_COLS_PER_ROW, sortedCols.length);
+      let rx = START_X;
+      for (let i = rowStartIdx; i < rowEnd; i++) {
+        colX.set(sortedCols[i], rx);
+        rx += (columnMaxWidth.get(sortedCols[i]) ?? 260) + GAP_PRIMARY;
+      }
+      rowStartIdx = rowEnd;
+    }
+
+    // Compute y offsets per zigzag row and reverse even rows
+    let runningRowY = START_Y;
+    rowStartIdx = 0;
+    let zigzagRowIdx = 0;
+    while (rowStartIdx < sortedCols.length) {
+      const rowEnd = Math.min(rowStartIdx + ZIGZAG_COLS_PER_ROW, sortedCols.length);
+      const rowCols = sortedCols.slice(rowStartIdx, rowEnd);
+      const isReversed = zigzagRowIdx % 2 === 1;
+
+      // For reversed rows, flip x positions within the row
+      if (isReversed) {
+        const xs = rowCols.map((c) => colX.get(c)!);
+        const reversedXs = [...xs].reverse();
+        for (let i = 0; i < rowCols.length; i++) {
+          colX.set(rowCols[i], reversedXs[i]);
+        }
+      }
+
+      let maxRowHeight = 0;
+      for (const col of rowCols) {
+        const ids = [...columns.get(col)!].sort((a, b) => (nodeIndex.get(a) ?? 0) - (nodeIndex.get(b) ?? 0));
+        const x = colX.get(col) ?? START_X;
+        let ry = runningRowY;
+        for (const id of ids) {
+          positions.set(id, { x, y: ry });
+          ry += (sizeById.get(id)?.height ?? 100) + GAP_SECONDARY;
+        }
+        maxRowHeight = Math.max(maxRowHeight, columnMaxHeight.get(col) ?? 0);
+      }
+
+      runningRowY += maxRowHeight + GAP_PRIMARY;
+      rowStartIdx = rowEnd;
+      zigzagRowIdx++;
+    }
+  } else if (direction === 'horizontal') {
     // Left-to-right: depth → x, siblings → y
     const columnMaxWidth = new Map<number, number>();
     for (const col of sortedCols) {
@@ -1025,7 +1087,7 @@ function StrategyPageInner() {
     setIsSampleStrategy(false);
   }, [setNodes, setEdges]);
 
-  const handleAutoLayout = useCallback((direction: 'horizontal' | 'vertical') => {
+  const handleAutoLayout = useCallback((direction: 'horizontal' | 'vertical' | 'zigzag') => {
     const topLevelNodes = nodes.filter((n) => !n.parentId);
     const layoutData = topLevelNodes.map((n) => ({
       id: n.id,
@@ -1270,7 +1332,13 @@ function StrategyPageInner() {
           </span>
           <ChevronRight className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
           <span className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            {strategyName || t('untitled')}
+            <input
+              type="text"
+              value={strategyName}
+              onChange={(e) => setStrategyName(e.target.value)}
+              placeholder={t('untitled')}
+              className="bg-transparent border-0 border-b border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-[#1313ec] dark:focus:border-blue-400 outline-none text-inherit font-inherit px-0 py-0 min-w-[8rem] max-w-[16rem] transition-colors"
+            />
             {isSampleStrategy && (
               <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded border border-[#1313ec]/30 text-[#1313ec] bg-[#1313ec]/5">
                 {t('builtInSample')}
@@ -1294,74 +1362,86 @@ function StrategyPageInner() {
           </div>
         )}
         {!isRunning && results && (
-          <div className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+          <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
             {t('stocksMatched', { count: results.length })}
           </div>
         )}
 
-        {/* Primary actions */}
+        {/* Canvas controls */}
         <button
           type="button"
           onClick={handleClear}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
-          <RotateCcw className="h-3.5 w-3.5" />
+          <RotateCcw className="h-3 w-3" />
           {t('reset')}
         </button>
         <button
           type="button"
           onClick={() => handleAutoLayout('horizontal')}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           title={t('autoLayoutHorizontal')}
         >
-          <AlignHorizontalSpaceAround className="h-3.5 w-3.5" />
+          <AlignHorizontalSpaceAround className="h-3 w-3" />
           {t('autoLayout')}
         </button>
         <button
           type="button"
           onClick={() => handleAutoLayout('vertical')}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           title={t('autoLayoutVertical')}
         >
-          <AlignVerticalSpaceAround className="h-3.5 w-3.5" />
+          <AlignVerticalSpaceAround className="h-3 w-3" />
           {t('autoLayoutVertical')}
         </button>
         <button
           type="button"
-          onClick={() => setShowLoadDialog(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          onClick={() => handleAutoLayout('zigzag')}
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          title={t('autoLayoutZigzag')}
         >
-          <FolderOpen className="h-3.5 w-3.5" />
+          <Route className="h-3 w-3" />
+          {t('autoLayoutZigzag')}
+        </button>
+        <div className="h-5 w-px bg-[#e1e3e5] dark:bg-[#2e2e30] mx-0.5" />
+        {/* Strategy management */}
+        <button
+          type="button"
+          onClick={() => setShowLoadDialog(true)}
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          <FolderOpen className="h-3 w-3" />
           {t('loadStrategy')}
         </button>
-        <div className="h-6 w-px bg-[#e1e3e5] dark:bg-[#2e2e30] mx-1" />
         <button
           type="button"
           onClick={handleSave}
           disabled={saveStrategy.isPending || updateStrategy.isPending}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
         >
-          <Save className="h-3.5 w-3.5" />
+          <Save className="h-3 w-3" />
           {t('saveStrategy')}
         </button>
+        <div className="h-5 w-px bg-[#e1e3e5] dark:bg-[#2e2e30] mx-0.5" />
+        {/* Actions */}
         <button
           type="button"
           onClick={() => setShowBacktest(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
-          <TestTube className="h-3.5 w-3.5" />
+          <TestTube className="h-3 w-3" />
           {t('backtest')}
         </button>
         <button
           type="button"
           onClick={handleRun}
           disabled={isRunning}
-          className="flex items-center gap-2 px-4 py-1.5 text-sm font-semibold bg-[#1313ec] text-white rounded hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-[#1313ec] text-white rounded hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
         >
           {isRunning ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <Zap className="h-4 w-4" />
+            <Zap className="h-3.5 w-3.5" />
           )}
           {t('executeStrategy')}
         </button>
@@ -1371,25 +1451,25 @@ function StrategyPageInner() {
       <div className="flex flex-1 overflow-hidden rounded-xl border border-[#e1e3e5] dark:border-[#2e2e30]">
         {/* Left palette */}
         {showPalette ? (
-          <div className="relative">
+          <div className="relative group/palette">
             <NodePalette nodeCount={nodeCount} />
             <button
               type="button"
               onClick={() => setShowPalette(false)}
-              className="absolute top-2 right-2 z-10 flex items-center justify-center w-6 h-6 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400 dark:text-gray-500"
+              className="absolute top-1/2 -right-3 -translate-y-1/2 z-10 flex items-center justify-center w-3 h-8 rounded-r-md bg-[#e1e3e5] dark:bg-[#2e2e30] opacity-0 group-hover/palette:opacity-100 hover:!opacity-100 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all text-gray-500 dark:text-gray-400"
               title={t('hidePalette')}
             >
-              <PanelLeftClose className="h-3.5 w-3.5" />
+              <ChevronLeft className="h-3 w-3" />
             </button>
           </div>
         ) : (
           <button
             type="button"
             onClick={() => setShowPalette(true)}
-            className="flex items-center justify-center w-8 border-r border-[#e1e3e5] dark:border-[#2e2e30] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-400 dark:text-gray-500"
+            className="flex items-center justify-center w-3 hover:w-5 border-r border-[#e1e3e5] dark:border-[#2e2e30] bg-gray-50 dark:bg-[#1e1e1f] hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-400 dark:text-gray-500"
             title={t('showPalette')}
           >
-            <PanelLeftOpen className="h-4 w-4" />
+            <ChevronRight className="h-3 w-3" />
           </button>
         )}
 

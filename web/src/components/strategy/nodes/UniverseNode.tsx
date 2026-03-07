@@ -78,7 +78,7 @@ function UniverseNode({ data, selected }: NodeProps) {
       </div>
       {/* Content */}
       <div className="p-3">
-        <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
+        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           {t('marketSelection')}
         </div>
         <div className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
