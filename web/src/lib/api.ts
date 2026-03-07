@@ -17,6 +17,8 @@ import type {
   TickerAnalysis,
   AIAnalysisResult,
   AnalysisStatus,
+  MacroBundle,
+  MacroHistoryResponse,
   KiwoomConnectionStatus,
   KiwoomConnectionState,
   KiwoomCondition,
@@ -401,6 +403,20 @@ export async function getTickerAnalysis(ticker: string, period: string = '6mo'):
  */
 export async function searchTickers(query: string): Promise<Array<{ ticker: string; name: string }>> {
   return fetchApi<Array<{ ticker: string; name: string }>>(`/api/search?q=${encodeURIComponent(query)}`);
+}
+
+/**
+ * Get macro bundle snapshot (FX + futures + investor flow + regime signal)
+ */
+export async function getMacroBundle(): Promise<MacroBundle> {
+  return fetchApi<MacroBundle>('/api/market/macro/bundle');
+}
+
+/**
+ * Get macro history for a given window (e.g. 60m, 1d)
+ */
+export async function getMacroHistory(window: string = '60m'): Promise<MacroHistoryResponse> {
+  return fetchApi<MacroHistoryResponse>(`/api/market/macro/history?window=${encodeURIComponent(window)}`);
 }
 
 /**
