@@ -951,16 +951,19 @@
     "pair_correlation": {
       "label": "Pair Correlation",
       "desc": "Rolling Pearson correlation between two tickers",
+      "help": "Measures how closely two stocks move together over a rolling window. A correlation above the threshold suggests the pair moves in sync, useful for pairs trading strategies.",
       "params": { "ticker2": "Companion ticker", "period": "Rolling window (days)", "min_correlation": "Min correlation" }
     },
     "pair_spread_zscore": {
       "label": "Spread Z-Score",
       "desc": "Log spread z-score for mean-reversion entry",
+      "help": "Calculates the z-score of the log price spread between two tickers. When the spread deviates significantly from its mean, it signals a potential mean-reversion trade opportunity.",
       "params": { "ticker2": "Companion ticker", "period": "Lookback (days)", "zscore_entry": "Z-score threshold", "direction": "Direction" }
     },
     "pair_cointegration": {
       "label": "Cointegration Test",
       "desc": "Engle-Granger cointegration test",
+      "help": "Tests whether two stock prices share a long-term equilibrium relationship using the Engle-Granger method. A low p-value indicates the pair is cointegrated and suitable for pairs trading.",
       "params": { "ticker2": "Companion ticker", "period": "Lookback (days)", "pvalue_threshold": "Max p-value" }
     },
     "min_price": {
