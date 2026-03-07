@@ -152,6 +152,7 @@ class TestPairSpreadZScore:
         result = cond.evaluate_pair("A", d1, "B", d2)
         # Perfectly correlated pair → spread is nearly constant → z≈0
         assert "zscore" in result.details
+        assert abs(result.details["zscore"]) < 2.0  # should not trigger at z=2
 
     def test_empty_data(self, empty_df):
         cond = PairSpreadZScoreCondition(ticker2="B", period=60)
@@ -174,6 +175,46 @@ class TestPairSpreadZScore:
         result = cond.evaluate_pair("A", d1, "B", d2)
         assert result.details["direction"] == "short_spread"
 
+    def test_invalid_direction_raises(self):
+        with pytest.raises(ValueError, match="Invalid direction"):
+            PairSpreadZScoreCondition(ticker2="B", direction="up")
+
+    def test_invalid_direction_down_raises(self):
+        with pytest.raises(ValueError, match="Invalid direction"):
+            PairSpreadZScoreCondition(ticker2="B", direction="down")
+
+    def test_long_spread_matches_negative_zscore(self):
+        """long_spread triggers when z <= -threshold (spread is unusually low)."""
+        n = 120
+        dates = pd.date_range("2024-01-01", periods=n)
+        base = _make_series(n, seed=42)
+        d1 = _make_df(base, dates)
+        # Make ticker2 diverge upward at the end → spread drops
+        modified = base.copy()
+        modified[-5:] = modified[-5:] + 30  # big jump in ticker2
+        d2 = _make_df(modified, dates)
+        cond = PairSpreadZScoreCondition(
+            ticker2="B", period=60, zscore_entry=1.5, direction="long_spread"
+        )
+        result = cond.evaluate_pair("A", d1, "B", d2)
+        assert result.details["zscore"] < 0  # spread dropped
+
+    def test_short_spread_matches_positive_zscore(self):
+        """short_spread triggers when z >= threshold (spread is unusually high)."""
+        n = 120
+        dates = pd.date_range("2024-01-01", periods=n)
+        base = _make_series(n, seed=42)
+        # Make ticker1 diverge upward → spread rises
+        modified = base.copy()
+        modified[-5:] = modified[-5:] + 30
+        d1 = _make_df(modified, dates)
+        d2 = _make_df(base, dates)
+        cond = PairSpreadZScoreCondition(
+            ticker2="B", period=60, zscore_entry=1.5, direction="short_spread"
+        )
+        result = cond.evaluate_pair("A", d1, "B", d2)
+        assert result.details["zscore"] > 0  # spread rose
+
 
 # ---------------------------------------------------------------------------
 # PairCointegrationCondition tests
@@ -185,6 +226,12 @@ class TestPairCointegration:
         cond = PairCointegrationCondition(ticker2="B", period=80, pvalue_threshold=0.1)
         result = cond.evaluate_pair("A", d1, "B", d2)
         assert "pvalue" in result.details
+
+    def test_pvalue_approximate_flag(self, correlated_pair):
+        d1, d2, _ = correlated_pair
+        cond = PairCointegrationCondition(ticker2="B", period=80, pvalue_threshold=0.5)
+        result = cond.evaluate_pair("A", d1, "B", d2)
+        assert result.details.get("pvalue_approximate") is True
 
     def test_empty_data(self, empty_df):
         cond = PairCointegrationCondition(ticker2="B", period=60)
@@ -289,6 +336,38 @@ class TestScreenerPairsIntegration:
         assert len(results) == 1
         assert results[0].matched is False
         assert "error" in results[0].condition_results[0].details
+
+    def test_companion_cache_reset_between_runs(self, correlated_pair):
+        """Cache is reset on each run(), so companion data is re-fetched."""
+        d1, d2, _ = correlated_pair
+        fetch_calls = []
+
+        def tracking_fetch(ticker, days):
+            fetch_calls.append((ticker, days))
+            return d2 if ticker == "B" else d1
+
+        screener = StockScreener(
+            conditions=[
+                PairCorrelationCondition(ticker2="B", period=60, min_correlation=0.7),
+            ],
+            max_workers=1,
+            use_full_universe=False,
+            request_delay=0.0,
+            use_cache=False,
+        )
+        screener._fetch_data = tracking_fetch
+        screener._get_stock_name = lambda t: t
+
+        # Run 1
+        screener.run(tickers=["A"], show_progress=False, return_all=True)
+        companion_fetches_run1 = [c for c in fetch_calls if c[0] == "B"]
+        assert len(companion_fetches_run1) == 1
+
+        # Run 2 — cache should be reset, so B is fetched again
+        fetch_calls.clear()
+        screener.run(tickers=["A"], show_progress=False, return_all=True)
+        companion_fetches_run2 = [c for c in fetch_calls if c[0] == "B"]
+        assert len(companion_fetches_run2) == 1  # re-fetched, not cached
 
     def test_single_conditions_still_work(self):
         """Regression: existing single-ticker conditions unaffected."""

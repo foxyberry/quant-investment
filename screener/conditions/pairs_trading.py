@@ -104,11 +104,13 @@ class PairCorrelationCondition(PairsCondition):
         {"name": "ticker2", "type": "ticker", "default": "", "description": "Companion ticker"},
         {"name": "period", "type": "int", "default": 60, "description": "Lookback window (days)"},
         {"name": "zscore_entry", "type": "float", "default": 2.0, "description": "Z-score entry threshold"},
-        {"name": "direction", "type": "str", "default": "long_spread", "description": "long_spread or short_spread"},
+        {"name": "direction", "type": "str", "default": "long_spread", "description": "long_spread or short_spread", "options": ["long_spread", "short_spread"]},
     ],
     is_pairs=True,
 )
 class PairSpreadZScoreCondition(PairsCondition):
+    _VALID_DIRECTIONS = ("long_spread", "short_spread")
+
     def __init__(
         self,
         ticker2: str = "",
@@ -116,6 +118,10 @@ class PairSpreadZScoreCondition(PairsCondition):
         zscore_entry: float = 2.0,
         direction: str = "long_spread",
     ):
+        if direction not in self._VALID_DIRECTIONS:
+            raise ValueError(
+                f"Invalid direction '{direction}'. Must be one of {self._VALID_DIRECTIONS}"
+            )
         self._ticker2 = ticker2
         self.period = period
         self.zscore_entry = zscore_entry
@@ -225,6 +231,7 @@ class PairCointegrationCondition(PairsCondition):
                 "pvalue": round(float(pvalue), 4),
                 "pvalue_threshold": self.pvalue_threshold,
                 "period": self.period,
+                "pvalue_approximate": True,
             },
         )
 

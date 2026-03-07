@@ -362,10 +362,11 @@ class StockScreener:
     def _fetch_companion_data(self, ticker2: str, days: int) -> Optional[pd.DataFrame]:
         """Fetch companion ticker data for pairs conditions (with caching)."""
         if not hasattr(self, '_companion_cache'):
-            self._companion_cache: Dict[str, Optional[pd.DataFrame]] = {}
-        if ticker2 not in self._companion_cache:
-            self._companion_cache[ticker2] = self._fetch_data(ticker2, days)
-        return self._companion_cache[ticker2]
+            self._companion_cache: Dict[tuple, Optional[pd.DataFrame]] = {}
+        cache_key = (ticker2, days)
+        if cache_key not in self._companion_cache:
+            self._companion_cache[cache_key] = self._fetch_data(ticker2, days)
+        return self._companion_cache[cache_key]
 
     def _evaluate_stock(self, ticker: str, data: pd.DataFrame) -> ScreeningResult:
         """단일 종목 평가 (pairs 조건 포함)"""
@@ -441,6 +442,9 @@ class StockScreener:
         """
         if not self.conditions:
             raise ValueError("조건이 설정되지 않았습니다. add_condition()으로 조건을 추가하세요.")
+
+        # Reset companion data cache for fresh run
+        self._companion_cache: Dict[tuple, Optional[pd.DataFrame]] = {}
 
         # 종목 목록 결정
         if tickers:
