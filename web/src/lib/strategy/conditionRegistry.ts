@@ -7,7 +7,7 @@
 
 export interface ConditionParam {
   name: string;
-  type: 'int' | 'float' | 'str' | 'bool';
+  type: 'int' | 'float' | 'str' | 'bool' | 'ticker';
   default: unknown;
   description: string;
   options?: string[];

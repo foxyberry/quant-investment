@@ -31,7 +31,7 @@ Usage:
     )
 """
 
-from .base import BaseCondition, ConditionResult, ConditionError
+from .base import BaseCondition, ConditionResult, ConditionError, PairsCondition
 
 from .price import (
     MinPriceCondition,
@@ -208,6 +208,12 @@ from .quant_special_batch11 import (
     QualityScoreCondition,
 )
 
+from .pairs_trading import (
+    PairCorrelationCondition,
+    PairSpreadZScoreCondition,
+    PairCointegrationCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -263,7 +269,7 @@ from .registry import get_condition_class_map, get_condition_metadata, register_
 
 __all__ = [
     # Base
-    'BaseCondition', 'ConditionResult', 'ConditionError',
+    'BaseCondition', 'ConditionResult', 'ConditionError', 'PairsCondition',
 
     # Price
     'MinPriceCondition', 'MaxPriceCondition', 'PriceRangeCondition', 'PriceChangeCondition',
@@ -358,6 +364,9 @@ __all__ = [
     'PreEarningsDriftCondition', 'AccrualsRatioCondition',
     'AssetGrowthRateCondition', 'GrossProfitabilityCondition',
     'QualityScoreCondition',
+
+    # Pairs Trading
+    'PairCorrelationCondition', 'PairSpreadZScoreCondition', 'PairCointegrationCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',

@@ -84,6 +84,21 @@ export function ParamInput({
     );
   }
 
+  if (param.type === 'ticker') {
+    return (
+      <div>
+        <FieldLabel>{paramLabel}</FieldLabel>
+        <input
+          type="text"
+          value={String(value ?? '')}
+          onChange={(e) => onChange(param.name, e.target.value.toUpperCase())}
+          placeholder="e.g. AAPL, 005930.KS"
+          className={numberInputClass}
+        />
+      </div>
+    );
+  }
+
   if (param.type === 'str') {
     // Generic options-based dropdown
     if (param.options && param.options.length > 0) {

@@ -38,7 +38,7 @@ try:
 except ImportError:
     PYKRX_AVAILABLE = False
 
-from .conditions.base import BaseCondition, ConditionResult
+from .conditions.base import BaseCondition, ConditionResult, PairsCondition
 from .kospi_fetcher import KospiListFetcher
 
 try:
@@ -359,13 +359,42 @@ class StockScreener:
         except Exception:
             return ticker
 
+    def _fetch_companion_data(self, ticker2: str, days: int) -> Optional[pd.DataFrame]:
+        """Fetch companion ticker data for pairs conditions (with caching)."""
+        if not hasattr(self, '_companion_cache'):
+            self._companion_cache: Dict[tuple, Optional[pd.DataFrame]] = {}
+        cache_key = (ticker2, days)
+        if cache_key not in self._companion_cache:
+            self._companion_cache[cache_key] = self._fetch_data(ticker2, days)
+        return self._companion_cache[cache_key]
+
     def _evaluate_stock(self, ticker: str, data: pd.DataFrame) -> ScreeningResult:
-        """단일 종목 평가"""
+        """단일 종목 평가 (pairs 조건 포함)"""
         results = []
         all_matched = True
+        required_days = self._get_required_days()
 
         for condition in self.conditions:
-            result = condition.evaluate(ticker, data)
+            if isinstance(condition, PairsCondition):
+                ticker2 = condition.ticker2
+                if not ticker2:
+                    result = ConditionResult(
+                        matched=False,
+                        condition_name=condition.name,
+                        details={"error": "ticker2 not specified"},
+                    )
+                else:
+                    data2 = self._fetch_companion_data(ticker2, required_days)
+                    if data2 is None or data2.empty:
+                        result = ConditionResult(
+                            matched=False,
+                            condition_name=condition.name,
+                            details={"error": f"Failed to fetch data for {ticker2}"},
+                        )
+                    else:
+                        result = condition.evaluate_pair(ticker, data, ticker2, data2)
+            else:
+                result = condition.evaluate(ticker, data)
             results.append(result)
             if not result.matched:
                 all_matched = False
@@ -413,6 +442,9 @@ class StockScreener:
         """
         if not self.conditions:
             raise ValueError("조건이 설정되지 않았습니다. add_condition()으로 조건을 추가하세요.")
+
+        # Reset companion data cache for fresh run
+        self._companion_cache: Dict[tuple, Optional[pd.DataFrame]] = {}
 
         # 종목 목록 결정
         if tickers:
