@@ -208,6 +208,12 @@ from .quant_special_batch11 import (
     QualityScoreCondition,
 )
 
+from .pairs_trading import (
+    PairCorrelationCondition,
+    PairSpreadZScoreCondition,
+    PairCointegrationCondition,
+)
+
 from .composite import (
     AndCondition,
     OrCondition,
@@ -358,6 +364,9 @@ __all__ = [
     'PreEarningsDriftCondition', 'AccrualsRatioCondition',
     'AssetGrowthRateCondition', 'GrossProfitabilityCondition',
     'QualityScoreCondition',
+
+    # Pairs Trading
+    'PairCorrelationCondition', 'PairSpreadZScoreCondition', 'PairCointegrationCondition',
 
     # Composite
     'AndCondition', 'OrCondition', 'NotCondition',
