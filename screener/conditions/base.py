@@ -63,6 +63,54 @@ class BaseCondition(ABC):
         return f"{self.__class__.__name__}()"
 
 
+class PairsCondition(BaseCondition):
+    """
+    페어 트레이딩 조건 기본 클래스
+
+    두 종목의 데이터를 동시에 평가하는 조건.
+    evaluate()는 단일 종목 경로에서 호출되지 않도록 NotImplementedError를 발생시키고,
+    실제 평가는 evaluate_pair()를 통해 수행.
+    """
+
+    @property
+    def is_pairs(self) -> bool:
+        return True
+
+    @property
+    def ticker2(self) -> str:
+        """The companion ticker symbol, set via __init__ params."""
+        return getattr(self, '_ticker2', '')
+
+    def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
+        """Single-ticker evaluate not supported for pairs conditions."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} is a pairs condition. "
+            "Use evaluate_pair(ticker1, data1, ticker2, data2) instead."
+        )
+
+    @abstractmethod
+    def evaluate_pair(
+        self,
+        ticker1: str,
+        data1: pd.DataFrame,
+        ticker2: str,
+        data2: pd.DataFrame,
+    ) -> ConditionResult:
+        """
+        페어 조건 평가
+
+        Args:
+            ticker1: 주 종목 코드
+            data1: 주 종목 OHLCV 데이터프레임
+            ticker2: 보조 종목 코드
+            data2: 보조 종목 OHLCV 데이터프레임
+
+        Returns:
+            ConditionResult 객체
+        """
+        pass
+
+
 class ConditionError(Exception):
     """조건 평가 에러"""
     pass

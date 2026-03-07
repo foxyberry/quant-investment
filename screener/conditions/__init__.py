@@ -31,7 +31,7 @@ Usage:
     )
 """
 
-from .base import BaseCondition, ConditionResult, ConditionError
+from .base import BaseCondition, ConditionResult, ConditionError, PairsCondition
 
 from .price import (
     MinPriceCondition,
@@ -263,7 +263,7 @@ from .registry import get_condition_class_map, get_condition_metadata, register_
 
 __all__ = [
     # Base
-    'BaseCondition', 'ConditionResult', 'ConditionError',
+    'BaseCondition', 'ConditionResult', 'ConditionError', 'PairsCondition',
 
     # Price
     'MinPriceCondition', 'MaxPriceCondition', 'PriceRangeCondition', 'PriceChangeCondition',
