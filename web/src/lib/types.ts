@@ -236,6 +236,7 @@ export interface TickerAnalysis {
   name: string;
   current_price: number;
   change_pct: number;
+  timestamp?: string;
   ohlcv: OHLCVData[];
   technical: TechnicalIndicators;
   fundamental?: {

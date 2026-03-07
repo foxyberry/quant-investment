@@ -284,6 +284,7 @@ def get_ticker_analysis(
         name=name,
         current_price=current_price,
         change_pct=change_pct,
+        timestamp=quote.get("timestamp") if quote else None,
         ohlcv=ohlcv_data,
         technical=technical,
         fundamental=fundamental,

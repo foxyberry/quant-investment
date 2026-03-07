@@ -168,7 +168,7 @@ function ConditionNode({ data, selected }: NodeProps) {
 
       {/* Content */}
       <div className="px-3 py-2.5">
-        <div className="text-[13px] font-bold text-gray-900 dark:text-gray-100">
+        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           {label}
         </div>
         {paramEntries.length > 0 && (

@@ -179,6 +179,7 @@ class TickerAnalysisResponse(BaseModel):
     name: str = Field(..., description="Company name")
     current_price: float = Field(..., description="Current stock price")
     change_pct: float = Field(0.0, description="Price change percentage")
+    timestamp: Optional[str] = Field(None, description="ISO timestamp of the price data point")
     ohlcv: List[OHLCVDataPoint] = Field(default_factory=list, description="OHLCV data")
     technical: TickerTechnicalIndicators = Field(
         default_factory=TickerTechnicalIndicators,
