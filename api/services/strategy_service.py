@@ -700,6 +700,12 @@ def _build_condition(condition_type: str, params: Dict[str, Any]) -> BaseConditi
         else:
             coerced[k] = v
 
+    # Validate pairs conditions have ticker2
+    if meta.get("is_pairs") and not coerced.get("ticker2"):
+        raise ValueError(
+            f"Pairs condition '{condition_type}' requires a 'ticker2' parameter"
+        )
+
     return cls(**coerced)
 
 

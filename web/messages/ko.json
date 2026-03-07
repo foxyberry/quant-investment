@@ -945,7 +945,23 @@
       "rsi": "RSI",
       "accumulation": "매집",
       "breakout": "돌파",
-      "fundamental": "펀더멘털"
+      "fundamental": "펀더멘털",
+      "pairs": "페어 트레이딩"
+    },
+    "pair_correlation": {
+      "label": "페어 상관관계",
+      "desc": "두 종목 간 롤링 피어슨 상관계수",
+      "params": { "ticker2": "비교 종목", "period": "롤링 윈도우 (일)", "min_correlation": "최소 상관계수" }
+    },
+    "pair_spread_zscore": {
+      "label": "스프레드 Z-Score",
+      "desc": "로그 스프레드 Z-Score 기반 평균회귀 진입",
+      "params": { "ticker2": "비교 종목", "period": "기간 (일)", "zscore_entry": "Z-Score 진입 임계값", "direction": "방향" }
+    },
+    "pair_cointegration": {
+      "label": "공적분 검정",
+      "desc": "Engle-Granger 공적분 검정",
+      "params": { "ticker2": "비교 종목", "period": "기간 (일)", "pvalue_threshold": "최대 p-value" }
     },
     "min_price": {
       "label": "최소 가격",

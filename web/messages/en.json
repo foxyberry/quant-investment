@@ -945,7 +945,23 @@
       "rsi": "RSI",
       "accumulation": "Accumulation",
       "breakout": "Breakout",
-      "fundamental": "Fundamental"
+      "fundamental": "Fundamental",
+      "pairs": "Pairs Trading"
+    },
+    "pair_correlation": {
+      "label": "Pair Correlation",
+      "desc": "Rolling Pearson correlation between two tickers",
+      "params": { "ticker2": "Companion ticker", "period": "Rolling window (days)", "min_correlation": "Min correlation" }
+    },
+    "pair_spread_zscore": {
+      "label": "Spread Z-Score",
+      "desc": "Log spread z-score for mean-reversion entry",
+      "params": { "ticker2": "Companion ticker", "period": "Lookback (days)", "zscore_entry": "Z-score threshold", "direction": "Direction" }
+    },
+    "pair_cointegration": {
+      "label": "Cointegration Test",
+      "desc": "Engle-Granger cointegration test",
+      "params": { "ticker2": "Companion ticker", "period": "Lookback (days)", "pvalue_threshold": "Max p-value" }
     },
     "min_price": {
       "label": "Min Price",
