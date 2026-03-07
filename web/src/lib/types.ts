@@ -274,6 +274,68 @@ export interface AnalysisStatus {
   data_dir: string | null;
 }
 
+// Macro monitoring types (FX + futures + investor flow)
+export type MacroRegime = 'risk_on' | 'neutral' | 'risk_off' | 'unknown';
+
+export interface MacroFxSnapshot {
+  pair: string; // e.g. USD/KRW
+  value: number | null;
+  change_pct: number | null;
+  updated_at: string | null;
+}
+
+export interface MacroFuturesSnapshot {
+  symbol: string; // e.g. KOSPI200_FUT
+  value: number | null;
+  basis: number | null;
+  change_pct: number | null;
+  updated_at: string | null;
+}
+
+export interface MacroInvestorFlowSnapshot {
+  market: string; // e.g. KOSPI
+  foreign_net: number | null;
+  institution_net: number | null;
+  individual_net: number | null;
+  window_min: number | null;
+  updated_at: string | null;
+}
+
+export interface MacroSignal {
+  macro_score: number | null;
+  regime: MacroRegime;
+  reason: string | null;
+  updated_at: string | null;
+}
+
+export interface MacroFreshness {
+  fx_age_sec: number | null;
+  futures_age_sec: number | null;
+  flow_age_sec: number | null;
+}
+
+export interface MacroBundle {
+  fx: MacroFxSnapshot;
+  futures: MacroFuturesSnapshot;
+  flow: MacroInvestorFlowSnapshot;
+  signal: MacroSignal;
+  freshness: MacroFreshness;
+}
+
+export interface MacroHistoryPoint {
+  timestamp: string;
+  fx_value: number | null;
+  futures_value: number | null;
+  foreign_net: number | null;
+  macro_score: number | null;
+  regime: MacroRegime;
+}
+
+export interface MacroHistoryResponse {
+  window: string;
+  points: MacroHistoryPoint[];
+}
+
 // Broker-agnostic types (unified broker router)
 export type BrokerOrderSide = 'BUY' | 'SELL';
 export type BrokerOrderType = 'MARKET' | 'LIMIT';
