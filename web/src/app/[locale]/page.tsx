@@ -7,6 +7,7 @@ import {
   PortfolioSummaryCard,
   SellSignalsCard,
   BuySignalsCard,
+  MacroFlowCard,
   RecentExecutionsCard,
   QuickActionsCard,
 } from '@/components/dashboard';
@@ -92,6 +93,7 @@ export default function Home() {
       {/* Main Dashboard Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         <PortfolioSummaryCard />
+        <MacroFlowCard />
         <SellSignalsCard />
         <BuySignalsCard />
         <RecentExecutionsCard />
