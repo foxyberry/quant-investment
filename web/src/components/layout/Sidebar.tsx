@@ -8,6 +8,7 @@ import {
   Search,
   PieChart,
   BarChart3,
+  Radar,
   FileText,
   Workflow,
   Star,
@@ -23,7 +24,7 @@ import type { KiwoomConnectionState, KiwoomConnectionStatus } from '@/lib/types'
 import { Toast, useToast } from '@/components/ui/Toast';
 
 interface NavItem {
-  href: '/' | '/screening' | '/strategy' | '/portfolio' | '/watchlist' | '/analysis' | '/reports';
+  href: '/' | '/screening' | '/strategy' | '/portfolio' | '/watchlist' | '/analysis' | '/reports' | '/macro';
   labelKey: string;
   icon: LucideIcon;
 }
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
   { href: '/portfolio', labelKey: 'portfolio', icon: PieChart },
   { href: '/watchlist', labelKey: 'watchlist', icon: Star },
   { href: '/analysis', labelKey: 'analysis', icon: BarChart3 },
+  { href: '/macro', labelKey: 'macro', icon: Radar },
   { href: '/reports', labelKey: 'reports', icon: FileText },
 ];
 
