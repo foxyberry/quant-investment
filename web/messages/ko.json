@@ -618,7 +618,7 @@
     "ticker": "종목코드",
     "name": "종목명",
     "price": "가격",
-    "market": "시장",
+    "market": "마켓",
     "status": "상태",
     "inputBadge": "입력",
     "screeningBadge": "스크리닝",
@@ -643,7 +643,6 @@
     "collapsePanel": "패널 축소",
     "searchPlaceholder": "컴포넌트 검색...",
     "coreNodes": "핵심 노드",
-    "market": "마켓",
     "sector": "섹터",
     "result": "결과",
     "inputNodes": "입력 노드",
@@ -757,7 +756,10 @@
       "warnings": "주의사항 ({count})",
       "addToCanvas": "캔버스에 추가",
       "added": "추가됨"
-    }
+    },
+    "logicAndShort": "모두 일치",
+    "logicOrShort": "하나 이상 일치",
+    "logicNotShort": "반전"
   },
   "analysis": {
     "title": "차트 & 분석",

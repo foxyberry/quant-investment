@@ -643,7 +643,6 @@
     "collapsePanel": "收起面板",
     "searchPlaceholder": "搜索组件...",
     "coreNodes": "核心节点",
-    "market": "市场",
     "sector": "板块",
     "result": "结果",
     "inputNodes": "输入节点",
@@ -757,7 +756,10 @@
       "warnings": "注意事项 ({count})",
       "addToCanvas": "添加到画布",
       "added": "已添加"
-    }
+    },
+    "logicAndShort": "全部匹配",
+    "logicOrShort": "任意匹配",
+    "logicNotShort": "取反"
   },
   "analysis": {
     "title": "图表与分析",
