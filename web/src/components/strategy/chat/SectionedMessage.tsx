@@ -1,7 +1,7 @@
 'use client';
 
-import { memo, useState } from 'react';
-import { ChevronDown, ChevronRight, Plus, Check } from 'lucide-react';
+import { memo, useState, useMemo } from 'react';
+import { ChevronDown, ChevronRight, Plus, Check, Pencil } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import MarkdownMessage from './MarkdownMessage';
 
@@ -24,21 +24,50 @@ interface NodeMapping {
   label: string;
 }
 
+interface ExistingConditionNode {
+  id: string;
+  condition_type: string;
+}
+
 interface SectionedMessageProps {
   content: string;
   payload: StructuredPayload;
   nodeMappings?: NodeMapping[];
   onAddNodes?: (nodes: NodeMapping[]) => void;
+  existingConditionNodes?: ExistingConditionNode[];
+  onUpdateNode?: (nodeId: string, params: Record<string, unknown>) => void;
 }
 
-function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: SectionedMessageProps) {
+function SectionedMessage({
+  content,
+  payload,
+  nodeMappings,
+  onAddNodes,
+  existingConditionNodes,
+  onUpdateNode,
+}: SectionedMessageProps) {
   const t = useTranslations('strategy');
   const tCond = useTranslations('conditions');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     suggestions: true,
     warnings: true,
   });
-  const [added, setAdded] = useState(false);
+  // Track per-suggestion action state with the action type taken
+  const [actionStates, setActionStates] = useState<Record<number, 'added' | 'updated'>>({});
+
+  // Map condition_type → existing node id for quick lookup
+  const existingMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (existingConditionNodes) {
+      for (const node of existingConditionNodes) {
+        // First match wins (if multiple nodes have same condition_type)
+        if (!map.has(node.condition_type)) {
+          map.set(node.condition_type, node.id);
+        }
+      }
+    }
+    return map;
+  }, [existingConditionNodes]);
 
   const getConditionLabel = (key: string): string => {
     const labelKey = `${key}.label`;
@@ -57,10 +86,17 @@ function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: Sectio
   const toggle = (key: string) =>
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const handleAddAll = () => {
-    if (!nodeMappings?.length || !onAddNodes) return;
-    onAddNodes(nodeMappings);
-    setAdded(true);
+  const handleAddSingle = (index: number, mapping: NodeMapping) => {
+    if (!onAddNodes) return;
+    onAddNodes([mapping]);
+    setActionStates(prev => ({ ...prev, [index]: 'added' }));
+  };
+
+  const handleUpdateSingle = (index: number, conditionType: string, params: Record<string, unknown>) => {
+    const nodeId = existingMap.get(conditionType);
+    if (!nodeId || !onUpdateNode) return;
+    onUpdateNode(nodeId, params);
+    setActionStates(prev => ({ ...prev, [index]: 'updated' }));
   };
 
   return (
@@ -79,7 +115,7 @@ function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: Sectio
       {/* Suggestions section */}
       {payload.suggestions && payload.suggestions.length > 0 && (
         <div className="rounded-lg border border-gray-200/80 dark:border-gray-700/60">
-          <div className="flex items-center justify-between px-3 py-1.5">
+          <div className="flex items-center px-3 py-1.5">
             <button
               type="button"
               onClick={() => toggle('suggestions')}
@@ -92,58 +128,75 @@ function SectionedMessage({ content, payload, nodeMappings, onAddNodes }: Sectio
               )}
               {t('chatbot.conditions', { count: payload.suggestions.length })}
             </button>
-            {/* Add to Canvas button */}
-            {nodeMappings && nodeMappings.length > 0 && onAddNodes && (
-              <button
-                type="button"
-                onClick={handleAddAll}
-                disabled={added}
-                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-blue-600 transition-colors hover:bg-blue-50 disabled:text-green-600 disabled:hover:bg-transparent dark:text-blue-400 dark:hover:bg-blue-900/20 dark:disabled:text-green-400"
-              >
-                {added ? (
-                  <>
-                    <Check className="h-3 w-3" />
-                    {t('chatbot.added')}
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-3 w-3" />
-                    {t('chatbot.addToCanvas')}
-                  </>
-                )}
-              </button>
-            )}
           </div>
           {expandedSections.suggestions && (
             <div className="space-y-1 px-3 pb-2">
-              {payload.suggestions.map((s, j) => (
-                <div
-                  key={j}
-                  className="rounded-lg border border-blue-200/60 bg-blue-50 px-2.5 py-1.5 dark:border-blue-500/20 dark:bg-blue-900/20"
-                >
-                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                    <span className="font-semibold text-blue-700 dark:text-blue-300">
-                      {getConditionLabel(s.condition_type)}
-                    </span>
-                    {s.params &&
-                      typeof s.params === 'object' &&
-                      !Array.isArray(s.params) &&
-                      Object.entries(s.params).map(([k, v]) => (
-                        <span
-                          key={k}
-                          className="rounded bg-blue-100 px-1 py-0.5 text-[10px] text-blue-600 dark:bg-blue-800/30 dark:text-blue-400"
-                        >
-                          {getParamLabel(s.condition_type, k)}={String(v)}
+              {payload.suggestions.map((s, j) => {
+                const candidate = nodeMappings?.[j];
+                const mapping = candidate?.condition_type === s.condition_type
+                  ? candidate
+                  : nodeMappings?.find(m => m.condition_type === s.condition_type);
+                const existingNodeId = existingMap.get(s.condition_type);
+                const actionTaken = actionStates[j];
+
+                return (
+                  <div
+                    key={j}
+                    className="rounded-lg border border-blue-200/60 bg-blue-50 px-2.5 py-1.5 dark:border-blue-500/20 dark:bg-blue-900/20"
+                  >
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                      <span className="font-semibold text-blue-700 dark:text-blue-300">
+                        {getConditionLabel(s.condition_type)}
+                      </span>
+                      {s.params &&
+                        typeof s.params === 'object' &&
+                        !Array.isArray(s.params) &&
+                        Object.entries(s.params).map(([k, v]) => (
+                          <span
+                            key={k}
+                            className="rounded bg-blue-100 px-1 py-0.5 text-[10px] text-blue-600 dark:bg-blue-800/30 dark:text-blue-400"
+                          >
+                            {getParamLabel(s.condition_type, k)}={String(v)}
+                          </span>
+                        ))}
+                    </div>
+                    {s.rationale && (
+                      <p className="mt-1 text-[11px] leading-snug text-gray-600 dark:text-gray-400">
+                        {s.rationale}
+                      </p>
+                    )}
+                    {/* Per-suggestion action button */}
+                    <div className="mt-1.5 flex justify-end">
+                      {actionTaken ? (
+                        <span className="flex items-center gap-1 text-[10px] font-medium text-green-600 dark:text-green-400">
+                          <Check className="h-3 w-3" />
+                          {actionTaken === 'updated'
+                            ? t('chatbot.updated')
+                            : t('chatbot.added')}
                         </span>
-                      ))}
+                      ) : existingNodeId && onUpdateNode ? (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateSingle(j, s.condition_type, s.params)}
+                          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-amber-600 transition-colors hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                        >
+                          <Pencil className="h-3 w-3" />
+                          {t('chatbot.updateExisting')}
+                        </button>
+                      ) : mapping && onAddNodes ? (
+                        <button
+                          type="button"
+                          onClick={() => handleAddSingle(j, mapping)}
+                          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-blue-600 transition-colors hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                        >
+                          <Plus className="h-3 w-3" />
+                          {t('chatbot.addNew')}
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
-                  {s.rationale && (
-                    <p className="mt-1 text-[11px] leading-snug text-gray-600 dark:text-gray-400">
-                      {s.rationale}
-                    </p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -705,6 +705,32 @@ function StrategyPageInner() {
     [setNodes],
   );
 
+  // Existing condition nodes for chat update-in-place feature
+  const existingConditionNodes = useMemo(
+    () =>
+      nodes
+        .filter((n) => (n.data as Record<string, unknown>)?.node_type === 'condition' && (n.data as Record<string, unknown>)?.condition_type)
+        .map((n) => ({
+          id: n.id,
+          condition_type: (n.data as Record<string, unknown>).condition_type as string,
+        })),
+    [nodes],
+  );
+
+  // Update existing node params from chat suggestion
+  const handleUpdateNodeFromChat = useCallback(
+    (nodeId: string, params: Record<string, unknown>) => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === nodeId
+            ? { ...n, data: { ...n.data, params: { ...((n.data as Record<string, unknown>).params as Record<string, unknown> || {}), ...params } } as Record<string, unknown> }
+            : n,
+        ),
+      );
+    },
+    [setNodes],
+  );
+
   // Auto-resize group nodes when children change (only expand, never shrink)
   const childNodeCount = useMemo(
     () => nodes.filter((n) => n.parentId).length,
@@ -1451,6 +1477,8 @@ function StrategyPageInner() {
           <ChatPanel
             graph={serializeGraph(nodes as Node<StrategyNodeData>[], edges)}
             onAddNodes={handleAddNodesFromChat}
+            existingConditionNodes={existingConditionNodes}
+            onUpdateNode={handleUpdateNodeFromChat}
           />
         </div>
       </div>

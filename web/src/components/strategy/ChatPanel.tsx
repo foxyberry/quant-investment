@@ -36,12 +36,19 @@ interface ChatMessage {
   nodeMappings?: NodeMapping[];
 }
 
+export interface ExistingConditionNode {
+  id: string;
+  condition_type: string;
+}
+
 interface ChatPanelProps {
   graph: { nodes: unknown[]; edges: unknown[] } | null;
   onAddNodes?: (nodes: NodeMapping[]) => void;
+  existingConditionNodes?: ExistingConditionNode[];
+  onUpdateNode?: (nodeId: string, params: Record<string, unknown>) => void;
 }
 
-export default function ChatPanel({ graph, onAddNodes }: ChatPanelProps) {
+export default function ChatPanel({ graph, onAddNodes, existingConditionNodes, onUpdateNode }: ChatPanelProps) {
   const t = useTranslations('strategy');
   const locale = useLocale();
 
@@ -253,6 +260,8 @@ export default function ChatPanel({ graph, onAddNodes }: ChatPanelProps) {
                         payload={msg.structuredPayload}
                         nodeMappings={msg.nodeMappings}
                         onAddNodes={onAddNodes}
+                        existingConditionNodes={existingConditionNodes}
+                        onUpdateNode={onUpdateNode}
                       />
                     ) : (
                       <MarkdownMessage content={msg.content} />
