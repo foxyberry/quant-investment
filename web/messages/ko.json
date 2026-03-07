@@ -887,6 +887,7 @@
     "summary": "종합",
     "addToScreening": "프리셋으로 스크리닝",
     "dataDelayNote": "데이터는 15분 지연됩니다.",
+    "dataAsOf": "{date} 기준",
     "ohlcvVol": "거래량",
     "ohlcvMa": "MA({period})"
   },

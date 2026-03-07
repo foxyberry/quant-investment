@@ -887,6 +887,7 @@
     "summary": "综合",
     "addToScreening": "使用预设筛选",
     "dataDelayNote": "数据延迟15分钟。",
+    "dataAsOf": "截至 {date}",
     "ohlcvVol": "成交量",
     "ohlcvMa": "MA({period})"
   },
