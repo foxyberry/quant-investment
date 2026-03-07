@@ -77,7 +77,7 @@ class PairCorrelationCondition(PairsCondition):
         if np.isnan(corr):
             return _insufficient(self.name, "Correlation is NaN")
 
-        matched = corr >= self.min_correlation
+        matched = bool(corr >= self.min_correlation)
         return ConditionResult(
             matched=matched,
             condition_name=self.name,
