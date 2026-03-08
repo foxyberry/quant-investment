@@ -7,27 +7,22 @@ import { useLocale, useTranslations } from 'next-intl';
 import { routing } from '@/i18n/routing';
 import {
   ArrowLeft,
-  BarChart3,
   TrendingUp,
   TrendingDown,
   Building2,
-  DollarSign,
-  Percent,
-  PieChart,
   RefreshCw,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
   Brain,
   ShieldAlert,
   Sparkles,
   ChevronDown,
   ChevronUp,
-  Banknote,
   ExternalLink,
 } from 'lucide-react';
 import { Card, Button } from '@/components/ui';
 import { CandleChart, IndicatorPanel } from '@/components/charts';
+import { FactorScoreBar, FundamentalCard, NewsCard } from '@/components/analysis';
 import {
   getTickerAnalysis,
   analyzeStock,
@@ -81,7 +76,6 @@ function CollapsibleSection({
   headerRight?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  // In non-popup mode, always show content (no toggle)
   if (!isPopup) {
     return (
       <div>
@@ -116,10 +110,6 @@ function CollapsibleSection({
   );
 }
 
-/**
- * Dynamic ticker analysis page with full chart, indicators,
- * strategy context, AI insight, and sector distribution.
- */
 export default function TickerAnalysisPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -130,12 +120,17 @@ export default function TickerAnalysisPage() {
   const tCommon = useTranslations('common');
   const tConditions = useTranslations('conditions');
   const tScreening = useTranslations('screening');
+  const tCompany = useTranslations('companyInfo');
 
   // Core data
   const [tickerData, setTickerData] = useState<TickerAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodOption>('6mo');
+
+  // News (opt-in)
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [newsLoaded, setNewsLoaded] = useState(false);
 
   // Strategy Context
   const [screeningResult, setScreeningResult] = useState<ScreeningResult | null>(null);
@@ -165,14 +160,12 @@ export default function TickerAnalysisPage() {
     }
   }, [ticker, t]);
 
-  // Fetch presets on mount
   useEffect(() => {
     getPresets()
       .then(setPresets)
       .catch(() => {});
   }, []);
 
-  // Fetch screening conditions
   const fetchScreening = useCallback(async (preset?: string) => {
     setScreeningLoading(true);
     setScreeningError(null);
@@ -184,23 +177,19 @@ export default function TickerAnalysisPage() {
     } finally {
       setScreeningLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedPreset is read as fallback only; preset is always passed explicitly from the dropdown onChange handler
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedPreset is read as fallback only
   }, [ticker, t]);
 
-  // Check AI availability on mount
   useEffect(() => {
     getAnalysisStatus()
       .then((status) => setAiAvailable(status.ai_available ?? status.claude_available))
       .catch(() => setAiAvailable(false));
   }, []);
 
-  // Keep popup locale in sync with the main window locale changes.
   useEffect(() => {
     if (!isPopup) return;
-
     const handleStorage = (event: StorageEvent) => {
       if (event.key !== LOCALE_SYNC_KEY || !event.newValue) return;
-
       try {
         const payload = JSON.parse(event.newValue) as { locale?: string };
         const nextLocale = payload.locale;
@@ -211,17 +200,14 @@ export default function TickerAnalysisPage() {
         // Ignore malformed payloads.
       }
     };
-
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, [isPopup, locale, ticker]);
 
-  // Effect 1: Fetch main page data (chart, indicators, financials)
   useEffect(() => {
     if (ticker) fetchData(selectedPeriod);
   }, [ticker, selectedPeriod, fetchData]);
 
-  // Effect 2: Fetch screening data (strategy context only)
   useEffect(() => {
     if (ticker) fetchScreening();
   }, [ticker, fetchScreening]);
@@ -243,6 +229,19 @@ export default function TickerAnalysisPage() {
     }
   };
 
+  const handleLoadNews = async () => {
+    setNewsLoading(true);
+    try {
+      const data = await getTickerAnalysis(ticker.toUpperCase(), selectedPeriod, true);
+      setTickerData(data);
+      setNewsLoaded(true);
+    } catch {
+      // News load failure is non-critical
+    } finally {
+      setNewsLoading(false);
+    }
+  };
+
   // Currency symbol based on ticker exchange suffix
   const currencySymbol = ticker.toUpperCase().endsWith('.KS') || ticker.toUpperCase().endsWith('.KQ')
     ? '₩'
@@ -258,13 +257,11 @@ export default function TickerAnalysisPage() {
 
   const formatTimestamp = (ts: string): string => {
     const upper = ticker.toUpperCase();
-    // Market close offset from midnight in hours
     let closeH = 16, closeM = 0;
     if (upper.endsWith('.KS') || upper.endsWith('.KQ')) { closeH = 15; closeM = 30; }
     else if (upper.endsWith('.T')) { closeH = 15; }
     else if (upper.endsWith('.L')) { closeH = 16; closeM = 30; }
     else if (upper.endsWith('.SS') || upper.endsWith('.SZ')) { closeH = 15; }
-    // ts is midnight in market timezone; add close time to get market close in UTC
     const midnight = new Date(ts);
     const closeDate = new Date(midnight.getTime() + closeH * 3600_000 + closeM * 60_000);
     return closeDate.toLocaleString(locale, {
@@ -277,34 +274,24 @@ export default function TickerAnalysisPage() {
   const formatMarketCap = (value: number | null | undefined): string => {
     if (value == null) return '-';
     const sym = currencySymbol;
-    if (value >= 1_000_000_000_000) {
-      return `${sym} ${(value / 1_000_000_000_000).toFixed(2)}T`;
-    }
-    if (value >= 1_000_000_000) {
-      return `${sym} ${(value / 1_000_000_000).toFixed(2)}B`;
-    }
-    if (value >= 1_000_000) {
-      return `${sym} ${(value / 1_000_000).toFixed(2)}M`;
-    }
+    if (value >= 1_000_000_000_000) return `${sym} ${(value / 1_000_000_000_000).toFixed(2)}T`;
+    if (value >= 1_000_000_000) return `${sym} ${(value / 1_000_000_000).toFixed(2)}B`;
+    if (value >= 1_000_000) return `${sym} ${(value / 1_000_000).toFixed(2)}M`;
     return `${sym} ${value.toLocaleString()}`;
   };
 
   const getConditionIcon = (condition: ConditionResult) => {
-    if (condition.matched) {
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-    }
-    return <XCircle className="h-4 w-4 text-red-500" />;
+    return condition.matched
+      ? <CheckCircle2 className="h-4 w-4 text-green-500" />
+      : <XCircle className="h-4 w-4 text-red-500" />;
   };
 
   const getConditionBadge = (condition: ConditionResult) => {
-    if (condition.matched) {
-      return (
-        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-          {t('pass')}
-        </span>
-      );
-    }
-    return (
+    return condition.matched ? (
+      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+        {t('pass')}
+      </span>
+    ) : (
       <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
         {t('fail')}
       </span>
@@ -313,27 +300,19 @@ export default function TickerAnalysisPage() {
 
   const getRecommendationStyle = (rec: string) => {
     switch (rec) {
-      case 'BUY':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'WAIT':
-        return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
-      case 'AVOID':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+      case 'BUY': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'WAIT': return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
+      case 'AVOID': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     }
   };
 
   const getRecommendationLabel = (rec: string) => {
     switch (rec) {
-      case 'BUY':
-        return t('recommendationBuy');
-      case 'WAIT':
-        return t('recommendationWait');
-      case 'AVOID':
-        return t('recommendationAvoid');
-      default:
-        return rec;
+      case 'BUY': return t('recommendationBuy');
+      case 'WAIT': return t('recommendationWait');
+      case 'AVOID': return t('recommendationAvoid');
+      default: return rec;
     }
   };
 
@@ -357,8 +336,8 @@ export default function TickerAnalysisPage() {
     financials: true,
     strategy: false,
     ai: false,
-    sector: false,
-    priceSummary: false,
+    companyInfo: false,
+    news: false,
   });
   const [showAdvancedSections, setShowAdvancedSections] = useState(!isPopup);
 
@@ -400,884 +379,479 @@ export default function TickerAnalysisPage() {
               )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => window.close()}
-            className="shrink-0 p-1.5 rounded-lg hover:bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
-            aria-label={tCommon('close')}
-          >
-            <XCircle className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="sm" onClick={() => fetchData(selectedPeriod)}>
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
+            <a
+              href={`/${locale}/analysis/${encodeURIComponent(ticker)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--background-secondary)] px-2 py-1.5 text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {t('openFullPage')}
+            </a>
+          </div>
         </div>
       )}
 
-      {/* Back navigation - hidden in popup mode */}
+      {/* Back navigation (full page only) */}
       {!isPopup && (
         <Link
           href="/analysis"
-          className="inline-flex items-center gap-2 text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           {t('backToAnalysis')}
         </Link>
       )}
 
-      {/* Header - full version for non-popup */}
-      {!isPopup && (
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="rounded-lg bg-[var(--color-primary)] p-3">
-              <BarChart3 className="h-8 w-8 text-white" />
+      {/* ── HEADER ── */}
+      {!isPopup && tickerData && (
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-[var(--foreground)]">
+                {ticker.toUpperCase()}
+              </h1>
+              <span className="text-lg text-[var(--foreground-muted)]">{tickerData.name}</span>
             </div>
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-[var(--foreground)]">
-                  {ticker.toUpperCase()}
-                </h1>
-                {tickerData && (
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium ${
-                      tickerData.change_pct >= 0
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                    }`}
-                  >
-                    {tickerData.change_pct >= 0 ? (
-                      <TrendingUp className="h-4 w-4" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4" />
-                    )}
-                    {tickerData.change_pct >= 0 ? '+' : ''}
-                    {tickerData.change_pct.toFixed(2)}%
-                  </span>
-                )}
-              </div>
-              {tickerData && (
-                <p className="text-[var(--foreground-muted)] mt-1">
-                  {tickerData.name}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {tickerData && (
-            <div className="text-right">
-              <span className="text-3xl font-bold text-[var(--foreground)]">
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-2xl font-semibold font-mono text-[var(--foreground)]">
                 {formatPrice(tickerData.current_price)}
               </span>
-              {tickerData.timestamp && (
-                <p className="text-[11px] text-[var(--foreground-muted)] mt-0.5">
-                  {t('dataAsOf', { date: formatTimestamp(tickerData.timestamp) })}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className="space-y-4">
-          <div
-            className={`rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] flex items-center justify-center ${
-              isPopup ? 'h-[260px]' : 'h-[500px]'
-            }`}
-          >
-            <div className="flex flex-col items-center gap-3">
-              <div
-                className={`animate-spin rounded-full border-3 border-[var(--color-primary)] border-t-transparent ${
-                  isPopup ? 'h-8 w-8' : 'h-10 w-10'
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold ${
+                  tickerData.change_pct >= 0
+                    ? 'bg-green-500/15 text-green-500'
+                    : 'bg-red-500/15 text-red-500'
                 }`}
-              />
-              <span className="text-[var(--foreground-muted)]">
-                {t('loadingData', { ticker: ticker.toUpperCase() })}
+              >
+                {tickerData.change_pct >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                {tickerData.change_pct >= 0 ? '+' : ''}{tickerData.change_pct.toFixed(2)}%
               </span>
             </div>
+            {tickerData.timestamp && (
+              <p className="text-xs text-[var(--foreground-muted)] mt-1">
+                {t('dataAsOf', { date: formatTimestamp(tickerData.timestamp) })}
+                {' · '}{t('dataDelayNote')}
+              </p>
+            )}
           </div>
+          <Button variant="outline" size="sm" onClick={() => fetchData(selectedPeriod)}>
+            <RefreshCw className="h-4 w-4 mr-1" />
+            {t('refresh')}
+          </Button>
         </div>
       )}
 
-      {/* Error State */}
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="animate-spin h-10 w-10 border-4 border-[var(--color-primary)] border-t-transparent rounded-full" />
+          <p className="mt-4 text-[var(--foreground-muted)]">{t('loadingData', { ticker: ticker.toUpperCase() })}</p>
+        </div>
+      )}
+
+      {/* Error state */}
       {error && !isLoading && (
-        <Card padding={isPopup ? 'md' : 'lg'} className="text-center">
-          <div className="flex flex-col items-center">
-            <BarChart3 className={`${isPopup ? 'h-9 w-9 mb-3' : 'h-12 w-12 mb-4'} text-red-500`} />
-            <h3 className={`${isPopup ? 'text-base' : 'text-lg'} font-medium text-[var(--foreground)]`}>
-              {t('loadFailed')}
-            </h3>
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-              {error}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className={isPopup ? 'mt-3' : 'mt-4'}
-              onClick={() => fetchData(selectedPeriod)}
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              {t('retry')}
-            </Button>
-          </div>
+        <Card className="text-center py-12">
+          <p className="text-red-500 text-lg font-semibold mb-2">{t('loadFailed')}</p>
+          <p className="text-[var(--foreground-muted)] mb-4">{error}</p>
+          <Button onClick={() => fetchData(selectedPeriod)}>{t('retry')}</Button>
         </Card>
       )}
 
-      {/* Main Content */}
-      {tickerData && !isLoading && (
+      {/* ── MAIN CONTENT ── */}
+      {tickerData && !isLoading && !error && (
         <>
-          {/* Period Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--foreground-muted)]">
-              {t('period')}:
-            </span>
-            <div className="flex rounded-lg border border-[var(--border)] overflow-hidden">
-              {periodOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => handlePeriodChange(option.value)}
-                  className={`px-4 py-2 text-sm font-medium transition-colors ${
-                    selectedPeriod === option.value
-                      ? 'bg-[var(--color-primary)] text-white'
-                      : 'bg-[var(--background-secondary)] text-[var(--foreground)] hover:bg-[var(--background)]'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
+          {/* ── 5-FACTOR SCORE BAR ── */}
+          <FactorScoreBar tickerData={tickerData} />
+
+          {/* ── CHART SECTION ── */}
+          <div>
+            {/* Period selector */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex gap-1">
+                {periodOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handlePeriodChange(opt.value)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      selectedPeriod === opt.value
+                        ? 'bg-[var(--color-primary)] text-white'
+                        : 'bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {isPopup && (
+                <Button variant="outline" size="sm" onClick={() => fetchData(selectedPeriod)}>
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
+
+            {/* Chart */}
+            {tickerData.ohlcv.length > 0 ? (
+              <CandleChart
+                data={tickerData.ohlcv}
+                height={isPopup ? 340 : 500}
+                showVolume
+              />
+            ) : (
+              <Card className="flex items-center justify-center py-16">
+                <p className="text-[var(--foreground-muted)]">{t('noChartData')}</p>
+              </Card>
+            )}
+
+            {/* OHLC strip */}
+            {tickerData.ohlcv.length > 0 && (() => {
+              const lastCandle = tickerData.ohlcv[tickerData.ohlcv.length - 1];
+              return (
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-3">
+                  {[
+                    { label: t('open'), value: formatPrice(lastCandle.open) },
+                    { label: t('high'), value: formatPrice(lastCandle.high) },
+                    { label: t('low'), value: formatPrice(lastCandle.low) },
+                    { label: t('close'), value: formatPrice(lastCandle.close) },
+                    { label: t('ohlcvVol'), value: lastCandle.volume ? `${(lastCandle.volume / 1_000_000).toFixed(1)}M` : '-' },
+                    ...(tickerData.technical.sma ? [
+                      { label: t('ohlcvMa', { period: '20' }), value: formatPrice(tickerData.technical.sma.sma20) },
+                    ] : []),
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-md bg-[var(--background-secondary)] border border-[var(--border)] px-3 py-2 text-center">
+                      <span className="block text-[10px] text-[var(--foreground-muted)]">{item.label}</span>
+                      <span className="text-sm font-mono font-semibold text-[var(--foreground)]">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
+          {/* Popup: Show Advanced Details toggle */}
           {isPopup && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchData(selectedPeriod)}
-              >
-                <RefreshCw className="h-4 w-4 mr-1.5" />
-                {t('refresh')}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  window.open(`/${locale}/analysis/${encodeURIComponent(ticker)}`, '_blank', 'noopener,noreferrer');
-                }}
-              >
-                <ExternalLink className="h-4 w-4 mr-1.5" />
-                {t('openFullPage')}
-              </Button>
-            </div>
-          )}
-
-          {/* Chart */}
-          <CandleChart
-            data={tickerData.ohlcv}
-            height={isPopup ? 340 : 500}
-            showVolume={true}
-          />
-
-          {/* OHLC Strip — today's Open/High/Low/Close + MA values */}
-          {tickerData.ohlcv.length > 0 && (() => {
-            const latest = tickerData.ohlcv[tickerData.ohlcv.length - 1];
-            const sma = tickerData.technical?.sma;
-            return (
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-4 py-2 text-xs">
-                <span className="text-[var(--foreground-muted)]">
-                  {t('open')} <span className="font-mono font-medium text-[var(--foreground)]">{latest.open.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </span>
-                <span className="text-[var(--foreground-muted)]">
-                  {t('high')} <span className="font-mono font-medium text-[var(--foreground)]">{latest.high.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </span>
-                <span className="text-[var(--foreground-muted)]">
-                  {t('low')} <span className="font-mono font-medium text-[var(--foreground)]">{latest.low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </span>
-                <span className="text-[var(--foreground-muted)]">
-                  {t('close')} <span className="font-mono font-medium text-[var(--foreground)]">{latest.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </span>
-                {latest.volume != null && (
-                  <span className="text-[var(--foreground-muted)]">
-                    {t('ohlcvVol')} <span className="font-mono font-medium text-[var(--foreground)]">{latest.volume.toLocaleString()}</span>
-                  </span>
-                )}
-                {sma?.sma20 != null && (
-                  <span className="text-[var(--foreground-muted)]">
-                    {t('ohlcvMa', { period: 20 })} <span className="font-mono font-medium text-blue-600 dark:text-blue-400">{sma.sma20.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  </span>
-                )}
-                {sma?.sma50 != null && (
-                  <span className="text-[var(--foreground-muted)]">
-                    {t('ohlcvMa', { period: 50 })} <span className="font-mono font-medium text-amber-600 dark:text-amber-400">{sma.sma50.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  </span>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* Popup KPI strip */}
-          {isPopup && (
-            <div className="grid grid-cols-3 gap-3">
-              <Card padding="sm">
-                <p className="text-xs text-[var(--foreground-muted)] text-center">{t('popupKpiPrice')}</p>
-                <p className="mt-1 font-mono font-semibold text-[var(--foreground)] text-center">
-                  {formatPrice(tickerData.current_price)}
-                </p>
-              </Card>
-              <Card padding="sm">
-                <p className="text-xs text-[var(--foreground-muted)] text-center">{t('popupKpiChange')}</p>
-                <p
-                  className={`mt-1 font-mono font-semibold text-center ${
-                    tickerData.change_pct >= 0
-                      ? 'text-green-600 dark:text-green-400'
-                      : 'text-red-600 dark:text-red-400'
-                  }`}
-                >
-                  {tickerData.change_pct >= 0 ? '+' : ''}
-                  {tickerData.change_pct.toFixed(2)}%
-                </p>
-              </Card>
-              <Card padding="sm">
-                <p className="text-xs text-[var(--foreground-muted)] text-center">{t('popupKpiVolume')}</p>
-                <p className="mt-1 font-mono font-semibold text-[var(--foreground)] text-center">
-                  {(tickerData.ohlcv[tickerData.ohlcv.length - 1]?.volume ?? 0).toLocaleString()}
-                </p>
-              </Card>
-            </div>
-          )}
-
-          {/* Data timestamp */}
-          {tickerData.timestamp && (
-            <p className="text-[11px] text-[var(--foreground-muted)] text-right">
-              {t('dataAsOf', { date: formatTimestamp(tickerData.timestamp) })}
-            </p>
-          )}
-
-          {/* Technical Summary — Oscillators / Moving Averages / Overall */}
-          {tickerData.technical && (() => {
-            const tech = tickerData.technical;
-            const getOscillatorSignal = () => {
-              const rsiSignal = tech.rsi?.signal;
-              if (rsiSignal === 'oversold') return 'buy';
-              if (rsiSignal === 'overbought') return 'sell';
-              return 'neutral';
-            };
-            const getMaSignal = () => {
-              if (!tech.sma) return 'neutral';
-              const price = tickerData.current_price;
-              const above20 = price > tech.sma.sma20;
-              const above50 = price > tech.sma.sma50;
-              const above200 = price > tech.sma.sma200;
-              const aboveCount = [above20, above50, above200].filter(Boolean).length;
-              if (aboveCount === 3) return 'strongBuy';
-              if (aboveCount >= 2) return 'buy';
-              if (aboveCount === 0) return 'strongSell';
-              if (aboveCount <= 1) return 'sell';
-              return 'neutral';
-            };
-            const oscSignal = getOscillatorSignal();
-            const maSignal = getMaSignal();
-            const overallMap: Record<string, Record<string, string>> = {
-              buy: { buy: 'strongBuy', sell: 'neutral', strongBuy: 'strongBuy', strongSell: 'neutral', neutral: 'buy' },
-              sell: { buy: 'neutral', sell: 'strongSell', strongBuy: 'neutral', strongSell: 'strongSell', neutral: 'sell' },
-              neutral: { buy: 'buy', sell: 'sell', strongBuy: 'buy', strongSell: 'sell', neutral: 'neutral' },
-            };
-            const overall = overallMap[oscSignal]?.[maSignal] ?? 'neutral';
-            const signalLabel = (s: string) => {
-              switch (s) {
-                case 'strongBuy': return t('strongBuy');
-                case 'buy': return t('buySignal');
-                case 'neutral': return t('neutralSignal');
-                case 'sell': return t('sellSignal');
-                case 'strongSell': return t('strongSell');
-                default: return t('neutralSignal');
-              }
-            };
-            const signalColor = (s: string) => {
-              if (s === 'strongBuy' || s === 'buy') return 'text-green-600 dark:text-green-400';
-              if (s === 'strongSell' || s === 'sell') return 'text-red-600 dark:text-red-400';
-              return 'text-amber-600 dark:text-amber-400';
-            };
-            return (
-              <div className="grid grid-cols-3 gap-3">
-                <Card padding="sm">
-                  <p className="text-xs text-[var(--foreground-muted)] text-center">{t('oscillators')}</p>
-                  <p className={`mt-1 text-center text-sm font-bold ${signalColor(oscSignal)}`}>{signalLabel(oscSignal)}</p>
-                </Card>
-                <Card padding="sm">
-                  <p className="text-xs text-[var(--foreground-muted)] text-center">{t('movingAverages')}</p>
-                  <p className={`mt-1 text-center text-sm font-bold ${signalColor(maSignal)}`}>{signalLabel(maSignal)}</p>
-                </Card>
-                <Card padding="sm">
-                  <p className="text-xs text-[var(--foreground-muted)] text-center">{t('summary')}</p>
-                  <p className={`mt-1 text-center text-sm font-bold ${signalColor(overall)}`}>{signalLabel(overall)}</p>
-                </Card>
-              </div>
-            );
-          })()}
-
-          {/* Technical Indicators */}
-          <CollapsibleSection
-            title={t('technicalIndicators')}
-            expanded={expandedSections.indicators}
-            onToggle={() => toggleSection('indicators')}
-            isPopup={isPopup}
-          >
-            <IndicatorPanel technicalData={tickerData.technical} currentPrice={tickerData.current_price} />
-          </CollapsibleSection>
-
-          {/* ===== Financial Overview ===== */}
-          {tickerData.fundamental && (
-            <CollapsibleSection
-              title={t('financialOverview')}
-              expanded={expandedSections.financials}
-              onToggle={() => toggleSection('financials')}
-              isPopup={isPopup}
+            <button
+              onClick={() => setShowAdvancedSections(!showAdvancedSections)}
+              className="flex items-center gap-1 text-sm text-[var(--color-primary)] hover:underline mx-auto"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                {/* Market Cap */}
-                <Card padding="md">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-[var(--background)] p-2">
-                      <DollarSign className="h-5 w-5 text-[var(--color-primary)]" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-[var(--foreground-muted)]">
-                        {t('marketCap')}
-                      </span>
-                      <p className="text-lg font-semibold text-[var(--foreground)]">
-                        {formatMarketCap(tickerData.fundamental.market_cap)}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* P/E Ratio */}
-                <Card padding="md">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-[var(--background)] p-2">
-                      <PieChart className="h-5 w-5 text-[var(--color-primary)]" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-[var(--foreground-muted)]">
-                        {t('peRatio')}
-                      </span>
-                      <p className="text-lg font-semibold text-[var(--foreground)]">
-                        {tickerData.fundamental.pe_ratio !== null
-                          ? tickerData.fundamental.pe_ratio.toFixed(2)
-                          : t('notAvailable')}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Dividend Yield */}
-                <Card padding="md">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-[var(--background)] p-2">
-                      <Percent className="h-5 w-5 text-[var(--color-primary)]" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-[var(--foreground-muted)]">
-                        {t('dividendYield')}
-                      </span>
-                      <p className="text-lg font-semibold text-[var(--foreground)]">
-                        {tickerData.fundamental.dividend_yield !== null
-                          ? `${(tickerData.fundamental.dividend_yield * 100).toFixed(2)}%`
-                          : t('notAvailable')}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* EPS */}
-                <Card padding="md">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-[var(--background)] p-2">
-                      <Banknote className="h-5 w-5 text-[var(--color-primary)]" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-[var(--foreground-muted)]">
-                        {t('eps')}
-                      </span>
-                      <p className="text-lg font-semibold text-[var(--foreground)]">
-                        {tickerData.fundamental.eps !== null
-                          ? formatPrice(tickerData.fundamental.eps)
-                          : t('notAvailable')}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Sector */}
-                <Card padding="md">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-[var(--background)] p-2">
-                      <Building2 className="h-5 w-5 text-[var(--color-primary)]" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-[var(--foreground-muted)]">
-                        {t('sector')}
-                      </span>
-                      <p className="text-lg font-semibold text-[var(--foreground)] truncate">
-                        {tickerData.fundamental.sector || t('notAvailable')}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-
-              {/* 52-Week Range */}
-              {tickerData.fundamental.week52_high != null && tickerData.fundamental.week52_low != null && (() => {
-                const w52High = tickerData.fundamental.week52_high!;
-                const w52Low = tickerData.fundamental.week52_low!;
-                const range = w52High - w52Low;
-                const pos = range > 0
-                  ? ((tickerData.current_price - w52Low) / range) * 100
-                  : 50;
-                return (
-                  <div className="mt-4 space-y-2">
-                    <h4 className="text-sm font-medium text-[var(--foreground)]">{t('week52Range')}</h4>
-                    <div className="flex items-center justify-between text-xs text-[var(--foreground-muted)]">
-                      <span>{t('week52Low')}: {formatPrice(w52Low)}</span>
-                      <span>{t('week52High')}: {formatPrice(w52High)}</span>
-                    </div>
-                    <div className="relative h-3 rounded-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400">
-                      <div
-                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-[var(--color-primary)] shadow-md"
-                        style={{ left: `calc(${Math.min(100, Math.max(0, pos))}% - 8px)` }}
-                      />
-                    </div>
-                    <div className="text-center text-xs text-[var(--foreground-muted)]">
-                      {t('currentPriceAt')} <span className="font-medium text-[var(--foreground)]">{pos.toFixed(0)}%</span> {t('ofRange')}
-                    </div>
-                  </div>
-                );
-              })()}
-            </CollapsibleSection>
+              {showAdvancedSections ? t('hideAdvancedDetails') : t('showAdvancedDetails')}
+              {showAdvancedSections ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
           )}
 
-          {/* ===== Strategy Context ===== */}
-          <CollapsibleSection
-            title={t('strategyContext')}
-            expanded={expandedSections.strategy}
-            onToggle={() => toggleSection('strategy')}
-            isPopup={isPopup}
-            headerRight={
-              presets.length > 0 ? (
-                <select
-                  value={selectedPreset}
-                  onChange={(e) => {
-                    setSelectedPreset(e.target.value);
-                    fetchScreening(e.target.value);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] text-[var(--foreground)] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+          {/* ── BOTTOM DASHBOARD (2-column grid) ── */}
+          {showAdvancedSections && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* ── LEFT COLUMN ── */}
+              <div className="space-y-6">
+                {/* Technical Indicators */}
+                <CollapsibleSection
+                  title={t('technicalIndicators')}
+                  expanded={expandedSections.indicators}
+                  onToggle={() => toggleSection('indicators')}
+                  isPopup={isPopup}
                 >
-                  {presets.map((p) => (
-                    <option key={p.name} value={p.name}>
-                      {(() => {
-                        const key = `presetNames.${p.name}`;
-                        if (tScreening.has(key)) {
-                          return `${tScreening(key as never)} (${p.conditions.length})`;
-                        }
-                        const fallback = p.name.startsWith('custom:')
-                          ? p.description || toTitleCaseFromKey(p.name)
-                          : toTitleCaseFromKey(p.name);
-                        return `${fallback} (${p.conditions.length})`;
-                      })()}
-                    </option>
-                  ))}
-                </select>
-              ) : undefined
-            }
-          >
-            <Card padding="md">
-              {screeningLoading && (
-                <div className="flex items-center gap-3 py-4">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--color-primary)] border-t-transparent" />
-                  <span className="text-[var(--foreground-muted)]">{t('loadingConditions')}</span>
-                </div>
-              )}
+                  <IndicatorPanel
+                    technicalData={tickerData.technical}
+                    currentPrice={tickerData.current_price}
+                  />
+                </CollapsibleSection>
 
-              {screeningError && !screeningLoading && (
-                <div className="flex items-center gap-2 text-red-600 dark:text-red-400 py-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span className="text-sm">{screeningError}</span>
-                </div>
-              )}
+                {/* Fundamentals */}
+                {tickerData.fundamental && (
+                  <CollapsibleSection
+                    title={t('fundamentalData')}
+                    expanded={expandedSections.financials}
+                    onToggle={() => toggleSection('financials')}
+                    isPopup={isPopup}
+                  >
+                    <FundamentalCard fundamental={tickerData.fundamental} />
 
-              {screeningResult && !screeningLoading && (
-                <div className="space-y-3">
-                  {/* Summary */}
-                  <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
-                    <div className="flex items-center gap-2">
-                      {screeningResult.matched ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <AlertTriangle className="h-5 w-5 text-amber-500" />
-                      )}
-                      <span className="font-medium text-[var(--foreground)]">
+                    {/* 52-Week Range */}
+                    {tickerData.fundamental.week52_high != null && tickerData.fundamental.week52_low != null && (
+                      <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-4">
+                        <h4 className="text-sm font-semibold text-[var(--foreground)] mb-3">{t('week52Range')}</h4>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-mono text-[var(--foreground-muted)]">
+                            {formatPrice(tickerData.fundamental.week52_low)}
+                          </span>
+                          <div className="flex-1 relative h-2 rounded-full bg-[var(--border)]">
+                            <div
+                              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[var(--color-primary)] border-2 border-white dark:border-gray-800 shadow"
+                              style={{
+                                left: `${Math.min(100, Math.max(0, ((tickerData.current_price - tickerData.fundamental.week52_low!) / (tickerData.fundamental.week52_high! - tickerData.fundamental.week52_low!)) * 100))}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs font-mono text-[var(--foreground-muted)]">
+                            {formatPrice(tickerData.fundamental.week52_high)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </CollapsibleSection>
+                )}
+
+                {/* Strategy Context */}
+                <CollapsibleSection
+                  title={t('strategyContext')}
+                  expanded={expandedSections.strategy}
+                  onToggle={() => toggleSection('strategy')}
+                  isPopup={isPopup}
+                  headerRight={
+                    screeningResult ? (
+                      <span className="text-xs text-[var(--foreground-muted)]">
                         {t('conditionsPassed', {
-                          passed: screeningResult.conditions.filter(c => c.matched).length,
+                          passed: screeningResult.conditions.filter((c) => c.matched).length,
                           total: screeningResult.conditions.length,
                         })}
                       </span>
-                    </div>
-                    <span
-                      className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-                        screeningResult.matched
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-                      }`}
-                    >
-                      {screeningResult.matched ? t('pass') : t('fail')}
-                    </span>
-                  </div>
-
-                  {/* Individual conditions */}
-                  {screeningResult.conditions.length > 0 ? (
-                    <div className="space-y-2">
-                      {screeningResult.conditions.map((condition, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--background)] hover:bg-[var(--background-secondary)] transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            {getConditionIcon(condition)}
-                            <span className="text-sm text-[var(--foreground)]">
-                              {(() => {
-                                const key = `${condition.condition_name}.label`;
-                                return tConditions.has(key)
-                                  ? tConditions(key as never)
-                                  : toTitleCaseFromKey(condition.condition_name);
-                              })()}
-                            </span>
-                          </div>
-                          {getConditionBadge(condition)}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-[var(--foreground-muted)] py-2">
-                      {t('noConditions')}
-                    </p>
-                  )}
-                </div>
-              )}
-            </Card>
-          </CollapsibleSection>
-
-          {/* ===== AI Insight ===== */}
-          <CollapsibleSection
-            title={t('aiInsight')}
-            expanded={expandedSections.ai}
-            onToggle={() => toggleSection('ai')}
-            isPopup={isPopup}
-          >
-            <Card padding="md">
-              {aiAvailable === false && (
-                <div className="flex items-center gap-3 py-4">
-                  <ShieldAlert className="h-5 w-5 text-[var(--foreground-muted)]" />
-                  <span className="text-sm text-[var(--foreground-muted)]">
-                    {t('apiKeyMissing')}
-                  </span>
-                </div>
-              )}
-
-              {aiAvailable !== false && !aiResult && (
-                <div className="flex flex-col items-center gap-4 py-6">
-                  <Brain className="h-10 w-10 text-[var(--foreground-muted)]" />
-                  <p className="text-sm text-[var(--foreground-muted)] text-center">
-                    {t('aiDescription')}
-                  </p>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={handleAIAnalysis}
-                    isLoading={aiLoading}
-                    disabled={aiLoading}
-                  >
-                    {aiLoading ? (
-                      t('analyzing')
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        {t('analyzeWithAI')}
-                      </>
-                    )}
-                  </Button>
-                  {aiError && (
-                    <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                      <AlertTriangle className="h-4 w-4" />
-                      <span className="text-sm">{aiError}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {aiResult && (
-                <div className="space-y-5">
-                  {/* Scores row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Valuation Score */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-[var(--foreground-muted)]">
-                          {t('valuationScore')}
-                        </span>
-                        <span className={`text-lg font-bold ${getScoreColor(aiResult.valuation_score)}`}>
-                          {aiResult.valuation_score.toFixed(1)}/10
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-[var(--background)] overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${getScoreBarColor(aiResult.valuation_score)}`}
-                          style={{ width: `${(aiResult.valuation_score / 10) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Risk Score */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-[var(--foreground-muted)]">
-                          {t('riskScore')}
-                        </span>
-                        <span className={`text-lg font-bold ${getScoreColor(aiResult.risk_score, true)}`}>
-                          {aiResult.risk_score.toFixed(1)}/10
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-[var(--background)] overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${getScoreBarColor(aiResult.risk_score, true)}`}
-                          style={{ width: `${(aiResult.risk_score / 10) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Recommendation */}
-                    <div className="flex flex-col items-center justify-center">
-                      <span className="text-sm text-[var(--foreground-muted)] mb-2">
-                        {t('recommendation')}
-                      </span>
-                      <span
-                        className={`inline-flex items-center rounded-full px-4 py-2 text-lg font-bold ${getRecommendationStyle(aiResult.entry_recommendation)}`}
+                    ) : undefined
+                  }
+                >
+                  <div className="space-y-4">
+                    {/* Preset selector */}
+                    {presets.length > 0 && (
+                      <select
+                        value={selectedPreset}
+                        onChange={(e) => {
+                          setSelectedPreset(e.target.value);
+                          fetchScreening(e.target.value);
+                        }}
+                        className="w-full rounded-md border border-[var(--border)] bg-[var(--background-secondary)] text-[var(--foreground)] px-3 py-2 text-sm"
                       >
-                        {getRecommendationLabel(aiResult.entry_recommendation)}
-                      </span>
-                    </div>
-                  </div>
+                        {presets.map((p) => (
+                          <option key={p.name} value={p.name}>
+                            {(() => {
+                              try { return tScreening(`presetNames.${p.name}`); }
+                              catch { return toTitleCaseFromKey(p.name); }
+                            })()}
+                          </option>
+                        ))}
+                      </select>
+                    )}
 
-                  {/* Key Risks & Catalysts */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Key Risks */}
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-[var(--foreground-muted)]">
-                        {t('keyRisks')}
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {aiResult.key_risks.map((risk, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
-                          >
-                            {risk}
-                          </span>
+                    {/* Conditions list */}
+                    {screeningLoading && (
+                      <p className="text-sm text-[var(--foreground-muted)]">{t('loadingConditions')}</p>
+                    )}
+                    {screeningError && (
+                      <p className="text-sm text-red-500">{screeningError}</p>
+                    )}
+                    {screeningResult && !screeningLoading && (
+                      <div className="space-y-2">
+                        {screeningResult.conditions.map((cond) => (
+                          <div key={cond.condition_name} className="flex items-center justify-between rounded-lg bg-[var(--background)]/60 border border-[var(--border)]/50 px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              {getConditionIcon(cond)}
+                              <span className="text-sm text-[var(--foreground)]">
+                                {(() => {
+                                  try { return tConditions(cond.condition_name); }
+                                  catch { return toTitleCaseFromKey(cond.condition_name); }
+                                })()}
+                              </span>
+                            </div>
+                            {getConditionBadge(cond)}
+                          </div>
                         ))}
                       </div>
-                    </div>
-
-                    {/* Catalysts */}
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-[var(--foreground-muted)]">
-                        {t('catalysts')}
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {aiResult.catalysts.map((catalyst, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
-                          >
-                            {catalyst}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                    )}
+                    {!screeningResult && !screeningLoading && !screeningError && (
+                      <p className="text-sm text-[var(--foreground-muted)]">{t('noConditions')}</p>
+                    )}
                   </div>
+                </CollapsibleSection>
+              </div>
 
-                  {/* Reasoning (collapsible) */}
-                  <div className="border-t border-[var(--border)] pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setReasoningExpanded(!reasoningExpanded)}
-                      className="flex items-center gap-2 text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors w-full"
-                    >
-                      {reasoningExpanded ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
+              {/* ── RIGHT COLUMN ── */}
+              <div className="space-y-6">
+                {/* Company Info */}
+                {tickerData.fundamental && (
+                  <CollapsibleSection
+                    title={tCompany('title')}
+                    expanded={expandedSections.companyInfo}
+                    onToggle={() => toggleSection('companyInfo')}
+                    isPopup={isPopup}
+                  >
+                    <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-5 space-y-3">
+                      <div className="flex gap-4">
+                        {tickerData.fundamental.sector && (
+                          <div>
+                            <span className="text-xs text-[var(--foreground-muted)]">{tCompany('sector')}</span>
+                            <p className="text-sm font-medium text-[var(--foreground)] flex items-center gap-1">
+                              <Building2 className="h-3.5 w-3.5" />
+                              {tickerData.fundamental.sector}
+                            </p>
+                          </div>
+                        )}
+                        {tickerData.fundamental.industry && (
+                          <div>
+                            <span className="text-xs text-[var(--foreground-muted)]">{tCompany('industry')}</span>
+                            <p className="text-sm font-medium text-[var(--foreground)]">
+                              {tickerData.fundamental.industry}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      {tickerData.fundamental.description && (
+                        <p className="text-sm text-[var(--foreground-muted)] leading-relaxed line-clamp-4">
+                          {tickerData.fundamental.description}
+                        </p>
                       )}
-                      {t('reasoning')}
-                    </button>
-                    {reasoningExpanded && (
-                      <div className="mt-3 p-4 rounded-lg bg-[var(--background)] text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">
-                        {aiResult.reasoning}
+                      {tickerData.fundamental.market_cap != null && (
+                        <div className="pt-2 border-t border-[var(--border)]">
+                          <span className="text-xs text-[var(--foreground-muted)]">{t('marketCap')}</span>
+                          <p className="text-lg font-semibold font-mono text-[var(--color-primary)]">
+                            {formatMarketCap(tickerData.fundamental.market_cap)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {/* News */}
+                <CollapsibleSection
+                  title="News"
+                  expanded={expandedSections.news}
+                  onToggle={() => toggleSection('news')}
+                  isPopup={isPopup}
+                >
+                  <NewsCard
+                    articles={tickerData.news?.articles}
+                    sentimentSummary={tickerData.news?.sentiment_summary}
+                    onLoadNews={!newsLoaded ? handleLoadNews : undefined}
+                    isLoading={newsLoading}
+                  />
+                </CollapsibleSection>
+
+                {/* AI Insight */}
+                <CollapsibleSection
+                  title={t('aiInsight')}
+                  expanded={expandedSections.ai}
+                  onToggle={() => toggleSection('ai')}
+                  isPopup={isPopup}
+                >
+                  <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-5 space-y-4">
+                    <p className="text-xs text-[var(--foreground-muted)]">{t('aiDescription')}</p>
+
+                    {!aiResult && aiAvailable && (
+                      <Button
+                        onClick={handleAIAnalysis}
+                        isLoading={aiLoading}
+                        variant="primary"
+                        size="sm"
+                      >
+                        <Sparkles className="h-4 w-4 mr-1" />
+                        {aiLoading ? t('analyzing') : t('analyzeWithAI')}
+                      </Button>
+                    )}
+
+                    {!aiResult && aiAvailable === false && (
+                      <p className="text-sm text-amber-500">{t('apiKeyMissing')}</p>
+                    )}
+
+                    {aiError && (
+                      <p className="text-sm text-red-500">{aiError}</p>
+                    )}
+
+                    {aiResult && (
+                      <div className="space-y-4">
+                        {/* Recommendation badge */}
+                        <div className="flex items-center gap-3">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-4 py-1.5 text-sm font-bold ${getRecommendationStyle(aiResult.entry_recommendation)}`}>
+                            {getRecommendationLabel(aiResult.entry_recommendation)}
+                          </span>
+                        </div>
+
+                        {/* Score bars */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-[var(--foreground-muted)]">{t('valuationScore')}</span>
+                              <span className={`text-sm font-bold ${getScoreColor(aiResult.valuation_score)}`}>
+                                {aiResult.valuation_score}/10
+                              </span>
+                            </div>
+                            <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden">
+                              <div className={`h-full rounded-full ${getScoreBarColor(aiResult.valuation_score)}`} style={{ width: `${aiResult.valuation_score * 10}%` }} />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-[var(--foreground-muted)]">{t('riskScore')}</span>
+                              <span className={`text-sm font-bold ${getScoreColor(aiResult.risk_score, true)}`}>
+                                {aiResult.risk_score}/10
+                              </span>
+                            </div>
+                            <div className="h-2 rounded-full bg-[var(--border)] overflow-hidden">
+                              <div className={`h-full rounded-full ${getScoreBarColor(aiResult.risk_score, true)}`} style={{ width: `${aiResult.risk_score * 10}%` }} />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Risks & Catalysts */}
+                        {aiResult.key_risks.length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-[var(--foreground-muted)] mb-2 flex items-center gap-1">
+                              <ShieldAlert className="h-3.5 w-3.5" />
+                              {t('keyRisks')}
+                            </h4>
+                            <div className="flex flex-wrap gap-1.5">
+                              {aiResult.key_risks.map((risk, i) => (
+                                <span key={i} className="px-2 py-1 rounded-md text-xs bg-red-500/10 text-red-500">
+                                  {risk}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {aiResult.catalysts.length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-[var(--foreground-muted)] mb-2 flex items-center gap-1">
+                              <Brain className="h-3.5 w-3.5" />
+                              {t('catalysts')}
+                            </h4>
+                            <div className="flex flex-wrap gap-1.5">
+                              {aiResult.catalysts.map((c, i) => (
+                                <span key={i} className="px-2 py-1 rounded-md text-xs bg-green-500/10 text-green-500">
+                                  {c}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Reasoning */}
+                        {aiResult.reasoning && (
+                          <div>
+                            <button
+                              onClick={() => setReasoningExpanded(!reasoningExpanded)}
+                              className="flex items-center gap-1 text-xs text-[var(--color-primary)] hover:underline"
+                            >
+                              {t('reasoning')}
+                              {reasoningExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                            </button>
+                            {reasoningExpanded && (
+                              <p className="mt-2 text-sm text-[var(--foreground-muted)] leading-relaxed whitespace-pre-wrap">
+                                {aiResult.reasoning}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-            </Card>
-          </CollapsibleSection>
-
-          {isPopup && (
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAdvancedSections((prev) => !prev)}
-              >
-                {showAdvancedSections ? t('hideAdvancedDetails') : t('showAdvancedDetails')}
-              </Button>
+                </CollapsibleSection>
+              </div>
             </div>
           )}
-
-          {/* ===== Sector Distribution ===== */}
-          {tickerData.fundamental?.sector && (!isPopup || showAdvancedSections) && (
-            <CollapsibleSection
-              title={t('sectorDistribution')}
-              expanded={expandedSections.sector}
-              onToggle={() => toggleSection('sector')}
-              isPopup={isPopup}
-            >
-              <Card padding="md">
-                <div className="flex items-center gap-3">
-                  <Building2 className="h-5 w-5 text-[var(--color-primary)]" />
-                  <span
-                    className="inline-flex items-center rounded-full px-4 py-2 text-sm font-medium bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
-                  >
-                    {tickerData.fundamental.sector}
-                  </span>
-                </div>
-              </Card>
-            </CollapsibleSection>
-          )}
-
-          {/* ===== Price Summary & Trading Range ===== */}
-          {(!isPopup || showAdvancedSections) && (
-            <CollapsibleSection
-              title={t('priceSummary')}
-              expanded={expandedSections.priceSummary}
-              onToggle={() => toggleSection('priceSummary')}
-              isPopup={isPopup}
-            >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Price Summary */}
-                <Card title={t('priceSummary')}>
-                  <div className="space-y-3">
-                    {tickerData.ohlcv.length > 0 && (() => {
-                      const prices = tickerData.ohlcv.map(d => d.close);
-                      const highs = tickerData.ohlcv.map(d => d.high);
-                      const lows = tickerData.ohlcv.map(d => d.low);
-                      const periodHigh = Math.max(...highs);
-                      const periodLow = Math.min(...lows);
-                      const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-                      const firstPrice = prices[0];
-                      const lastPrice = prices[prices.length - 1];
-                      const periodReturn = ((lastPrice - firstPrice) / firstPrice) * 100;
-
-                      return (
-                        <>
-                          <div className="flex justify-between items-center">
-                            <span className="text-[var(--foreground-muted)]">{t('periodHigh')}</span>
-                            <span className="font-medium text-[var(--foreground)]">
-                              {formatPrice(periodHigh)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-[var(--foreground-muted)]">{t('periodLow')}</span>
-                            <span className="font-medium text-[var(--foreground)]">
-                              {formatPrice(periodLow)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-[var(--foreground-muted)]">{t('averagePrice')}</span>
-                            <span className="font-medium text-[var(--foreground)]">
-                              {formatPrice(avgPrice)}
-                            </span>
-                          </div>
-                          <div className="h-px bg-[var(--border)]" />
-                          <div className="flex justify-between items-center">
-                            <span className="text-[var(--foreground-muted)]">{t('periodReturn')}</span>
-                            <span
-                              className={`font-medium ${
-                                periodReturn >= 0
-                                  ? 'text-green-600 dark:text-green-400'
-                                  : 'text-red-600 dark:text-red-400'
-                              }`}
-                            >
-                              {periodReturn >= 0 ? '+' : ''}{periodReturn.toFixed(2)}%
-                            </span>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                </Card>
-
-                {/* Trading Range */}
-                <Card title={t('tradingRange')}>
-                  <div className="space-y-4">
-                    {tickerData.ohlcv.length > 0 && (() => {
-                      const highs = tickerData.ohlcv.map(d => d.high);
-                      const lows = tickerData.ohlcv.map(d => d.low);
-                      const periodHigh = Math.max(...highs);
-                      const periodLow = Math.min(...lows);
-                      const currentPrice = tickerData.current_price;
-                      const range = periodHigh - periodLow;
-                      const positionInRange = range > 0
-                        ? ((currentPrice - periodLow) / range) * 100
-                        : 50;
-
-                      return (
-                        <>
-                          <div className="flex justify-between text-sm text-[var(--foreground-muted)]">
-                            <span>{t('low')}: {formatPrice(periodLow)}</span>
-                            <span>{t('high')}: {formatPrice(periodHigh)}</span>
-                          </div>
-                          <div className="relative h-3 rounded-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400">
-                            <div
-                              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-[var(--color-primary)] shadow-md"
-                              style={{ left: `calc(${Math.min(100, Math.max(0, positionInRange))}% - 8px)` }}
-                            />
-                          </div>
-                          <div className="text-center">
-                            <span className="text-sm text-[var(--foreground-muted)]">
-                              {t('currentPriceAt')}{' '}
-                            </span>
-                            <span className="font-medium text-[var(--foreground)]">
-                              {positionInRange.toFixed(0)}%
-                            </span>
-                            <span className="text-sm text-[var(--foreground-muted)]">
-                              {' '}{t('ofRange')}
-                            </span>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                </Card>
-              </div>
-            </CollapsibleSection>
-          )}
         </>
-      )}
-
-      {!tickerData && !isLoading && !error && (
-        <Card padding="lg" className="text-center">
-          <p className="font-medium text-[var(--foreground)]">{t('emptyStateTitle')}</p>
-          <p className="mt-2 text-sm text-[var(--foreground-muted)]">{t('emptyStateDesc')}</p>
-        </Card>
       )}
     </div>
   );
