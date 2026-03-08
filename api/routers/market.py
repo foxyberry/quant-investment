@@ -9,9 +9,16 @@ from typing import Annotated, List
 
 from fastapi import APIRouter, HTTPException, Query
 
-from api.schemas.market import OHLCVResponse, QuoteResponse, TechnicalIndicators
+from api.schemas.market import (
+    MacroBundleResponse,
+    MacroHistoryResponse,
+    OHLCVResponse,
+    QuoteResponse,
+    TechnicalIndicators,
+)
 from api.schemas.analysis import SearchResult
 from api.services.market_service import MarketService
+from api.services.macro_market_service import get_macro_market_service
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +33,7 @@ router = APIRouter(
 
 # Service instance
 _service = MarketService()
+_macro_service = get_macro_market_service(_service)
 
 
 @router.get(
@@ -129,3 +137,28 @@ def get_technical_indicators(ticker: str) -> TechnicalIndicators:
         )
 
     return TechnicalIndicators(**result)
+
+
+@router.get(
+    "/macro/bundle",
+    response_model=MacroBundleResponse,
+    summary="Get Macro Bundle",
+    description="Get aggregated macro snapshot for FX, futures, investor flow, and regime score.",
+)
+def get_macro_bundle() -> MacroBundleResponse:
+    result = _macro_service.get_bundle()
+    return MacroBundleResponse(**result)
+
+
+@router.get(
+    "/macro/history",
+    response_model=MacroHistoryResponse,
+    summary="Get Macro History",
+    description="Get macro timeline points for a given window (e.g., 60m, 6h, 1d).",
+)
+def get_macro_history(
+    window: Annotated[str, Query(min_length=2, max_length=8, description="Window string, e.g. 60m")]
+    = "60m",
+) -> MacroHistoryResponse:
+    result = _macro_service.get_history(window=window)
+    return MacroHistoryResponse(**result)
