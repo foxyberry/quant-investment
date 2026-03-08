@@ -140,6 +140,11 @@ class TechnicalEnricher:
         macd_value = self._safe_last(macd_line)
         signal_value = self._safe_last(signal_line)
         histogram_value = self._safe_last(histogram)
+        prev_histogram_value = (
+            float(histogram.iloc[-2])
+            if histogram is not None and len(histogram) >= 2 and not pd.isna(histogram.iloc[-2])
+            else None
+        )
         bb_upper_value = self._safe_last(bb_upper)
         bb_middle_value = self._safe_last(bb_middle)
         bb_lower_value = self._safe_last(bb_lower)
@@ -163,6 +168,7 @@ class TechnicalEnricher:
             "macd": macd_value,
             "macd_signal": signal_value,
             "macd_histogram": histogram_value,
+            "macd_prev_histogram": prev_histogram_value,
             "macd_cross": macd_cross,
             "bb_upper": bb_upper_value,
             "bb_middle": bb_middle_value,

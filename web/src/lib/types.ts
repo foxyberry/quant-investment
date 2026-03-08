@@ -210,6 +210,7 @@ export interface TechnicalIndicators {
     macd: number;
     signal: number;
     histogram: number;
+    prev_histogram?: number | null;
     trend: 'bullish' | 'neutral' | 'bearish';
   };
   bollingerBands?: {
