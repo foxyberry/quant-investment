@@ -234,7 +234,7 @@ export default function TickerAnalysisPage() {
     setAiLoading(true);
     setAiError(null);
     try {
-      const result = await analyzeStock(ticker.toUpperCase());
+      const result = await analyzeStock(ticker.toUpperCase(), true, locale);
       setAiResult(result);
     } catch (err) {
       setAiError(err instanceof Error ? err.message : t('aiAnalysisError'));

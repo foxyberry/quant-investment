@@ -113,7 +113,8 @@ def analyze_stock(request: AnalysisRequest) -> AnalysisResult:
     try:
         result = service.analyze_stock(
             ticker=request.ticker,
-            include_news=request.include_news
+            include_news=request.include_news,
+            locale=request.locale
         )
 
         if result is None:

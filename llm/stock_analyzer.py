@@ -259,6 +259,7 @@ class StockAnalyzer:
         name: str = None,
         current_price: float = None,
         ma_240: float = None,
+        locale: str = None,
     ) -> FullAnalysisResult:
         """
         Analyze a single stock (fetches all data automatically).
@@ -268,6 +269,7 @@ class StockAnalyzer:
             name: Company name (optional)
             current_price: Current price (optional, fetched if not provided)
             ma_240: 240-day MA (optional, calculated if not provided)
+            locale: Response language locale (e.g., "ko", "zh")
 
         Returns:
             FullAnalysisResult with complete analysis
@@ -275,20 +277,21 @@ class StockAnalyzer:
         # Enrich stock data
         profile = self.enrich_stock(ticker, name, current_price, ma_240)
 
-        # Analyze with Claude
-        return self.analyze_with_profile(profile)
+        # Analyze with AI
+        return self.analyze_with_profile(profile, locale=locale)
 
-    def analyze_with_profile(self, profile: StockProfile) -> FullAnalysisResult:
+    def analyze_with_profile(self, profile: StockProfile, locale: str = None) -> FullAnalysisResult:
         """
         Analyze a stock using pre-enriched profile.
 
         Args:
             profile: StockProfile with all data
+            locale: Response language locale (e.g., "ko", "zh")
 
         Returns:
             FullAnalysisResult
         """
-        # Call Claude for analysis
+        # Call AI for analysis
         result = self.claude.analyze_stock(
             ticker=profile.ticker,
             name=profile.name,
@@ -297,6 +300,7 @@ class StockAnalyzer:
             technical=profile.technical,
             fundamental=profile.fundamental,
             news=profile.news,
+            locale=locale,
         )
 
         return FullAnalysisResult(
