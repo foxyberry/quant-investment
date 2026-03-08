@@ -448,8 +448,10 @@ export async function downloadHoldingsTemplate(minimal: boolean = false): Promis
 /**
  * Get ticker analysis with OHLCV data and technical indicators
  */
-export async function getTickerAnalysis(ticker: string, period: string = '6mo'): Promise<TickerAnalysis> {
-  return fetchApi<TickerAnalysis>(`/api/analysis/ticker/${encodeURIComponent(ticker)}?period=${period}`);
+export async function getTickerAnalysis(ticker: string, period: string = '6mo', includeNews = false): Promise<TickerAnalysis> {
+  const params = new URLSearchParams({ period });
+  if (includeNews) params.set('include_news', 'true');
+  return fetchApi<TickerAnalysis>(`/api/analysis/ticker/${encodeURIComponent(ticker)}?${params.toString()}`);
 }
 
 /**

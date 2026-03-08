@@ -3194,5 +3194,45 @@
     "realEstate": "부동산",
     "utilities": "유틸리티",
     "communication": "통신"
+  },
+  "factors": {
+    "valuation": "밸류에이션",
+    "quality": "퀄리티",
+    "momentum": "모멘텀",
+    "sentiment": "센티먼트",
+    "risk": "리스크",
+    "bullish": "강세",
+    "neutral": "중립",
+    "bearish": "약세"
+  },
+  "fundamentals": {
+    "title": "재무 지표",
+    "peRatio": "PER",
+    "forwardPE": "Forward PER",
+    "pbRatio": "PBR",
+    "psRatio": "PSR",
+    "pegRatio": "PEG",
+    "marketCap": "시가총액",
+    "revenue": "매출",
+    "revenueGrowth": "매출 성장률",
+    "profitMargin": "이익률",
+    "roe": "ROE",
+    "roa": "ROA",
+    "debtToEquity": "부채비율",
+    "currentRatio": "유동비율",
+    "eps": "주당순이익"
+  },
+  "news": {
+    "title": "뉴스",
+    "loadPrompt": "감성 분석이 포함된 뉴스 기사를 불러옵니다",
+    "loadButton": "뉴스 불러오기",
+    "noArticles": "뉴스 기사가 없습니다",
+    "showMore": "{count}개 더 보기",
+    "showLess": "접기"
+  },
+  "companyInfo": {
+    "title": "기업 정보",
+    "sector": "섹터",
+    "industry": "산업"
   }
 }

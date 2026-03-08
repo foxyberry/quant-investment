@@ -3194,5 +3194,45 @@
     "realEstate": "Real Estate",
     "utilities": "Utilities",
     "communication": "Communication"
+  },
+  "factors": {
+    "valuation": "Valuation",
+    "quality": "Quality",
+    "momentum": "Momentum",
+    "sentiment": "Sentiment",
+    "risk": "Risk",
+    "bullish": "Bullish",
+    "neutral": "Neutral",
+    "bearish": "Bearish"
+  },
+  "fundamentals": {
+    "title": "Fundamentals",
+    "peRatio": "P/E Ratio",
+    "forwardPE": "Forward P/E",
+    "pbRatio": "P/B Ratio",
+    "psRatio": "P/S Ratio",
+    "pegRatio": "PEG Ratio",
+    "marketCap": "Market Cap",
+    "revenue": "Revenue",
+    "revenueGrowth": "Revenue Growth",
+    "profitMargin": "Profit Margin",
+    "roe": "ROE",
+    "roa": "ROA",
+    "debtToEquity": "Debt/Equity",
+    "currentRatio": "Current Ratio",
+    "eps": "EPS"
+  },
+  "news": {
+    "title": "News",
+    "loadPrompt": "Load news articles with sentiment analysis",
+    "loadButton": "Load News",
+    "noArticles": "No news articles available",
+    "showMore": "Show {count} more",
+    "showLess": "Show less"
+  },
+  "companyInfo": {
+    "title": "Company Info",
+    "sector": "Sector",
+    "industry": "Industry"
   }
 }

@@ -212,6 +212,7 @@ export interface TechnicalIndicators {
     histogram: number;
     prev_histogram?: number | null;
     trend: 'bullish' | 'neutral' | 'bearish';
+    cross?: 'bullish' | 'bearish' | 'none';
   };
   bollingerBands?: {
     upper: number;
@@ -224,6 +225,14 @@ export interface TechnicalIndicators {
     sma50: number;
     sma200: number;
   };
+  stochastic?: {
+    k: number;
+    d: number | null;
+  };
+  obv?: {
+    value: number;
+    trend: 'rising' | 'falling' | 'flat';
+  };
   volume?: {
     current: number;
     average: number;
@@ -232,6 +241,15 @@ export interface TechnicalIndicators {
 }
 
 // Ticker analysis response
+export interface NewsArticle {
+  title: string;
+  source: string;
+  date: string;
+  summary: string;
+  sentiment: string;
+  url: string;
+}
+
 export interface TickerAnalysis {
   ticker: string;
   name: string;
@@ -243,11 +261,29 @@ export interface TickerAnalysis {
   fundamental?: {
     market_cap: number;
     pe_ratio: number | null;
+    forward_pe?: number | null;
+    pb_ratio?: number | null;
+    ps_ratio?: number | null;
+    peg_ratio?: number | null;
     dividend_yield: number | null;
     eps: number | null;
+    revenue?: number | null;
+    revenue_growth?: number | null;
+    profit_margin?: number | null;
+    roe?: number | null;
+    roa?: number | null;
+    debt_to_equity?: number | null;
+    current_ratio?: number | null;
+    enterprise_value?: number | null;
     sector: string;
+    industry?: string | null;
+    description?: string | null;
     week52_high?: number | null;
     week52_low?: number | null;
+  };
+  news?: {
+    articles: NewsArticle[];
+    sentiment_summary: string;
   };
 }
 

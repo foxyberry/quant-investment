@@ -3194,5 +3194,45 @@
     "realEstate": "房地产",
     "utilities": "公用事业",
     "communication": "通信"
+  },
+  "factors": {
+    "valuation": "估值",
+    "quality": "质量",
+    "momentum": "动量",
+    "sentiment": "情绪",
+    "risk": "风险",
+    "bullish": "看涨",
+    "neutral": "中性",
+    "bearish": "看跌"
+  },
+  "fundamentals": {
+    "title": "基本面",
+    "peRatio": "市盈率",
+    "forwardPE": "远期市盈率",
+    "pbRatio": "市净率",
+    "psRatio": "市销率",
+    "pegRatio": "PEG比率",
+    "marketCap": "市值",
+    "revenue": "营收",
+    "revenueGrowth": "营收增长",
+    "profitMargin": "利润率",
+    "roe": "净资产收益率",
+    "roa": "总资产收益率",
+    "debtToEquity": "资产负债率",
+    "currentRatio": "流动比率",
+    "eps": "每股收益"
+  },
+  "news": {
+    "title": "新闻",
+    "loadPrompt": "加载带情感分析的新闻文章",
+    "loadButton": "加载新闻",
+    "noArticles": "暂无新闻文章",
+    "showMore": "显示更多 {count} 条",
+    "showLess": "收起"
+  },
+  "companyInfo": {
+    "title": "公司信息",
+    "sector": "行业",
+    "industry": "产业"
   }
 }
