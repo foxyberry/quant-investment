@@ -147,6 +147,12 @@
     "historyUnavailable": "宏观历史数据不可用",
     "staleWarning": "延迟",
     "changePct": "涨跌",
+    "fxUnit": "₩/USD",
+    "futuresUnit": "pt",
+    "flowUnit": "韩元",
+    "fxSource": "Frankfurter (ECB)",
+    "futuresSource": "KODEX 200 vs KOSPI",
+    "flowSource": "Naver Finance",
     "time": "时间",
     "noHistory": "暂无历史数据",
     "bundleUnavailable": "宏观聚合接口不可用"

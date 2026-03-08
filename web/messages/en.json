@@ -147,6 +147,12 @@
     "historyUnavailable": "Macro history is unavailable",
     "staleWarning": "Stale",
     "changePct": "Change",
+    "fxUnit": "₩/USD",
+    "futuresUnit": "pt",
+    "flowUnit": "KRW",
+    "fxSource": "Frankfurter (ECB)",
+    "futuresSource": "KODEX 200 vs KOSPI",
+    "flowSource": "Naver Finance",
     "time": "Time",
     "noHistory": "No history data",
     "bundleUnavailable": "Macro bundle endpoint is unavailable"
