@@ -22,6 +22,7 @@ export const queryKeys = {
     search: (query: string) => [...queryKeys.market.all, 'search', query] as const,
     macroBundle: () => [...queryKeys.market.all, 'macro-bundle'] as const,
     macroHistory: (window: string) => [...queryKeys.market.all, 'macro-history', window] as const,
+    ohlcv: (ticker: string, days: number) => [...queryKeys.market.all, 'ohlcv', ticker, days] as const,
   },
   strategy: {
     all: ['strategy'] as const,

@@ -51,6 +51,7 @@ import type {
   SellRuleUpdate,
   SellRuleEvaluateResult,
   SellRulePreset,
+  OHLCVData,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -473,6 +474,19 @@ export async function getMacroBundle(): Promise<MacroBundle> {
  */
 export async function getMacroHistory(window: string = '60m'): Promise<MacroHistoryResponse> {
   return fetchApi<MacroHistoryResponse>(`/api/market/macro/history?window=${encodeURIComponent(window)}`);
+}
+
+/**
+ * Get OHLCV data for a ticker
+ */
+export async function getOhlcv(ticker: string, days = 30): Promise<{ ticker: string; data: OHLCVData[]; period_days: number }> {
+  const raw = await fetchApi<{ ticker: string; data: Array<{ date: string; open: number; high: number; low: number; close: number; volume: number }>; period_days: number }>(
+    `/api/market/ohlcv/${encodeURIComponent(ticker)}?days=${days}`
+  );
+  return {
+    ...raw,
+    data: raw.data.map((d) => ({ time: d.date, open: d.open, high: d.high, low: d.low, close: d.close, volume: d.volume })),
+  };
 }
 
 /**

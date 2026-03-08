@@ -153,6 +153,9 @@
     "fxSource": "Frankfurter (ECB)",
     "futuresSource": "KODEX 200 vs KOSPI",
     "flowSource": "Naver Finance",
+    "futuresChartTitle": "KODEX 200 · 近30天",
+    "futuresChartLoading": "加载期货图表...",
+    "futuresChartError": "无法加载期货图表",
     "time": "时间",
     "noHistory": "暂无历史数据",
     "bundleUnavailable": "宏观聚合接口不可用"

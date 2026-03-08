@@ -3,7 +3,8 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Card } from '@/components/ui';
-import { useMacroBundle, useMacroHistory } from '@/hooks/useMarket';
+import { useMacroBundle, useMacroHistory, useOhlcv } from '@/hooks/useMarket';
+import CandleChart from '@/components/charts/CandleChart';
 import { formatPercent } from '@/lib/format';
 import {
   Activity,
@@ -93,6 +94,8 @@ export default function MacroPage() {
   const bundleQuery = useMacroBundle();
   const [historyWindow, setHistoryWindow] = useState<WindowOption>('60m');
   const historyQuery = useMacroHistory(historyWindow);
+  const futuresTicker = bundleQuery.data?.futures.symbol || '069500.KS';
+  const futuresOhlcv = useOhlcv(futuresTicker, 30);
 
   const regime = bundleQuery.data?.signal.regime ?? 'unknown';
 
@@ -145,6 +148,7 @@ export default function MacroPage() {
           onClick={() => {
             void bundleQuery.refetch();
             void historyQuery.refetch();
+            void futuresOhlcv.refetch();
           }}
           className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background)]"
         >
@@ -341,6 +345,21 @@ export default function MacroPage() {
               </ComposedChart>
             </ResponsiveContainer>
           </div>
+        )}
+      </Card>
+
+      {/* Futures OHLCV Chart */}
+      <Card>
+        <h3 className="mb-4 text-base font-semibold text-[var(--foreground)]">{t('futuresChartTitle')}</h3>
+        {futuresOhlcv.isLoading ? (
+          <p className="text-sm text-[var(--foreground-muted)]">{t('futuresChartLoading')}</p>
+        ) : futuresOhlcv.isError || !futuresOhlcv.data?.data?.length ? (
+          <p className="inline-flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+            <ShieldAlert className="h-4 w-4" />
+            {t('futuresChartError')}
+          </p>
+        ) : (
+          <CandleChart data={futuresOhlcv.data.data} height={320} showVolume showMA />
         )}
       </Card>
 
