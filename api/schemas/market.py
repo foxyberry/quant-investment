@@ -108,3 +108,62 @@ class TechnicalIndicators(BaseModel):
     ma_60: Optional[float] = Field(None, description="60-day moving average")
     ma_120: Optional[float] = Field(None, description="120-day moving average")
     ma_240: Optional[float] = Field(None, description="240-day moving average")
+
+
+class MacroFxSnapshot(BaseModel):
+    pair: str = Field(..., description="FX pair, e.g. USD/KRW")
+    value: Optional[float] = Field(None, description="Latest FX value")
+    change_pct: Optional[float] = Field(None, description="Short-term FX change percent")
+    updated_at: Optional[str] = Field(None, description="Last update timestamp")
+
+
+class MacroFuturesSnapshot(BaseModel):
+    symbol: str = Field(..., description="Futures symbol (or proxy ticker)")
+    value: Optional[float] = Field(None, description="Latest futures/proxy value")
+    basis: Optional[float] = Field(None, description="Futures basis versus spot proxy")
+    change_pct: Optional[float] = Field(None, description="Short-term futures change percent")
+    updated_at: Optional[str] = Field(None, description="Last update timestamp")
+
+
+class MacroInvestorFlowSnapshot(BaseModel):
+    market: str = Field(..., description="Market name")
+    foreign_net: Optional[float] = Field(None, description="Foreign net flow")
+    institution_net: Optional[float] = Field(None, description="Institution net flow")
+    individual_net: Optional[float] = Field(None, description="Individual net flow")
+    window_min: Optional[int] = Field(None, description="Aggregation window in minutes")
+    updated_at: Optional[str] = Field(None, description="Last update timestamp")
+
+
+class MacroSignal(BaseModel):
+    macro_score: Optional[float] = Field(None, description="Composite macro score")
+    regime: str = Field(..., description="Regime classification")
+    reason: Optional[str] = Field(None, description="Human-readable scoring reason")
+    updated_at: Optional[str] = Field(None, description="Signal timestamp")
+
+
+class MacroFreshness(BaseModel):
+    fx_age_sec: Optional[int] = Field(None, description="FX data age in seconds")
+    futures_age_sec: Optional[int] = Field(None, description="Futures data age in seconds")
+    flow_age_sec: Optional[int] = Field(None, description="Flow data age in seconds")
+
+
+class MacroBundleResponse(BaseModel):
+    fx: MacroFxSnapshot
+    futures: MacroFuturesSnapshot
+    flow: MacroInvestorFlowSnapshot
+    signal: MacroSignal
+    freshness: MacroFreshness
+
+
+class MacroHistoryPoint(BaseModel):
+    timestamp: str = Field(..., description="Point timestamp")
+    fx_value: Optional[float] = Field(None, description="FX value")
+    futures_value: Optional[float] = Field(None, description="Futures/proxy value")
+    foreign_net: Optional[float] = Field(None, description="Foreign net flow")
+    macro_score: Optional[float] = Field(None, description="Macro score")
+    regime: str = Field(..., description="Regime at timestamp")
+
+
+class MacroHistoryResponse(BaseModel):
+    window: str = Field(..., description="Requested window string")
+    points: List[MacroHistoryPoint] = Field(default_factory=list, description="History points")
