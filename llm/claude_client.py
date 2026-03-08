@@ -96,7 +96,7 @@ Be concise but thorough in your reasoning. Focus on actionable insights."""
     def __init__(
         self,
         api_key: str = None,
-        model: str = "claude-sonnet-4-20250514",
+        model: str = None,
         max_tokens: int = 1500,
         max_retries: int = 3,
         retry_delay: float = 1.0
@@ -104,19 +104,39 @@ Be concise but thorough in your reasoning. Focus on actionable insights."""
         """
         Initialize Claude analyzer.
 
+        Automatically detects provider based on available API keys.
+        Priority: ANTHROPIC_API_KEY > OPENAI_API_KEY.
+
         Args:
-            api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY env var)
-            model: Claude model to use
+            api_key: API key (defaults to env var based on provider detection)
+            model: Model to use (defaults based on provider)
             max_tokens: Max tokens for response
             max_retries: Maximum number of retry attempts for transient failures
             retry_delay: Base delay between retries in seconds (exponential backoff)
         """
-        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-        if not self.api_key:
+        anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+        openai_key = os.environ.get("OPENAI_API_KEY")
+
+        if api_key:
+            # Explicit key provided — assume anthropic unless only openai key matches
+            self.api_key = api_key
+            self._provider = "anthropic"
+        elif anthropic_key:
+            self.api_key = anthropic_key
+            self._provider = "anthropic"
+        elif openai_key:
+            self.api_key = openai_key
+            self._provider = "openai"
+        else:
             raise APIKeyMissingError(
-                "ANTHROPIC_API_KEY not found. Set it as environment variable or pass api_key parameter."
+                "No AI API key found. Set ANTHROPIC_API_KEY or OPENAI_API_KEY environment variable."
             )
-        self.model = model
+
+        default_models = {
+            "anthropic": "claude-sonnet-4-20250514",
+            "openai": "gpt-4o",
+        }
+        self.model = model or default_models[self._provider]
         self.max_tokens = max_tokens
         self.max_retries = max_retries
         self.retry_delay = retry_delay
@@ -124,16 +144,26 @@ Be concise but thorough in your reasoning. Focus on actionable insights."""
 
     @property
     def client(self):
-        """Lazy initialization of Anthropic client"""
+        """Lazy initialization of API client based on provider"""
         if self._client is None:
-            try:
-                import anthropic
-                self._client = anthropic.Anthropic(api_key=self.api_key)
-                logger.debug(f"Initialized Anthropic client with model: {self.model}")
-            except ImportError:
-                raise ImportError(
-                    "anthropic package not installed. Run: pip install anthropic"
-                )
+            if self._provider == "openai":
+                try:
+                    import openai
+                    self._client = openai.OpenAI(api_key=self.api_key)
+                    logger.debug(f"Initialized OpenAI client with model: {self.model}")
+                except ImportError:
+                    raise ImportError(
+                        "openai package not installed. Run: pip install openai"
+                    )
+            else:
+                try:
+                    import anthropic
+                    self._client = anthropic.Anthropic(api_key=self.api_key)
+                    logger.debug(f"Initialized Anthropic client with model: {self.model}")
+                except ImportError:
+                    raise ImportError(
+                        "anthropic package not installed. Run: pip install anthropic"
+                    )
         return self._client
 
     def analyze_stock(
@@ -331,25 +361,31 @@ Be concise but thorough in your reasoning. Focus on actionable insights."""
 
     def _call_claude(self, prompt: str, system: str = None) -> str:
         """
-        Make API call to Claude with retry logic.
+        Make API call with retry logic. Dispatches to the correct provider.
 
         Args:
             prompt: User prompt to send
             system: System prompt (optional)
 
         Returns:
-            Response text from Claude
+            Response text from the AI model
 
         Raises:
             APICallError: If all retries fail
         """
+        if self._provider == "openai":
+            return self._call_openai(prompt, system)
+        return self._call_anthropic(prompt, system)
+
+    def _call_anthropic(self, prompt: str, system: str = None) -> str:
+        """Make API call to Anthropic Claude with retry logic."""
         import anthropic
 
         last_error = None
 
         for attempt in range(self.max_retries):
             try:
-                logger.debug(f"API call attempt {attempt + 1}/{self.max_retries}")
+                logger.debug(f"Anthropic API call attempt {attempt + 1}/{self.max_retries}")
 
                 message = self.client.messages.create(
                     model=self.model,
@@ -393,6 +429,62 @@ Be concise but thorough in your reasoning. Focus on actionable insights."""
                 raise APICallError(f"Unexpected error: {e}")
 
         # All retries exhausted
+        logger.error(f"All {self.max_retries} retries failed. Last error: {last_error}")
+        raise APICallError(f"API call failed after {self.max_retries} retries: {last_error}")
+
+    def _call_openai(self, prompt: str, system: str = None) -> str:
+        """Make API call to OpenAI with retry logic."""
+        import openai
+
+        last_error = None
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        for attempt in range(self.max_retries):
+            try:
+                logger.debug(f"OpenAI API call attempt {attempt + 1}/{self.max_retries}")
+
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    max_tokens=self.max_tokens,
+                    messages=messages,
+                )
+
+                response_text = response.choices[0].message.content
+                if not response_text:
+                    raise APICallError("OpenAI returned empty response content")
+                logger.debug(f"API response received: {len(response_text)} chars")
+
+                return response_text
+
+            except openai.RateLimitError as e:
+                last_error = e
+                delay = self.retry_delay * (2 ** attempt)
+                logger.warning(f"Rate limit hit. Retrying in {delay:.1f}s...")
+                time.sleep(delay)
+
+            except openai.APIConnectionError as e:
+                last_error = e
+                delay = self.retry_delay * (2 ** attempt)
+                logger.warning(f"Connection error. Retrying in {delay:.1f}s...")
+                time.sleep(delay)
+
+            except openai.APIStatusError as e:
+                if e.status_code < 500 and e.status_code != 429:
+                    logger.error(f"API error (non-retryable): {e}")
+                    raise APICallError(f"API error: {e}")
+
+                last_error = e
+                delay = self.retry_delay * (2 ** attempt)
+                logger.warning(f"Server error ({e.status_code}). Retrying in {delay:.1f}s...")
+                time.sleep(delay)
+
+            except Exception as e:
+                logger.error(f"Unexpected error during API call: {e}")
+                raise APICallError(f"Unexpected error: {e}")
+
         logger.error(f"All {self.max_retries} retries failed. Last error: {last_error}")
         raise APICallError(f"API call failed after {self.max_retries} retries: {last_error}")
 

@@ -264,7 +264,9 @@ export interface AIAnalysisResult {
 
 // Analysis service status
 export interface AnalysisStatus {
-  claude_available: boolean;
+  ai_available: boolean;
+  provider: 'anthropic' | 'openai' | null;
+  claude_available: boolean; // backward compat
   cache_available: boolean;
   enrichers: {
     technical: boolean;
