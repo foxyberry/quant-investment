@@ -143,9 +143,11 @@ class TickerTechnicalIndicators(BaseModel):
     """Technical indicators for ticker analysis."""
 
     rsi: Optional[Dict[str, Any]] = Field(None, description="RSI with value and signal")
-    macd: Optional[Dict[str, Any]] = Field(None, description="MACD with macd, signal, histogram, trend")
+    macd: Optional[Dict[str, Any]] = Field(None, description="MACD with macd, signal, histogram, cross, trend")
     bollingerBands: Optional[Dict[str, Any]] = Field(None, description="Bollinger Bands")
     sma: Optional[Dict[str, Any]] = Field(None, description="Simple Moving Averages")
+    stochastic: Optional[Dict[str, Any]] = Field(None, description="Stochastic oscillator (k, d)")
+    obv: Optional[Dict[str, Any]] = Field(None, description="On-Balance Volume (value, trend)")
     volume: Optional[Dict[str, Any]] = Field(None, description="Volume analysis")
 
 
@@ -153,10 +155,24 @@ class TickerFundamental(BaseModel):
     """Fundamental data for ticker analysis."""
 
     market_cap: Optional[float] = Field(None, description="Market capitalization")
-    pe_ratio: Optional[float] = Field(None, description="Price-to-earnings ratio")
-    dividend_yield: Optional[float] = Field(None, description="Dividend yield")
+    pe_ratio: Optional[float] = Field(None, description="Price-to-earnings ratio (trailing)")
+    forward_pe: Optional[float] = Field(None, description="Forward price-to-earnings ratio")
+    pb_ratio: Optional[float] = Field(None, description="Price-to-book ratio")
+    ps_ratio: Optional[float] = Field(None, description="Price-to-sales ratio")
+    peg_ratio: Optional[float] = Field(None, description="PEG ratio")
+    dividend_yield: Optional[float] = Field(None, description="Dividend yield (raw, e.g. 0.02 = 2%)")
     eps: Optional[float] = Field(None, description="Earnings per share (trailing)")
+    revenue: Optional[float] = Field(None, description="Total revenue")
+    revenue_growth: Optional[float] = Field(None, description="Revenue growth rate")
+    profit_margin: Optional[float] = Field(None, description="Net profit margin")
+    roe: Optional[float] = Field(None, description="Return on equity")
+    roa: Optional[float] = Field(None, description="Return on assets")
+    debt_to_equity: Optional[float] = Field(None, description="Debt-to-equity ratio")
+    current_ratio: Optional[float] = Field(None, description="Current ratio")
+    enterprise_value: Optional[float] = Field(None, description="Enterprise value")
     sector: Optional[str] = Field(None, description="Industry sector")
+    industry: Optional[str] = Field(None, description="Industry sub-sector")
+    description: Optional[str] = Field(None, description="Company description")
     week52_high: Optional[float] = Field(None, description="52-week high price")
     week52_low: Optional[float] = Field(None, description="52-week low price")
 
@@ -186,6 +202,7 @@ class TickerAnalysisResponse(BaseModel):
         description="Technical indicators"
     )
     fundamental: Optional[TickerFundamental] = Field(None, description="Fundamental data")
+    news: Optional[Dict[str, Any]] = Field(None, description="News articles with sentiment")
 
 
 class SearchResult(BaseModel):

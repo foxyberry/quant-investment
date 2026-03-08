@@ -19,6 +19,8 @@ from api.schemas.analysis import (
 )
 from api.services.analysis_service import get_analysis_service
 from api.services.market_service import MarketService
+from data_enrichment.fundamental import FundamentalEnricher
+from data_enrichment.news import NewsEnricher
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +151,10 @@ def get_ticker_analysis(
         default="6mo",
         description="Period for OHLCV data (1mo, 3mo, 6mo, 1y, 2y)"
     ),
+    include_news: bool = Query(
+        default=False,
+        description="Include news articles (requires API key, adds latency)"
+    ),
 ) -> TickerAnalysisResponse:
     """
     Get combined analysis for a ticker including OHLCV, technical, and fundamental data.
@@ -230,6 +236,7 @@ def get_ticker_analysis(
                 "histogram": hist,
                 "prev_histogram": prev_hist,
                 "trend": trend,
+                "cross": tech_result.get("macd_cross", "none"),
             }
 
         bb_upper = tech_result.get("bb_upper")
@@ -249,14 +256,46 @@ def get_ticker_analysis(
                 "sma200": tech_result.get("ma_240"),
             }
 
-    # Get fundamental data
+        stoch_k = tech_result.get("stochastic_k")
+        if stoch_k is not None:
+            technical.stochastic = {
+                "k": stoch_k,
+                "d": tech_result.get("stochastic_d"),
+            }
+
+        obv_val = tech_result.get("obv")
+        if obv_val is not None:
+            technical.obv = {
+                "value": obv_val,
+                "trend": tech_result.get("obv_trend", "flat"),
+            }
+
+        # Volume analysis from OHLCV data
+        if shared_data is not None and "volume" in shared_data.columns:
+            vol_series = shared_data["volume"].dropna()
+            if len(vol_series) >= 20:
+                current_vol = float(vol_series.iloc[-1])
+                avg_vol = float(vol_series.tail(20).mean())
+                if avg_vol > 0:
+                    technical.volume = {
+                        "current": current_vol,
+                        "average": round(avg_vol, 0),
+                        "ratio": round(current_vol / avg_vol, 2),
+                    }
+
+    # Get fundamental data via FundamentalEnricher for richer fields
     fundamental = None
     try:
-        info = market_service.get_ticker_info(ticker)
-        if not isinstance(info, dict):
-            info = {}
-        if info:
-            name = info.get("shortName") or info.get("longName") or name
+        enricher = FundamentalEnricher()
+        fund_data = enricher.enrich(ticker)
+        _core_fund_keys = ("pe_ratio", "market_cap", "eps", "revenue", "sector")
+        has_meaningful_data = fund_data and any(
+            fund_data.get(k) is not None for k in _core_fund_keys
+        )
+        if has_meaningful_data:
+            enriched_name = fund_data.get("name")
+            if enriched_name:
+                name = enriched_name
 
             # For Korean tickers, prefer the native Korean name from pykrx
             if ticker.upper().endswith((".KS", ".KQ")):
@@ -268,18 +307,81 @@ def get_ticker_analysis(
                     if ko_name:
                         name = ko_name
                 except Exception:
-                    pass  # fallback to yfinance name
+                    pass  # fallback to enricher name
+
+            # dividend_yield: frontend expects raw ratio (0.02 = 2%).
+            # FundamentalEnricher usually returns percentage (2.0 = 2%),
+            # but Korean fallback paths may return raw ratio. Normalize:
+            #   > 1 → treat as percentage, divide by 100
+            #   <= 1 → treat as raw ratio, keep as-is
+            div_yield = fund_data.get("dividend_yield")
+            if div_yield is not None and div_yield > 1:
+                div_yield = div_yield / 100.0
+
+            # Week52 data not in FundamentalEnricher; get from yfinance info
+            week52_high = None
+            week52_low = None
+            try:
+                info = market_service.get_ticker_info(ticker)
+                if isinstance(info, dict):
+                    week52_high = info.get("fiftyTwoWeekHigh")
+                    week52_low = info.get("fiftyTwoWeekLow")
+            except Exception:
+                pass
+
             fundamental = TickerFundamental(
-                market_cap=info.get("marketCap"),
-                pe_ratio=info.get("trailingPE"),
-                dividend_yield=info.get("dividendYield"),
-                eps=info.get("trailingEps"),
-                sector=info.get("sector"),
-                week52_high=info.get("fiftyTwoWeekHigh"),
-                week52_low=info.get("fiftyTwoWeekLow"),
+                market_cap=fund_data.get("market_cap"),
+                pe_ratio=fund_data.get("pe_ratio"),
+                forward_pe=fund_data.get("forward_pe"),
+                pb_ratio=fund_data.get("pb_ratio"),
+                ps_ratio=fund_data.get("ps_ratio"),
+                peg_ratio=fund_data.get("peg_ratio"),
+                dividend_yield=div_yield,
+                eps=fund_data.get("eps"),
+                revenue=fund_data.get("revenue"),
+                revenue_growth=fund_data.get("revenue_growth"),
+                profit_margin=fund_data.get("profit_margin"),
+                roe=fund_data.get("roe"),
+                roa=fund_data.get("roa"),
+                debt_to_equity=fund_data.get("debt_to_equity"),
+                current_ratio=fund_data.get("current_ratio"),
+                enterprise_value=fund_data.get("enterprise_value"),
+                sector=fund_data.get("sector"),
+                industry=fund_data.get("industry"),
+                description=fund_data.get("description"),
+                week52_high=week52_high,
+                week52_low=week52_low,
             )
+        else:
+            # Fallback to basic info from market_service
+            info = market_service.get_ticker_info(ticker)
+            if isinstance(info, dict) and info:
+                name = info.get("shortName") or info.get("longName") or name
+                fundamental = TickerFundamental(
+                    market_cap=info.get("marketCap"),
+                    pe_ratio=info.get("trailingPE"),
+                    dividend_yield=info.get("dividendYield"),
+                    eps=info.get("trailingEps"),
+                    sector=info.get("sector"),
+                    week52_high=info.get("fiftyTwoWeekHigh"),
+                    week52_low=info.get("fiftyTwoWeekLow"),
+                )
     except Exception as e:
         logger.warning(f"Failed to get fundamental data for {ticker}: {e}")
+
+    # Get news (opt-in via query parameter)
+    news_data = None
+    if include_news:
+        try:
+            news_enricher = NewsEnricher()
+            news_result = news_enricher.enrich(ticker, name=name)
+            if news_result and news_result.get("articles"):
+                news_data = {
+                    "articles": news_result["articles"],
+                    "sentiment_summary": news_result.get("sentiment_summary", "neutral"),
+                }
+        except Exception as e:
+            logger.warning(f"Failed to get news for {ticker}: {e}")
 
     return TickerAnalysisResponse(
         ticker=ticker,
@@ -290,6 +392,7 @@ def get_ticker_analysis(
         ohlcv=ohlcv_data,
         technical=technical,
         fundamental=fundamental,
+        news=news_data,
     )
 
 
