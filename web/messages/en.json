@@ -153,6 +153,9 @@
     "fxSource": "Frankfurter (ECB)",
     "futuresSource": "KODEX 200 vs KOSPI",
     "flowSource": "Naver Finance",
+    "futuresChartTitle": "KODEX 200 · 30 Days",
+    "futuresChartLoading": "Loading futures chart...",
+    "futuresChartError": "Failed to load futures chart",
     "time": "Time",
     "noHistory": "No history data",
     "bundleUnavailable": "Macro bundle endpoint is unavailable"

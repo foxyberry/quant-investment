@@ -153,6 +153,9 @@
     "fxSource": "Frankfurter (ECB)",
     "futuresSource": "KODEX 200 vs KOSPI",
     "flowSource": "네이버 금융",
+    "futuresChartTitle": "KODEX 200 · 최근 30일",
+    "futuresChartLoading": "선물 차트 로딩 중...",
+    "futuresChartError": "선물 차트를 불러올 수 없습니다",
     "time": "시간",
     "noHistory": "히스토리 데이터 없음",
     "bundleUnavailable": "매크로 번들 API를 사용할 수 없습니다"

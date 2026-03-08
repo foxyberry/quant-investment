@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { getMacroBundle, getMacroHistory, searchTickers } from '@/lib/api';
+import { getMacroBundle, getMacroHistory, getOhlcv, searchTickers } from '@/lib/api';
 
 export function useSearchTickers(query: string) {
   return useQuery({
@@ -27,5 +27,14 @@ export function useMacroHistory(window: string = '60m') {
     queryKey: queryKeys.market.macroHistory(window),
     queryFn: () => getMacroHistory(window),
     staleTime: 30 * 1000,
+  });
+}
+
+export function useOhlcv(ticker: string, days = 30) {
+  return useQuery({
+    queryKey: queryKeys.market.ohlcv(ticker, days),
+    queryFn: () => getOhlcv(ticker, days),
+    staleTime: 60 * 60 * 1000, // 1 hour — daily OHLCV doesn't change often
+    enabled: !!ticker,
   });
 }
