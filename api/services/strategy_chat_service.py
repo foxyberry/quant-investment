@@ -68,6 +68,9 @@ Rules for the structured block:
 - The JSON must be valid
 - condition_type must be an exact key from Available Conditions
 - params must use exact parameter names from the condition definition
+- All human-readable text fields (summary, rationale, warnings) MUST be written \
+in the same language as the user's message. If the user writes in Korean, \
+these fields must also be in Korean.
 """
 
 # Cached system prompt with conditions section — keyed by locale

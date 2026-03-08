@@ -191,9 +191,10 @@ export default function IndicatorPanel({
         >
           {(() => {
             const isBullish = technicalData.macd.histogram >= 0;
-            const isStrengthening = isBullish
-              ? technicalData.macd.macd > technicalData.macd.signal
-              : technicalData.macd.macd < technicalData.macd.signal;
+            const prevHist = technicalData.macd.prev_histogram;
+            const isStrengthening = prevHist != null
+              ? Math.abs(technicalData.macd.histogram) > Math.abs(prevHist)
+              : false;
             return (
             <div className="space-y-3">
               {/* Big visual verdict */}

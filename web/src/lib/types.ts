@@ -210,6 +210,7 @@ export interface TechnicalIndicators {
     macd: number;
     signal: number;
     histogram: number;
+    prev_histogram?: number | null;
     trend: 'bullish' | 'neutral' | 'bearish';
   };
   bollingerBands?: {
@@ -236,6 +237,7 @@ export interface TickerAnalysis {
   name: string;
   current_price: number;
   change_pct: number;
+  timestamp?: string;
   ohlcv: OHLCVData[];
   technical: TechnicalIndicators;
   fundamental?: {

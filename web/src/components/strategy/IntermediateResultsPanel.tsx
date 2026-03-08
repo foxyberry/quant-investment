@@ -5,17 +5,23 @@ import { ChevronDown, ChevronUp, Flag, Maximize2, Minimize2 } from 'lucide-react
 import { useTranslations, useLocale } from 'next-intl';
 import type { NodeIntermediateResult, StrategyResultItem } from '@/lib/api';
 
-/** Extract numeric metric values from a stock's condition details. */
+/** Extract metric values (numeric + date strings) from a stock's condition details. */
 function extractMetrics(
   stock: StrategyResultItem
-): Record<string, number> {
-  const metrics: Record<string, number> = {};
+): Record<string, number | string> {
+  const metrics: Record<string, number | string> = {};
   if (!stock.conditions) return metrics;
   for (const cond of stock.conditions) {
     const details = cond.details as Record<string, unknown> | undefined;
     if (!details) continue;
     for (const [k, v] of Object.entries(details)) {
+      if (k === 'cross_day') continue; // hidden: redundant with cross_date
       if (
+        typeof v === 'string' &&
+        k.endsWith('_date')
+      ) {
+        metrics[k] = v;
+      } else if (
         typeof v === 'number' &&
         !k.startsWith('min_') &&
         !k.startsWith('max_') &&
@@ -40,9 +46,11 @@ const METRIC_LABELS: Record<string, string> = {
   debt_to_equity: 'D/E',
   f_score: 'F',
   earnings_yield_pct: 'EY%',
+  cross_date: 'Cross Date',
 };
 
-function formatMetric(key: string, value: number): string {
+function formatMetric(key: string, value: number | string): string {
+  if (typeof value === 'string') return value;
   const isPct = key.endsWith('_pct');
   const formatted = Number.isInteger(value) ? String(value) : value.toFixed(2);
   return isPct ? `${formatted}%` : formatted;

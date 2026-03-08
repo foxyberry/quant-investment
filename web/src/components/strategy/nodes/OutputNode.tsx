@@ -41,7 +41,7 @@ function OutputNode({ data, selected }: NodeProps) {
       </div>
       {/* Content */}
       <div className="p-3">
-        <div className="text-[13px] font-bold text-gray-900 dark:text-gray-100">
+        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           {t('finalSelection')}
         </div>
         {resultCount !== undefined && resultCount !== null ? (
@@ -67,7 +67,7 @@ function OutputNode({ data, selected }: NodeProps) {
 
       {/* Inline info popup (read-only) */}
       <NodeEditPopup selected={!!selected} onDelete={handleDelete}>
-        <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+        <div className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed">
           {t('outputInstruction')}
         </div>
         {resultCount !== undefined && resultCount !== null && (

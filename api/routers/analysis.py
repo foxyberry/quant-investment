@@ -223,10 +223,12 @@ def get_ticker_analysis(
         if macd_val is not None:
             hist = tech_result.get("macd_histogram", 0) or 0
             trend = "bullish" if hist > 0 else ("bearish" if hist < 0 else "neutral")
+            prev_hist = tech_result.get("macd_prev_histogram")
             technical.macd = {
                 "macd": macd_val,
                 "signal": tech_result.get("macd_signal"),
                 "histogram": hist,
+                "prev_histogram": prev_hist,
                 "trend": trend,
             }
 
@@ -284,6 +286,7 @@ def get_ticker_analysis(
         name=name,
         current_price=current_price,
         change_pct=change_pct,
+        timestamp=quote.get("timestamp") if quote else None,
         ohlcv=ohlcv_data,
         technical=technical,
         fundamental=fundamental,

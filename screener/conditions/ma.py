@@ -289,6 +289,8 @@ class MACrossUpCondition(BaseCondition):
                 cross_day = i
                 break
 
+        cross_date = data.index[-cross_day].strftime('%Y-%m-%d') if cross_day else None
+
         return ConditionResult(
             matched=matched,
             condition_name=self.name,
@@ -298,6 +300,7 @@ class MACrossUpCondition(BaseCondition):
                 "short_period": self.short_period,
                 "long_period": self.long_period,
                 "cross_day": cross_day,
+                "cross_date": cross_date,
             }
         )
 
@@ -368,6 +371,8 @@ class MACrossDownCondition(BaseCondition):
                 cross_day = i
                 break
 
+        cross_date = data.index[-cross_day].strftime('%Y-%m-%d') if cross_day else None
+
         return ConditionResult(
             matched=matched,
             condition_name=self.name,
@@ -377,6 +382,7 @@ class MACrossDownCondition(BaseCondition):
                 "short_period": self.short_period,
                 "long_period": self.long_period,
                 "cross_day": cross_day,
+                "cross_date": cross_date,
             }
         )
 

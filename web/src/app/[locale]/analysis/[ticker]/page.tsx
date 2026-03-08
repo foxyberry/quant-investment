@@ -256,6 +256,24 @@ export default function TickerAnalysisPage() {
     return `$ ${value.toFixed(2)}`;
   };
 
+  const formatTimestamp = (ts: string): string => {
+    const upper = ticker.toUpperCase();
+    // Market close offset from midnight in hours
+    let closeH = 16, closeM = 0;
+    if (upper.endsWith('.KS') || upper.endsWith('.KQ')) { closeH = 15; closeM = 30; }
+    else if (upper.endsWith('.T')) { closeH = 15; }
+    else if (upper.endsWith('.L')) { closeH = 16; closeM = 30; }
+    else if (upper.endsWith('.SS') || upper.endsWith('.SZ')) { closeH = 15; }
+    // ts is midnight in market timezone; add close time to get market close in UTC
+    const midnight = new Date(ts);
+    const closeDate = new Date(midnight.getTime() + closeH * 3600_000 + closeM * 60_000);
+    return closeDate.toLocaleString(locale, {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+      timeZoneName: 'short',
+    });
+  };
+
   const formatMarketCap = (value: number | null | undefined): string => {
     if (value == null) return '-';
     const sym = currencySymbol;
@@ -447,6 +465,11 @@ export default function TickerAnalysisPage() {
               <span className="text-3xl font-bold text-[var(--foreground)]">
                 {formatPrice(tickerData.current_price)}
               </span>
+              {tickerData.timestamp && (
+                <p className="text-[11px] text-[var(--foreground-muted)] mt-0.5">
+                  {t('dataAsOf', { date: formatTimestamp(tickerData.timestamp) })}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -620,6 +643,13 @@ export default function TickerAnalysisPage() {
                 </p>
               </Card>
             </div>
+          )}
+
+          {/* Data timestamp */}
+          {tickerData.timestamp && (
+            <p className="text-[11px] text-[var(--foreground-muted)] text-right">
+              {t('dataAsOf', { date: formatTimestamp(tickerData.timestamp) })}
+            </p>
           )}
 
           {/* Technical Summary — Oscillators / Moving Averages / Overall */}
