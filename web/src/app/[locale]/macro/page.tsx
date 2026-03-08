@@ -188,6 +188,8 @@ export default function MacroPage() {
           title="USD/KRW"
           icon={<DollarSign className="h-4 w-4" />}
           value={formatNumber(bundleQuery.data?.fx.value ?? null, locale, 2)}
+          unit={t('fxUnit')}
+          source={t('fxSource')}
           items={[
             { label: t('changePct'), value: formatPercent(bundleQuery.data?.fx.change_pct ?? null) },
           ]}
@@ -199,6 +201,8 @@ export default function MacroPage() {
           title={t('futures')}
           icon={<CandlestickChart className="h-4 w-4" />}
           value={formatNumber(bundleQuery.data?.futures.value ?? null, locale, 0)}
+          unit={t('futuresUnit')}
+          source={t('futuresSource')}
           items={[
             { label: t('basis'), value: formatNumber(bundleQuery.data?.futures.basis ?? null, locale, 2) },
             { label: t('changePct'), value: formatPercent(bundleQuery.data?.futures.change_pct ?? null) },
@@ -215,6 +219,8 @@ export default function MacroPage() {
               ? formatNumber(bundleQuery.data.flow.foreign_net, locale, 0)
               : t('flowUnavailable')
           }
+          unit={t('flowUnit')}
+          source={t('flowSource')}
           items={[
             { label: t('institution'), value: formatNumber(bundleQuery.data?.flow.institution_net ?? null, locale, 0) },
             { label: t('individual'), value: formatNumber(bundleQuery.data?.flow.individual_net ?? null, locale, 0) },
@@ -386,6 +392,8 @@ function MetricCard({
   title,
   icon,
   value,
+  unit,
+  source,
   items,
   ageSec,
   ageLabel,
@@ -394,6 +402,8 @@ function MetricCard({
   title: string;
   icon: ReactNode;
   value: string;
+  unit: string;
+  source: string;
   items: { label: string; value: string }[];
   ageSec: number | null;
   ageLabel: string;
@@ -416,15 +426,23 @@ function MetricCard({
             </span>
           )}
         </div>
-        <p className="text-xl font-semibold text-[var(--foreground)]">{value}</p>
+        <p className="text-xl font-semibold text-[var(--foreground)]">
+          {value}
+          {/\d/.test(value) && (
+            <span className="ml-1 text-sm font-normal text-[var(--foreground-muted)]">{unit}</span>
+          )}
+        </p>
         {items.map((item) => (
           <p key={item.label} className="text-sm text-[var(--foreground-muted)]">
             {item.label}: {item.value}
           </p>
         ))}
-        <p className={`text-xs ${isStale ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--foreground-muted)]'}`}>
-          {ageLabel}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className={`text-xs ${isStale ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--foreground-muted)]'}`}>
+            {ageLabel}
+          </p>
+          <p className="text-[10px] text-[var(--foreground-muted)] opacity-60">{source}</p>
+        </div>
       </div>
     </Card>
   );

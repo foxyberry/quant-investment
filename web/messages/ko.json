@@ -147,6 +147,12 @@
     "historyUnavailable": "매크로 히스토리를 불러올 수 없습니다",
     "staleWarning": "지연",
     "changePct": "등락",
+    "fxUnit": "₩/USD",
+    "futuresUnit": "pt",
+    "flowUnit": "억원",
+    "fxSource": "Frankfurter (ECB)",
+    "futuresSource": "KODEX 200 vs KOSPI",
+    "flowSource": "네이버 금융",
     "time": "시간",
     "noHistory": "히스토리 데이터 없음",
     "bundleUnavailable": "매크로 번들 API를 사용할 수 없습니다"
