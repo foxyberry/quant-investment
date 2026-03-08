@@ -23,6 +23,7 @@ Primary goal: move from idea to executable strategy with one connected toolchain
 | Portfolio | `/[locale]/portfolio` | Holdings, positions, sell rules, PnL treemap, order desk |
 | Watchlist | `/[locale]/watchlist` | Track target stocks, set target prices, buy rules, quick-view popup |
 | Analysis | `/[locale]/analysis` | Chart/indicator context, ticker-based analysis popup |
+| Macro Monitor | `/[locale]/macro` | Combined FX + futures + investor-flow regime monitor |
 | Reports | `/[locale]/reports` | Generated analysis reports with target date tracking |
 | Settings | `/[locale]/settings` | App preferences and configuration |
 
@@ -165,6 +166,9 @@ docker compose up -d db
 | `ANTHROPIC_API_KEY` | AI analysis integration |
 | `FINNHUB_API_KEY` | Optional news/data source |
 | `MARKETAUX_API_KEY` | Optional news/data source |
+| `MACRO_FUTURES_TICKER` | Futures/proxy ticker for macro monitor (default: `069500.KS`) |
+| `MACRO_SPOT_TICKER` | Spot proxy ticker for basis calc (default: `^KS11`) |
+| `MACRO_INVESTOR_FLOW_PATH` | Optional investor-flow JSON adapter path (default: `data/market/investor_flow_latest.json`) |
 
 ## API Endpoints
 
@@ -178,6 +182,7 @@ docker compose up -d db
 | Analysis | `/api/analysis` | Stock analysis and AI insights |
 | Reports | `/api/reports` | Analysis report management |
 | Market | `/api/market` | Market calendar, exchange rates |
+| Macro | `/api/market/macro/*` | Macro bundle and history (`/bundle`, `/history`) |
 | Backtest | `/api/backtest` | Backtest execution |
 
 Full interactive docs: `http://localhost:8001/docs`
@@ -212,6 +217,7 @@ npm --prefix web run check:strategy-i18n
 - **i18n key errors** (`MISSING_MESSAGE`): Run `npm --prefix web run check:strategy-i18n` / `check:condition-i18n`
 - **Strategy run returns empty results**: Confirm universe/condition thresholds are not overly strict
 - **Korean stock names not showing**: Ensure pykrx is installed and KRX master CSVs are up to date
+- **Macro panel shows unknown/unavailable**: check exchange-rate upstream, futures ticker symbol, and `MACRO_INVESTOR_FLOW_PATH` file freshness
 
 ## Roadmap / Limitations
 
