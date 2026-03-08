@@ -261,12 +261,15 @@ class MacroMarketService:
 
     def _parse_window(self, window: str) -> timedelta:
         value = (window or "60m").strip().lower()
-        if value.endswith("m"):
-            return timedelta(minutes=max(int(value[:-1] or "60"), 1))
-        if value.endswith("h"):
-            return timedelta(hours=max(int(value[:-1] or "1"), 1))
-        if value.endswith("d"):
-            return timedelta(days=max(int(value[:-1] or "1"), 1))
+        try:
+            if value.endswith("m"):
+                return timedelta(minutes=max(int(value[:-1] or "60"), 1))
+            if value.endswith("h"):
+                return timedelta(hours=max(int(value[:-1] or "1"), 1))
+            if value.endswith("d"):
+                return timedelta(days=max(int(value[:-1] or "1"), 1))
+        except ValueError:
+            logger.warning("Invalid macro history window: %s. Falling back to 60m.", value)
         return timedelta(minutes=60)
 
     def _age_sec(self, value: Any, now: datetime) -> Optional[int]:
