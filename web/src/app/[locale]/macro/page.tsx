@@ -1,13 +1,36 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Card } from '@/components/ui';
 import { useMacroBundle, useMacroHistory } from '@/hooks/useMarket';
 import { formatPercent } from '@/lib/format';
-import { Activity, CandlestickChart, DollarSign, RefreshCw, ShieldAlert, Users } from 'lucide-react';
+import {
+  Activity,
+  AlertTriangle,
+  CandlestickChart,
+  DollarSign,
+  RefreshCw,
+  ShieldAlert,
+  Users,
+} from 'lucide-react';
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ReferenceArea,
+} from 'recharts';
+import type { MacroRegime } from '@/lib/types';
 
-function formatNumber(value: number | null, locale: string, maximumFractionDigits: number = 2): string {
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatNumber(value: number | null, locale: string, maximumFractionDigits = 2): string {
   if (value == null || Number.isNaN(value)) return '-';
   return value.toLocaleString(locale === 'ko' ? 'ko-KR' : locale === 'zh' ? 'zh-CN' : 'en-US', {
     maximumFractionDigits,
@@ -27,21 +50,91 @@ function formatDateTime(value: string | null, locale: string): string {
   }).format(date);
 }
 
+function formatShortTime(value: string | null, locale: string): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : locale === 'zh' ? 'zh-CN' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+/** Parse reason string "neutral: fx=0.12 (decay=0.89), futures=-0.30 (decay=0.50), flow=0.00 (decay=0.00)" */
+function parseSignalContributions(reason: string | null): { fx: number | null; futures: number | null; flow: number | null } {
+  if (!reason) return { fx: null, futures: null, flow: null };
+  const extract = (key: string) => {
+    const match = reason.match(new RegExp(`${key}=([\\-\\d.]+)`));
+    if (!match) return null;
+    const val = parseFloat(match[1]);
+    return Number.isNaN(val) ? null : val;
+  };
+  return { fx: extract('fx'), futures: extract('futures'), flow: extract('flow') };
+}
+
+const STALE_THRESHOLD_SEC = 600; // half-life
+
+const REGIME_COLORS: Record<MacroRegime, string> = {
+  risk_on: 'rgba(16, 185, 129, 0.08)',
+  risk_off: 'rgba(239, 68, 68, 0.08)',
+  neutral: 'rgba(245, 158, 11, 0.04)',
+  unknown: 'rgba(156, 163, 175, 0.04)',
+};
+
+type WindowOption = '60m' | '6h' | '1d';
+
+// ---------------------------------------------------------------------------
+// Main Page
+// ---------------------------------------------------------------------------
+
 export default function MacroPage() {
   const t = useTranslations('macro');
   const locale = useLocale();
   const bundleQuery = useMacroBundle();
-  const historyQuery = useMacroHistory('60m');
+  const [historyWindow, setHistoryWindow] = useState<WindowOption>('60m');
+  const historyQuery = useMacroHistory(historyWindow);
 
-  const regimeClass = useMemo(() => {
-    const regime = bundleQuery.data?.signal.regime;
-    if (regime === 'risk_on') return 'text-emerald-600 dark:text-emerald-400';
-    if (regime === 'risk_off') return 'text-red-600 dark:text-red-400';
-    return 'text-amber-600 dark:text-amber-400';
-  }, [bundleQuery.data?.signal.regime]);
+  const regime = bundleQuery.data?.signal.regime ?? 'unknown';
+
+  const regimeStyle = useMemo(() => {
+    if (regime === 'risk_on') return { text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800' };
+    if (regime === 'risk_off') return { text: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800' };
+    return { text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800' };
+  }, [regime]);
+
+  const contributions = useMemo(
+    () => parseSignalContributions(bundleQuery.data?.signal.reason ?? null),
+    [bundleQuery.data?.signal.reason],
+  );
+
+  // Compute regime segments for chart background
+  const regimeSegments = useMemo(() => {
+    const points = historyQuery.data?.points ?? [];
+    if (points.length < 2) return [];
+    const segments: { x1: string; x2: string; regime: MacroRegime }[] = [];
+    let start = 0;
+    for (let i = 1; i < points.length; i++) {
+      if (points[i].regime !== points[start].regime) {
+        segments.push({
+          x1: points[start].timestamp,
+          x2: points[i - 1].timestamp,
+          regime: points[start].regime,
+        });
+        start = i;
+      }
+    }
+    // Always close the last segment
+    segments.push({
+      x1: points[start].timestamp,
+      x2: points[points.length - 1].timestamp,
+      regime: points[start].regime,
+    });
+    return segments;
+  }, [historyQuery.data?.points]);
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('title')}</h1>
@@ -60,58 +153,100 @@ export default function MacroPage() {
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <p className="text-sm text-[var(--foreground-muted)]">{t('regime')}</p>
-          <p className={`mt-1 text-xl font-semibold uppercase ${regimeClass}`}>
-            {t(`regime_${bundleQuery.data?.signal.regime ?? 'unknown'}`)}
+      {/* Regime Insight Banner */}
+      <div className={`rounded-xl border p-4 ${regimeStyle.bg}`}>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`text-3xl font-bold uppercase ${regimeStyle.text}`}>
+              {t(`regime_${regime}`)}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-[var(--foreground)]">
+                {formatPercent(bundleQuery.data?.signal.macro_score ?? null)}
+              </span>
+              <span className="text-xs text-[var(--foreground-muted)]">
+                {formatDateTime(bundleQuery.data?.signal.updated_at ?? null, locale)}
+              </span>
+            </div>
+          </div>
+          <p className="text-sm text-[var(--foreground)]">
+            {t(`insight${regime === 'risk_on' ? 'RiskOn' : regime === 'risk_off' ? 'RiskOff' : regime === 'neutral' ? 'Neutral' : 'Unknown'}`)}
           </p>
-        </Card>
-        <Card>
-          <p className="text-sm text-[var(--foreground-muted)]">{t('macroScore')}</p>
-          <p className="mt-1 text-xl font-semibold text-[var(--foreground)]">
-            {formatPercent(bundleQuery.data?.signal.macro_score ?? null)}
-          </p>
-        </Card>
-        <Card>
-          <p className="text-sm text-[var(--foreground-muted)]">{t('lastUpdated')}</p>
-          <p className="mt-1 text-xl font-semibold text-[var(--foreground)]">
-            {formatDateTime(bundleQuery.data?.signal.updated_at ?? null, locale)}
-          </p>
-        </Card>
-        <Card>
-          <p className="text-sm text-[var(--foreground-muted)]">{t('reason')}</p>
-          <p className="mt-1 line-clamp-2 text-sm text-[var(--foreground)]">
-            {bundleQuery.data?.signal.reason || t('noReason')}
-          </p>
-        </Card>
+        </div>
+
+        {/* Signal Contribution Bars */}
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <SignalBar label={t('fxSignal')} value={contributions.fx} nullLabel={t('flowUnavailable')} />
+          <SignalBar label={t('futuresSignal')} value={contributions.futures} nullLabel={t('flowUnavailable')} />
+          <SignalBar label={t('flowSignal')} value={contributions.flow} nullLabel={t('flowUnavailable')} />
+        </div>
       </div>
 
+      {/* Metric Cards */}
       <div className="grid gap-4 lg:grid-cols-3">
         <MetricCard
           title="USD/KRW"
           icon={<DollarSign className="h-4 w-4" />}
           value={formatNumber(bundleQuery.data?.fx.value ?? null, locale, 2)}
-          subValue={formatPercent(bundleQuery.data?.fx.change_pct ?? null)}
+          items={[
+            { label: t('changePct'), value: formatPercent(bundleQuery.data?.fx.change_pct ?? null) },
+          ]}
+          ageSec={bundleQuery.data?.freshness.fx_age_sec ?? null}
           ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.fx_age_sec ?? '-' })}
+          staleLabel={t('staleWarning')}
         />
         <MetricCard
           title={t('futures')}
           icon={<CandlestickChart className="h-4 w-4" />}
-          value={formatNumber(bundleQuery.data?.futures.value ?? null, locale, 2)}
-          subValue={`${t('basis')}: ${formatNumber(bundleQuery.data?.futures.basis ?? null, locale, 2)}`}
+          value={formatNumber(bundleQuery.data?.futures.value ?? null, locale, 0)}
+          items={[
+            { label: t('basis'), value: formatNumber(bundleQuery.data?.futures.basis ?? null, locale, 2) },
+            { label: t('changePct'), value: formatPercent(bundleQuery.data?.futures.change_pct ?? null) },
+          ]}
+          ageSec={bundleQuery.data?.freshness.futures_age_sec ?? null}
           ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.futures_age_sec ?? '-' })}
+          staleLabel={t('staleWarning')}
         />
         <MetricCard
           title={t('investorFlow')}
           icon={<Users className="h-4 w-4" />}
-          value={formatNumber(bundleQuery.data?.flow.foreign_net ?? null, locale, 0)}
-          subValue={`${t('institution')}: ${formatNumber(bundleQuery.data?.flow.institution_net ?? null, locale, 0)}`}
+          value={
+            bundleQuery.data?.flow.foreign_net != null
+              ? formatNumber(bundleQuery.data.flow.foreign_net, locale, 0)
+              : t('flowUnavailable')
+          }
+          items={[
+            { label: t('institution'), value: formatNumber(bundleQuery.data?.flow.institution_net ?? null, locale, 0) },
+            { label: t('individual'), value: formatNumber(bundleQuery.data?.flow.individual_net ?? null, locale, 0) },
+          ]}
+          ageSec={bundleQuery.data?.freshness.flow_age_sec ?? null}
           ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.flow_age_sec ?? '-' })}
+          staleLabel={t('staleWarning')}
         />
       </div>
 
-      <Card title={t('historyTitle')}>
+      {/* Timeline Chart */}
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <h3 className="text-base font-semibold text-[var(--foreground)]">{t('historyChart')}</h3>
+          <div className="inline-flex rounded-lg border border-[var(--border)] overflow-hidden">
+            {(['60m', '6h', '1d'] as WindowOption[]).map((w) => (
+              <button
+                key={w}
+                type="button"
+                onClick={() => setHistoryWindow(w)}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  historyWindow === w
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:bg-[var(--background)]'
+                }`}
+              >
+                {t(`window${w === '60m' ? '1h' : w === '6h' ? '6h' : '1d'}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {historyQuery.isLoading ? (
           <p className="text-sm text-[var(--foreground-muted)]">{t('loadingHistory')}</p>
         ) : historyQuery.isError ? (
@@ -119,38 +254,86 @@ export default function MacroPage() {
             <ShieldAlert className="h-4 w-4" />
             {t('historyUnavailable')}
           </p>
+        ) : (!historyQuery.data?.points || historyQuery.data.points.length === 0) ? (
+          <p className="py-8 text-center text-sm text-[var(--foreground-muted)]">{t('noHistory')}</p>
         ) : (
-          <div className="space-y-2">
-            <p className="text-sm text-[var(--foreground-muted)]">{t('historyPlaceholder')}</p>
-            <div className="max-h-56 overflow-y-auto rounded-lg border border-[var(--border)]">
-              <table className="min-w-full text-sm">
-                <thead className="bg-[var(--background)] text-[var(--foreground-muted)]">
-                  <tr>
-                    <th className="px-3 py-2 text-left">{t('time')}</th>
-                    <th className="px-3 py-2 text-right">USD/KRW</th>
-                    <th className="px-3 py-2 text-right">{t('macroScore')}</th>
-                    <th className="px-3 py-2 text-right">{t('regime')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(historyQuery.data?.points ?? []).slice(-20).reverse().map((point, idx) => (
-                    <tr key={`${point.timestamp}-${idx}`} className="border-t border-[var(--border)]">
-                      <td className="px-3 py-2">{formatDateTime(point.timestamp, locale)}</td>
-                      <td className="px-3 py-2 text-right">{formatNumber(point.fx_value, locale, 2)}</td>
-                      <td className="px-3 py-2 text-right">{formatPercent(point.macro_score)}</td>
-                      <td className="px-3 py-2 text-right uppercase">{t(`regime_${point.regime}`)}</td>
-                    </tr>
-                  ))}
-                  {(!historyQuery.data?.points || historyQuery.data.points.length === 0) && (
-                    <tr>
-                      <td colSpan={4} className="px-3 py-6 text-center text-[var(--foreground-muted)]">
-                        {t('noHistory')}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={historyQuery.data.points} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                {regimeSegments.map((seg, i) => (
+                  <ReferenceArea
+                    key={`regime-${i}`}
+                    x1={seg.x1}
+                    x2={seg.x2}
+                    fill={REGIME_COLORS[seg.regime]}
+                    fillOpacity={1}
+                  />
+                ))}
+                <XAxis
+                  dataKey="timestamp"
+                  tickFormatter={(v: string) => formatShortTime(v, locale)}
+                  tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }}
+                  stroke="var(--border)"
+                />
+                <YAxis
+                  yAxisId="fx"
+                  orientation="left"
+                  domain={['auto', 'auto']}
+                  tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }}
+                  stroke="var(--border)"
+                  tickFormatter={(v: number) => v.toFixed(0)}
+                  width={60}
+                />
+                <YAxis
+                  yAxisId="score"
+                  orientation="right"
+                  domain={[-1, 1]}
+                  tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }}
+                  stroke="var(--border)"
+                  tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
+                  width={50}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--background-secondary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    fontSize: 12,
+                  }}
+                  labelFormatter={(v) => formatDateTime(String(v), locale)}
+                  formatter={(value, name) => {
+                    if (value == null || value === '') return ['-', name];
+                    const v = Number(value);
+                    if (Number.isNaN(v)) return ['-', name];
+                    if (name === 'USD/KRW') return [formatNumber(v, locale, 2), name];
+                    if (name === t('macroScore')) return [formatPercent(v), name];
+                    return [String(value), name];
+                  }}
+                />
+                <Line
+                  yAxisId="fx"
+                  type="monotone"
+                  dataKey="fx_value"
+                  name="USD/KRW"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls
+                />
+                <Line
+                  yAxisId="score"
+                  type="monotone"
+                  dataKey="macro_score"
+                  name={t('macroScore')}
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  strokeDasharray="5 3"
+                  dot={false}
+                  connectNulls
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
         )}
       </Card>
@@ -165,29 +348,83 @@ export default function MacroPage() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Signal Contribution Bar
+// ---------------------------------------------------------------------------
+
+function SignalBar({ label, value, nullLabel }: { label: string; value: number | null; nullLabel: string }) {
+  // value is in [-1, 1] range. Positive = risk-off contribution, negative = risk-on.
+  const pct = value != null ? Math.abs(value) * 100 : 0;
+  const isNull = value == null;
+  const isPositive = (value ?? 0) >= 0;
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-[var(--foreground-muted)]">{label}</span>
+        <span className="font-mono text-[var(--foreground)]">
+          {isNull ? nullLabel : value!.toFixed(2)}
+        </span>
+      </div>
+      <div className="relative h-2 rounded-full bg-[var(--background)] overflow-hidden">
+        <div
+          className={`absolute top-0 h-full rounded-full transition-all ${
+            isNull ? 'bg-gray-300 dark:bg-gray-600' : isPositive ? 'bg-red-400' : 'bg-emerald-400'
+          }`}
+          style={{ width: `${Math.min(pct, 100)}%`, left: 0 }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Metric Card (enhanced)
+// ---------------------------------------------------------------------------
+
 function MetricCard({
   title,
   icon,
   value,
-  subValue,
+  items,
+  ageSec,
   ageLabel,
+  staleLabel,
 }: {
   title: string;
   icon: ReactNode;
   value: string;
-  subValue: string;
+  items: { label: string; value: string }[];
+  ageSec: number | null;
   ageLabel: string;
+  staleLabel: string;
 }) {
+  const isStale = ageSec != null && ageSec > STALE_THRESHOLD_SEC;
+
   return (
     <Card>
       <div className="space-y-2">
-        <div className="inline-flex items-center gap-1 text-sm text-[var(--foreground-muted)]">
-          {icon}
-          {title}
+        <div className="flex items-center justify-between">
+          <div className="inline-flex items-center gap-1 text-sm text-[var(--foreground-muted)]">
+            {icon}
+            {title}
+          </div>
+          {isStale && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+              <AlertTriangle className="h-3 w-3" />
+              {staleLabel}
+            </span>
+          )}
         </div>
         <p className="text-xl font-semibold text-[var(--foreground)]">{value}</p>
-        <p className="text-sm text-[var(--foreground-muted)]">{subValue}</p>
-        <p className="text-xs text-[var(--foreground-muted)]">{ageLabel}</p>
+        {items.map((item) => (
+          <p key={item.label} className="text-sm text-[var(--foreground-muted)]">
+            {item.label}: {item.value}
+          </p>
+        ))}
+        <p className={`text-xs ${isStale ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--foreground-muted)]'}`}>
+          {ageLabel}
+        </p>
       </div>
     </Card>
   );
