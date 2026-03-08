@@ -166,6 +166,12 @@ Be concise but thorough in your reasoning. Focus on actionable insights."""
                     )
         return self._client
 
+    # Language instructions appended to system prompt per locale
+    LOCALE_INSTRUCTIONS = {
+        "ko": "\n\nIMPORTANT: Write ALL text values (reasoning, key_risks, catalysts) in Korean. JSON keys must remain in English.",
+        "zh": "\n\nIMPORTANT: Write ALL text values (reasoning, key_risks, catalysts) in Chinese. JSON keys must remain in English.",
+    }
+
     def analyze_stock(
         self,
         ticker: str,
@@ -174,10 +180,11 @@ Be concise but thorough in your reasoning. Focus on actionable insights."""
         ma_240: float,
         technical: dict,
         fundamental: dict,
-        news: dict = None
+        news: dict = None,
+        locale: str = None
     ) -> AnalysisResult:
         """
-        Analyze a single stock using Claude.
+        Analyze a single stock using AI.
 
         Args:
             ticker: Stock ticker symbol (e.g., "AAPL")
@@ -187,6 +194,7 @@ Be concise but thorough in your reasoning. Focus on actionable insights."""
             technical: Technical indicators dict (e.g., {"rsi": 55, "macd": 0.5})
             fundamental: Fundamental data dict (e.g., {"pe_ratio": 28})
             news: News data dict (optional, e.g., {"sentiment": "positive", "headlines": [...]})
+            locale: Response language locale (e.g., "ko", "zh"). None or "en" = English.
 
         Returns:
             AnalysisResult with valuation, risk, and recommendation
@@ -208,7 +216,11 @@ Be concise but thorough in your reasoning. Focus on actionable insights."""
         logger.info(f"Analyzing stock: {ticker}")
         logger.debug(f"Analysis prompt for {ticker}: {prompt[:200]}...")
 
-        response = self._call_claude(prompt, system=self.SYSTEM_PROMPT)
+        system = self.SYSTEM_PROMPT
+        if locale and locale in self.LOCALE_INSTRUCTIONS:
+            system += self.LOCALE_INSTRUCTIONS[locale]
+
+        response = self._call_claude(prompt, system=system)
 
         return self._parse_analysis_response(ticker, response)
 

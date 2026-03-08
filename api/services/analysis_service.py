@@ -183,7 +183,8 @@ class AnalysisService:
     def analyze_stock(
         self,
         ticker: str,
-        include_news: bool = True
+        include_news: bool = True,
+        locale: str = None
     ) -> Optional[AnalysisResult]:
         """
         Analyze a single stock using AI (Anthropic or OpenAI).
@@ -194,9 +195,10 @@ class AnalysisService:
         Args:
             ticker: Stock ticker symbol
             include_news: Whether to include news in analysis
+            locale: Response language locale (e.g., "ko", "zh")
 
         Returns:
-            AnalysisResult if Claude API is available, None otherwise
+            AnalysisResult if AI API is available, None otherwise
 
         Raises:
             ValueError: If ticker data cannot be fetched
@@ -207,7 +209,7 @@ class AnalysisService:
 
         try:
             # Use stock analyzer which handles all enrichment and analysis
-            result = self.stock_analyzer.analyze(ticker)
+            result = self.stock_analyzer.analyze(ticker, locale=locale)
 
             return AnalysisResult(
                 ticker=result.ticker,

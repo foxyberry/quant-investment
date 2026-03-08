@@ -483,10 +483,10 @@ export async function getTickerPrice(ticker: string): Promise<{ ticker: string; 
 /**
  * Run AI analysis on a stock (Claude API, may take 30+ seconds)
  */
-export async function analyzeStock(ticker: string, includeNews = true): Promise<AIAnalysisResult> {
+export async function analyzeStock(ticker: string, includeNews = true, locale?: string): Promise<AIAnalysisResult> {
   return fetchApi<AIAnalysisResult>('/api/analysis/analyze', {
     method: 'POST',
-    body: JSON.stringify({ ticker, include_news: includeNews }),
+    body: JSON.stringify({ ticker, include_news: includeNews, locale }),
   });
 }
 

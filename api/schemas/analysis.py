@@ -79,6 +79,10 @@ class AnalysisRequest(BaseModel):
         default=True,
         description="Whether to include news in analysis"
     )
+    locale: Optional[str] = Field(
+        default=None,
+        description="Response language locale (e.g., 'ko', 'zh'). None or 'en' = English."
+    )
 
 
 class AnalysisResult(BaseModel):
