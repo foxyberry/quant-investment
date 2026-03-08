@@ -77,8 +77,8 @@ def enrich_stock(request: EnrichRequest) -> EnrichedStock:
     "/analyze",
     response_model=AnalysisResult,
     summary="Analyze Stock with AI",
-    description="Analyze a single stock using Claude AI for valuation and risk assessment. "
-                "Requires ANTHROPIC_API_KEY environment variable. May take 30+ seconds.",
+    description="Analyze a single stock using AI for valuation and risk assessment. "
+                "Requires ANTHROPIC_API_KEY or OPENAI_API_KEY. May take 30+ seconds.",
 )
 def analyze_stock(request: AnalysisRequest) -> AnalysisResult:
     """
@@ -90,7 +90,7 @@ def analyze_stock(request: AnalysisRequest) -> AnalysisResult:
     - Entry recommendation (BUY, WAIT, AVOID)
     - Key risks and catalysts
 
-    Note: Requires ANTHROPIC_API_KEY environment variable.
+    Note: Requires ANTHROPIC_API_KEY or OPENAI_API_KEY environment variable.
     This operation may take 30+ seconds due to API calls.
 
     Args:
@@ -104,10 +104,10 @@ def analyze_stock(request: AnalysisRequest) -> AnalysisResult:
     """
     service = get_analysis_service()
 
-    if not service.is_claude_available():
+    if not service.is_ai_available():
         raise HTTPException(
             status_code=503,
-            detail="Claude API not available. Please set ANTHROPIC_API_KEY environment variable."
+            detail="AI API not available. Please set ANTHROPIC_API_KEY or OPENAI_API_KEY environment variable."
         )
 
     try:
@@ -308,6 +308,8 @@ def get_status() -> dict:
     service = get_analysis_service()
 
     return {
+        "ai_available": service.is_ai_available(),
+        "provider": service.provider,
         "claude_available": service.is_claude_available(),
         "cache_available": service.cache is not None,
         "enrichers": {

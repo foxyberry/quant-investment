@@ -121,7 +121,7 @@ class StockAnalyzer:
 
     def __init__(
         self,
-        claude_model: str = "claude-sonnet-4-20250514",
+        claude_model: str = None,
         max_tokens: int = 1500,
         use_cache: bool = True
     ):
@@ -129,8 +129,8 @@ class StockAnalyzer:
         Initialize stock analyzer.
 
         Args:
-            claude_model: Claude model to use
-            max_tokens: Max tokens for Claude response
+            claude_model: Model to use (None = auto-detect based on provider)
+            max_tokens: Max tokens for AI response
             use_cache: Use OHLCV cache
         """
         self.claude = ClaudeAnalyzer(model=claude_model, max_tokens=max_tokens)

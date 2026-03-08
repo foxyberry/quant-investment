@@ -190,7 +190,7 @@ export default function TickerAnalysisPage() {
   // Check AI availability on mount
   useEffect(() => {
     getAnalysisStatus()
-      .then((status) => setAiAvailable(status.claude_available))
+      .then((status) => setAiAvailable(status.ai_available ?? status.claude_available))
       .catch(() => setAiAvailable(false));
   }, []);
 

@@ -45,8 +45,13 @@ class AnalysisService:
         self._cache = None
         self._stock_analyzer = None
 
-        # Check if Claude API is available
-        self._claude_available = bool(os.environ.get("ANTHROPIC_API_KEY"))
+        # Detect AI provider: Anthropic > OpenAI
+        has_anthropic = bool(os.environ.get("ANTHROPIC_API_KEY"))
+        has_openai = bool(os.environ.get("OPENAI_API_KEY"))
+        self._ai_available = has_anthropic or has_openai
+        self._provider = "anthropic" if has_anthropic else ("openai" if has_openai else None)
+        # Anthropic-specific flag (backward compat for is_claude_available)
+        self._claude_available = has_anthropic
 
     @property
     def cache(self):
@@ -82,8 +87,8 @@ class AnalysisService:
 
     @property
     def stock_analyzer(self):
-        """Get or create stock analyzer instance (requires Claude API)."""
-        if self._stock_analyzer is None and self._claude_available:
+        """Get or create stock analyzer instance (requires AI API key)."""
+        if self._stock_analyzer is None and self._ai_available:
             try:
                 from llm import StockAnalyzer
                 self._stock_analyzer = StockAnalyzer()
@@ -181,9 +186,9 @@ class AnalysisService:
         include_news: bool = True
     ) -> Optional[AnalysisResult]:
         """
-        Analyze a single stock using Claude AI.
+        Analyze a single stock using AI (Anthropic or OpenAI).
 
-        This operation requires ANTHROPIC_API_KEY environment variable.
+        Requires ANTHROPIC_API_KEY or OPENAI_API_KEY environment variable.
         May take 30+ seconds due to API calls.
 
         Args:
@@ -196,8 +201,8 @@ class AnalysisService:
         Raises:
             ValueError: If ticker data cannot be fetched
         """
-        if not self._claude_available or self.stock_analyzer is None:
-            logger.warning("Claude API not available for analysis")
+        if not self._ai_available or self.stock_analyzer is None:
+            logger.warning("AI API not available for analysis")
             return None
 
         try:
@@ -424,8 +429,17 @@ class AnalysisService:
 
         return files
 
+    def is_ai_available(self) -> bool:
+        """Check if any AI API (Anthropic or OpenAI) is available."""
+        return self._ai_available
+
+    @property
+    def provider(self) -> Optional[str]:
+        """Return the active AI provider name, or None."""
+        return self._provider
+
     def is_claude_available(self) -> bool:
-        """Check if Claude API is available for analysis."""
+        """Check if Anthropic Claude API specifically is available."""
         return self._claude_available
 
 
