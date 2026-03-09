@@ -158,6 +158,7 @@
     "futuresChartError": "Failed to load futures chart",
     "time": "Time",
     "noHistory": "No history data",
+    "historyAccumulating": "Data is still accumulating — try a shorter time range",
     "bundleUnavailable": "Macro bundle endpoint is unavailable",
     "entryAssessment": "Market Entry Assessment",
     "entry_buy_favorable": "Buy Favorable",

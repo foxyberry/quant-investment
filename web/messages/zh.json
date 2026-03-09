@@ -158,6 +158,7 @@
     "futuresChartError": "无法加载期货图表",
     "time": "时间",
     "noHistory": "暂无历史数据",
+    "historyAccumulating": "数据仍在积累中 — 请尝试更短的时间范围",
     "bundleUnavailable": "宏观聚合接口不可用",
     "entryAssessment": "市场进入评估",
     "entry_buy_favorable": "买入时机",
