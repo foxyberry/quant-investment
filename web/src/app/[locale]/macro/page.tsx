@@ -285,8 +285,11 @@ export default function MacroPage() {
             </p>
           </div>
         ) : (!historyQuery.data?.points || historyQuery.data.points.length === 0) ? (
-          <div className="flex h-72 items-center justify-center">
+          <div className="flex h-72 flex-col items-center justify-center gap-2">
             <p className="text-sm text-[var(--foreground-muted)]">{t('noHistory')}</p>
+            {historyWindow !== '60m' && (
+              <p className="text-xs text-[var(--foreground-muted)]">{t('historyAccumulating')}</p>
+            )}
           </div>
         ) : (
           <div className="h-72">

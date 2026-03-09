@@ -158,6 +158,7 @@
     "futuresChartError": "선물 차트를 불러올 수 없습니다",
     "time": "시간",
     "noHistory": "히스토리 데이터 없음",
+    "historyAccumulating": "데이터가 아직 쌓이는 중입니다 — 더 짧은 시간 범위를 선택하세요",
     "bundleUnavailable": "매크로 번들 API를 사용할 수 없습니다",
     "entryAssessment": "시장 진입 판단",
     "entry_buy_favorable": "매수 적기",
