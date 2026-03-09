@@ -131,6 +131,7 @@ export default function TickerAnalysisPage() {
   // News (opt-in)
   const [newsLoading, setNewsLoading] = useState(false);
   const [newsLoaded, setNewsLoaded] = useState(false);
+  const [newsError, setNewsError] = useState<string | null>(null);
 
   // Strategy Context
   const [screeningResult, setScreeningResult] = useState<ScreeningResult | null>(null);
@@ -214,6 +215,8 @@ export default function TickerAnalysisPage() {
 
   const handlePeriodChange = (period: PeriodOption) => {
     setSelectedPeriod(period);
+    setNewsError(null);
+    setNewsLoaded(false);
   };
 
   const handleAIAnalysis = async () => {
@@ -231,12 +234,13 @@ export default function TickerAnalysisPage() {
 
   const handleLoadNews = async () => {
     setNewsLoading(true);
+    setNewsError(null);
     try {
       const data = await getTickerAnalysis(ticker.toUpperCase(), selectedPeriod, true);
       setTickerData(data);
       setNewsLoaded(true);
-    } catch {
-      // News load failure is non-critical
+    } catch (err) {
+      setNewsError(err instanceof Error ? err.message : 'error');
     } finally {
       setNewsLoading(false);
     }
@@ -337,7 +341,7 @@ export default function TickerAnalysisPage() {
     strategy: false,
     ai: false,
     companyInfo: false,
-    news: false,
+    news: true,
   });
   const [showAdvancedSections, setShowAdvancedSections] = useState(!isPopup);
 
@@ -727,6 +731,8 @@ export default function TickerAnalysisPage() {
                     sentimentSummary={tickerData.news?.sentiment_summary}
                     onLoadNews={!newsLoaded ? handleLoadNews : undefined}
                     isLoading={newsLoading}
+                    error={newsError}
+                    onRetry={handleLoadNews}
                   />
                 </CollapsibleSection>
 
