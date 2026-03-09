@@ -136,6 +136,8 @@
     "window1h": "1시간",
     "window6h": "6시간",
     "window1d": "1일",
+    "window1w": "1주",
+    "window1m": "1개월",
     "futures": "선물",
     "basis": "베이시스",
     "investorFlow": "수급",
