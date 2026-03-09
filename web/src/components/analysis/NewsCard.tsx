@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Newspaper, ExternalLink } from 'lucide-react';
+import { Newspaper, ExternalLink, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import type { NewsArticle } from '@/lib/types';
@@ -11,6 +11,8 @@ interface NewsCardProps {
   sentimentSummary?: string;
   onLoadNews?: () => void;
   isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   className?: string;
 }
 
@@ -46,6 +48,8 @@ export default function NewsCard({
   sentimentSummary,
   onLoadNews,
   isLoading = false,
+  error = null,
+  onRetry,
   className = '',
 }: NewsCardProps) {
   const t = useTranslations('news');
@@ -72,7 +76,22 @@ export default function NewsCard({
         )}
       </div>
 
-      {!hasArticles && onLoadNews && (
+      {error && !hasArticles && (
+        <div className="flex flex-col items-center py-6 gap-3">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="h-4 w-4" />
+            <p className="text-sm">{t('loadError')}</p>
+          </div>
+          {onRetry && (
+            <Button variant="outline" size="sm" onClick={onRetry} isLoading={isLoading}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1" />
+              {t('retry')}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {!error && !hasArticles && onLoadNews && (
         <div className="flex flex-col items-center py-6 gap-3">
           <p className="text-sm text-[var(--foreground-muted)]">{t('loadPrompt')}</p>
           <Button
@@ -86,7 +105,7 @@ export default function NewsCard({
         </div>
       )}
 
-      {!hasArticles && !onLoadNews && (
+      {!error && !hasArticles && !onLoadNews && (
         <p className="text-sm text-[var(--foreground-muted)] text-center py-4">{t('noArticles')}</p>
       )}
 

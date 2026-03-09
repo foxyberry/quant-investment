@@ -3230,6 +3230,8 @@
     "loadPrompt": "加载带情感分析的新闻文章",
     "loadButton": "加载新闻",
     "noArticles": "暂无新闻文章",
+    "loadError": "加载新闻失败，请重试。",
+    "retry": "重试",
     "showMore": "显示更多 {count} 条",
     "showLess": "收起"
   },

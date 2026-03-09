@@ -3230,6 +3230,8 @@
     "loadPrompt": "감성 분석이 포함된 뉴스 기사를 불러옵니다",
     "loadButton": "뉴스 불러오기",
     "noArticles": "뉴스 기사가 없습니다",
+    "loadError": "뉴스를 불러오지 못했습니다. 다시 시도해 주세요.",
+    "retry": "다시 시도",
     "showMore": "{count}개 더 보기",
     "showLess": "접기"
   },

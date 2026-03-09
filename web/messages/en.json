@@ -3230,6 +3230,8 @@
     "loadPrompt": "Load news articles with sentiment analysis",
     "loadButton": "Load News",
     "noArticles": "No news articles available",
+    "loadError": "Failed to load news. Please try again.",
+    "retry": "Retry",
     "showMore": "Show {count} more",
     "showLess": "Show less"
   },
