@@ -162,6 +162,7 @@
     "noHistory": "히스토리 데이터 없음",
     "historyAccumulating": "데이터가 아직 쌓이는 중입니다 — 더 짧은 시간 범위를 선택하세요",
     "marketClosedHint": "장이 닫혀 있어 동일한 값이 표시됩니다 — 거래 시간에 업데이트됩니다",
+    "dataRangeHint": "{actual} 분량의 데이터 표시 중 ({requested} 요청) — 데이터가 아직 쌓이는 중입니다",
     "regimeRiskOn": "위험 선호",
     "regimeRiskOff": "위험 회피",
     "regimeNeutral": "중립",
