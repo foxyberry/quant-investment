@@ -161,6 +161,7 @@
     "time": "Time",
     "noHistory": "No history data",
     "historyAccumulating": "Data is still accumulating — try a shorter time range",
+    "marketClosedHint": "Market is closed — values will update when trading resumes",
     "regimeRiskOn": "Risk-On",
     "regimeRiskOff": "Risk-Off",
     "regimeNeutral": "Neutral",

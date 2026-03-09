@@ -321,7 +321,7 @@ class MacroMarketService:
         now: datetime,
     ) -> Dict[str, Any]:
         # Raw component scores in [-1, +1]
-        fx_raw = self._clip((self._to_float(fx.get("change_pct")) or 0.0) / 0.5, -1.0, 1.0)
+        fx_raw = self._clip((self._to_float(fx.get("change_pct")) or 0.0) / 1.5, -1.0, 1.0)
         fut_change = self._to_float(futures.get("change_pct"))
         fut_basis = self._to_float(futures.get("basis"))  # now in % (premium/discount)
         futures_raw = self._clip((-(fut_change or 0.0) / 3.0) + (-(fut_basis or 0.0) / 1.0), -1.0, 1.0)
