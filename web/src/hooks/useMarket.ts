@@ -27,6 +27,7 @@ export function useMacroHistory(window: string = '60m') {
     queryKey: queryKeys.market.macroHistory(window),
     queryFn: () => getMacroHistory(window),
     staleTime: 30 * 1000,
+    placeholderData: (prev) => prev,
   });
 }
 

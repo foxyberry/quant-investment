@@ -389,16 +389,28 @@ export default function MacroPage() {
         )}
         {(() => {
           const pts = historyQuery.data?.points ?? [];
-          if (pts.length >= 2) {
-            const fxVals = pts.map(p => p.fx_value).filter((v): v is number => v != null);
-            const isFlat = fxVals.length >= 2 && new Set(fxVals).size === 1;
-            if (isFlat) {
-              return (
-                <p className="mt-2 text-center text-xs text-[var(--foreground-muted)]">
-                  {t('marketClosedHint')}
-                </p>
-              );
-            }
+          if (pts.length < 2) return null;
+          // Show how much data we actually have vs requested
+          const windowMinutes: Record<WindowOption, number> = { '60m': 60, '6h': 360, '1d': 1440, '7d': 10080, '30d': 43200 };
+          const first = new Date(pts[0].timestamp).getTime();
+          const last = new Date(pts[pts.length - 1].timestamp).getTime();
+          const spanMin = (last - first) / 60000;
+          const requested = windowMinutes[historyWindow];
+          if (spanMin < requested * 0.8) {
+            return (
+              <p className="mt-2 text-center text-xs text-[var(--foreground-muted)]">
+                {t('dataRangeHint', { actual: spanMin < 60 ? `${Math.round(spanMin)}m` : `${(spanMin / 60).toFixed(1)}h`, requested: historyWindow === '60m' ? '1h' : historyWindow === '6h' ? '6h' : historyWindow === '1d' ? '1d' : historyWindow === '7d' ? '1w' : '1m' })}
+              </p>
+            );
+          }
+          // Check if values are flat (market closed)
+          const fxVals = pts.map(p => p.fx_value).filter((v): v is number => v != null);
+          if (fxVals.length >= 2 && new Set(fxVals).size === 1) {
+            return (
+              <p className="mt-2 text-center text-xs text-[var(--foreground-muted)]">
+                {t('marketClosedHint')}
+              </p>
+            );
           }
           return null;
         })()}

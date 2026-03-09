@@ -162,6 +162,7 @@
     "noHistory": "暂无历史数据",
     "historyAccumulating": "数据仍在积累中 — 请尝试更短的时间范围",
     "marketClosedHint": "市场已关闭 — 交易时间恢复后数据将更新",
+    "dataRangeHint": "显示 {actual} 数据（请求 {requested}）— 数据仍在积累中",
     "regimeRiskOn": "风险偏好",
     "regimeRiskOff": "风险规避",
     "regimeNeutral": "中性",
