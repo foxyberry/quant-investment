@@ -10,8 +10,9 @@ import json
 import logging
 import math
 import os
+import time
 from collections import deque
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Deque, Dict, Optional
 
@@ -41,6 +42,10 @@ class MacroMarketService:
         self._history: Deque[Dict[str, Any]] = deque(maxlen=1000)
         self._last_fx_value: Optional[float] = None
 
+        # Session-start FX baseline for daily change calculation
+        self._session_start_fx: Optional[float] = None
+        self._session_start_date: Optional[date] = None
+
     def get_bundle(self) -> Dict[str, Any]:
         now = datetime.now(timezone.utc)
 
@@ -56,12 +61,15 @@ class MacroMarketService:
 
         signal = self._compute_signal(fx, futures, flow, freshness, now)
 
+        interpretation = self._build_interpretation(fx, futures, flow)
+
         bundle = {
             "fx": fx,
             "futures": futures,
             "flow": flow,
             "signal": signal,
             "freshness": freshness,
+            "interpretation": interpretation,
         }
         self._append_history(bundle, now)
         return bundle
@@ -93,9 +101,16 @@ class MacroMarketService:
             updated_at = rates.get("updated_at")
             value = float(value) if value is not None else None
 
+            # Reset session baseline at the start of each day
+            today = now.date()
+            if value is not None:
+                if self._session_start_date != today or self._session_start_fx is None:
+                    self._session_start_fx = value
+                    self._session_start_date = today
+
             change_pct: Optional[float] = None
-            if value is not None and self._last_fx_value not in (None, 0):
-                change_pct = ((value - float(self._last_fx_value)) / float(self._last_fx_value)) * 100.0
+            if value is not None and self._session_start_fx not in (None, 0):
+                change_pct = ((value - float(self._session_start_fx)) / float(self._session_start_fx)) * 100.0
             self._last_fx_value = value
 
             return {
@@ -242,6 +257,114 @@ class MacroMarketService:
         ]
         return f"{regime}: " + ", ".join(parts)
 
+    # ------------------------------------------------------------------
+    # Background history collector
+    # ------------------------------------------------------------------
+
+    def run_history_collector(self, interval_sec: int = 60) -> None:
+        """Blocking loop that appends history every *interval_sec* seconds.
+
+        Designed to run inside a daemon thread so the timeline fills
+        independently of API calls.
+        """
+        logger.info("Macro history collector started (interval=%ds)", interval_sec)
+        while True:
+            try:
+                self.get_bundle()
+            except Exception as exc:
+                logger.warning("History collector tick failed: %s", exc)
+            time.sleep(interval_sec)
+
+    # ------------------------------------------------------------------
+    # Interpretation helpers
+    # ------------------------------------------------------------------
+
+    def _build_interpretation(
+        self,
+        fx: Dict[str, Any],
+        futures: Dict[str, Any],
+        flow: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Produce human-readable interpretation of each data source."""
+        fx_interp = self._interpret_fx(fx)
+        futures_interp = self._interpret_futures(futures)
+        flow_interp = self._interpret_flow(flow)
+        entry_signal = self._derive_entry_signal(fx_interp, futures_interp, flow_interp)
+
+        return {
+            "entry_signal": entry_signal,
+            "fx_interpretation": fx_interp,
+            "futures_interpretation": futures_interp,
+            "flow_interpretation": flow_interp,
+        }
+
+    def _interpret_fx(self, fx: Dict[str, Any]) -> str:
+        change = self._to_float(fx.get("change_pct"))
+        if change is None:
+            return "unavailable"
+        if change > 0.5:
+            return "rising_strong"
+        if change > 0.1:
+            return "rising"
+        if change < -0.5:
+            return "falling_strong"
+        if change < -0.1:
+            return "falling"
+        return "stable"
+
+    def _interpret_futures(self, futures: Dict[str, Any]) -> str:
+        basis = self._to_float(futures.get("basis"))
+        if basis is None:
+            return "unavailable"
+        if basis > 0:
+            return "contango"
+        if basis < 0:
+            return "backwardation"
+        return "flat"
+
+    def _interpret_flow(self, flow: Dict[str, Any]) -> str:
+        foreign = self._to_float(flow.get("foreign_net"))
+        if foreign is None:
+            return "unavailable"
+        if foreign > 50_000_000_000:
+            return "foreign_strong_buy"
+        if foreign > 0:
+            return "foreign_buy"
+        if foreign < -50_000_000_000:
+            return "foreign_strong_sell"
+        if foreign < 0:
+            return "foreign_sell"
+        return "neutral"
+
+    def _derive_entry_signal(self, fx_interp: str, futures_interp: str, flow_interp: str) -> str:
+        """Combine interpretations into an actionable entry signal."""
+        positive = 0
+        negative = 0
+
+        # FX: falling KRW/USD is good for KR equities (capital inflow)
+        if fx_interp in ("falling", "falling_strong"):
+            positive += 1
+        elif fx_interp in ("rising", "rising_strong"):
+            negative += 1
+
+        # Futures: contango means optimistic
+        if futures_interp == "contango":
+            positive += 1
+        elif futures_interp == "backwardation":
+            negative += 1
+
+        # Flow: foreign buying is positive
+        if flow_interp in ("foreign_buy", "foreign_strong_buy"):
+            positive += 1
+        elif flow_interp in ("foreign_sell", "foreign_strong_sell"):
+            negative += 1
+
+        if positive >= 2 and negative == 0:
+            return "buy_favorable"
+        if negative >= 2:
+            return "caution"
+        return "wait"
+
     def _append_history(self, bundle: Dict[str, Any], now: datetime) -> None:
         signal = bundle.get("signal", {})
         fx = bundle.get("fx", {})
@@ -321,5 +444,14 @@ class MacroMarketService:
         return max(lower, min(upper, value))
 
 
-def get_macro_market_service(market_service: MarketService) -> MacroMarketService:
-    return MacroMarketService(market_service=market_service)
+_singleton_instance: Optional[MacroMarketService] = None
+
+
+def get_macro_market_service(market_service: Optional[MarketService] = None) -> MacroMarketService:
+    """Return a cached singleton MacroMarketService instance."""
+    global _singleton_instance  # noqa: PLW0603
+    if _singleton_instance is None:
+        if market_service is None:
+            market_service = MarketService()
+        _singleton_instance = MacroMarketService(market_service=market_service)
+    return _singleton_instance

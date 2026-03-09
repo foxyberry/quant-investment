@@ -141,6 +141,28 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         init_db()
         # Start background metadata backfill for existing holdings
         threading.Thread(target=_backfill_metadata, daemon=True, name="metadata-backfill").start()
+        # Start macro background collectors
+        try:
+            from api.services.investor_flow_collector import run_investor_flow_collector
+            threading.Thread(
+                target=run_investor_flow_collector,
+                daemon=True,
+                name="investor-flow-collector",
+            ).start()
+        except Exception as e:
+            print(f"WARNING: Investor flow collector failed to start: {e}")
+
+        try:
+            from api.services.macro_market_service import get_macro_market_service
+            _macro_svc = get_macro_market_service()  # singleton; router uses same instance
+            threading.Thread(
+                target=_macro_svc.run_history_collector,
+                daemon=True,
+                name="macro-history-collector",
+            ).start()
+        except Exception as e:
+            print(f"WARNING: Macro history collector failed to start: {e}")
+
         try:
             get_broker_settings_service().apply_tiger_settings_to_runtime()
         except Exception as e:
