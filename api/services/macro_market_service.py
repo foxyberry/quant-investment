@@ -128,7 +128,87 @@ class MacroMarketService:
                 "updated_at": None,
             }
 
+    # Mapping from yfinance-style spot tickers to Naver index codes
+    _SPOT_TICKER_MAP: Dict[str, str] = {
+        "^KS11": "KOSPI",
+        "^KQ11": "KOSDAQ",
+    }
+
+    @staticmethod
+    def _parse_naver_price(raw: str | int | float | None) -> float | None:
+        """Parse Naver price string like '76,245' or '5,140.87' to float."""
+        if raw is None:
+            return None
+        if isinstance(raw, (int, float)):
+            return float(raw)
+        try:
+            return float(raw.replace(",", "").strip())
+        except (TypeError, ValueError):
+            return None
+
+    def _fetch_naver_stock(self, code: str) -> Dict[str, Any] | None:
+        """Fetch realtime stock/ETF data from Naver Stock mobile API."""
+        try:
+            import requests
+        except ImportError:
+            return None
+        try:
+            url = f"https://m.stock.naver.com/api/stock/{code}/basic"
+            r = requests.get(url, headers={"Accept": "application/json"}, timeout=10)
+            r.raise_for_status()
+            return r.json()
+        except Exception as exc:
+            logger.debug("Naver stock API failed for %s: %s", code, exc)
+            return None
+
+    def _fetch_naver_index(self, index: str) -> Dict[str, Any] | None:
+        """Fetch realtime index data from Naver Stock mobile API."""
+        try:
+            import requests
+        except ImportError:
+            return None
+        try:
+            url = f"https://m.stock.naver.com/api/index/{index}/basic"
+            r = requests.get(url, headers={"Accept": "application/json"}, timeout=10)
+            r.raise_for_status()
+            return r.json()
+        except Exception as exc:
+            logger.debug("Naver index API failed for %s: %s", index, exc)
+            return None
+
     def _get_futures_snapshot(self, now: datetime) -> Dict[str, Any]:
+        # Primary: Naver Stock mobile API (realtime)
+        try:
+            futures_code = self.futures_ticker.replace(".KS", "").replace(".KQ", "")
+            fut_data = self._fetch_naver_stock(futures_code)
+
+            if fut_data:
+                fut_value = self._parse_naver_price(fut_data.get("closePrice"))
+                change_pct = self._to_float(
+                    str(fut_data.get("fluctuationsRatio", "")).replace(",", "") or None
+                )
+                updated_at = fut_data.get("localTradedAt")
+
+                # Spot index for basis (best-effort, basis is None if unavailable)
+                basis = None
+                naver_index = self._SPOT_TICKER_MAP.get(self.spot_ticker, "KOSPI")
+                spot_data = self._fetch_naver_index(naver_index)
+                if spot_data:
+                    spot_value = self._parse_naver_price(spot_data.get("closePrice"))
+                    if fut_value is not None and spot_value is not None:
+                        basis = fut_value - spot_value
+
+                return {
+                    "symbol": self.futures_ticker,
+                    "value": fut_value,
+                    "basis": basis,
+                    "change_pct": change_pct,
+                    "updated_at": self._to_iso(updated_at or now),
+                }
+        except Exception as exc:
+            logger.debug("Naver futures snapshot failed, falling back: %s", exc)
+
+        # Fallback: yfinance cache
         try:
             fut = self.market_service.get_quote(self.futures_ticker)
             spot = self.market_service.get_quote(self.spot_ticker)
