@@ -152,7 +152,7 @@
     "flowUnit": "억원",
     "fxSource": "Frankfurter (ECB)",
     "futuresSource": "KODEX 200 vs KOSPI",
-    "flowSource": "네이버 금융",
+    "flowSource": "네이버 증권",
     "futuresChartTitle": "KODEX 200 · 최근 30일",
     "futuresChartLoading": "선물 차트 로딩 중...",
     "futuresChartError": "선물 차트를 불러올 수 없습니다",

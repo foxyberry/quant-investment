@@ -40,6 +40,13 @@ function formatNumber(value: number | null, locale: string, maximumFractionDigit
   });
 }
 
+function formatFlowBillion(value: number | null, locale: string): string {
+  if (value == null || Number.isNaN(value)) return '-';
+  const billion = value / 100_000_000; // 원 → 억원
+  const prefix = billion > 0 ? '+' : '';
+  return prefix + formatNumber(Math.round(billion), locale, 0);
+}
+
 function formatDateTime(value: string | null, locale: string): string {
   if (!value) return '-';
   const date = new Date(value);
@@ -228,14 +235,14 @@ export default function MacroPage() {
           icon={<Users className="h-4 w-4" />}
           value={
             bundleQuery.data?.flow.foreign_net != null
-              ? formatNumber(bundleQuery.data.flow.foreign_net, locale, 0)
+              ? formatFlowBillion(bundleQuery.data.flow.foreign_net, locale)
               : t('flowUnavailable')
           }
           unit={t('flowUnit')}
           source={t('flowSource')}
           items={[
-            { label: t('institution'), value: formatNumber(bundleQuery.data?.flow.institution_net ?? null, locale, 0) },
-            { label: t('individual'), value: formatNumber(bundleQuery.data?.flow.individual_net ?? null, locale, 0) },
+            { label: t('institution'), value: formatFlowBillion(bundleQuery.data?.flow.institution_net ?? null, locale) },
+            { label: t('individual'), value: formatFlowBillion(bundleQuery.data?.flow.individual_net ?? null, locale) },
           ]}
           ageSec={bundleQuery.data?.freshness.flow_age_sec ?? null}
           ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.flow_age_sec ?? '-' })}
