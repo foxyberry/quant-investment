@@ -26,6 +26,7 @@ import {
   Tooltip,
   CartesianGrid,
   ReferenceArea,
+  Legend,
 } from 'recharts';
 import type { MacroEntrySignal, MacroRegime } from '@/lib/types';
 
@@ -254,7 +255,14 @@ export default function MacroPage() {
       {/* Timeline Chart */}
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <h3 className="text-base font-semibold text-[var(--foreground)]">{t('historyChart')}</h3>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-base font-semibold text-[var(--foreground)]">{t('historyChart')}</h3>
+            <div className="flex items-center gap-3 text-[10px] text-[var(--foreground-muted)]">
+              <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />{t('regimeRiskOn')}</span>
+              <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-red-400" />{t('regimeRiskOff')}</span>
+              <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-400" />{t('regimeNeutral')}</span>
+            </div>
+          </div>
           <div className="inline-flex shrink-0 rounded-lg border border-[var(--border)] overflow-hidden">
             {(['60m', '6h', '1d'] as WindowOption[]).map((w) => (
               <button
@@ -345,6 +353,12 @@ export default function MacroPage() {
                     if (name === t('macroScore')) return [formatPercent(v), name];
                     return [String(value), name];
                   }}
+                />
+                <Legend
+                  verticalAlign="top"
+                  align="right"
+                  iconType="line"
+                  wrapperStyle={{ fontSize: 11, paddingBottom: 4 }}
                 />
                 <Line
                   yAxisId="fx"
