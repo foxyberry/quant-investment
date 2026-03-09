@@ -194,9 +194,9 @@ export default function MacroPage() {
 
         {/* Signal Contribution Bars */}
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <SignalBar label={t('fxSignal')} value={contributions.fx} nullLabel={t('flowUnavailable')} />
-          <SignalBar label={t('futuresSignal')} value={contributions.futures} nullLabel={t('flowUnavailable')} />
-          <SignalBar label={t('flowSignal')} value={contributions.flow} nullLabel={t('flowUnavailable')} />
+          <SignalBar label={t('fxSignal')} value={contributions.fx} nullLabel={t('flowUnavailable')} t={t} />
+          <SignalBar label={t('futuresSignal')} value={contributions.futures} nullLabel={t('flowUnavailable')} t={t} />
+          <SignalBar label={t('flowSignal')} value={contributions.flow} nullLabel={t('flowUnavailable')} t={t} />
         </div>
       </div>
 
@@ -416,18 +416,33 @@ export default function MacroPage() {
 // Signal Contribution Bar
 // ---------------------------------------------------------------------------
 
-function SignalBar({ label, value, nullLabel }: { label: string; value: number | null; nullLabel: string }) {
+function signalLabel(value: number, t: (key: string) => string): string {
+  // value in [-1, 1]. Negative = risk-on (buying pressure), positive = risk-off (selling pressure)
+  if (value <= -0.7) return t('signalStrongBuy');
+  if (value <= -0.3) return t('signalBuy');
+  if (value >= 0.7) return t('signalStrongSell');
+  if (value >= 0.3) return t('signalSell');
+  return t('signalNeutral');
+}
+
+function SignalBar({ label, value, nullLabel, t }: { label: string; value: number | null; nullLabel: string; t: (key: string) => string }) {
   // value is in [-1, 1] range. Positive = risk-off contribution, negative = risk-on.
   const pct = value != null ? Math.abs(value) * 100 : 0;
   const isNull = value == null;
   const isPositive = (value ?? 0) >= 0;
+  const desc = !isNull ? signalLabel(value!, t) : null;
 
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
         <span className="text-[var(--foreground-muted)]">{label}</span>
         <span className="font-mono text-[var(--foreground)]">
-          {isNull ? nullLabel : value!.toFixed(2)}
+          {isNull ? nullLabel : (
+            <span className="inline-flex items-center gap-1.5">
+              <span>{value!.toFixed(2)}</span>
+              <span className={`text-[10px] font-sans ${isPositive ? 'text-red-400' : 'text-emerald-400'}`}>{desc}</span>
+            </span>
+          )}
         </span>
       </div>
       <div className="relative h-2 rounded-full bg-[var(--background)] overflow-hidden">

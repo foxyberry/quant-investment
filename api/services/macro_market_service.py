@@ -95,28 +95,48 @@ class MacroMarketService:
         return {"window": window, "points": points}
 
     def _get_fx_snapshot(self, now: datetime) -> Dict[str, Any]:
+        # Primary: Naver FX (realtime during KRW market hours)
+        try:
+            naver = self._fetch_naver_fx("FX_USDKRW")
+            if naver:
+                value = self._parse_naver_price(naver.get("closePrice"))
+                change_pct = self._to_float(
+                    str(naver.get("fluctuationsRatio", "")).replace(",", "") or None
+                )
+                updated_at = naver.get("localTradedAt")
+                if value is not None:
+                    self._last_fx_value = value
+                    return {
+                        "pair": "USD/KRW",
+                        "value": value,
+                        "change_pct": change_pct,
+                        "updated_at": self._to_iso(updated_at or now),
+                    }
+        except Exception as exc:
+            logger.debug("Naver FX snapshot failed, falling back: %s", exc)
+
+        # Fallback: Frankfurter (ECB) — daily rate
         try:
             rates = self.exchange_service.get_rates(base="USD")
             value = rates.get("rates", {}).get("KRW")
             updated_at = rates.get("updated_at")
             value = float(value) if value is not None else None
 
-            # Reset session baseline at the start of each day
             today = now.date()
             if value is not None:
                 if self._session_start_date != today or self._session_start_fx is None:
                     self._session_start_fx = value
                     self._session_start_date = today
 
-            change_pct: Optional[float] = None
+            change_pct_fb: Optional[float] = None
             if value is not None and self._session_start_fx not in (None, 0):
-                change_pct = ((value - float(self._session_start_fx)) / float(self._session_start_fx)) * 100.0
+                change_pct_fb = ((value - float(self._session_start_fx)) / float(self._session_start_fx)) * 100.0
             self._last_fx_value = value
 
             return {
                 "pair": "USD/KRW",
                 "value": value,
-                "change_pct": change_pct,
+                "change_pct": change_pct_fb,
                 "updated_at": self._to_iso(updated_at or now),
             }
         except Exception as exc:
@@ -148,6 +168,26 @@ class MacroMarketService:
         try:
             return float(raw.replace(",", "").strip())
         except (TypeError, ValueError):
+            return None
+
+    def _fetch_naver_fx(self, reuters_code: str = "FX_USDKRW") -> Dict[str, Any] | None:
+        """Fetch realtime FX rate from Naver Stock front-API."""
+        try:
+            import requests
+        except ImportError:
+            return None
+        try:
+            url = (
+                "https://m.stock.naver.com/front-api/marketIndex/productDetail"
+                f"?category=exchange&reutersCode={reuters_code}"
+            )
+            r = requests.get(url, headers={"Accept": "application/json"}, timeout=10)
+            r.raise_for_status()
+            body = r.json()
+            result = body.get("result") if body.get("isSuccess") else None
+            return result
+        except Exception as exc:
+            logger.debug("Naver FX API failed for %s: %s", reuters_code, exc)
             return None
 
     def _fetch_naver_stock(self, code: str) -> Dict[str, Any] | None:
