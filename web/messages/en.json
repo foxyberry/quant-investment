@@ -136,6 +136,8 @@
     "window1h": "1H",
     "window6h": "6H",
     "window1d": "1D",
+    "window1w": "1W",
+    "window1m": "1M",
     "futures": "Futures",
     "basis": "Basis",
     "investorFlow": "Investor Flow",

@@ -136,6 +136,8 @@
     "window1h": "1小时",
     "window6h": "6小时",
     "window1d": "1天",
+    "window1w": "1周",
+    "window1m": "1月",
     "futures": "期货",
     "basis": "基差",
     "investorFlow": "资金流向",

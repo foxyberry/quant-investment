@@ -92,7 +92,7 @@ const REGIME_COLORS: Record<MacroRegime, string> = {
   unknown: 'rgba(156, 163, 175, 0.04)',
 };
 
-type WindowOption = '60m' | '6h' | '1d';
+type WindowOption = '60m' | '6h' | '1d' | '7d' | '30d';
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -207,10 +207,9 @@ export default function MacroPage() {
           icon={<DollarSign className="h-4 w-4" />}
           value={formatNumber(bundleQuery.data?.fx.value ?? null, locale, 2)}
           unit={t('fxUnit')}
+          changePct={bundleQuery.data?.fx.change_pct ?? null}
           source={t('fxSource')}
-          items={[
-            { label: t('changePct'), value: formatPercent(bundleQuery.data?.fx.change_pct ?? null) },
-          ]}
+          items={[]}
           ageSec={bundleQuery.data?.freshness.fx_age_sec ?? null}
           ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.fx_age_sec ?? '-' })}
           staleLabel={t('staleWarning')}
@@ -221,10 +220,10 @@ export default function MacroPage() {
           icon={<CandlestickChart className="h-4 w-4" />}
           value={formatNumber(bundleQuery.data?.futures.value ?? null, locale, 0)}
           unit={t('futuresUnit')}
+          changePct={bundleQuery.data?.futures.change_pct ?? null}
           source={t('futuresSource')}
           items={[
             { label: t('basis'), value: bundleQuery.data?.futures.basis != null ? `${bundleQuery.data.futures.basis > 0 ? '+' : ''}${formatNumber(bundleQuery.data.futures.basis, locale, 3)}%` : '-' },
-            { label: t('changePct'), value: formatPercent(bundleQuery.data?.futures.change_pct ?? null) },
           ]}
           ageSec={bundleQuery.data?.freshness.futures_age_sec ?? null}
           ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.futures_age_sec ?? '-' })}
@@ -264,20 +263,23 @@ export default function MacroPage() {
             </div>
           </div>
           <div className="inline-flex shrink-0 rounded-lg border border-[var(--border)] overflow-hidden">
-            {(['60m', '6h', '1d'] as WindowOption[]).map((w) => (
-              <button
-                key={w}
-                type="button"
-                onClick={() => setHistoryWindow(w)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                  historyWindow === w
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:bg-[var(--background)]'
-                }`}
-              >
-                {t(`window${w === '60m' ? '1h' : w === '6h' ? '6h' : '1d'}`)}
-              </button>
-            ))}
+            {(['60m', '6h', '1d', '7d', '30d'] as WindowOption[]).map((w) => {
+              const labelMap: Record<WindowOption, string> = { '60m': '1h', '6h': '6h', '1d': '1d', '7d': '1w', '30d': '1m' };
+              return (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setHistoryWindow(w)}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                    historyWindow === w
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:bg-[var(--background)]'
+                  }`}
+                >
+                  {t(`window${labelMap[w]}`)}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -466,6 +468,7 @@ function MetricCard({
   icon,
   value,
   unit,
+  changePct,
   source,
   items,
   ageSec,
@@ -477,6 +480,7 @@ function MetricCard({
   icon: ReactNode;
   value: string;
   unit: string;
+  changePct?: number | null;
   source: string;
   items: { label: string; value: string }[];
   ageSec: number | null;
@@ -501,12 +505,19 @@ function MetricCard({
             </span>
           )}
         </div>
-        <p className="text-xl font-semibold text-[var(--foreground)]">
-          {value}
-          {/\d/.test(value) && (
-            <span className="ml-1 text-sm font-normal text-[var(--foreground-muted)]">{unit}</span>
+        <div className="flex items-baseline gap-2">
+          <p className="text-xl font-semibold text-[var(--foreground)]">
+            {value}
+            {/\d/.test(value) && (
+              <span className="ml-1 text-sm font-normal text-[var(--foreground-muted)]">{unit}</span>
+            )}
+          </p>
+          {changePct != null && (
+            <span className={`text-sm font-medium ${changePct > 0 ? 'text-red-500' : changePct < 0 ? 'text-emerald-500' : 'text-[var(--foreground-muted)]'}`}>
+              {changePct > 0 ? '+' : ''}{changePct.toFixed(2)}%
+            </span>
           )}
-        </p>
+        </div>
         {items.map((item) => (
           <p key={item.label} className="text-sm text-[var(--foreground-muted)]">
             {item.label}: {item.value}

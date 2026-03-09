@@ -39,7 +39,7 @@ class MacroMarketService:
             os.getenv("MACRO_INVESTOR_FLOW_PATH", "data/market/investor_flow_latest.json")
         )
 
-        self._history: Deque[Dict[str, Any]] = deque(maxlen=1000)
+        self._history: Deque[Dict[str, Any]] = deque(maxlen=50_000)
         self._last_fx_value: Optional[float] = None
 
         # Session-start FX baseline for daily change calculation
@@ -79,18 +79,24 @@ class MacroMarketService:
         delta = self._parse_window(window)
         min_ts = now - delta
 
-        points = [
-            {
+        # Reverse scan: deque is chronological, so iterate from newest.
+        # Stop early once we pass the time boundary.
+        points = []
+        for p in reversed(self._history):
+            dt = self._safe_datetime(p.get("timestamp"))
+            if not dt:
+                continue
+            if dt < min_ts:
+                break
+            points.append({
                 "timestamp": p["timestamp"],
                 "fx_value": p.get("fx_value"),
                 "futures_value": p.get("futures_value"),
                 "foreign_net": p.get("foreign_net"),
                 "macro_score": p.get("macro_score"),
                 "regime": p.get("regime", "unknown"),
-            }
-            for p in self._history
-            if self._safe_datetime(p.get("timestamp")) and self._safe_datetime(p.get("timestamp")) >= min_ts
-        ]
+            })
+        points.reverse()  # restore chronological order
 
         return {"window": window, "points": points}
 
