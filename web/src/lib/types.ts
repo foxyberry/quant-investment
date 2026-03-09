@@ -354,12 +354,22 @@ export interface MacroFreshness {
   flow_age_sec: number | null;
 }
 
+export type MacroEntrySignal = 'buy_favorable' | 'wait' | 'caution';
+
+export interface MacroInterpretation {
+  entry_signal: MacroEntrySignal;
+  fx_interpretation: string;
+  futures_interpretation: string;
+  flow_interpretation: string;
+}
+
 export interface MacroBundle {
   fx: MacroFxSnapshot;
   futures: MacroFuturesSnapshot;
   flow: MacroInvestorFlowSnapshot;
   signal: MacroSignal;
   freshness: MacroFreshness;
+  interpretation?: MacroInterpretation | null;
 }
 
 export interface MacroHistoryPoint {

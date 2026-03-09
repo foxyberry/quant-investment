@@ -10,9 +10,11 @@ import {
   Activity,
   AlertTriangle,
   CandlestickChart,
+  CheckCircle,
   DollarSign,
   RefreshCw,
   ShieldAlert,
+  TrendingUp,
   Users,
 } from 'lucide-react';
 import {
@@ -25,7 +27,7 @@ import {
   CartesianGrid,
   ReferenceArea,
 } from 'recharts';
-import type { MacroRegime } from '@/lib/types';
+import type { MacroEntrySignal, MacroRegime } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -98,6 +100,7 @@ export default function MacroPage() {
   const futuresOhlcv = useOhlcv(futuresTicker, 30);
 
   const regime = bundleQuery.data?.signal.regime ?? 'unknown';
+  const interpretation = bundleQuery.data?.interpretation;
 
   const regimeStyle = useMemo(() => {
     if (regime === 'risk_on') return { text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800' };
@@ -157,6 +160,9 @@ export default function MacroPage() {
         </button>
       </div>
 
+      {/* Market Entry Assessment */}
+      {interpretation && <MarketEntryAssessment entrySignal={interpretation.entry_signal} fxInterp={interpretation.fx_interpretation} futuresInterp={interpretation.futures_interpretation} flowInterp={interpretation.flow_interpretation} t={t} />}
+
       {/* Regime Insight Banner */}
       <div className={`rounded-xl border p-4 ${regimeStyle.bg}`}>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -200,6 +206,7 @@ export default function MacroPage() {
           ageSec={bundleQuery.data?.freshness.fx_age_sec ?? null}
           ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.fx_age_sec ?? '-' })}
           staleLabel={t('staleWarning')}
+          interpretationText={interpretation ? t(`interp_fx_${interpretation.fx_interpretation}`) : undefined}
         />
         <MetricCard
           title={t('futures')}
@@ -214,6 +221,7 @@ export default function MacroPage() {
           ageSec={bundleQuery.data?.freshness.futures_age_sec ?? null}
           ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.futures_age_sec ?? '-' })}
           staleLabel={t('staleWarning')}
+          interpretationText={interpretation ? t(`interp_futures_${interpretation.futures_interpretation}`) : undefined}
         />
         <MetricCard
           title={t('investorFlow')}
@@ -232,6 +240,7 @@ export default function MacroPage() {
           ageSec={bundleQuery.data?.freshness.flow_age_sec ?? null}
           ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.flow_age_sec ?? '-' })}
           staleLabel={t('staleWarning')}
+          interpretationText={interpretation ? t(`interp_flow_${interpretation.flow_interpretation}`) : undefined}
         />
       </div>
 
@@ -239,7 +248,7 @@ export default function MacroPage() {
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <h3 className="text-base font-semibold text-[var(--foreground)]">{t('historyChart')}</h3>
-          <div className="inline-flex rounded-lg border border-[var(--border)] overflow-hidden">
+          <div className="inline-flex shrink-0 rounded-lg border border-[var(--border)] overflow-hidden">
             {(['60m', '6h', '1d'] as WindowOption[]).map((w) => (
               <button
                 key={w}
@@ -258,14 +267,20 @@ export default function MacroPage() {
         </div>
 
         {historyQuery.isLoading ? (
-          <p className="text-sm text-[var(--foreground-muted)]">{t('loadingHistory')}</p>
+          <div className="flex h-72 items-center justify-center">
+            <p className="text-sm text-[var(--foreground-muted)]">{t('loadingHistory')}</p>
+          </div>
         ) : historyQuery.isError ? (
-          <p className="inline-flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
-            <ShieldAlert className="h-4 w-4" />
-            {t('historyUnavailable')}
-          </p>
+          <div className="flex h-72 items-center justify-center">
+            <p className="inline-flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+              <ShieldAlert className="h-4 w-4" />
+              {t('historyUnavailable')}
+            </p>
+          </div>
         ) : (!historyQuery.data?.points || historyQuery.data.points.length === 0) ? (
-          <p className="py-8 text-center text-sm text-[var(--foreground-muted)]">{t('noHistory')}</p>
+          <div className="flex h-72 items-center justify-center">
+            <p className="text-sm text-[var(--foreground-muted)]">{t('noHistory')}</p>
+          </div>
         ) : (
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -417,6 +432,7 @@ function MetricCard({
   ageSec,
   ageLabel,
   staleLabel,
+  interpretationText,
 }: {
   title: string;
   icon: ReactNode;
@@ -427,6 +443,7 @@ function MetricCard({
   ageSec: number | null;
   ageLabel: string;
   staleLabel: string;
+  interpretationText?: string;
 }) {
   const isStale = ageSec != null && ageSec > STALE_THRESHOLD_SEC;
 
@@ -456,6 +473,9 @@ function MetricCard({
             {item.label}: {item.value}
           </p>
         ))}
+        {interpretationText && (
+          <p className="text-xs italic text-[var(--foreground-muted)]">{interpretationText}</p>
+        )}
         <div className="flex items-center justify-between">
           <p className={`text-xs ${isStale ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--foreground-muted)]'}`}>
             {ageLabel}
@@ -464,5 +484,77 @@ function MetricCard({
         </div>
       </div>
     </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Market Entry Assessment
+// ---------------------------------------------------------------------------
+
+const ENTRY_STYLES: Record<string, { icon: typeof CheckCircle; text: string; bg: string }> = {
+  buy_favorable: {
+    icon: CheckCircle,
+    text: 'text-emerald-700 dark:text-emerald-400',
+    bg: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800',
+  },
+  wait: {
+    icon: AlertTriangle,
+    text: 'text-amber-700 dark:text-amber-400',
+    bg: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800',
+  },
+  caution: {
+    icon: ShieldAlert,
+    text: 'text-red-700 dark:text-red-400',
+    bg: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800',
+  },
+};
+
+function MarketEntryAssessment({
+  entrySignal,
+  fxInterp,
+  futuresInterp,
+  flowInterp,
+  t,
+}: {
+  entrySignal: MacroEntrySignal | string;
+  fxInterp: string;
+  futuresInterp: string;
+  flowInterp: string;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const style = ENTRY_STYLES[entrySignal] ?? ENTRY_STYLES.wait;
+  const Icon = style.icon;
+
+  return (
+    <div className={`rounded-xl border p-4 ${style.bg}`}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <Icon className={`h-8 w-8 ${style.text}`} />
+          <div>
+            <h2 className="text-sm font-medium text-[var(--foreground-muted)]">{t('entryAssessment')}</h2>
+            <p className={`text-2xl font-bold ${style.text}`}>
+              {t(`entry_${entrySignal}`)}
+            </p>
+          </div>
+        </div>
+        <p className="text-sm text-[var(--foreground)]">
+          {t(`entryDesc_${entrySignal}`)}
+        </p>
+      </div>
+      <ul className="mt-3 space-y-1 text-sm text-[var(--foreground-muted)]">
+        <li className="flex items-start gap-2">
+          <TrendingUp className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {t(`interp_fx_${fxInterp}`)}
+        </li>
+        <li className="flex items-start gap-2">
+          <CandlestickChart className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {t(`interp_futures_${futuresInterp}`)}
+        </li>
+        <li className="flex items-start gap-2">
+          <Users className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {t(`interp_flow_${flowInterp}`)}
+        </li>
+      </ul>
+    </div>
   );
 }

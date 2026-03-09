@@ -5,7 +5,7 @@ Provides schemas for OHLCV data, quotes, and technical indicators.
 """
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -147,12 +147,20 @@ class MacroFreshness(BaseModel):
     flow_age_sec: Optional[int] = Field(None, description="Flow data age in seconds")
 
 
+class MacroInterpretation(BaseModel):
+    entry_signal: Literal["buy_favorable", "wait", "caution"] = Field(..., description="Entry signal")
+    fx_interpretation: str = Field(..., description="FX direction interpretation")
+    futures_interpretation: str = Field(..., description="Futures basis interpretation")
+    flow_interpretation: str = Field(..., description="Investor flow interpretation")
+
+
 class MacroBundleResponse(BaseModel):
     fx: MacroFxSnapshot
     futures: MacroFuturesSnapshot
     flow: MacroInvestorFlowSnapshot
     signal: MacroSignal
     freshness: MacroFreshness
+    interpretation: Optional[MacroInterpretation] = None
 
 
 class MacroHistoryPoint(BaseModel):
