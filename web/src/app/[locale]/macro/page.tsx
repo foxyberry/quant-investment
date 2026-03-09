@@ -222,7 +222,7 @@ export default function MacroPage() {
           unit={t('futuresUnit')}
           source={t('futuresSource')}
           items={[
-            { label: t('basis'), value: formatNumber(bundleQuery.data?.futures.basis ?? null, locale, 2) },
+            { label: t('basis'), value: bundleQuery.data?.futures.basis != null ? `${bundleQuery.data.futures.basis > 0 ? '+' : ''}${formatNumber(bundleQuery.data.futures.basis, locale, 3)}%` : '-' },
             { label: t('changePct'), value: formatPercent(bundleQuery.data?.futures.change_pct ?? null) },
           ]}
           ageSec={bundleQuery.data?.freshness.futures_age_sec ?? null}
