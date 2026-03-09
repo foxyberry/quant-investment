@@ -133,6 +133,10 @@ class MacroMarketService:
         "^KS11": "KOSPI",
         "^KQ11": "KOSDAQ",
     }
+    # KOSPI 200 index code for proper basis calculation
+    _KOSPI200_INDEX = "KPI200"
+    # KODEX 200 tracks KOSPI200 at ~100x scale (KODEX price ≈ KPI200 × 100)
+    _KODEX_KPI200_MULTIPLIER = 100.0
 
     @staticmethod
     def _parse_naver_price(raw: str | int | float | None) -> float | None:
@@ -189,14 +193,17 @@ class MacroMarketService:
                 )
                 updated_at = fut_data.get("localTradedAt")
 
-                # Spot index for basis (best-effort, basis is None if unavailable)
+                # Basis: KODEX 200 premium/discount vs KOSPI 200 index (%)
+                # Only meaningful when futures_ticker is KODEX 200 (069500)
+                # KODEX 200 ≈ KPI200 × 100 (multiplier is fixed; deviation captured in basis %)
                 basis = None
-                naver_index = self._SPOT_TICKER_MAP.get(self.spot_ticker, "KOSPI")
-                spot_data = self._fetch_naver_index(naver_index)
-                if spot_data:
-                    spot_value = self._parse_naver_price(spot_data.get("closePrice"))
-                    if fut_value is not None and spot_value is not None:
-                        basis = fut_value - spot_value
+                if futures_code == "069500":
+                    kpi200_data = self._fetch_naver_index(self._KOSPI200_INDEX)
+                    if kpi200_data:
+                        kpi200_value = self._parse_naver_price(kpi200_data.get("closePrice"))
+                        if fut_value is not None and kpi200_value is not None and kpi200_value > 0:
+                            theoretical = kpi200_value * self._KODEX_KPI200_MULTIPLIER
+                            basis = round((fut_value - theoretical) / theoretical * 100, 3)
 
                 return {
                     "symbol": self.futures_ticker,
@@ -208,22 +215,18 @@ class MacroMarketService:
         except Exception as exc:
             logger.debug("Naver futures snapshot failed, falling back: %s", exc)
 
-        # Fallback: yfinance cache
+        # Fallback: yfinance cache (basis unavailable — can't compare units properly)
         try:
             fut = self.market_service.get_quote(self.futures_ticker)
-            spot = self.market_service.get_quote(self.spot_ticker)
 
             fut_value = float(fut["current_price"]) if fut and fut.get("current_price") is not None else None
-            spot_value = float(spot["current_price"]) if spot and spot.get("current_price") is not None else None
-
-            basis = fut_value - spot_value if fut_value is not None and spot_value is not None else None
             change_pct = float(fut["change_pct"]) if fut and fut.get("change_pct") is not None else None
             updated_at = fut.get("timestamp") if fut else None
 
             return {
                 "symbol": self.futures_ticker,
                 "value": fut_value,
-                "basis": basis,
+                "basis": None,  # yfinance fallback can't compute proper basis
                 "change_pct": change_pct,
                 "updated_at": self._to_iso(updated_at or now),
             }
@@ -274,8 +277,8 @@ class MacroMarketService:
         # Raw component scores in [-1, +1]
         fx_raw = self._clip((self._to_float(fx.get("change_pct")) or 0.0) / 0.5, -1.0, 1.0)
         fut_change = self._to_float(futures.get("change_pct"))
-        fut_basis = self._to_float(futures.get("basis"))
-        futures_raw = self._clip((-(fut_change or 0.0) / 1.0) + (-(fut_basis or 0.0) / 50.0), -1.0, 1.0)
+        fut_basis = self._to_float(futures.get("basis"))  # now in % (premium/discount)
+        futures_raw = self._clip((-(fut_change or 0.0) / 3.0) + (-(fut_basis or 0.0) / 1.0), -1.0, 1.0)
 
         foreign_net = self._to_float(flow.get("foreign_net"))
         flow_raw = self._clip((-(foreign_net or 0.0)) / 1_000_000_000.0, -1.0, 1.0)
@@ -393,12 +396,12 @@ class MacroMarketService:
         return "stable"
 
     def _interpret_futures(self, futures: Dict[str, Any]) -> str:
-        basis = self._to_float(futures.get("basis"))
+        basis = self._to_float(futures.get("basis"))  # premium/discount in %
         if basis is None:
             return "unavailable"
-        if basis > 0:
+        if basis > 0.1:
             return "contango"
-        if basis < 0:
+        if basis < -0.1:
             return "backwardation"
         return "flat"
 
