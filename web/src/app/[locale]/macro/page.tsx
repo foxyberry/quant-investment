@@ -387,6 +387,21 @@ export default function MacroPage() {
             </ResponsiveContainer>
           </div>
         )}
+        {(() => {
+          const pts = historyQuery.data?.points ?? [];
+          if (pts.length >= 2) {
+            const fxVals = pts.map(p => p.fx_value).filter((v): v is number => v != null);
+            const isFlat = fxVals.length >= 2 && new Set(fxVals).size === 1;
+            if (isFlat) {
+              return (
+                <p className="mt-2 text-center text-xs text-[var(--foreground-muted)]">
+                  {t('marketClosedHint')}
+                </p>
+              );
+            }
+          }
+          return null;
+        })()}
       </Card>
 
       {/* Futures OHLCV Chart */}
@@ -419,7 +434,6 @@ export default function MacroPage() {
 // ---------------------------------------------------------------------------
 
 function signalLabel(value: number, t: (key: string) => string): string {
-  // value in [-1, 1]. Negative = risk-on (buying pressure), positive = risk-off (selling pressure)
   if (value <= -0.7) return t('signalStrongBuy');
   if (value <= -0.3) return t('signalBuy');
   if (value >= 0.7) return t('signalStrongSell');
@@ -428,26 +442,22 @@ function signalLabel(value: number, t: (key: string) => string): string {
 }
 
 function SignalBar({ label, value, nullLabel, t }: { label: string; value: number | null; nullLabel: string; t: (key: string) => string }) {
-  // value is in [-1, 1] range. Positive = risk-off contribution, negative = risk-on.
   const pct = value != null ? Math.abs(value) * 100 : 0;
   const isNull = value == null;
   const isPositive = (value ?? 0) >= 0;
   const desc = !isNull ? signalLabel(value!, t) : null;
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs">
         <span className="text-[var(--foreground-muted)]">{label}</span>
-        <span className="font-mono text-[var(--foreground)]">
-          {isNull ? nullLabel : (
-            <span className="inline-flex items-center gap-1.5">
-              <span>{value!.toFixed(2)}</span>
-              <span className={`text-[10px] font-sans ${isPositive ? 'text-red-400' : 'text-emerald-400'}`}>{desc}</span>
-            </span>
-          )}
-        </span>
+        {isNull ? (
+          <span className="text-[var(--foreground-muted)]">{nullLabel}</span>
+        ) : (
+          <span className={`font-medium ${isPositive ? 'text-red-500' : 'text-emerald-500'}`}>{desc}</span>
+        )}
       </div>
-      <div className="relative h-2 rounded-full bg-[var(--background)] overflow-hidden">
+      <div className="relative h-2.5 rounded-full bg-[var(--background)] overflow-hidden">
         <div
           className={`absolute top-0 h-full rounded-full transition-all ${
             isNull ? 'bg-gray-300 dark:bg-gray-600' : isPositive ? 'bg-red-400' : 'bg-emerald-400'
