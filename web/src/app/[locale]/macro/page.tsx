@@ -213,11 +213,17 @@ export default function MacroPage() {
           </p>
         </div>
 
-        {/* Signal Contribution Bars */}
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <SignalBar label={t('fxSignal')} value={contributions.fx} nullLabel={t('flowUnavailable')} t={t} />
-          <SignalBar label={t('futuresSignal')} value={contributions.futures} nullLabel={t('flowUnavailable')} t={t} />
-          <SignalBar label={t('flowSignal')} value={contributions.flow} nullLabel={t('flowUnavailable')} t={t} />
+        {/* Signal Contribution Bars — center-diverging */}
+        <div className="mt-4 space-y-1">
+          <div className="flex items-center justify-between text-[10px] text-[var(--foreground-muted)] opacity-60 px-0.5">
+            <span>{t('signalLegendBuy')}</span>
+            <span>{t('signalLegendSell')}</span>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <SignalBar label={t('fxSignal')} value={contributions.fx} nullLabel={t('flowUnavailable')} t={t} />
+            <SignalBar label={t('futuresSignal')} value={contributions.futures} nullLabel={t('flowUnavailable')} t={t} />
+            <SignalBar label={t('flowSignal')} value={contributions.flow} nullLabel={t('flowUnavailable')} t={t} />
+          </div>
         </div>
       </div>
 
@@ -488,9 +494,9 @@ function signalLabel(value: number, t: (key: string) => string): string {
 }
 
 function SignalBar({ label, value, nullLabel, t }: { label: string; value: number | null; nullLabel: string; t: (key: string) => string }) {
-  const pct = value != null ? Math.abs(value) * 100 : 0;
+  const pct = value != null ? Math.min(Math.abs(value) * 50, 50) : 0; // half-width max 50%
   const isNull = value == null;
-  const isPositive = (value ?? 0) >= 0;
+  const isBuy = (value ?? 0) < 0; // negative = buy favorable
   const desc = !isNull ? signalLabel(value!, t) : null;
 
   return (
@@ -500,16 +506,31 @@ function SignalBar({ label, value, nullLabel, t }: { label: string; value: numbe
         {isNull ? (
           <span className="text-[var(--foreground-muted)]">{nullLabel}</span>
         ) : (
-          <span className={`font-medium ${isPositive ? 'text-red-500' : 'text-emerald-500'}`}>{desc}</span>
+          <span className={`font-medium ${isBuy ? 'text-emerald-500' : 'text-red-500'}`}>{desc}</span>
         )}
       </div>
+      {/* Center-anchored diverging bar: green ← center → red */}
       <div className="relative h-2.5 rounded-full bg-[var(--background)] overflow-hidden">
-        <div
-          className={`absolute top-0 h-full rounded-full transition-all ${
-            isNull ? 'bg-gray-300 dark:bg-gray-600' : isPositive ? 'bg-red-400' : 'bg-emerald-400'
-          }`}
-          style={{ width: `${Math.min(pct, 100)}%`, left: 0 }}
-        />
+        {/* Center line */}
+        <div className="absolute left-1/2 top-0 h-full w-px bg-[var(--foreground-muted)] opacity-30" />
+        {!isNull && pct > 0 && (
+          <div
+            className={`absolute top-0 h-full rounded-full transition-all ${
+              isBuy ? 'bg-emerald-400' : 'bg-red-400'
+            }`}
+            style={
+              isBuy
+                ? { right: '50%', width: `${pct}%` }
+                : { left: '50%', width: `${pct}%` }
+            }
+          />
+        )}
+        {isNull && (
+          <div
+            className="absolute top-0 h-full rounded-full bg-gray-300 dark:bg-gray-600"
+            style={{ left: '50%', width: '2%', transform: 'translateX(-50%)' }}
+          />
+        )}
       </div>
     </div>
   );
