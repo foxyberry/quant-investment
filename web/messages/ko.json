@@ -177,6 +177,8 @@
     "signalNeutral": "중립",
     "signalSell": "매도",
     "signalStrongSell": "강한 매도",
+    "signalLegendBuy": "← 매수 유리",
+    "signalLegendSell": "매도 유리 →",
     "bundleUnavailable": "매크로 번들 API를 사용할 수 없습니다",
     "entryAssessment": "시장 진입 판단",
     "entry_buy_favorable": "매수 적기",
