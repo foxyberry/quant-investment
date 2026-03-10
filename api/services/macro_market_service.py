@@ -10,12 +10,18 @@ import json
 import logging
 import math
 import os
+import threading
 import time
 from collections import deque
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Deque, Dict, Optional
+from typing import Any, Deque, Dict, List, Optional
 
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
+
+from api.database import SessionLocal
+from api.models.macro_history import MacroHistory
 from api.services.exchange_rate_service import ExchangeRateService, get_exchange_rate_service
 from api.services.market_service import MarketService
 
@@ -24,6 +30,9 @@ logger = logging.getLogger(__name__)
 
 class MacroMarketService:
     """Aggregates macro inputs and computes regime signal."""
+
+    # Batch DB writes every N ticks to reduce I/O
+    _DB_FLUSH_INTERVAL = 10
 
     def __init__(
         self,
@@ -39,12 +48,18 @@ class MacroMarketService:
             os.getenv("MACRO_INVESTOR_FLOW_PATH", "data/market/investor_flow_latest.json")
         )
 
+        self._lock = threading.Lock()
         self._history: Deque[Dict[str, Any]] = deque(maxlen=50_000)
+        self._db_buffer: List[Dict[str, Any]] = []
+        self._db_tick_count = 0
         self._last_fx_value: Optional[float] = None
 
         # Session-start FX baseline for daily change calculation
         self._session_start_fx: Optional[float] = None
         self._session_start_date: Optional[date] = None
+
+        # Load recent history from DB on startup
+        self._load_history_from_db()
 
     def get_bundle(self) -> Dict[str, Any]:
         now = datetime.now(timezone.utc)
@@ -79,23 +94,38 @@ class MacroMarketService:
         delta = self._parse_window(window)
         min_ts = now - delta
 
+        # Check if deque covers the requested range
+        with self._lock:
+            deque_min_ts = None
+            if self._history:
+                deque_min_ts = self._safe_datetime(self._history[0].get("timestamp"))
+
+        # If deque doesn't cover the range, query DB
+        if deque_min_ts is None or deque_min_ts > min_ts:
+            # Flush pending buffer first so DB is up-to-date
+            self._flush_to_db()
+            db_points = self._query_db_history(min_ts, now)
+            if db_points:
+                return {"window": window, "points": db_points}
+
         # Reverse scan: deque is chronological, so iterate from newest.
         # Stop early once we pass the time boundary.
         points = []
-        for p in reversed(self._history):
-            dt = self._safe_datetime(p.get("timestamp"))
-            if not dt:
-                continue
-            if dt < min_ts:
-                break
-            points.append({
-                "timestamp": p["timestamp"],
-                "fx_value": p.get("fx_value"),
-                "futures_value": p.get("futures_value"),
-                "foreign_net": p.get("foreign_net"),
-                "macro_score": p.get("macro_score"),
-                "regime": p.get("regime", "unknown"),
-            })
+        with self._lock:
+            for p in reversed(self._history):
+                dt = self._safe_datetime(p.get("timestamp"))
+                if not dt:
+                    continue
+                if dt < min_ts:
+                    break
+                points.append({
+                    "timestamp": p["timestamp"],
+                    "fx_value": p.get("fx_value"),
+                    "futures_value": p.get("futures_value"),
+                    "foreign_net": p.get("foreign_net"),
+                    "macro_score": p.get("macro_score"),
+                    "regime": p.get("regime", "unknown"),
+                })
         points.reverse()  # restore chronological order
 
         return {"window": window, "points": points}
@@ -394,12 +424,14 @@ class MacroMarketService:
         """Blocking loop that appends history every *interval_sec* seconds.
 
         Designed to run inside a daemon thread so the timeline fills
-        independently of API calls.
+        independently of API calls.  Flushes to DB after each tick.
         """
         logger.info("Macro history collector started (interval=%ds)", interval_sec)
         while True:
             try:
                 self.get_bundle()
+                # Flush any buffered points to DB each tick
+                self._flush_to_db()
             except Exception as exc:
                 logger.warning("History collector tick failed: %s", exc)
             time.sleep(interval_sec)
@@ -500,26 +532,138 @@ class MacroMarketService:
         futures = bundle.get("futures", {})
         flow = bundle.get("flow", {})
 
-        self._history.append(
-            {
-                "timestamp": self._to_iso(now),
-                "fx_value": self._to_float(fx.get("value")),
-                "futures_value": self._to_float(futures.get("value")),
-                "foreign_net": self._to_float(flow.get("foreign_net")),
-                "macro_score": self._to_float(signal.get("macro_score")),
-                "regime": signal.get("regime", "unknown"),
-            }
-        )
+        point = {
+            "timestamp": self._to_iso(now),
+            "fx_value": self._to_float(fx.get("value")),
+            "futures_value": self._to_float(futures.get("value")),
+            "foreign_net": self._to_float(flow.get("foreign_net")),
+            "macro_score": self._to_float(signal.get("macro_score")),
+            "regime": signal.get("regime", "unknown"),
+        }
+        should_flush = False
+        with self._lock:
+            self._history.append(point)
+            self._db_buffer.append(point)
+            self._db_tick_count += 1
+            if self._db_tick_count >= self._DB_FLUSH_INTERVAL:
+                should_flush = True
+
+        if should_flush:
+            self._flush_to_db()
+
+    # ------------------------------------------------------------------
+    # DB persistence
+    # ------------------------------------------------------------------
+
+    def _load_history_from_db(self) -> None:
+        """Load recent macro history rows from DB into the in-memory deque."""
+        try:
+            db: Session = SessionLocal()
+            try:
+                rows = (
+                    db.query(MacroHistory)
+                    .order_by(desc(MacroHistory.timestamp))
+                    .limit(self._history.maxlen or 50_000)
+                    .all()
+                )
+                rows.reverse()  # oldest first
+                for row in rows:
+                    ts = row.timestamp
+                    if ts and ts.tzinfo is None:
+                        ts = ts.replace(tzinfo=timezone.utc)
+                    self._history.append({
+                        "timestamp": ts.isoformat() if ts else None,
+                        "fx_value": row.fx_value,
+                        "futures_value": row.futures_value,
+                        "foreign_net": row.foreign_net,
+                        "macro_score": row.macro_score,
+                        "regime": row.regime or "unknown",
+                    })
+                if rows:
+                    logger.info("Loaded %d macro history rows from DB", len(rows))
+            finally:
+                db.close()
+        except Exception as exc:
+            logger.warning("Failed to load macro history from DB: %s", exc)
+
+    def _flush_to_db(self) -> None:
+        """Write buffered history points to the database."""
+        with self._lock:
+            if not self._db_buffer:
+                return
+            batch = self._db_buffer[:]
+            self._db_buffer.clear()
+            self._db_tick_count = 0
+        try:
+            db: Session = SessionLocal()
+            try:
+                for point in batch:
+                    ts = self._safe_datetime(point.get("timestamp"))
+                    if ts is None:
+                        continue
+                    db.add(MacroHistory(
+                        timestamp=ts,
+                        fx_value=point.get("fx_value"),
+                        futures_value=point.get("futures_value"),
+                        foreign_net=point.get("foreign_net"),
+                        macro_score=point.get("macro_score"),
+                        regime=point.get("regime"),
+                    ))
+                db.commit()
+            finally:
+                db.close()
+        except Exception as exc:
+            logger.warning("Failed to flush macro history to DB: %s", exc)
+            # Restore failed batch to buffer for retry
+            with self._lock:
+                self._db_buffer = batch + self._db_buffer
+
+    # Cap DB query results to prevent excessive memory usage
+    _DB_QUERY_LIMIT = 50_000
+
+    def _query_db_history(self, min_ts: datetime, max_ts: datetime) -> List[Dict[str, Any]]:
+        """Query macro history from DB for a time range."""
+        try:
+            db: Session = SessionLocal()
+            try:
+                rows = (
+                    db.query(MacroHistory)
+                    .filter(MacroHistory.timestamp >= min_ts, MacroHistory.timestamp <= max_ts)
+                    .order_by(MacroHistory.timestamp)
+                    .limit(self._DB_QUERY_LIMIT)
+                    .all()
+                )
+                return [
+                    {
+                        "timestamp": (r.timestamp.replace(tzinfo=timezone.utc) if r.timestamp and r.timestamp.tzinfo is None else r.timestamp).isoformat() if r.timestamp else None,
+                        "fx_value": r.fx_value,
+                        "futures_value": r.futures_value,
+                        "foreign_net": r.foreign_net,
+                        "macro_score": r.macro_score,
+                        "regime": r.regime or "unknown",
+                    }
+                    for r in rows
+                ]
+            finally:
+                db.close()
+        except Exception as exc:
+            logger.warning("Failed to query macro history from DB: %s", exc)
+            return []
+
+    _MAX_WINDOW = timedelta(days=90)
 
     def _parse_window(self, window: str) -> timedelta:
         value = (window or "60m").strip().lower()
         try:
             if value.endswith("m"):
-                return timedelta(minutes=max(int(value[:-1] or "60"), 1))
-            if value.endswith("h"):
-                return timedelta(hours=max(int(value[:-1] or "1"), 1))
-            if value.endswith("d"):
-                return timedelta(days=max(int(value[:-1] or "1"), 1))
+                delta = timedelta(minutes=max(int(value[:-1] or "60"), 1))
+            elif value.endswith("h"):
+                delta = timedelta(hours=max(int(value[:-1] or "1"), 1))
+            elif value.endswith("d"):
+                delta = timedelta(days=max(int(value[:-1] or "1"), 1))
+            else:
+                delta = timedelta(minutes=60)
+            return min(delta, self._MAX_WINDOW)
         except ValueError:
             logger.warning("Invalid macro history window: %s. Falling back to 60m.", value)
         return timedelta(minutes=60)

@@ -179,6 +179,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Shutdown (종료 시 실행)
     print("Shutting down application...")
+    try:
+        from api.services.macro_market_service import get_macro_market_service
+        get_macro_market_service()._flush_to_db()
+    except Exception:
+        pass
 
 
 def create_app() -> FastAPI:

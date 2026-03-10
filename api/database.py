@@ -51,6 +51,7 @@ def init_db() -> None:
     import api.models.agent_task  # noqa: F401 — register model with Base
     import api.models.broker_credential  # noqa: F401 — register model with Base
     import api.models.execution_history  # noqa: F401 — register model with Base
+    import api.models.macro_history  # noqa: F401 — register model with Base
     import api.models.portfolio  # noqa: F401 — register model with Base
     import api.models.screening_result  # noqa: F401 — register model with Base
     import api.models.strategy  # noqa: F401 — register model with Base
