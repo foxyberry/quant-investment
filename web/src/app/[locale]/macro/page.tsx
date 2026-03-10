@@ -121,6 +121,19 @@ export default function MacroPage() {
     [bundleQuery.data?.signal.reason],
   );
 
+  // Compute change% from first data point for each history point
+  const chartData = useMemo(() => {
+    const points = historyQuery.data?.points ?? [];
+    if (points.length === 0) return [];
+    const baseFx = points[0].fx_value;
+    return points.map((p) => ({
+      ...p,
+      fx_change_pct: p.fx_value != null && baseFx != null && baseFx !== 0
+        ? ((p.fx_value - baseFx) / baseFx) * 100
+        : null,
+    }));
+  }, [historyQuery.data?.points]);
+
   // Compute regime segments for chart background
   const regimeSegments = useMemo(() => {
     const points = historyQuery.data?.points ?? [];
@@ -223,7 +236,7 @@ export default function MacroPage() {
           changePct={bundleQuery.data?.futures.change_pct ?? null}
           source={t('futuresSource')}
           items={[
-            { label: t('basis'), value: bundleQuery.data?.futures.basis != null ? `${bundleQuery.data.futures.basis > 0 ? '+' : ''}${formatNumber(bundleQuery.data.futures.basis, locale, 3)}%` : '-' },
+            { label: t('basis'), value: bundleQuery.data?.futures.basis != null ? `${bundleQuery.data.futures.basis > 0 ? '+' : ''}${formatNumber(bundleQuery.data.futures.basis, locale, 3)}%` : '-', hint: t('basisExplain') },
           ]}
           ageSec={bundleQuery.data?.freshness.futures_age_sec ?? null}
           ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.futures_age_sec ?? '-' })}
@@ -241,6 +254,7 @@ export default function MacroPage() {
           unit={t('flowUnit')}
           source={t('flowSource')}
           items={[
+            { label: t('foreign'), value: formatFlowBillion(bundleQuery.data?.flow.foreign_net ?? null, locale) },
             { label: t('institution'), value: formatFlowBillion(bundleQuery.data?.flow.institution_net ?? null, locale) },
             { label: t('individual'), value: formatFlowBillion(bundleQuery.data?.flow.individual_net ?? null, locale) },
           ]}
@@ -304,7 +318,7 @@ export default function MacroPage() {
         ) : (
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={historyQuery.data.points} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 {regimeSegments.map((seg, i) => (
                   <ReferenceArea
@@ -353,6 +367,7 @@ export default function MacroPage() {
                     if (Number.isNaN(v)) return ['-', name];
                     if (name === 'USD/KRW') return [formatNumber(v, locale, 2), name];
                     if (name === t('macroScore')) return [formatPercent(v), name];
+                    if (name === t('fxChangePct')) return [`${v > 0 ? '+' : ''}${v.toFixed(3)}%`, name];
                     return [String(value), name];
                   }}
                 />
@@ -380,6 +395,17 @@ export default function MacroPage() {
                   stroke="#f59e0b"
                   strokeWidth={2}
                   strokeDasharray="5 3"
+                  dot={false}
+                  connectNulls
+                />
+                <Line
+                  yAxisId="score"
+                  type="monotone"
+                  dataKey="fx_change_pct"
+                  name={t('fxChangePct')}
+                  stroke="#8b5cf6"
+                  strokeWidth={1.5}
+                  strokeDasharray="3 2"
                   dot={false}
                   connectNulls
                 />
@@ -504,7 +530,7 @@ function MetricCard({
   unit: string;
   changePct?: number | null;
   source: string;
-  items: { label: string; value: string }[];
+  items: { label: string; value: string; hint?: string }[];
   ageSec: number | null;
   ageLabel: string;
   staleLabel: string;
@@ -541,9 +567,14 @@ function MetricCard({
           )}
         </div>
         {items.map((item) => (
-          <p key={item.label} className="text-sm text-[var(--foreground-muted)]">
-            {item.label}: {item.value}
-          </p>
+          <div key={item.label} className="space-y-0.5">
+            <p className="text-sm text-[var(--foreground-muted)]">
+              {item.label}: {item.value}
+            </p>
+            {item.hint && (
+              <p className="text-[10px] text-[var(--foreground-muted)] opacity-60">{item.hint}</p>
+            )}
+          </div>
         ))}
         {interpretationText && (
           <p className="text-xs italic text-[var(--foreground-muted)]">{interpretationText}</p>
