@@ -41,6 +41,14 @@ function formatNumber(value: number | null, locale: string, maximumFractionDigit
   });
 }
 
+function formatAge(sec: number | null, t: (key: string, values?: Record<string, string | number>) => string): string {
+  if (sec == null || Number.isNaN(sec)) return t('ageSec', { age: '-' });
+  if (sec < 60) return t('ageSec', { age: `${Math.round(sec)}` });
+  if (sec < 3600) return t('ageMin', { age: `${Math.round(sec / 60)}` });
+  if (sec < 86400) return t('ageHour', { age: `${(sec / 3600).toFixed(1)}` });
+  return t('ageDay', { age: `${(sec / 86400).toFixed(1)}` });
+}
+
 function formatFlowBillion(value: number | null, locale: string): string {
   if (value == null || Number.isNaN(value)) return '-';
   const billion = value / 100_000_000; // 원 → 억원
@@ -224,7 +232,7 @@ export default function MacroPage() {
           source={t('fxSource')}
           items={[]}
           ageSec={bundleQuery.data?.freshness.fx_age_sec ?? null}
-          ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.fx_age_sec ?? '-' })}
+          ageLabel={formatAge(bundleQuery.data?.freshness.fx_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
           interpretationText={interpretation ? t(`interp_fx_${interpretation.fx_interpretation}`) : undefined}
         />
@@ -239,7 +247,7 @@ export default function MacroPage() {
             { label: t('basis'), value: bundleQuery.data?.futures.basis != null ? `${bundleQuery.data.futures.basis > 0 ? '+' : ''}${formatNumber(bundleQuery.data.futures.basis, locale, 3)}%` : '-', hint: t('basisExplain') },
           ]}
           ageSec={bundleQuery.data?.freshness.futures_age_sec ?? null}
-          ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.futures_age_sec ?? '-' })}
+          ageLabel={formatAge(bundleQuery.data?.freshness.futures_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
           interpretationText={interpretation ? t(`interp_futures_${interpretation.futures_interpretation}`) : undefined}
         />
@@ -259,7 +267,7 @@ export default function MacroPage() {
             { label: t('individual'), value: formatFlowBillion(bundleQuery.data?.flow.individual_net ?? null, locale) },
           ]}
           ageSec={bundleQuery.data?.freshness.flow_age_sec ?? null}
-          ageLabel={t('ageSec', { age: bundleQuery.data?.freshness.flow_age_sec ?? '-' })}
+          ageLabel={formatAge(bundleQuery.data?.freshness.flow_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
           interpretationText={interpretation ? t(`interp_flow_${interpretation.flow_interpretation}`) : undefined}
         />
