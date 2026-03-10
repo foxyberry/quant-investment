@@ -504,7 +504,7 @@ export default function MacroPage() {
             {t('futuresChartError')}
           </p>
         ) : (
-          <CandleChart data={futuresOhlcv.data.data} height={320} showVolume showMA />
+          <CandleChart data={futuresOhlcv.data.data} height={320} showVolume showChangeRate showMA />
         )}
       </Card>
 
