@@ -55,6 +55,12 @@ class MacroMarketService:
         self.investor_flow_path = Path(
             os.getenv("MACRO_INVESTOR_FLOW_PATH", "data/market/investor_flow_latest.json")
         )
+        self.breadth_path = Path(
+            os.getenv("MACRO_BREADTH_PATH", "data/market/market_breadth_latest.json")
+        )
+        self.events_calendar_path = Path(
+            os.getenv("MACRO_EVENTS_PATH", os.path.join(os.path.dirname(__file__), "..", "static", "events_calendar.json"))
+        )
 
         self._lock = threading.Lock()
         self._history: Deque[Dict[str, Any]] = deque(maxlen=50_000)
@@ -107,6 +113,9 @@ class MacroMarketService:
 
         interpretation = self._build_interpretation(fx, futures, flow)
 
+        breadth = self._get_breadth_snapshot()
+        events = self._get_upcoming_events()
+
         generated_at = self._to_iso(now)
         bundle = {
             "fx": fx,
@@ -118,6 +127,8 @@ class MacroMarketService:
             "cache_hit": False,
             "generated_at": generated_at,
             "is_market_hours": self._is_krx_market_hours(),
+            "breadth": breadth,
+            "events": events if events else None,
         }
         self._append_history(bundle, now)
 
@@ -440,6 +451,72 @@ class MacroMarketService:
             logger.warning("Investor flow file adapter failed: %s", exc)
 
         return base
+
+    _BREADTH_STALE_SEC = 1200  # 20 minutes
+
+    def _get_breadth_snapshot(self) -> Dict[str, Any] | None:
+        """Read market breadth data from JSON file produced by breadth collector."""
+        try:
+            if self.breadth_path.exists():
+                raw = json.loads(self.breadth_path.read_text(encoding="utf-8"))
+                updated_at = self._to_iso(raw.get("updated_at"))
+                # Skip stale data (older than 20 min)
+                if updated_at:
+                    age = self._age_sec(updated_at, datetime.now(timezone.utc))
+                    if age is not None and age > self._BREADTH_STALE_SEC:
+                        return None
+                return {
+                    "market": str(raw.get("market", "KOSPI")),
+                    "advancing": self._to_int(raw.get("advancing")),
+                    "declining": self._to_int(raw.get("declining")),
+                    "unchanged": self._to_int(raw.get("unchanged")),
+                    "total": self._to_int(raw.get("total")),
+                    "ad_ratio": self._to_float(raw.get("ad_ratio")),
+                    "updated_at": updated_at,
+                }
+        except Exception as exc:
+            logger.warning("Market breadth file read failed: %s", exc)
+        return None
+
+    def _get_upcoming_events(self, days_ahead: int = 14) -> list[Dict[str, Any]]:
+        """Load events calendar and return events within the next N days (KST-based)."""
+        try:
+            if not self.events_calendar_path.exists():
+                return []
+            events = json.loads(self.events_calendar_path.read_text(encoding="utf-8"))
+            if not isinstance(events, list):
+                return []
+
+            # Use KST-based today to match Korean market context
+            kst = timezone(timedelta(hours=9))
+            today = datetime.now(timezone.utc).astimezone(kst).date()
+
+            result = []
+            for ev in events:
+                if not isinstance(ev, dict):
+                    continue
+                ev_date_str = ev.get("date")
+                title_key = ev.get("title_key")
+                if not ev_date_str or not title_key:
+                    continue
+                try:
+                    ev_date = date.fromisoformat(ev_date_str)
+                except ValueError:
+                    continue
+                d_day = (ev_date - today).days
+                if 0 <= d_day <= days_ahead:
+                    result.append({
+                        "date": ev_date_str,
+                        "type": ev.get("type", ""),
+                        "title_key": title_key,
+                        "importance": ev.get("importance"),
+                        "d_day": d_day,
+                    })
+            result.sort(key=lambda x: x["d_day"])
+            return result
+        except Exception as exc:
+            logger.warning("Events calendar load failed: %s", exc)
+            return []
 
     def _compute_signal(
         self,
