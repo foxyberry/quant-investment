@@ -23,6 +23,7 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Line,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -190,12 +191,20 @@ export default function MacroPage() {
     const points = historyQuery.data?.points ?? [];
     if (points.length === 0) return [];
     const baseFx = points[0].fx_value;
-    return points.map((p) => ({
+    return points.map((p, index) => {
+      const prev = index > 0 ? points[index - 1] : null;
+      let fxVolatility: number | null = null;
+      if (p.fx_value != null && prev?.fx_value != null && prev.fx_value !== 0) {
+        fxVolatility = Math.abs((p.fx_value - prev.fx_value) / prev.fx_value);
+      }
+      return {
       ...p,
       fx_change_pct: p.fx_value != null && baseFx != null && baseFx !== 0
         ? ((p.fx_value - baseFx) / baseFx) * 100
         : null,
-    }));
+      fx_volatility: fxVolatility,
+    };
+    });
   }, [historyQuery.data?.points]);
 
   // Compute regime segments for chart background
@@ -304,8 +313,8 @@ export default function MacroPage() {
             {/* Signal Contribution Bars */}
             <div className="space-y-1 pt-2">
               <div className="flex items-center justify-between text-xs text-slate-400 px-0.5">
-                <span>{t('signalLegendBuy')}</span>
-                <span>{t('signalLegendSell')}</span>
+                <span>{t('signalLegendRiskOn')}</span>
+                <span>{t('signalLegendRiskOff')}</span>
               </div>
               {bundleQuery.data?.is_market_hours === false && (
                 <div className="flex justify-center">
@@ -695,9 +704,10 @@ export default function MacroPage() {
                   key={w}
                   type="button"
                   onClick={() => setHistoryWindow(w)}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                  aria-pressed={historyWindow === w}
+                  className={`px-3 py-1.5 text-xs font-medium ${
                     historyWindow === w
-                      ? 'bg-[var(--accent)] text-white'
+                      ? 'bg-[var(--accent)] text-white font-bold ring-1 ring-[var(--accent)]'
                       : 'bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:bg-[var(--background)]'
                   }`}
                 >
@@ -708,11 +718,7 @@ export default function MacroPage() {
           </div>
         </div>
 
-        {historyQuery.isLoading ? (
-          <div className="flex h-72 items-center justify-center">
-            <p className="text-sm text-[var(--foreground-muted)]">{t('loadingHistory')}</p>
-          </div>
-        ) : historyQuery.isError ? (
+        {historyQuery.isError ? (
           <div className="flex h-72 items-center justify-center">
             <p className="inline-flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
               <ShieldAlert className="h-4 w-4" />
@@ -721,13 +727,15 @@ export default function MacroPage() {
           </div>
         ) : (!historyQuery.data?.points || historyQuery.data.points.length === 0) ? (
           <div className="flex h-72 flex-col items-center justify-center gap-2">
-            <p className="text-sm text-[var(--foreground-muted)]">{t('noHistory')}</p>
+            <p className="text-sm text-[var(--foreground-muted)]">
+              {historyQuery.isLoading ? t('loadingHistory') : t('noHistory')}
+            </p>
             {historyWindow !== '60m' && (
               <p className="text-xs text-[var(--foreground-muted)]">{t('historyAccumulating')}</p>
             )}
           </div>
         ) : (
-          <div className="h-72">
+          <div className="relative h-72" aria-busy={historyQuery.isLoading}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -779,6 +787,7 @@ export default function MacroPage() {
                     if (name === 'USD/KRW') return [formatNumber(v, locale, 2), name];
                     if (name === t('macroScore')) return [formatPercent(v), name];
                     if (name === t('fxChangePct')) return [`${v > 0 ? '+' : ''}${v.toFixed(3)}%`, name];
+                    if (name === t('fxVolatility')) return [`${(v * 100).toFixed(3)}%`, name];
                     return [String(value), name];
                   }}
                 />
@@ -787,6 +796,13 @@ export default function MacroPage() {
                   align="right"
                   iconType="line"
                   wrapperStyle={{ fontSize: 11, paddingBottom: 4 }}
+                />
+                <Bar
+                  yAxisId="score"
+                  dataKey="fx_volatility"
+                  name={t('fxVolatility')}
+                  fill="rgba(139,92,246,0.15)"
+                  barSize={6}
                 />
                 <Line
                   yAxisId="fx"
@@ -822,6 +838,11 @@ export default function MacroPage() {
                 />
               </ComposedChart>
             </ResponsiveContainer>
+            {historyQuery.isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center rounded bg-[var(--background)]/45">
+                <p role="status" aria-live="polite" className="text-sm font-medium text-[var(--foreground-muted)]">{t('loadingHistory')}</p>
+              </div>
+            )}
           </div>
         )}
         {(() => {
@@ -833,10 +854,19 @@ export default function MacroPage() {
           const last = new Date(pts[pts.length - 1].timestamp).getTime();
           const spanMin = (last - first) / 60000;
           const requested = windowMinutes[historyWindow];
+          const actualLabel = spanMin < 60 ? `${Math.round(spanMin)}m` : `${(spanMin / 60).toFixed(1)}h`;
+          const requestedLabel = historyWindow === '60m' ? '1h' : historyWindow === '6h' ? '6h' : historyWindow === '1d' ? '1d' : historyWindow === '7d' ? '1w' : '1m';
+          if (spanMin < requested * 0.5) {
+            return (
+              <p className="mt-2 text-center text-xs text-[var(--foreground-muted)]">
+                {t('dataRangeHintStrong', { actual: actualLabel, requested: requestedLabel })}
+              </p>
+            );
+          }
           if (spanMin < requested * 0.8) {
             return (
               <p className="mt-2 text-center text-xs text-[var(--foreground-muted)]">
-                {t('dataRangeHint', { actual: spanMin < 60 ? `${Math.round(spanMin)}m` : `${(spanMin / 60).toFixed(1)}h`, requested: historyWindow === '60m' ? '1h' : historyWindow === '6h' ? '6h' : historyWindow === '1d' ? '1d' : historyWindow === '7d' ? '1w' : '1m' })}
+                {t('dataRangeHintWeak', { actual: actualLabel, requested: requestedLabel })}
               </p>
             );
           }
@@ -1022,6 +1052,10 @@ function SignalBar({ label, contribution, nullLabel, t }: { label: string; contr
             style={{ left: '50%', width: '2%', transform: 'translateX(-50%)' }}
           />
         )}
+      </div>
+      <div className="mt-0.5 flex justify-between text-[9px] text-slate-500">
+        <span>{t('signalLegendRiskOn')}</span>
+        <span>{t('signalLegendRiskOff')}</span>
       </div>
     </div>
   );
