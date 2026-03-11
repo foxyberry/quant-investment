@@ -161,6 +161,8 @@ class MacroBundleResponse(BaseModel):
     signal: MacroSignal
     freshness: MacroFreshness
     interpretation: Optional[MacroInterpretation] = None
+    cache_hit: Optional[bool] = Field(None, description="Whether this response was served from cache")
+    generated_at: Optional[str] = Field(None, description="When this bundle was originally generated")
 
 
 class MacroHistoryPoint(BaseModel):
