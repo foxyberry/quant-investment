@@ -67,6 +67,11 @@ class MacroMarketService:
         # Load recent history from DB on startup
         self._load_history_from_db()
 
+        # Backfill gaps with historical daily data in background
+        threading.Thread(
+            target=self._backfill_history, daemon=True, name="macro-backfill"
+        ).start()
+
     def get_bundle(self, force_refresh: bool = False) -> Dict[str, Any]:
         # Check TTL cache (lock-free read for fast path)
         if not force_refresh:
@@ -632,6 +637,200 @@ class MacroMarketService:
                 db.close()
         except Exception as exc:
             logger.warning("Failed to load macro history from DB: %s", exc)
+
+    # ------------------------------------------------------------------
+    # Historical backfill
+    # ------------------------------------------------------------------
+
+    _BACKFILL_MAX_DAYS = 35
+
+    def _backfill_history(self) -> None:
+        """Backfill missing daily history from external APIs.
+
+        Detects the last recorded timestamp in DB and fills gaps with daily
+        FX + futures data so the 30d timeline is complete even after server
+        restarts.
+        """
+        try:
+            db: Session = SessionLocal()
+            try:
+                latest = db.query(MacroHistory).order_by(desc(MacroHistory.timestamp)).first()
+            finally:
+                db.close()
+
+            now = datetime.now(timezone.utc)
+            if latest and latest.timestamp:
+                last_ts = latest.timestamp
+                if last_ts.tzinfo is None:
+                    last_ts = last_ts.replace(tzinfo=timezone.utc)
+                gap = now - last_ts
+            else:
+                gap = timedelta(days=self._BACKFILL_MAX_DAYS)
+                last_ts = now - gap
+
+            if gap < timedelta(hours=12):
+                logger.info("Macro history gap < 12h, skipping backfill")
+                return
+
+            days_to_fill = min(int(gap.total_seconds() / 86400) + 1, self._BACKFILL_MAX_DAYS)
+            start_date = (now - timedelta(days=days_to_fill)).date()
+            end_date = (now - timedelta(days=1)).date()
+
+            if start_date >= end_date:
+                return
+
+            logger.info(
+                "Backfilling macro history from %s to %s (%d days gap)",
+                start_date, end_date, days_to_fill,
+            )
+
+            fx_daily = self._fetch_fx_historical(start_date, end_date)
+            futures_daily = self._fetch_futures_historical(days_to_fill + 5)
+            backfill_points = self._merge_daily_backfill(fx_daily, futures_daily, last_ts)
+
+            if not backfill_points:
+                logger.info("No backfill points to insert")
+                return
+
+            db = SessionLocal()
+            try:
+                for point in backfill_points:
+                    ts = self._safe_datetime(point.get("timestamp"))
+                    if ts is None:
+                        continue
+                    db.add(MacroHistory(
+                        timestamp=ts,
+                        fx_value=point.get("fx_value"),
+                        futures_value=point.get("futures_value"),
+                        foreign_net=None,
+                        macro_score=point.get("macro_score"),
+                        regime=point.get("regime"),
+                    ))
+                db.commit()
+                logger.info("Backfilled %d macro history points", len(backfill_points))
+            finally:
+                db.close()
+
+            # Reload deque to include backfilled data
+            with self._lock:
+                self._history.clear()
+            self._load_history_from_db()
+
+        except Exception as exc:
+            logger.warning("Macro history backfill failed: %s", exc)
+
+    def _fetch_fx_historical(self, start_date: date, end_date: date) -> Dict[date, float]:
+        """Fetch daily USD/KRW rates from Frankfurter API."""
+        try:
+            import requests
+
+            url = (
+                f"https://api.frankfurter.app/{start_date}..{end_date}"
+                f"?from=USD&to=KRW"
+            )
+            r = requests.get(url, timeout=15)
+            r.raise_for_status()
+            data = r.json()
+            result: Dict[date, float] = {}
+            for date_str, rate_dict in data.get("rates", {}).items():
+                d = date.fromisoformat(date_str)
+                krw = rate_dict.get("KRW")
+                if krw is not None:
+                    result[d] = float(krw)
+            logger.info("Fetched %d daily FX rates for backfill", len(result))
+            return result
+        except Exception as exc:
+            logger.warning("Failed to fetch historical FX rates: %s", exc)
+            return {}
+
+    def _fetch_futures_historical(self, days: int) -> Dict[date, float]:
+        """Fetch daily KODEX 200 close prices via market service."""
+        try:
+            ohlcv = self.market_service.get_ohlcv(self.futures_ticker, days=days)
+            if not ohlcv or not ohlcv.get("data"):
+                return {}
+            result: Dict[date, float] = {}
+            for item in ohlcv["data"]:
+                d = date.fromisoformat(item["time"])
+                result[d] = float(item["close"])
+            logger.info("Fetched %d daily futures prices for backfill", len(result))
+            return result
+        except Exception as exc:
+            logger.warning("Failed to fetch historical futures data: %s", exc)
+            return {}
+
+    def _merge_daily_backfill(
+        self,
+        fx_daily: Dict[date, float],
+        futures_daily: Dict[date, float],
+        last_ts: datetime,
+    ) -> List[Dict[str, Any]]:
+        """Merge daily FX + futures into backfill history points."""
+        all_dates = sorted(set(fx_daily.keys()) | set(futures_daily.keys()))
+        if not all_dates:
+            return []
+
+        points: List[Dict[str, Any]] = []
+        prev_fx: Optional[float] = None
+        prev_fut: Optional[float] = None
+
+        for d in all_dates:
+            # Use 9:00 UTC (≈ 18:00 KST, after market close)
+            dt = datetime(d.year, d.month, d.day, 9, 0, tzinfo=timezone.utc)
+            if dt <= last_ts:
+                # Track previous values for change calculation
+                prev_fx = fx_daily.get(d, prev_fx)
+                prev_fut = futures_daily.get(d, prev_fut)
+                continue
+
+            fx_val = fx_daily.get(d)
+            fut_val = futures_daily.get(d)
+
+            # Compute daily change percentages
+            fx_change = None
+            if fx_val is not None and prev_fx is not None and prev_fx > 0:
+                fx_change = ((fx_val - prev_fx) / prev_fx) * 100
+
+            fut_change = None
+            if fut_val is not None and prev_fut is not None and prev_fut > 0:
+                fut_change = ((fut_val - prev_fut) / prev_fut) * 100
+
+            # Simplified signal (no basis, no flow — reweighted 55/45)
+            fx_raw = self._clip((fx_change or 0) / 1.5, -1.0, 1.0)
+            fut_raw = self._clip(-(fut_change or 0) / 3.0, -1.0, 1.0)
+
+            numerator = 0.0
+            denominator = 0.0
+            if fx_val is not None:
+                numerator += 0.55 * fx_raw
+                denominator += 0.55
+            if fut_val is not None:
+                numerator += 0.45 * fut_raw
+                denominator += 0.45
+
+            macro_score = round(numerator / denominator, 4) if denominator > 0 else None
+            regime = "unknown"
+            if macro_score is not None:
+                if macro_score >= 0.6:
+                    regime = "risk_off"
+                elif macro_score <= -0.6:
+                    regime = "risk_on"
+                else:
+                    regime = "neutral"
+
+            points.append({
+                "timestamp": dt.isoformat(),
+                "fx_value": fx_val,
+                "futures_value": fut_val,
+                "foreign_net": None,
+                "macro_score": macro_score,
+                "regime": regime,
+            })
+
+            prev_fx = fx_val if fx_val is not None else prev_fx
+            prev_fut = fut_val if fut_val is not None else prev_fut
+
+        return points
 
     def _flush_to_db(self) -> None:
         """Write buffered history points to the database."""

@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { getMacroBundle, getMacroHistory, getOhlcv, searchTickers } from '@/lib/api';
 
@@ -24,14 +25,32 @@ export function useMacroBundle() {
   });
 }
 
+const MACRO_HISTORY_STALE_TIME = 2 * 60 * 1000; // 2 minutes
+
 export function useMacroHistory(window: string = '60m') {
   return useQuery({
     queryKey: queryKeys.market.macroHistory(window),
     queryFn: () => getMacroHistory(window),
     refetchInterval: MACRO_POLL_MS,
-    staleTime: MACRO_POLL_MS,
+    staleTime: MACRO_HISTORY_STALE_TIME,
     placeholderData: (prev) => prev,
   });
+}
+
+const ALL_WINDOWS = ['60m', '6h', '1d', '7d', '30d'] as const;
+
+/** Prefetch all macro history windows on mount so tab switches are instant. */
+export function usePrefetchMacroHistory() {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    for (const w of ALL_WINDOWS) {
+      void queryClient.prefetchQuery({
+        queryKey: queryKeys.market.macroHistory(w),
+        queryFn: () => getMacroHistory(w),
+        staleTime: MACRO_HISTORY_STALE_TIME,
+      });
+    }
+  }, [queryClient]);
 }
 
 export function useOhlcv(ticker: string, days = 30) {

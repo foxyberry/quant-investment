@@ -22,6 +22,8 @@ interface CandleChartProps {
   height?: number;
   /** Show volume histogram */
   showVolume?: boolean;
+  /** Show daily change rate (%) histogram at the bottom */
+  showChangeRate?: boolean;
   /** Show moving average lines (SMA 5, 20, 60, 120) */
   showMA?: boolean;
   /** Additional CSS class */
@@ -56,6 +58,7 @@ export default function CandleChart({
   data,
   height = 400,
   showVolume = true,
+  showChangeRate = false,
   showMA = true,
   className = '',
 }: CandleChartProps) {
@@ -65,6 +68,7 @@ export default function CandleChart({
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const changeRateSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const maSeriesRefs = useRef<(ISeriesApi<'Line'> | null)[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -143,6 +147,28 @@ export default function CandleChart({
       volumeSeriesRef.current = volumeSeries;
     }
 
+    // Create change rate histogram if enabled
+    if (showChangeRate) {
+      const changeRateSeries = chart.addSeries(HistogramSeries, {
+        color: '#60a5fa',
+        priceFormat: {
+          type: 'price',
+          precision: 2,
+          minMove: 0.01,
+        },
+        priceScaleId: 'changeRate',
+      });
+
+      changeRateSeries.priceScale().applyOptions({
+        scaleMargins: {
+          top: 0.8,
+          bottom: 0,
+        },
+      });
+
+      changeRateSeriesRef.current = changeRateSeries;
+    }
+
     // Create moving average line series if enabled
     if (showMA) {
       maSeriesRefs.current = MA_CONFIGS.map((cfg) => {
@@ -177,9 +203,10 @@ export default function CandleChart({
       chartRef.current = null;
       candleSeriesRef.current = null;
       volumeSeriesRef.current = null;
+      changeRateSeriesRef.current = null;
       maSeriesRefs.current = [];
     };
-  }, [height, showVolume, showMA]);
+  }, [height, showVolume, showChangeRate, showMA]);
 
   // Update data
   useEffect(() => {
@@ -207,6 +234,20 @@ export default function CandleChart({
       volumeSeriesRef.current.setData(volumeData);
     }
 
+    // Update change rate data if enabled
+    if (showChangeRate && changeRateSeriesRef.current) {
+      const changeRateData: HistogramData<Time>[] = data.map((item, i) => {
+        const prevClose = i > 0 ? data[i - 1].close : item.open;
+        const changeRate = prevClose !== 0 ? ((item.close - prevClose) / prevClose) * 100 : 0;
+        return {
+          time: item.time as Time,
+          value: changeRate,
+          color: changeRate >= 0 ? '#22c55e80' : '#ef444480',
+        };
+      });
+      changeRateSeriesRef.current.setData(changeRateData);
+    }
+
     // Update moving average data
     if (showMA && maSeriesRefs.current.length > 0) {
       MA_CONFIGS.forEach((cfg, idx) => {
@@ -222,7 +263,7 @@ export default function CandleChart({
     if (chartRef.current) {
       chartRef.current.timeScale().fitContent();
     }
-  }, [data, showVolume, showMA]);
+  }, [data, showVolume, showChangeRate, showMA]);
 
   // Update chart colors on theme change
   useEffect(() => {
