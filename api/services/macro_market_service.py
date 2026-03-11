@@ -369,31 +369,77 @@ class MacroMarketService:
                 "updated_at": None,
             }
 
+    @staticmethod
+    def _compute_alignment(foreign_net: float | None, institution_net: float | None) -> str:
+        """Compute foreign vs institution alignment/conflict status."""
+        if foreign_net is None or institution_net is None:
+            return "unknown"
+        if foreign_net > 0 and institution_net > 0:
+            return "aligned_buy"
+        if foreign_net < 0 and institution_net < 0:
+            return "aligned_sell"
+        if foreign_net > 0 and institution_net < 0:
+            return "foreign_lead"
+        if foreign_net < 0 and institution_net > 0:
+            return "institution_lead"
+        return "unknown"
+
+    @staticmethod
+    def _compute_foreign_strength(foreign_net: float | None) -> str | None:
+        """Compute foreign flow strength signal based on absolute value."""
+        if foreign_net is None:
+            return None
+        abs_val = abs(foreign_net)
+        if abs_val >= 500_000_000_000:  # >= 5000억
+            return "strong"
+        if abs_val >= 100_000_000_000:  # >= 1000억
+            return "moderate"
+        return "weak"
+
     def _get_flow_snapshot(self) -> Dict[str, Any]:
         # Primary adapter: pipeline-populated JSON file
-        try:
-            if self.investor_flow_path.exists():
-                raw = json.loads(self.investor_flow_path.read_text(encoding="utf-8"))
-                return {
-                    "market": str(raw.get("market", "KOSPI")),
-                    "foreign_net": self._to_float(raw.get("foreign_net")),
-                    "institution_net": self._to_float(raw.get("institution_net")),
-                    "individual_net": self._to_float(raw.get("individual_net")),
-                    "window_min": self._to_int(raw.get("window_min")),
-                    "updated_at": self._to_iso(raw.get("updated_at")),
-                }
-        except Exception as exc:
-            logger.warning("Investor flow file adapter failed: %s", exc)
-
-        # Fallback: unavailable (explicit nulls to avoid fake precision)
-        return {
+        base = {
             "market": "KOSPI",
             "foreign_net": None,
             "institution_net": None,
             "individual_net": None,
             "window_min": None,
             "updated_at": None,
+            "alignment": None,
+            "foreign_strength": None,
+            "kosdaq_foreign_net": None,
+            "kosdaq_institution_net": None,
+            "kosdaq_individual_net": None,
         }
+        try:
+            if self.investor_flow_path.exists():
+                raw = json.loads(self.investor_flow_path.read_text(encoding="utf-8"))
+                foreign = self._to_float(raw.get("foreign_net"))
+                institution = self._to_float(raw.get("institution_net"))
+
+                base.update({
+                    "market": str(raw.get("market", "KOSPI")),
+                    "foreign_net": foreign,
+                    "institution_net": institution,
+                    "individual_net": self._to_float(raw.get("individual_net")),
+                    "window_min": self._to_int(raw.get("window_min")),
+                    "updated_at": self._to_iso(raw.get("updated_at")),
+                    "alignment": self._compute_alignment(foreign, institution),
+                    "foreign_strength": self._compute_foreign_strength(foreign),
+                })
+
+                # KOSDAQ nested data (from collector)
+                kq = raw.get("kosdaq")
+                if isinstance(kq, dict):
+                    base["kosdaq_foreign_net"] = self._to_float(kq.get("foreign_net"))
+                    base["kosdaq_institution_net"] = self._to_float(kq.get("institution_net"))
+                    base["kosdaq_individual_net"] = self._to_float(kq.get("individual_net"))
+
+                return base
+        except Exception as exc:
+            logger.warning("Investor flow file adapter failed: %s", exc)
+
+        return base
 
     def _compute_signal(
         self,

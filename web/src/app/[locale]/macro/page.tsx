@@ -56,6 +56,34 @@ function formatFlowBillion(value: number | null, locale: string): string {
   return prefix + formatNumber(Math.round(billion), locale, 0);
 }
 
+const ALIGNMENT_STYLES: Record<string, { color: string; bg: string }> = {
+  aligned_buy: { color: 'text-emerald-400', bg: 'bg-emerald-900/30' },
+  aligned_sell: { color: 'text-red-400', bg: 'bg-red-900/30' },
+  foreign_lead: { color: 'text-blue-400', bg: 'bg-blue-900/30' },
+  institution_lead: { color: 'text-amber-400', bg: 'bg-amber-900/30' },
+  unknown: { color: 'text-slate-400', bg: 'bg-slate-700/40' },
+};
+
+const ALIGNMENT_KEYS: Record<string, string> = {
+  aligned_buy: 'alignmentAlignedBuy',
+  aligned_sell: 'alignmentAlignedSell',
+  foreign_lead: 'alignmentForeignLead',
+  institution_lead: 'alignmentInstitutionLead',
+  unknown: 'alignmentUnknown',
+};
+
+const STRENGTH_STYLES: Record<string, { color: string; bg: string }> = {
+  strong: { color: 'text-orange-300', bg: 'bg-orange-900/30' },
+  moderate: { color: 'text-yellow-300', bg: 'bg-yellow-900/30' },
+  weak: { color: 'text-slate-400', bg: 'bg-slate-700/40' },
+};
+
+const STRENGTH_KEYS: Record<string, string> = {
+  strong: 'strengthStrong',
+  moderate: 'strengthModerate',
+  weak: 'strengthWeak',
+};
+
 function formatDateTime(value: string | null, locale: string): string {
   if (!value) return '-';
   const date = new Date(value);
@@ -326,10 +354,36 @@ export default function MacroPage() {
           }
           unit={t('flowUnit')}
           source={t('flowSource')}
+          valueBadge={
+            (() => {
+              const alignment = bundleQuery.data?.flow.alignment;
+              const strength = bundleQuery.data?.flow.foreign_strength;
+              if (!alignment || alignment === 'unknown') return undefined;
+              const aStyle = ALIGNMENT_STYLES[alignment] ?? ALIGNMENT_STYLES.unknown;
+              const sStyle = strength ? (STRENGTH_STYLES[strength] ?? STRENGTH_STYLES.weak) : null;
+              return (
+                <span className="inline-flex items-center gap-1">
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${aStyle.bg} ${aStyle.color}`}>
+                    {t(ALIGNMENT_KEYS[alignment] ?? 'alignmentUnknown')}
+                  </span>
+                  {sStyle && strength && strength !== 'weak' && (
+                    <span className={`rounded px-1 py-0.5 text-[10px] font-medium ${sStyle.bg} ${sStyle.color}`}>
+                      {t(STRENGTH_KEYS[strength] ?? 'strengthWeak')}
+                    </span>
+                  )}
+                </span>
+              );
+            })()
+          }
           items={[
-            { label: t('foreign'), value: formatFlowBillion(bundleQuery.data?.flow.foreign_net ?? null, locale) },
-            { label: t('institution'), value: formatFlowBillion(bundleQuery.data?.flow.institution_net ?? null, locale) },
-            { label: t('individual'), value: formatFlowBillion(bundleQuery.data?.flow.individual_net ?? null, locale) },
+            { label: `${t('kospiLabel')} ${t('foreign')}`, value: formatFlowBillion(bundleQuery.data?.flow.foreign_net ?? null, locale) },
+            { label: `${t('kospiLabel')} ${t('institution')}`, value: formatFlowBillion(bundleQuery.data?.flow.institution_net ?? null, locale) },
+            { label: `${t('kospiLabel')} ${t('individual')}`, value: formatFlowBillion(bundleQuery.data?.flow.individual_net ?? null, locale) },
+            ...((bundleQuery.data?.flow.kosdaq_foreign_net != null || bundleQuery.data?.flow.kosdaq_institution_net != null || bundleQuery.data?.flow.kosdaq_individual_net != null) ? [
+              { label: `${t('kosdaqLabel')} ${t('foreign')}`, value: formatFlowBillion(bundleQuery.data?.flow.kosdaq_foreign_net ?? null, locale) },
+              { label: `${t('kosdaqLabel')} ${t('institution')}`, value: formatFlowBillion(bundleQuery.data?.flow.kosdaq_institution_net ?? null, locale) },
+              { label: `${t('kosdaqLabel')} ${t('individual')}`, value: formatFlowBillion(bundleQuery.data?.flow.kosdaq_individual_net ?? null, locale) },
+            ] : []),
           ]}
           ageSec={bundleQuery.data?.freshness.flow_age_sec ?? null}
           ageLabel={formatAge(bundleQuery.data?.freshness.flow_age_sec ?? null, t)}

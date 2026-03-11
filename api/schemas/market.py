@@ -132,6 +132,11 @@ class MacroInvestorFlowSnapshot(BaseModel):
     individual_net: Optional[float] = Field(None, description="Individual net flow")
     window_min: Optional[int] = Field(None, description="Aggregation window in minutes")
     updated_at: Optional[str] = Field(None, description="Last update timestamp")
+    alignment: Optional[str] = Field(None, description="Foreign vs institution alignment (aligned_buy/aligned_sell/foreign_lead/institution_lead/unknown)")
+    foreign_strength: Optional[str] = Field(None, description="Foreign flow strength (strong/moderate/weak)")
+    kosdaq_foreign_net: Optional[float] = Field(None, description="KOSDAQ foreign net flow")
+    kosdaq_institution_net: Optional[float] = Field(None, description="KOSDAQ institution net flow")
+    kosdaq_individual_net: Optional[float] = Field(None, description="KOSDAQ individual net flow")
 
 
 class MacroSignalComponent(BaseModel):
