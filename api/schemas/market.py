@@ -187,6 +187,17 @@ class MacroBondSnapshot(BaseModel):
     )
 
 
+class MacroVolatilitySnapshot(BaseModel):
+    vix: Optional[float] = Field(None, description="CBOE VIX index value")
+    vix_change_pct: Optional[float] = Field(None, description="VIX daily change %")
+    vix_as_of: Optional[str] = Field(None, description="VIX data timestamp")
+    vkospi: Optional[float] = Field(None, description="VKOSPI index value")
+    vkospi_change_pct: Optional[float] = Field(None, description="VKOSPI daily change %")
+    vkospi_as_of: Optional[str] = Field(None, description="VKOSPI data timestamp")
+    fear_greed: Optional[str] = Field(None, description="Fear/greed classification based on VIX")
+    vkospi_vix_ratio: Optional[float] = Field(None, description="VKOSPI/VIX ratio (auxiliary)")
+
+
 class MacroBundleResponse(BaseModel):
     fx: MacroFxSnapshot
     futures: MacroFuturesSnapshot
@@ -198,6 +209,9 @@ class MacroBundleResponse(BaseModel):
     generated_at: Optional[str] = Field(None, description="When this bundle was originally generated")
     is_market_hours: Optional[bool] = Field(None, description="Whether KRX is currently in market hours")
     bonds: Optional[MacroBondSnapshot] = Field(None, description="Bond rate snapshot (yields, spreads)")
+    volatility: Optional[MacroVolatilitySnapshot] = Field(
+        None, description="Volatility snapshot (VIX, VKOSPI)"
+    )
 
 
 class MacroHistoryPoint(BaseModel):

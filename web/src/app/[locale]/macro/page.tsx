@@ -416,6 +416,72 @@ export default function MacroPage() {
         </section>
       )}
 
+      {bundleQuery.data?.volatility && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold flex items-center gap-2 text-[var(--foreground)]">
+            <ShieldAlert className="h-5 w-5 text-red-500" />
+            {t('volatilityTitle')}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MetricCard
+              title={t('volatilityVix')}
+              icon={<Activity className="h-4 w-4" />}
+              value={formatNumber(bundleQuery.data.volatility.vix, locale, 2)}
+              unit=""
+              changePct={bundleQuery.data.volatility.vix_change_pct}
+              source="CBOE"
+              items={[
+                {
+                  label: t('volatilityFearGreed'),
+                  value: (() => {
+                    const fg = bundleQuery.data.volatility?.fear_greed;
+                    const valid = ['low_vol', 'normal', 'elevated', 'high', 'extreme'] as const;
+                    if (fg && (valid as readonly string[]).includes(fg)) return t(`volatilityLevel_${fg}`);
+                    return '-';
+                  })(),
+                },
+              ]}
+              ageSec={null}
+              ageLabel={bundleQuery.data.volatility.vix_as_of ? formatDateTime(bundleQuery.data.volatility.vix_as_of, locale) : '-'}
+              staleLabel={t('staleWarning')}
+              valueBadge={bundleQuery.data.volatility.vix != null && bundleQuery.data.volatility.vix >= 30 ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  <AlertTriangle className="h-3 w-3" />
+                  {t('volatilityExtremeWarning')}
+                </span>
+              ) : null}
+              interpretationText={
+                bundleQuery.data.volatility.fear_greed === 'extreme'
+                  ? t('volatilityExtremeDesc')
+                  : bundleQuery.data.volatility.fear_greed === 'high'
+                    ? t('volatilityHighDesc')
+                    : undefined
+              }
+            />
+            <MetricCard
+              title={t('volatilityVkospi')}
+              icon={<Activity className="h-4 w-4" />}
+              value={formatNumber(bundleQuery.data.volatility.vkospi, locale, 2)}
+              unit=""
+              changePct={bundleQuery.data.volatility.vkospi_change_pct}
+              source="KRX"
+              items={[
+                {
+                  label: t('volatilityRatio'),
+                  value: bundleQuery.data.volatility.vkospi_vix_ratio != null
+                    ? formatNumber(bundleQuery.data.volatility.vkospi_vix_ratio, locale, 2)
+                    : '-',
+                  hint: t('volatilityRatioHint'),
+                },
+              ]}
+              ageSec={null}
+              ageLabel={bundleQuery.data.volatility.vkospi_as_of ? formatDateTime(bundleQuery.data.volatility.vkospi_as_of, locale) : '-'}
+              staleLabel={t('staleWarning')}
+            />
+          </div>
+        </section>
+      )}
+
       {/* Timeline Chart */}
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">

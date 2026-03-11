@@ -224,7 +224,21 @@
     "bondsKrUsNegative": "KR rate below US — capital outflow pressure",
     "bondsKrUsPositive": "KR rate above US — stable capital flow",
     "bondsFredSource": "FRED (Federal Reserve)",
-    "bondsEcosSource": "ECOS (Bank of Korea)"
+    "bondsEcosSource": "ECOS (Bank of Korea)",
+    "volatilityTitle": "Volatility (Fear & Greed)",
+    "volatilityVix": "VIX (S&P 500)",
+    "volatilityVkospi": "VKOSPI (KOSPI 200)",
+    "volatilityFearGreed": "Market Sentiment",
+    "volatilityLevel_low_vol": "Low Volatility",
+    "volatilityLevel_normal": "Normal",
+    "volatilityLevel_elevated": "Elevated",
+    "volatilityLevel_high": "High Volatility",
+    "volatilityLevel_extreme": "Extreme Fear",
+    "volatilityExtremeWarning": "Extreme Fear",
+    "volatilityExtremeDesc": "VIX above 30 — market in extreme fear, historically a contrarian buy signal",
+    "volatilityHighDesc": "VIX elevated — increased uncertainty, proceed with caution",
+    "volatilityRatio": "VKOSPI/VIX Ratio",
+    "volatilityRatioHint": "Ratio above 1.0 means Korea market more fearful than global"
   },
   "screening": {
     "title": "Stock Screening",

@@ -373,6 +373,17 @@ export interface MacroFreshness {
   flow_age_sec: number | null;
 }
 
+export interface MacroVolatilitySnapshot {
+  vix: number | null;
+  vix_change_pct: number | null;
+  vix_as_of: string | null;
+  vkospi: number | null;
+  vkospi_change_pct: number | null;
+  vkospi_as_of: string | null;
+  fear_greed: string | null;
+  vkospi_vix_ratio: number | null;
+}
+
 export type MacroEntrySignal = 'buy_favorable' | 'wait' | 'caution';
 
 export interface MacroInterpretation {
@@ -389,6 +400,7 @@ export interface MacroBundle {
   signal: MacroSignal;
   freshness: MacroFreshness;
   bonds?: MacroBondSnapshot | null;
+  volatility?: MacroVolatilitySnapshot | null;
   interpretation?: MacroInterpretation | null;
   cache_hit?: boolean | null;
   generated_at?: string | null;

@@ -13,6 +13,7 @@ from api.schemas.market import (
     MacroBondSnapshot,
     MacroBundleResponse,
     MacroHistoryResponse,
+    MacroVolatilitySnapshot,
     OHLCVResponse,
     QuoteResponse,
     TechnicalIndicators,
@@ -21,6 +22,7 @@ from api.services.bond_rate_service import get_bond_rate_service
 from api.schemas.analysis import SearchResult
 from api.services.market_service import MarketService
 from api.services.macro_market_service import get_macro_market_service
+from api.services.volatility_service import get_volatility_service
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,7 @@ router = APIRouter(
 _service = MarketService()
 _macro_service = get_macro_market_service(_service)
 _bond_service = get_bond_rate_service()
+_volatility_service = get_volatility_service()
 
 
 @router.get(
@@ -162,6 +165,16 @@ def get_macro_bundle(
     except Exception:
         logger.warning("Failed to fetch bond snapshot", exc_info=True)
         result["bonds"] = None
+    try:
+        vol_snapshot = _volatility_service.get_snapshot()
+        if vol_snapshot and (vol_snapshot.get("vix") is not None or vol_snapshot.get("vkospi") is not None):
+            vol = MacroVolatilitySnapshot(**vol_snapshot)
+            result["volatility"] = vol.model_dump()
+        else:
+            result["volatility"] = None
+    except Exception:
+        logger.warning("Failed to fetch volatility snapshot", exc_info=True)
+        result["volatility"] = None
     return MacroBundleResponse(**result)
 
 
