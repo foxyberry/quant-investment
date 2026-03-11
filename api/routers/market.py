@@ -10,12 +10,14 @@ from typing import Annotated, List
 from fastapi import APIRouter, HTTPException, Query
 
 from api.schemas.market import (
+    MacroBondSnapshot,
     MacroBundleResponse,
     MacroHistoryResponse,
     OHLCVResponse,
     QuoteResponse,
     TechnicalIndicators,
 )
+from api.services.bond_rate_service import get_bond_rate_service
 from api.schemas.analysis import SearchResult
 from api.services.market_service import MarketService
 from api.services.macro_market_service import get_macro_market_service
@@ -34,6 +36,7 @@ router = APIRouter(
 # Service instance
 _service = MarketService()
 _macro_service = get_macro_market_service(_service)
+_bond_service = get_bond_rate_service()
 
 
 @router.get(
@@ -149,6 +152,16 @@ def get_macro_bundle(
     force: bool = Query(False, description="Bypass server cache and force fresh data collection"),
 ) -> MacroBundleResponse:
     result = _macro_service.get_bundle(force_refresh=force)
+    try:
+        snapshot = _bond_service.get_snapshot()
+        if snapshot:
+            bonds = MacroBondSnapshot(**snapshot)
+            result["bonds"] = bonds.model_dump()
+        else:
+            result["bonds"] = None
+    except Exception:
+        logger.warning("Failed to fetch bond snapshot", exc_info=True)
+        result["bonds"] = None
     return MacroBundleResponse(**result)
 
 

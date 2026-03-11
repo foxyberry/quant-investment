@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   CandlestickChart,
   DollarSign,
+  Landmark,
   RefreshCw,
   ShieldAlert,
   TrendingUp,
@@ -316,6 +317,83 @@ export default function MacroPage() {
           interpretationText={interpretation ? t(`interp_flow_${interpretation.flow_interpretation}`) : undefined}
         />
       </div>
+
+      {bundleQuery.data?.bonds && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold flex items-center gap-2 text-[var(--foreground)]">
+            <Landmark className="h-5 w-5 text-blue-500" />
+            {t('bondsTitle')}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MetricCard
+              title={t('bondsUsTreasury')}
+              icon={<DollarSign className="h-4 w-4" />}
+              value={formatNumber(bundleQuery.data.bonds.us_10y, locale, 3)}
+              unit="%"
+              changePct={null}
+              source={t('bondsFredSource')}
+              items={[
+                { label: t('bondsUs2y'), value: bundleQuery.data.bonds.us_2y != null ? `${formatNumber(bundleQuery.data.bonds.us_2y, locale, 3)}%` : '-' },
+                {
+                  label: t('bondsSpread210'),
+                  value: bundleQuery.data.bonds.us_spread_2_10 != null ? `${formatNumber(bundleQuery.data.bonds.us_spread_2_10, locale, 2)}pp` : '-',
+                  hint: t('bondsSpread210Explain'),
+                },
+              ]}
+              ageSec={null}
+              ageLabel={bundleQuery.data.bonds.source_updated_at ? formatDateTime(bundleQuery.data.bonds.source_updated_at, locale) : '-'}
+              staleLabel={t('staleWarning')}
+              stale={bundleQuery.data.bonds.stale ?? false}
+              interpretationText={
+                bundleQuery.data.bonds.inverted
+                  ? t('bondsInvertedWarning')
+                  : bundleQuery.data.bonds.us_spread_2_10 != null
+                    ? (bundleQuery.data.bonds.us_spread_2_10 < 0.5 ? t('bondsSpreadNarrow') : t('bondsSpreadNormal'))
+                    : undefined
+              }
+              valueBadge={bundleQuery.data.bonds.inverted ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  <AlertTriangle className="h-3 w-3" />
+                  {t('bondsInvertedBadge')}
+                </span>
+              ) : null}
+            />
+            <MetricCard
+              title={t('bondsKrGovBond')}
+              icon={<Landmark className="h-4 w-4" />}
+              value={formatNumber(bundleQuery.data.bonds.kr_10y, locale, 3)}
+              unit="%"
+              changePct={null}
+              source={t('bondsEcosSource')}
+              items={[
+                { label: t('bondsKr3y'), value: bundleQuery.data.bonds.kr_3y != null ? `${formatNumber(bundleQuery.data.bonds.kr_3y, locale, 3)}%` : '-' },
+              ]}
+              ageSec={null}
+              ageLabel={bundleQuery.data.bonds.source_updated_at ? formatDateTime(bundleQuery.data.bonds.source_updated_at, locale) : '-'}
+              staleLabel={t('staleWarning')}
+              stale={bundleQuery.data.bonds.stale ?? false}
+            />
+            <MetricCard
+              title={t('bondsKrUsSpread')}
+              icon={<Activity className="h-4 w-4" />}
+              value={formatNumber(bundleQuery.data.bonds.kr_us_spread_10y, locale, 2)}
+              unit="pp"
+              changePct={null}
+              source="FRED + ECOS"
+              items={[]}
+              ageSec={null}
+              ageLabel={bundleQuery.data.bonds.source_updated_at ? formatDateTime(bundleQuery.data.bonds.source_updated_at, locale) : '-'}
+              staleLabel={t('staleWarning')}
+              stale={bundleQuery.data.bonds.stale ?? false}
+              interpretationText={
+                bundleQuery.data.bonds.kr_us_spread_10y != null
+                  ? (bundleQuery.data.bonds.kr_us_spread_10y < 0 ? t('bondsKrUsNegative') : t('bondsKrUsPositive'))
+                  : undefined
+              }
+            />
+          </div>
+        </section>
+      )}
 
       {/* Timeline Chart */}
       <Card>
@@ -652,6 +730,8 @@ function MetricCard({
   ageSec,
   ageLabel,
   staleLabel,
+  stale,
+  valueBadge,
   interpretationText,
 }: {
   title: string;
@@ -664,9 +744,11 @@ function MetricCard({
   ageSec: number | null;
   ageLabel: string;
   staleLabel: string;
+  stale?: boolean;
+  valueBadge?: ReactNode;
   interpretationText?: string;
 }) {
-  const isStale = ageSec != null && ageSec > STALE_THRESHOLD_SEC;
+  const isStale = stale ?? (ageSec != null && ageSec > STALE_THRESHOLD_SEC);
 
   return (
     <Card>
@@ -690,6 +772,7 @@ function MetricCard({
               <span className="ml-1 text-sm font-normal text-[var(--foreground-muted)]">{unit}</span>
             )}
           </p>
+          {valueBadge}
           {changePct != null && (
             <span className={`text-sm font-medium ${changePct > 0 ? 'text-red-500' : changePct < 0 ? 'text-emerald-500' : 'text-[var(--foreground-muted)]'}`}>
               {changePct > 0 ? '+' : ''}{changePct.toFixed(2)}%
@@ -719,4 +802,3 @@ function MetricCard({
     </Card>
   );
 }
-

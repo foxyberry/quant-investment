@@ -288,7 +288,9 @@ class TestMacroEndpoints:
     """Tests for macro bundle/history endpoints."""
 
     def test_get_macro_bundle(self, client):
-        with patch("api.routers.market._macro_service") as mock_macro_service:
+        with patch("api.routers.market._macro_service") as mock_macro_service, patch(
+            "api.routers.market._bond_service"
+        ) as mock_bond_service:
             mock_macro_service.get_bundle.return_value = {
                 "fx": {
                     "pair": "USD/KRW",
@@ -323,6 +325,7 @@ class TestMacroEndpoints:
                     "flow_age_sec": 120,
                 },
             }
+            mock_bond_service.get_snapshot.return_value = None
 
             response = client.get("/api/market/macro/bundle")
 
@@ -331,6 +334,65 @@ class TestMacroEndpoints:
             assert payload["fx"]["pair"] == "USD/KRW"
             assert payload["signal"]["regime"] == "risk_off"
             assert "freshness" in payload
+            assert payload.get("bonds") is None
+
+    def test_get_macro_bundle_with_bonds(self, client):
+        with patch("api.routers.market._macro_service") as mock_macro_service, patch(
+            "api.routers.market._bond_service"
+        ) as mock_bond_service:
+            mock_macro_service.get_bundle.return_value = {
+                "fx": {
+                    "pair": "USD/KRW",
+                    "value": 1340.5,
+                    "change_pct": 0.12,
+                    "updated_at": "2026-03-07T13:00:00+00:00",
+                },
+                "futures": {
+                    "symbol": "069500.KS",
+                    "value": 400.2,
+                    "basis": 1.4,
+                    "change_pct": -0.22,
+                    "updated_at": "2026-03-07T13:00:00+00:00",
+                },
+                "flow": {
+                    "market": "KOSPI",
+                    "foreign_net": -1500000000.0,
+                    "institution_net": 900000000.0,
+                    "individual_net": 600000000.0,
+                    "window_min": 5,
+                    "updated_at": "2026-03-07T12:58:00+00:00",
+                },
+                "signal": {
+                    "macro_score": 0.64,
+                    "regime": "risk_off",
+                    "reason": "risk_off: fx=0.80 (decay=1.00)",
+                    "updated_at": "2026-03-07T13:00:00+00:00",
+                },
+                "freshness": {
+                    "fx_age_sec": 5,
+                    "futures_age_sec": 3,
+                    "flow_age_sec": 120,
+                },
+            }
+            mock_bond_service.get_snapshot.return_value = {
+                "us_10y": 4.10,
+                "us_2y": 4.30,
+                "us_spread_2_10": -0.20,
+                "inverted": True,
+                "kr_10y": 3.20,
+                "kr_3y": 3.00,
+                "kr_us_spread_10y": -0.90,
+                "source_updated_at": "2026-03-10",
+                "stale": False,
+            }
+
+            response = client.get("/api/market/macro/bundle")
+
+            assert response.status_code == 200
+            payload = response.json()
+            assert payload["bonds"]["us_10y"] == 4.10
+            assert payload["bonds"]["inverted"] is True
+            assert payload["bonds"]["kr_us_spread_10y"] == -0.90
 
     def test_get_macro_history(self, client):
         with patch("api.routers.market._macro_service") as mock_macro_service:
