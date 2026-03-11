@@ -248,7 +248,16 @@
     "volatilityExtremeDesc": "VIX 30 이상 — 극도의 공포 구간, 역사적으로 역발상 매수 신호",
     "volatilityHighDesc": "VIX 상승 — 불확실성 증가, 신중한 접근 필요",
     "volatilityRatio": "VKOSPI/VIX 비율",
-    "volatilityRatioHint": "1.0 이상이면 한국 시장이 글로벌보다 더 큰 공포 상태"
+    "volatilityRatioHint": "1.0 이상이면 한국 시장이 글로벌보다 더 큰 공포 상태",
+    "globalTitle": "글로벌 지표",
+    "globalDxy": "DXY (달러 인덱스)",
+    "globalWti": "WTI 원유",
+    "globalGold": "금",
+    "globalCopper": "구리",
+    "globalMsciEm": "MSCI 신흥국 (EEM)",
+    "globalMsciDm": "MSCI 선진국 (EFA)",
+    "globalEmDmRatio": "EM/DM 비율",
+    "globalEmDmRatioHint": "EEM/EFA — 0.5 이상이면 신흥국이 선진국 대비 강세"
   },
   "screening": {
     "title": "종목 스크리닝",

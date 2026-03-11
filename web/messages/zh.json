@@ -248,7 +248,16 @@
     "volatilityExtremeDesc": "VIX超过30 — 市场极度恐慌，历史上是逆向买入信号",
     "volatilityHighDesc": "VIX升高 — 不确定性增加，需谨慎操作",
     "volatilityRatio": "VKOSPI/VIX比率",
-    "volatilityRatioHint": "比率高于1.0表示韩国市场比全球更恐慌"
+    "volatilityRatioHint": "比率高于1.0表示韩国市场比全球更恐慌",
+    "globalTitle": "全球指标",
+    "globalDxy": "DXY（美元指数）",
+    "globalWti": "WTI原油",
+    "globalGold": "黄金",
+    "globalCopper": "铜",
+    "globalMsciEm": "MSCI新兴市场（EEM）",
+    "globalMsciDm": "MSCI发达市场（EFA）",
+    "globalEmDmRatio": "EM/DM比率",
+    "globalEmDmRatioHint": "EEM/EFA — 高于0.5表示新兴市场跑赢发达市场"
   },
   "screening": {
     "title": "股票筛选",

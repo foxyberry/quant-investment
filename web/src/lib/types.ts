@@ -392,6 +392,23 @@ export interface MacroVolatilitySnapshot {
   vkospi_vix_ratio: number | null;
 }
 
+export interface MacroQuotePoint {
+  value: number | null;
+  change_pct: number | null;
+  as_of: string | null;
+}
+
+export interface MacroGlobalSnapshot {
+  dxy: MacroQuotePoint | null;
+  wti: MacroQuotePoint | null;
+  gold: MacroQuotePoint | null;
+  copper: MacroQuotePoint | null;
+  msci_em: MacroQuotePoint | null;
+  msci_dm: MacroQuotePoint | null;
+  em_dm_ratio: number | null;
+  copper_gold_ratio: number | null;
+}
+
 export type MacroEntrySignal = 'buy_favorable' | 'wait' | 'caution';
 
 export interface MacroInterpretation {
@@ -409,6 +426,7 @@ export interface MacroBundle {
   freshness: MacroFreshness;
   bonds?: MacroBondSnapshot | null;
   volatility?: MacroVolatilitySnapshot | null;
+  global_macro?: MacroGlobalSnapshot | null;
   interpretation?: MacroInterpretation | null;
   cache_hit?: boolean | null;
   generated_at?: string | null;

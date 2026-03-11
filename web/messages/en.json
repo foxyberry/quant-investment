@@ -248,7 +248,16 @@
     "volatilityExtremeDesc": "VIX above 30 — market in extreme fear, historically a contrarian buy signal",
     "volatilityHighDesc": "VIX elevated — increased uncertainty, proceed with caution",
     "volatilityRatio": "VKOSPI/VIX Ratio",
-    "volatilityRatioHint": "Ratio above 1.0 means Korea market more fearful than global"
+    "volatilityRatioHint": "Ratio above 1.0 means Korea market more fearful than global",
+    "globalTitle": "Global Indicators",
+    "globalDxy": "DXY (Dollar Index)",
+    "globalWti": "WTI Crude Oil",
+    "globalGold": "Gold",
+    "globalCopper": "Copper",
+    "globalMsciEm": "MSCI EM (EEM)",
+    "globalMsciDm": "MSCI DM (EFA)",
+    "globalEmDmRatio": "EM/DM Ratio",
+    "globalEmDmRatioHint": "EEM/EFA — above 0.5 signals EM outperformance vs DM"
   },
   "screening": {
     "title": "Stock Screening",
