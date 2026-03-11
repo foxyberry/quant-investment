@@ -145,8 +145,10 @@ def get_technical_indicators(ticker: str) -> TechnicalIndicators:
     summary="Get Macro Bundle",
     description="Get aggregated macro snapshot for FX, futures, investor flow, and regime score.",
 )
-def get_macro_bundle() -> MacroBundleResponse:
-    result = _macro_service.get_bundle()
+def get_macro_bundle(
+    force: bool = Query(False, description="Bypass server cache and force fresh data collection"),
+) -> MacroBundleResponse:
+    result = _macro_service.get_bundle(force_refresh=force)
     return MacroBundleResponse(**result)
 
 

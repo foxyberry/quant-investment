@@ -58,10 +58,26 @@ class MacroMarketService:
         self._session_start_fx: Optional[float] = None
         self._session_start_date: Optional[date] = None
 
+        # Bundle TTL cache (separate lock to avoid contention with history)
+        self._BUNDLE_TTL_SEC = 5.0
+        self._cache_lock = threading.Lock()
+        self._cached_bundle: Optional[Dict[str, Any]] = None
+        self._cached_at: float = 0.0  # monotonic timestamp
+
         # Load recent history from DB on startup
         self._load_history_from_db()
 
-    def get_bundle(self) -> Dict[str, Any]:
+    def get_bundle(self, force_refresh: bool = False) -> Dict[str, Any]:
+        # Check TTL cache (lock-free read for fast path)
+        if not force_refresh:
+            with self._cache_lock:
+                if self._cached_bundle is not None:
+                    elapsed = time.monotonic() - self._cached_at
+                    if elapsed < self._BUNDLE_TTL_SEC:
+                        # Return shallow copy with cache_hit flag
+                        hit = {**self._cached_bundle, "cache_hit": True}
+                        return hit
+
         now = datetime.now(timezone.utc)
 
         fx = self._get_fx_snapshot(now)
@@ -78,6 +94,7 @@ class MacroMarketService:
 
         interpretation = self._build_interpretation(fx, futures, flow)
 
+        generated_at = self._to_iso(now)
         bundle = {
             "fx": fx,
             "futures": futures,
@@ -85,8 +102,16 @@ class MacroMarketService:
             "signal": signal,
             "freshness": freshness,
             "interpretation": interpretation,
+            "cache_hit": False,
+            "generated_at": generated_at,
         }
         self._append_history(bundle, now)
+
+        # Update cache
+        with self._cache_lock:
+            self._cached_bundle = bundle.copy()
+            self._cached_at = time.monotonic()
+
         return bundle
 
     def get_history(self, window: str = "60m") -> Dict[str, Any]:
@@ -429,7 +454,7 @@ class MacroMarketService:
         logger.info("Macro history collector started (interval=%ds)", interval_sec)
         while True:
             try:
-                self.get_bundle()
+                self.get_bundle(force_refresh=True)
                 # Flush any buffered points to DB each tick
                 self._flush_to_db()
             except Exception as exc:

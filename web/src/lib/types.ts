@@ -370,6 +370,8 @@ export interface MacroBundle {
   signal: MacroSignal;
   freshness: MacroFreshness;
   interpretation?: MacroInterpretation | null;
+  cache_hit?: boolean | null;
+  generated_at?: string | null;
 }
 
 export interface MacroHistoryPoint {
