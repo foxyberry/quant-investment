@@ -418,6 +418,24 @@ export interface MacroInterpretation {
   flow_interpretation: string;
 }
 
+export interface MacroBreadthSnapshot {
+  market: string | null;
+  advancing: number | null;
+  declining: number | null;
+  unchanged: number | null;
+  total: number | null;
+  ad_ratio: number | null;
+  updated_at: string | null;
+}
+
+export interface MacroEvent {
+  date: string;
+  type: string;
+  title_key: string;
+  importance: string | null;
+  d_day: number;
+}
+
 export interface MacroBundle {
   fx: MacroFxSnapshot;
   futures: MacroFuturesSnapshot;
@@ -427,6 +445,8 @@ export interface MacroBundle {
   bonds?: MacroBondSnapshot | null;
   volatility?: MacroVolatilitySnapshot | null;
   global_macro?: MacroGlobalSnapshot | null;
+  breadth?: MacroBreadthSnapshot | null;
+  events?: MacroEvent[] | null;
   interpretation?: MacroInterpretation | null;
   cache_hit?: boolean | null;
   generated_at?: string | null;

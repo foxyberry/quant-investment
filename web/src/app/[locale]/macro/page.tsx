@@ -9,6 +9,8 @@ import { formatPercent } from '@/lib/format';
 import {
   Activity,
   AlertTriangle,
+  BarChart3,
+  Calendar,
   CandlestickChart,
   DollarSign,
   Landmark,
@@ -584,6 +586,94 @@ export default function MacroPage() {
             })}
           </div>
         </section>
+      )}
+
+      {/* Market Breadth + Events */}
+      {(bundleQuery.data?.breadth || bundleQuery.data?.events) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {bundleQuery.data?.breadth && (() => {
+            const b = bundleQuery.data.breadth;
+            const advPct = b.total && b.total > 0 ? Math.round((b.advancing ?? 0) / b.total * 100) : null;
+            const decPct = b.total && b.total > 0 ? Math.round((b.declining ?? 0) / b.total * 100) : null;
+            return (
+              <Card>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
+                    <BarChart3 className="h-4 w-4 text-indigo-500" />
+                    {t('breadthTitle')}
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-xl font-semibold text-[var(--foreground)]">
+                      {b.ad_ratio != null ? b.ad_ratio.toFixed(2) : '-'}
+                    </p>
+                    <span className="text-sm text-[var(--foreground-muted)]">{t('adRatio')}</span>
+                  </div>
+                  {/* A/D bar */}
+                  <div className="relative h-4 w-full rounded-full bg-slate-700 overflow-hidden flex">
+                    {advPct != null && (
+                      <div
+                        className="h-full bg-emerald-500 transition-all"
+                        style={{ width: `${advPct}%` }}
+                      />
+                    )}
+                    {decPct != null && (
+                      <div
+                        className="h-full bg-red-500 transition-all ml-auto"
+                        style={{ width: `${decPct}%` }}
+                      />
+                    )}
+                  </div>
+                  <div className="flex justify-between text-xs text-[var(--foreground-muted)]">
+                    <span className="text-emerald-400">{t('advancing')} {b.advancing ?? '-'}{advPct != null ? ` (${advPct}%)` : ''}</span>
+                    <span className="text-red-400">{t('declining')} {b.declining ?? '-'}{decPct != null ? ` (${decPct}%)` : ''}</span>
+                  </div>
+                  {b.unchanged != null && (
+                    <p className="text-[10px] text-[var(--foreground-muted)]">
+                      {t('unchanged')} {b.unchanged} / {t('totalStocks')} {b.total ?? '-'}
+                    </p>
+                  )}
+                </div>
+              </Card>
+            );
+          })()}
+
+          {bundleQuery.data?.events && bundleQuery.data.events.length > 0 && (
+            <Card>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
+                  <Calendar className="h-4 w-4 text-orange-500" />
+                  {t('eventsTitle')}
+                </div>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {bundleQuery.data.events.map((ev, i) => {
+                    const isToday = ev.d_day === 0;
+                    const isImminent = ev.d_day >= 0 && ev.d_day <= 3;
+                    const isPast = ev.d_day < 0;
+                    const badgeColor = isToday
+                      ? 'bg-red-600 text-white'
+                      : isImminent
+                        ? 'bg-orange-600/80 text-orange-100'
+                        : isPast
+                          ? 'bg-slate-600 text-slate-300'
+                          : 'bg-slate-700 text-slate-300';
+                    const dDayText = isToday ? t('dDayToday') : ev.d_day > 0 ? `D-${ev.d_day}` : `D+${Math.abs(ev.d_day)}`;
+                    return (
+                      <div key={`${ev.date}-${ev.type}-${i}`} className={`flex items-center justify-between rounded px-2 py-1.5 text-xs ${isPast ? 'opacity-50' : ''}`}>
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${badgeColor}`}>
+                            {dDayText}
+                          </span>
+                          <span className="text-[var(--foreground)]">{t(ev.title_key)}</span>
+                        </div>
+                        <span className="text-[var(--foreground-muted)] text-[10px]">{ev.date}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Timeline Chart */}
