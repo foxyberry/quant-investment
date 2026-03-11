@@ -341,10 +341,28 @@ export interface MacroInvestorFlowSnapshot {
   updated_at: string | null;
 }
 
+export interface MacroSignalComponent {
+  raw: number;
+  decay: number;
+  weight: number;
+  contribution: number;
+}
+
+export interface MacroReasonDetail {
+  version: number;
+  summary: string;
+  components: {
+    fx: MacroSignalComponent;
+    futures: MacroSignalComponent;
+    flow: MacroSignalComponent;
+  };
+}
+
 export interface MacroSignal {
   macro_score: number | null;
   regime: MacroRegime;
   reason: string | null;
+  reason_detail?: MacroReasonDetail | null;
   updated_at: string | null;
 }
 

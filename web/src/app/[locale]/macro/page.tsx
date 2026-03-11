@@ -79,8 +79,18 @@ function formatShortTime(value: string | null, locale: string): string {
   }).format(date);
 }
 
-/** Parse reason string "neutral: fx=0.12 (decay=0.89), futures=-0.30 (decay=0.50), flow=0.00 (decay=0.00)" */
-function parseSignalContributions(reason: string | null): { fx: number | null; futures: number | null; flow: number | null } {
+function getSignalContributions(signal: { reason_detail?: { components: { fx: { raw: number }; futures: { raw: number }; flow: { raw: number } } } | null; reason?: string | null }): { fx: number | null; futures: number | null; flow: number | null } {
+  // Prefer structured reason_detail
+  const detail = signal.reason_detail;
+  if (detail?.components) {
+    return {
+      fx: detail.components.fx?.raw ?? null,
+      futures: detail.components.futures?.raw ?? null,
+      flow: detail.components.flow?.raw ?? null,
+    };
+  }
+  // Fallback: parse legacy reason string
+  const reason = signal.reason;
   if (!reason) return { fx: null, futures: null, flow: null };
   const extract = (key: string) => {
     const match = reason.match(new RegExp(`${key}=([\\-\\d.]+)`));
@@ -125,8 +135,8 @@ export default function MacroPage() {
   }, [regime]);
 
   const contributions = useMemo(
-    () => parseSignalContributions(bundleQuery.data?.signal.reason ?? null),
-    [bundleQuery.data?.signal.reason],
+    () => getSignalContributions(bundleQuery.data?.signal ?? {}),
+    [bundleQuery.data?.signal],
   );
 
   // Compute change% from first data point for each history point
