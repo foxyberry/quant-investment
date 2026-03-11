@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Card } from '@/components/ui';
-import { useMacroBundle, useMacroHistory, useOhlcv } from '@/hooks/useMarket';
+import { useMacroBundle, useMacroHistory, usePrefetchMacroHistory, useOhlcv } from '@/hooks/useMarket';
 import CandleChart from '@/components/charts/CandleChart';
 import { formatPercent } from '@/lib/format';
 import {
@@ -121,6 +121,7 @@ export default function MacroPage() {
   const bundleQuery = useMacroBundle();
   const [historyWindow, setHistoryWindow] = useState<WindowOption>('60m');
   const historyQuery = useMacroHistory(historyWindow);
+  usePrefetchMacroHistory(); // prefetch all windows on mount for instant tab switching
   const futuresTicker = bundleQuery.data?.futures.symbol || '069500.KS';
   const futuresOhlcv = useOhlcv(futuresTicker, 30);
 
