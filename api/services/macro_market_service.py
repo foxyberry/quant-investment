@@ -34,6 +34,14 @@ class MacroMarketService:
     # Batch DB writes every N ticks to reduce I/O
     _DB_FLUSH_INTERVAL = 10
 
+    # Off-hours half-life multiplier (장외 시간에 반감기 확장)
+    _OFF_HOURS_MULTIPLIER = 24
+
+    # Default half-lives (seconds) — used during market hours
+    _HALF_LIFE_FX = 600
+    _HALF_LIFE_FUTURES = 600
+    _HALF_LIFE_FLOW = 900
+
     def __init__(
         self,
         market_service: MarketService,
@@ -109,6 +117,7 @@ class MacroMarketService:
             "interpretation": interpretation,
             "cache_hit": False,
             "generated_at": generated_at,
+            "is_market_hours": self._is_krx_market_hours(),
         }
         self._append_history(bundle, now)
 
@@ -159,6 +168,20 @@ class MacroMarketService:
         points.reverse()  # restore chronological order
 
         return {"window": window, "points": points}
+
+    def _is_krx_market_hours(self) -> bool:
+        """Check if current KST time is within KRX market hours (Mon-Fri 09:00-15:40)."""
+        from datetime import timezone as tz, timedelta as td
+
+        now_kst = datetime.now(tz.utc).astimezone(tz(td(hours=9)))
+        if now_kst.weekday() > 4:
+            return False
+        hour, minute = now_kst.hour, now_kst.minute
+        if hour < 9:
+            return False
+        if hour > 15 or (hour == 15 and minute > 40):
+            return False
+        return True
 
     def _get_fx_snapshot(self, now: datetime) -> Dict[str, Any]:
         # Primary: Naver FX (realtime during KRW market hours)
@@ -389,10 +412,16 @@ class MacroMarketService:
         foreign_net = self._to_float(flow.get("foreign_net"))
         flow_raw = self._clip((-(foreign_net or 0.0)) / 1_000_000_000.0, -1.0, 1.0)
 
-        # Freshness decay (half-life in seconds)
-        fx_decay = self._stale_decay(freshness.get("fx_age_sec"), half_life_sec=600)
-        futures_decay = self._stale_decay(freshness.get("futures_age_sec"), half_life_sec=600)
-        flow_decay = self._stale_decay(freshness.get("flow_age_sec"), half_life_sec=900)
+        # Freshness decay (half-life in seconds, extended off-hours)
+        is_market = self._is_krx_market_hours()
+        mult = 1 if is_market else self._OFF_HOURS_MULTIPLIER
+        fx_hl = self._HALF_LIFE_FX * mult
+        futures_hl = self._HALF_LIFE_FUTURES * mult
+        flow_hl = self._HALF_LIFE_FLOW * mult
+
+        fx_decay = self._stale_decay(freshness.get("fx_age_sec"), half_life_sec=fx_hl)
+        futures_decay = self._stale_decay(freshness.get("futures_age_sec"), half_life_sec=futures_hl)
+        flow_decay = self._stale_decay(freshness.get("flow_age_sec"), half_life_sec=flow_hl)
 
         weighted = [
             (0.40, fx_raw, fx_decay, fx.get("value") is not None),
@@ -421,7 +450,10 @@ class MacroMarketService:
                 regime = "neutral"
 
         reason_detail = self._build_reason_detail(
-            fx_raw, futures_raw, flow_raw, fx_decay, futures_decay, flow_decay, regime,
+            fx_raw, futures_raw, flow_raw,
+            fx_decay, futures_decay, flow_decay,
+            regime,
+            fx_hl, futures_hl, flow_hl,
         )
 
         return {
@@ -441,15 +473,19 @@ class MacroMarketService:
         futures_decay: float,
         flow_decay: float,
         regime: str,
+        fx_hl: int = 600,
+        futures_hl: int = 600,
+        flow_hl: int = 900,
     ) -> Dict[str, Any]:
         weights = {"fx": 0.40, "futures": 0.35, "flow": 0.25}
 
-        def _component(raw: float, decay: float, weight: float) -> Dict[str, Any]:
+        def _component(raw: float, decay: float, weight: float, half_life_sec: int) -> Dict[str, Any]:
             return {
                 "raw": round(raw, 4),
                 "decay": round(decay, 4),
                 "weight": weight,
                 "contribution": round(raw * decay * weight, 4),
+                "half_life_sec": half_life_sec,
             }
 
         parts = [
@@ -462,9 +498,9 @@ class MacroMarketService:
             "version": 1,
             "summary": f"{regime}: " + ", ".join(parts),
             "components": {
-                "fx": _component(fx_raw, fx_decay, weights["fx"]),
-                "futures": _component(futures_raw, futures_decay, weights["futures"]),
-                "flow": _component(flow_raw, flow_decay, weights["flow"]),
+                "fx": _component(fx_raw, fx_decay, weights["fx"], fx_hl),
+                "futures": _component(futures_raw, futures_decay, weights["futures"], futures_hl),
+                "flow": _component(flow_raw, flow_decay, weights["flow"], flow_hl),
             },
         }
 

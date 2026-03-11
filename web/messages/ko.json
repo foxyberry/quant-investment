@@ -202,7 +202,13 @@
     "interp_flow_foreign_strong_sell": "외국인이 대규모로 팔고 있음 → 강한 매도세",
     "interp_flow_foreign_sell": "외국인이 팔고 있음 → 매도 우위",
     "interp_flow_neutral": "외국인·기관·개인 수급 균형",
-    "interp_flow_unavailable": "주말/장외 시간이라 수급 데이터 미수집"
+    "interp_flow_unavailable": "주말/장외 시간이라 수급 데이터 미수집",
+    "signalStale": "만료",
+    "signalFading": "약화",
+    "afterHoursNotice": "장마감 — 확장 반감기",
+    "marketOpen": "장중",
+    "marketClosed": "장마감",
+    "signalStrength": "({pct}%)"
   },
   "screening": {
     "title": "종목 스크리닝",
