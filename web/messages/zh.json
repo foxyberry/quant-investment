@@ -234,7 +234,21 @@
     "bondsKrUsNegative": "韩国利率低于美国 — 资本外流压力",
     "bondsKrUsPositive": "韩国利率高于美国 — 资金流动稳定",
     "bondsFredSource": "FRED（美联储）",
-    "bondsEcosSource": "ECOS（韩国银行）"
+    "bondsEcosSource": "ECOS（韩国银行）",
+    "volatilityTitle": "波动率（恐惧与贪婪）",
+    "volatilityVix": "VIX（标普500）",
+    "volatilityVkospi": "VKOSPI（KOSPI 200）",
+    "volatilityFearGreed": "市场情绪",
+    "volatilityLevel_low_vol": "低波动",
+    "volatilityLevel_normal": "正常",
+    "volatilityLevel_elevated": "偏高",
+    "volatilityLevel_high": "高波动",
+    "volatilityLevel_extreme": "极度恐慌",
+    "volatilityExtremeWarning": "极度恐慌",
+    "volatilityExtremeDesc": "VIX超过30 — 市场极度恐慌，历史上是逆向买入信号",
+    "volatilityHighDesc": "VIX升高 — 不确定性增加，需谨慎操作",
+    "volatilityRatio": "VKOSPI/VIX比率",
+    "volatilityRatioHint": "比率高于1.0表示韩国市场比全球更恐慌"
   },
   "screening": {
     "title": "股票筛选",

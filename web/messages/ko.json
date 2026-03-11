@@ -234,7 +234,21 @@
     "bondsKrUsNegative": "한국 금리 < 미국 — 자본 유출 압력",
     "bondsKrUsPositive": "한국 금리 ≥ 미국 — 안정적 자금 흐름",
     "bondsFredSource": "FRED (미 연준)",
-    "bondsEcosSource": "ECOS (한국은행)"
+    "bondsEcosSource": "ECOS (한국은행)",
+    "volatilityTitle": "변동성 (공포 · 탐욕)",
+    "volatilityVix": "VIX (S&P 500)",
+    "volatilityVkospi": "VKOSPI (KOSPI 200)",
+    "volatilityFearGreed": "시장 심리",
+    "volatilityLevel_low_vol": "저변동성",
+    "volatilityLevel_normal": "보통",
+    "volatilityLevel_elevated": "다소 높음",
+    "volatilityLevel_high": "높은 변동성",
+    "volatilityLevel_extreme": "극도의 공포",
+    "volatilityExtremeWarning": "극도의 공포",
+    "volatilityExtremeDesc": "VIX 30 이상 — 극도의 공포 구간, 역사적으로 역발상 매수 신호",
+    "volatilityHighDesc": "VIX 상승 — 불확실성 증가, 신중한 접근 필요",
+    "volatilityRatio": "VKOSPI/VIX 비율",
+    "volatilityRatioHint": "1.0 이상이면 한국 시장이 글로벌보다 더 큰 공포 상태"
   },
   "screening": {
     "title": "종목 스크리닝",
