@@ -8,7 +8,7 @@ import MessageActions from './chat/MessageActions';
 import SectionedMessage from './chat/SectionedMessage';
 import { normalizeChunk, finalizeStreamText } from './chat/streamTextFormatter';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
 interface StructuredSuggestion {
   condition_type: string;

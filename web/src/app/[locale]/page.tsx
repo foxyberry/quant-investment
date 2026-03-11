@@ -29,7 +29,7 @@ export default function Home() {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
         const response = await fetch(`${apiUrl}/health`, {
           method: 'GET',
           signal: AbortSignal.timeout(5000),
@@ -56,7 +56,7 @@ export default function Home() {
     checkConnection();
   }, []);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
   return (
     <div className="space-y-6">

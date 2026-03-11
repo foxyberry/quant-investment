@@ -120,7 +120,7 @@ export default function OrderDesk({ prefill }: OrderDeskProps) {
     let unmounted = false;
 
     const configured = process.env.NEXT_PUBLIC_KIWOOM_ORDERS_WS_URL;
-    const baseUrl = configured ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+    const baseUrl = configured ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8001';
     let wsUrl: string | null = null;
 
     try {
