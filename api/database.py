@@ -95,8 +95,9 @@ def _migrate_trade_columns() -> None:
     """Schema compatibility migration for legacy trades table."""
     try:
         with engine.begin() as conn:
-            column_rows = conn.execute(text("PRAGMA table_info(trades)")).fetchall()
-            existing_columns = {row[1] for row in column_rows}
+            existing_columns = _get_column_names(conn, "trades")
+            if existing_columns is None:
+                return
             if "tax" not in existing_columns:
                 conn.execute(text("ALTER TABLE trades ADD COLUMN tax FLOAT DEFAULT 0"))
                 logger.info("Added missing trades.tax column for legacy DB compatibility")
@@ -108,20 +109,13 @@ def _migrate_holding_metadata_columns() -> None:
     """Schema compatibility migration for legacy holdings metadata columns."""
     try:
         with engine.begin() as conn:
-            column_rows = conn.execute(text("PRAGMA table_info(holdings)")).fetchall()
-            existing_columns = {row[1] for row in column_rows}
-            if "sector" not in existing_columns:
-                conn.execute(text("ALTER TABLE holdings ADD COLUMN sector VARCHAR(128)"))
-                logger.info("Added missing holdings.sector column for legacy DB compatibility")
-            if "industry" not in existing_columns:
-                conn.execute(text("ALTER TABLE holdings ADD COLUMN industry VARCHAR(128)"))
-                logger.info("Added missing holdings.industry column for legacy DB compatibility")
-            if "country" not in existing_columns:
-                conn.execute(text("ALTER TABLE holdings ADD COLUMN country VARCHAR(64)"))
-                logger.info("Added missing holdings.country column for legacy DB compatibility")
-            if "exchange" not in existing_columns:
-                conn.execute(text("ALTER TABLE holdings ADD COLUMN exchange VARCHAR(32)"))
-                logger.info("Added missing holdings.exchange column for legacy DB compatibility")
+            existing_columns = _get_column_names(conn, "holdings")
+            if existing_columns is None:
+                return
+            for col, col_type in [("sector", "VARCHAR(128)"), ("industry", "VARCHAR(128)"), ("country", "VARCHAR(64)"), ("exchange", "VARCHAR(32)")]:
+                if col not in existing_columns:
+                    conn.execute(text(f"ALTER TABLE holdings ADD COLUMN {col} {col_type}"))
+                    logger.info("Added missing holdings.%s column for legacy DB compatibility", col)
     except Exception as e:
         logger.warning("Holding schema compatibility migration skipped: %s", e)
 
