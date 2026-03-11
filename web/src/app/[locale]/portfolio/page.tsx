@@ -293,7 +293,7 @@ export default function PortfolioPage() {
     (tickers: string[]): string | null => {
       try {
         const configured = process.env.NEXT_PUBLIC_PORTFOLIO_WS_URL;
-        const baseUrl = configured ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+        const baseUrl = configured ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8001';
         const wsUrl = new URL(baseUrl);
         if (!configured) {
           wsUrl.protocol = wsUrl.protocol === 'https:' ? 'wss:' : 'ws:';
