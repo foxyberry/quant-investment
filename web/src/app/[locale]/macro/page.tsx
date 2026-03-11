@@ -10,7 +10,6 @@ import {
   Activity,
   AlertTriangle,
   CandlestickChart,
-  CheckCircle,
   DollarSign,
   RefreshCw,
   ShieldAlert,
@@ -28,7 +27,7 @@ import {
   ReferenceArea,
   Legend,
 } from 'recharts';
-import type { MacroEntrySignal, MacroRegime } from '@/lib/types';
+import type { MacroRegime } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -128,12 +127,6 @@ export default function MacroPage() {
   const regime = bundleQuery.data?.signal.regime ?? 'unknown';
   const interpretation = bundleQuery.data?.interpretation;
 
-  const regimeStyle = useMemo(() => {
-    if (regime === 'risk_on') return { text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800' };
-    if (regime === 'risk_off') return { text: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800' };
-    return { text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800' };
-  }, [regime]);
-
   const contributions = useMemo(
     () => getSignalContributions(bundleQuery.data?.signal ?? {}),
     [bundleQuery.data?.signal],
@@ -199,40 +192,74 @@ export default function MacroPage() {
         </button>
       </div>
 
-      {/* Market Entry Assessment */}
-      {interpretation && <MarketEntryAssessment entrySignal={interpretation.entry_signal} fxInterp={interpretation.fx_interpretation} futuresInterp={interpretation.futures_interpretation} flowInterp={interpretation.flow_interpretation} t={t} />}
-
-      {/* Regime Insight Banner */}
-      <div className={`rounded-xl border p-4 ${regimeStyle.bg}`}>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`text-3xl font-bold uppercase ${regimeStyle.text}`}>
-              {t(`regime_${regime}`)}
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-[var(--foreground)]">
-                {formatPercent(bundleQuery.data?.signal.macro_score ?? null)}
-              </span>
-              <span className="text-xs text-[var(--foreground-muted)]">
-                {formatDateTime(bundleQuery.data?.signal.updated_at ?? null, locale)}
-              </span>
-            </div>
+      {/* Gauge Hero — Regime + Entry Assessment unified */}
+      <div className="rounded-xl border border-[var(--border)] bg-gradient-to-b from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 p-6 text-white">
+        <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
+          {/* Gauge */}
+          <div className="flex flex-col items-center">
+            <RegimeGauge
+              score={bundleQuery.data?.signal.macro_score ?? null}
+              regime={regime}
+              t={t}
+            />
+            <p className="mt-2 text-xs text-slate-300">
+              {formatDateTime(bundleQuery.data?.signal.updated_at ?? null, locale)}
+            </p>
           </div>
-          <p className="text-sm text-[var(--foreground)]">
-            {t(`insight${regime === 'risk_on' ? 'RiskOn' : regime === 'risk_off' ? 'RiskOff' : regime === 'neutral' ? 'Neutral' : 'Unknown'}`)}
-          </p>
-        </div>
 
-        {/* Signal Contribution Bars — center-diverging */}
-        <div className="mt-4 space-y-1">
-          <div className="flex items-center justify-between text-[10px] text-[var(--foreground-muted)] opacity-60 px-0.5">
-            <span>{t('signalLegendBuy')}</span>
-            <span>{t('signalLegendSell')}</span>
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <SignalBar label={t('fxSignal')} value={contributions.fx} nullLabel={t('flowUnavailable')} t={t} />
-            <SignalBar label={t('futuresSignal')} value={contributions.futures} nullLabel={t('flowUnavailable')} t={t} />
-            <SignalBar label={t('flowSignal')} value={contributions.flow} nullLabel={t('flowUnavailable')} t={t} />
+          {/* Right panel: Entry signal + Insight + Signal bars */}
+          <div className="flex-1 space-y-4 text-center lg:text-left">
+            {/* Entry signal badge */}
+            {interpretation && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wider text-slate-400">{t('entryAssessment')}</p>
+                <p className={`text-2xl font-bold ${
+                  interpretation.entry_signal === 'buy_favorable' ? 'text-emerald-400' :
+                  interpretation.entry_signal === 'caution' ? 'text-red-400' : 'text-amber-400'
+                }`}>
+                  {t(`entry_${interpretation.entry_signal}`)}
+                </p>
+                <p className="text-sm text-slate-300">
+                  {t(`entryDesc_${interpretation.entry_signal}`)}
+                </p>
+              </div>
+            )}
+
+            {/* Regime insight text */}
+            <p className="text-sm text-slate-300">
+              {t(`insight${regime === 'risk_on' ? 'RiskOn' : regime === 'risk_off' ? 'RiskOff' : regime === 'neutral' ? 'Neutral' : 'Unknown'}`)}
+            </p>
+
+            {/* Interpretation bullets */}
+            {interpretation && (
+              <ul className="space-y-1 text-sm text-slate-400">
+                <li className="flex items-start gap-2">
+                  <TrendingUp className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                  {t(`interp_fx_${interpretation.fx_interpretation}`)}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CandlestickChart className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                  {t(`interp_futures_${interpretation.futures_interpretation}`)}
+                </li>
+                <li className="flex items-start gap-2">
+                  <Users className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                  {t(`interp_flow_${interpretation.flow_interpretation}`)}
+                </li>
+              </ul>
+            )}
+
+            {/* Signal Contribution Bars */}
+            <div className="space-y-1 pt-2">
+              <div className="flex items-center justify-between text-xs text-slate-400 px-0.5">
+                <span>{t('signalLegendBuy')}</span>
+                <span>{t('signalLegendSell')}</span>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                <SignalBar label={t('fxSignal')} value={contributions.fx} nullLabel={t('flowUnavailable')} t={t} />
+                <SignalBar label={t('futuresSignal')} value={contributions.futures} nullLabel={t('flowUnavailable')} t={t} />
+                <SignalBar label={t('flowSignal')} value={contributions.flow} nullLabel={t('flowUnavailable')} t={t} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -492,6 +519,71 @@ export default function MacroPage() {
 }
 
 // ---------------------------------------------------------------------------
+// Regime Gauge — semicircular speedometer
+// ---------------------------------------------------------------------------
+
+function RegimeGauge({
+  score,
+  regime,
+  t,
+}: {
+  score: number | null;
+  regime: MacroRegime | string;
+  t: (key: string) => string;
+}) {
+  // Map score from [-1, 1] to angle for the semicircle
+  // -1 = full left (risk_off/red), 0 = center (neutral/amber), +1 = full right (risk_on/green)
+  const hasScore = score != null;
+  const clampedScore = hasScore ? Math.max(-1, Math.min(1, score)) : 0;
+  const needleAngle = clampedScore * 90; // -90° to +90° from center
+  // Signed percentage consistent with history chart (-100% to +100%)
+  const displayPct = Math.round(clampedScore * 100);
+  const displayLabel = hasScore ? `${displayPct > 0 ? '+' : ''}${displayPct}%` : '-';
+
+  const regimeColor = regime === 'risk_on' ? 'text-emerald-400' :
+    regime === 'risk_off' ? 'text-red-400' : 'text-amber-400';
+
+  return (
+    <div className="relative flex flex-col items-center" role="meter" aria-label={hasScore ? `Macro score: ${displayPct}%` : 'Macro score unavailable'} aria-valuemin={-100} aria-valuemax={100} aria-valuenow={hasScore ? displayPct : undefined}>
+      {/* Gauge arc */}
+      <div className="relative h-[100px] w-[200px] overflow-hidden">
+        <div
+          className="absolute inset-0 h-[200px] w-[200px] rounded-full"
+          style={{
+            background: 'conic-gradient(from 180deg, #ef4444 0deg, #ef4444 54deg, #f59e0b 54deg, #f59e0b 126deg, #10b981 126deg, #10b981 180deg, transparent 180deg)',
+          }}
+        />
+        {/* Inner cutout — creates the arc ring */}
+        <div className="absolute left-1/2 top-0 h-[200px] w-[200px] -translate-x-1/2 scale-[0.7] rounded-full bg-slate-900" />
+        {/* Needle — hidden when no data */}
+        <div
+          className={`absolute bottom-0 left-1/2 h-[90px] w-0.5 origin-bottom transition-transform duration-700 ease-out ${hasScore ? '' : 'opacity-20'}`}
+          style={{ transform: `translateX(-50%) rotate(${needleAngle}deg)` }}
+        >
+          <div className="h-full w-full rounded-full bg-white" />
+          <div className="absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-white bg-slate-900" />
+        </div>
+      </div>
+
+      {/* Score display below gauge */}
+      <div className="mt-1 text-center">
+        <span className={`text-3xl font-bold ${regimeColor}`}>{displayLabel}</span>
+        <p className={`text-sm font-semibold uppercase tracking-wide ${regimeColor}`}>
+          {t(`regime_${regime}`)}
+        </p>
+      </div>
+
+      {/* Scale labels */}
+      <div className="flex w-[200px] justify-between px-1 text-xs text-slate-400">
+        <span>{t('regimeRiskOff')}</span>
+        <span>{t('regimeNeutral')}</span>
+        <span>{t('regimeRiskOn')}</span>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Signal Contribution Bar
 // ---------------------------------------------------------------------------
 
@@ -504,25 +596,23 @@ function signalLabel(value: number, t: (key: string) => string): string {
 }
 
 function SignalBar({ label, value, nullLabel, t }: { label: string; value: number | null; nullLabel: string; t: (key: string) => string }) {
-  const pct = value != null ? Math.min(Math.abs(value) * 50, 50) : 0; // half-width max 50%
+  const pct = value != null ? Math.min(Math.abs(value) * 50, 50) : 0;
   const isNull = value == null;
-  const isBuy = (value ?? 0) < 0; // negative = buy favorable
+  const isBuy = (value ?? 0) < 0;
   const desc = !isNull ? signalLabel(value!, t) : null;
 
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-[var(--foreground-muted)]">{label}</span>
+        <span className="text-slate-400">{label}</span>
         {isNull ? (
-          <span className="text-[var(--foreground-muted)]">{nullLabel}</span>
+          <span className="text-slate-500">{nullLabel}</span>
         ) : (
-          <span className={`font-medium ${isBuy ? 'text-emerald-500' : 'text-red-500'}`}>{desc}</span>
+          <span className={`font-medium ${isBuy ? 'text-emerald-400' : 'text-red-400'}`}>{desc}</span>
         )}
       </div>
-      {/* Center-anchored diverging bar: green ← center → red */}
-      <div className="relative h-2.5 rounded-full bg-[var(--background)] overflow-hidden">
-        {/* Center line */}
-        <div className="absolute left-1/2 top-0 h-full w-px bg-[var(--foreground-muted)] opacity-30" />
+      <div className="relative h-2.5 rounded-full bg-slate-700 overflow-hidden">
+        <div className="absolute left-1/2 top-0 h-full w-px bg-slate-500 opacity-40" />
         {!isNull && pct > 0 && (
           <div
             className={`absolute top-0 h-full rounded-full transition-all ${
@@ -537,7 +627,7 @@ function SignalBar({ label, value, nullLabel, t }: { label: string; value: numbe
         )}
         {isNull && (
           <div
-            className="absolute top-0 h-full rounded-full bg-gray-300 dark:bg-gray-600"
+            className="absolute top-0 h-full rounded-full bg-slate-600"
             style={{ left: '50%', width: '2%', transform: 'translateX(-50%)' }}
           />
         )}
@@ -629,74 +719,3 @@ function MetricCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Market Entry Assessment
-// ---------------------------------------------------------------------------
-
-const ENTRY_STYLES: Record<string, { icon: typeof CheckCircle; text: string; bg: string }> = {
-  buy_favorable: {
-    icon: CheckCircle,
-    text: 'text-emerald-700 dark:text-emerald-400',
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800',
-  },
-  wait: {
-    icon: AlertTriangle,
-    text: 'text-amber-700 dark:text-amber-400',
-    bg: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800',
-  },
-  caution: {
-    icon: ShieldAlert,
-    text: 'text-red-700 dark:text-red-400',
-    bg: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800',
-  },
-};
-
-function MarketEntryAssessment({
-  entrySignal,
-  fxInterp,
-  futuresInterp,
-  flowInterp,
-  t,
-}: {
-  entrySignal: MacroEntrySignal | string;
-  fxInterp: string;
-  futuresInterp: string;
-  flowInterp: string;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const style = ENTRY_STYLES[entrySignal] ?? ENTRY_STYLES.wait;
-  const Icon = style.icon;
-
-  return (
-    <div className={`rounded-xl border p-4 ${style.bg}`}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Icon className={`h-8 w-8 ${style.text}`} />
-          <div>
-            <h2 className="text-sm font-medium text-[var(--foreground-muted)]">{t('entryAssessment')}</h2>
-            <p className={`text-2xl font-bold ${style.text}`}>
-              {t(`entry_${entrySignal}`)}
-            </p>
-          </div>
-        </div>
-        <p className="text-sm text-[var(--foreground)]">
-          {t(`entryDesc_${entrySignal}`)}
-        </p>
-      </div>
-      <ul className="mt-3 space-y-1 text-sm text-[var(--foreground-muted)]">
-        <li className="flex items-start gap-2">
-          <TrendingUp className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          {t(`interp_fx_${fxInterp}`)}
-        </li>
-        <li className="flex items-start gap-2">
-          <CandlestickChart className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          {t(`interp_futures_${futuresInterp}`)}
-        </li>
-        <li className="flex items-start gap-2">
-          <Users className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          {t(`interp_flow_${flowInterp}`)}
-        </li>
-      </ul>
-    </div>
-  );
-}
