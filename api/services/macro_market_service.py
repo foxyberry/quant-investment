@@ -415,16 +415,19 @@ class MacroMarketService:
             else:
                 regime = "neutral"
 
-        reason = self._build_reason(fx_raw, futures_raw, flow_raw, fx_decay, futures_decay, flow_decay, regime)
+        reason_detail = self._build_reason_detail(
+            fx_raw, futures_raw, flow_raw, fx_decay, futures_decay, flow_decay, regime,
+        )
 
         return {
             "macro_score": macro_score,
             "regime": regime,
-            "reason": reason,
+            "reason": reason_detail["summary"],
+            "reason_detail": reason_detail,
             "updated_at": self._to_iso(now),
         }
 
-    def _build_reason(
+    def _build_reason_detail(
         self,
         fx_raw: float,
         futures_raw: float,
@@ -433,13 +436,32 @@ class MacroMarketService:
         futures_decay: float,
         flow_decay: float,
         regime: str,
-    ) -> str:
+    ) -> Dict[str, Any]:
+        weights = {"fx": 0.40, "futures": 0.35, "flow": 0.25}
+
+        def _component(raw: float, decay: float, weight: float) -> Dict[str, Any]:
+            return {
+                "raw": round(raw, 4),
+                "decay": round(decay, 4),
+                "weight": weight,
+                "contribution": round(raw * decay * weight, 4),
+            }
+
         parts = [
             f"fx={fx_raw:.2f} (decay={fx_decay:.2f})",
             f"futures={futures_raw:.2f} (decay={futures_decay:.2f})",
             f"flow={flow_raw:.2f} (decay={flow_decay:.2f})",
         ]
-        return f"{regime}: " + ", ".join(parts)
+
+        return {
+            "version": 1,
+            "summary": f"{regime}: " + ", ".join(parts),
+            "components": {
+                "fx": _component(fx_raw, fx_decay, weights["fx"]),
+                "futures": _component(futures_raw, futures_decay, weights["futures"]),
+                "flow": _component(flow_raw, flow_decay, weights["flow"]),
+            },
+        }
 
     # ------------------------------------------------------------------
     # Background history collector

@@ -5,7 +5,7 @@ Provides schemas for OHLCV data, quotes, and technical indicators.
 """
 
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -134,10 +134,26 @@ class MacroInvestorFlowSnapshot(BaseModel):
     updated_at: Optional[str] = Field(None, description="Last update timestamp")
 
 
+class MacroSignalComponent(BaseModel):
+    raw: float = Field(..., description="Raw component score [-1, 1]")
+    decay: float = Field(..., description="Freshness decay factor [0, 1]")
+    weight: float = Field(..., description="Component weight in scoring")
+    contribution: float = Field(..., description="Effective contribution (raw * decay * weight)")
+
+
+class MacroReasonDetail(BaseModel):
+    version: int = Field(1, description="Schema version for forward compatibility")
+    summary: str = Field(..., description="Human-readable summary string")
+    components: Dict[str, MacroSignalComponent] = Field(
+        ..., description="Per-component scoring breakdown (fx, futures, flow)"
+    )
+
+
 class MacroSignal(BaseModel):
     macro_score: Optional[float] = Field(None, description="Composite macro score")
     regime: str = Field(..., description="Regime classification")
-    reason: Optional[str] = Field(None, description="Human-readable scoring reason")
+    reason: Optional[str] = Field(None, description="Human-readable scoring reason (backward compat)")
+    reason_detail: Optional[MacroReasonDetail] = Field(None, description="Structured scoring breakdown")
     updated_at: Optional[str] = Field(None, description="Signal timestamp")
 
 
