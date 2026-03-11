@@ -139,6 +139,7 @@ class MacroSignalComponent(BaseModel):
     decay: float = Field(..., description="Freshness decay factor [0, 1]")
     weight: float = Field(..., description="Component weight in scoring")
     contribution: float = Field(..., description="Effective contribution (raw * decay * weight)")
+    half_life_sec: Optional[int] = Field(None, description="Half-life used for decay calculation (seconds)")
 
 
 class MacroReasonDetail(BaseModel):
@@ -195,6 +196,7 @@ class MacroBundleResponse(BaseModel):
     interpretation: Optional[MacroInterpretation] = None
     cache_hit: Optional[bool] = Field(None, description="Whether this response was served from cache")
     generated_at: Optional[str] = Field(None, description="When this bundle was originally generated")
+    is_market_hours: Optional[bool] = Field(None, description="Whether KRX is currently in market hours")
     bonds: Optional[MacroBondSnapshot] = Field(None, description="Bond rate snapshot (yields, spreads)")
 
 

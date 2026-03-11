@@ -79,29 +79,40 @@ function formatShortTime(value: string | null, locale: string): string {
   }).format(date);
 }
 
-function getSignalContributions(signal: { reason_detail?: { components: { fx: { raw: number }; futures: { raw: number }; flow: { raw: number } } } | null; reason?: string | null }): { fx: number | null; futures: number | null; flow: number | null } {
-  // Prefer structured reason_detail
+interface SignalContrib {
+  raw: number | null;
+  decay: number | null;
+  effective: number | null; // raw * decay
+}
+
+function getSignalContributions(signal: { reason_detail?: { components: { fx: { raw: number; decay: number }; futures: { raw: number; decay: number }; flow: { raw: number; decay: number } } } | null; reason?: string | null }): { fx: SignalContrib; futures: SignalContrib; flow: SignalContrib } {
   const detail = signal.reason_detail;
   if (detail?.components) {
+    const nil: SignalContrib = { raw: null, decay: null, effective: null };
+    const toContrib = (c?: { raw?: number; decay?: number } | null): SignalContrib => {
+      if (!c) return nil;
+      const raw = c.raw ?? null;
+      const decay = c.decay ?? null;
+      return { raw, decay, effective: (raw != null && decay != null) ? raw * decay : null };
+    };
     return {
-      fx: detail.components.fx?.raw ?? null,
-      futures: detail.components.futures?.raw ?? null,
-      flow: detail.components.flow?.raw ?? null,
+      fx: toContrib(detail.components?.fx),
+      futures: toContrib(detail.components?.futures),
+      flow: toContrib(detail.components?.flow),
     };
   }
-  // Fallback: parse legacy reason string
+  // Fallback: parse legacy reason string -- decay unknown, treat as full strength
   const reason = signal.reason;
-  if (!reason) return { fx: null, futures: null, flow: null };
-  const extract = (key: string) => {
+  if (!reason) return { fx: { raw: null, decay: null, effective: null }, futures: { raw: null, decay: null, effective: null }, flow: { raw: null, decay: null, effective: null } };
+  const extract = (key: string): SignalContrib => {
     const match = reason.match(new RegExp(`${key}=([\\-\\d.]+)`));
-    if (!match) return null;
+    if (!match) return { raw: null, decay: null, effective: null };
     const val = parseFloat(match[1]);
-    return Number.isNaN(val) ? null : val;
+    if (Number.isNaN(val)) return { raw: null, decay: null, effective: null };
+    return { raw: val, decay: null, effective: val }; // legacy: no decay info, treat raw as effective
   };
   return { fx: extract('fx'), futures: extract('futures'), flow: extract('flow') };
 }
-
-const STALE_THRESHOLD_SEC = 600; // half-life
 
 const REGIME_COLORS: Record<MacroRegime, string> = {
   risk_on: 'rgba(16, 185, 129, 0.08)',
@@ -256,10 +267,17 @@ export default function MacroPage() {
                 <span>{t('signalLegendBuy')}</span>
                 <span>{t('signalLegendSell')}</span>
               </div>
+              {bundleQuery.data?.is_market_hours === false && (
+                <div className="flex justify-center">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-600/50 px-2.5 py-0.5 text-[10px] font-medium text-slate-300">
+                    {t('afterHoursNotice')}
+                  </span>
+                </div>
+              )}
               <div className="grid gap-3 md:grid-cols-3">
-                <SignalBar label={t('fxSignal')} value={contributions.fx} nullLabel={t('flowUnavailable')} t={t} />
-                <SignalBar label={t('futuresSignal')} value={contributions.futures} nullLabel={t('flowUnavailable')} t={t} />
-                <SignalBar label={t('flowSignal')} value={contributions.flow} nullLabel={t('flowUnavailable')} t={t} />
+                <SignalBar label={t('fxSignal')} contribution={contributions.fx} nullLabel={t('flowUnavailable')} t={t} />
+                <SignalBar label={t('futuresSignal')} contribution={contributions.futures} nullLabel={t('flowUnavailable')} t={t} />
+                <SignalBar label={t('flowSignal')} contribution={contributions.flow} nullLabel={t('flowUnavailable')} t={t} />
               </div>
             </div>
           </div>
@@ -280,6 +298,7 @@ export default function MacroPage() {
           ageLabel={formatAge(bundleQuery.data?.freshness.fx_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
           interpretationText={interpretation ? t(`interp_fx_${interpretation.fx_interpretation}`) : undefined}
+          decay={bundleQuery.data?.signal.reason_detail?.components?.fx?.decay}
         />
         <MetricCard
           title={t('futures')}
@@ -295,6 +314,7 @@ export default function MacroPage() {
           ageLabel={formatAge(bundleQuery.data?.freshness.futures_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
           interpretationText={interpretation ? t(`interp_futures_${interpretation.futures_interpretation}`) : undefined}
+          decay={bundleQuery.data?.signal.reason_detail?.components?.futures?.decay}
         />
         <MetricCard
           title={t('investorFlow')}
@@ -315,6 +335,7 @@ export default function MacroPage() {
           ageLabel={formatAge(bundleQuery.data?.freshness.flow_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
           interpretationText={interpretation ? t(`interp_flow_${interpretation.flow_interpretation}`) : undefined}
+          decay={bundleQuery.data?.signal.reason_detail?.components?.flow?.decay}
         />
       </div>
 
@@ -674,29 +695,60 @@ function signalLabel(value: number, t: (key: string) => string): string {
   return t('signalNeutral');
 }
 
-function SignalBar({ label, value, nullLabel, t }: { label: string; value: number | null; nullLabel: string; t: (key: string) => string }) {
-  const pct = value != null ? Math.min(Math.abs(value) * 50, 50) : 0;
-  const isNull = value == null;
-  const isBuy = (value ?? 0) < 0;
-  const desc = !isNull ? signalLabel(value!, t) : null;
+function SignalBar({ label, contribution, nullLabel, t }: { label: string; contribution: SignalContrib; nullLabel: string; t: (key: string, values?: Record<string, string | number>) => string }) {
+  const { raw, decay, effective } = contribution;
+  const isNull = effective == null && raw == null;
+  const displayValue = effective ?? raw;
+  const pct = displayValue != null ? Math.min(Math.abs(displayValue) * 50, 50) : 0;
+  const isBuy = (displayValue ?? 0) < 0;
+  const desc = displayValue != null ? signalLabel(displayValue, t) : null;
+
+  // Decay-based 3-tier visualization
+  const isStale = decay != null && decay < 0.1;
+  const isFading = decay != null && decay >= 0.1 && decay < 0.5;
+  // Strength percentage (based on effective vs raw)
+  const strengthPct = (raw != null && raw !== 0 && effective != null)
+    ? Math.round(Math.abs(effective / raw) * 100)
+    : null;
+
+  // Color classes based on decay state
+  const barColor = isStale
+    ? 'bg-slate-500'
+    : isFading
+      ? (isBuy ? 'bg-emerald-400/60' : 'bg-red-400/60')
+      : (isBuy ? 'bg-emerald-400' : 'bg-red-400');
+  const labelColor = isStale
+    ? 'text-slate-400'
+    : isFading
+      ? (isBuy ? 'text-emerald-400/70' : 'text-red-400/70')
+      : (isBuy ? 'text-emerald-400' : 'text-red-400');
 
   return (
-    <div className="space-y-1.5">
+    <div className={`space-y-1.5 ${isStale ? 'opacity-30' : ''}`}>
       <div className="flex items-center justify-between text-xs">
         <span className="text-slate-400">{label}</span>
         {isNull ? (
           <span className="text-slate-500">{nullLabel}</span>
         ) : (
-          <span className={`font-medium ${isBuy ? 'text-emerald-400' : 'text-red-400'}`}>{desc}</span>
+          <span className="flex items-center gap-1">
+            <span className={`font-medium ${labelColor}`}>{desc}</span>
+            {strengthPct != null && strengthPct < 100 && (
+              <span className="text-slate-500 text-[10px]">({strengthPct}%)</span>
+            )}
+            {isStale && (
+              <span className="rounded bg-slate-600 px-1 py-0.5 text-[9px] font-medium text-slate-300">{t('signalStale')}</span>
+            )}
+            {isFading && !isStale && (
+              <span className="rounded bg-amber-800/40 px-1 py-0.5 text-[9px] font-medium text-amber-400">{t('signalFading')}</span>
+            )}
+          </span>
         )}
       </div>
       <div className="relative h-2.5 rounded-full bg-slate-700 overflow-hidden">
         <div className="absolute left-1/2 top-0 h-full w-px bg-slate-500 opacity-40" />
         {!isNull && pct > 0 && (
           <div
-            className={`absolute top-0 h-full rounded-full transition-all ${
-              isBuy ? 'bg-emerald-400' : 'bg-red-400'
-            }`}
+            className={`absolute top-0 h-full rounded-full transition-all ${barColor}`}
             style={
               isBuy
                 ? { right: '50%', width: `${pct}%` }
@@ -733,6 +785,7 @@ function MetricCard({
   stale,
   valueBadge,
   interpretationText,
+  decay,
 }: {
   title: string;
   icon: ReactNode;
@@ -747,8 +800,9 @@ function MetricCard({
   stale?: boolean;
   valueBadge?: ReactNode;
   interpretationText?: string;
+  decay?: number | null;
 }) {
-  const isStale = stale ?? (ageSec != null && ageSec > STALE_THRESHOLD_SEC);
+  const isStale = stale ?? (decay != null ? decay < 0.1 : (ageSec != null && ageSec > 600));
 
   return (
     <Card>
