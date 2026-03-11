@@ -388,10 +388,23 @@ export interface MacroBundle {
   flow: MacroInvestorFlowSnapshot;
   signal: MacroSignal;
   freshness: MacroFreshness;
+  bonds?: MacroBondSnapshot | null;
   interpretation?: MacroInterpretation | null;
   cache_hit?: boolean | null;
   generated_at?: string | null;
   is_market_hours?: boolean | null;
+}
+
+export interface MacroBondSnapshot {
+  us_10y: number | null;
+  us_2y: number | null;
+  us_spread_2_10: number | null;
+  inverted: boolean | null;
+  kr_10y: number | null;
+  kr_3y: number | null;
+  kr_us_spread_10y: number | null;
+  source_updated_at: string | null;
+  stale: boolean | null;
 }
 
 export interface MacroHistoryPoint {

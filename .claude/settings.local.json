@@ -21,7 +21,8 @@
       "Bash(git status:*)",
       "Bash(git pull:*)",
       "Bash(chmod +x:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(source:*)"
     ]
   },
   "enabledMcpjsonServers": [

@@ -171,6 +171,22 @@ class MacroInterpretation(BaseModel):
     flow_interpretation: str = Field(..., description="Investor flow interpretation")
 
 
+class MacroBondSnapshot(BaseModel):
+    us_10y: Optional[float] = Field(None, description="US 10-Year Treasury Yield (%)")
+    us_2y: Optional[float] = Field(None, description="US 2-Year Treasury Yield (%)")
+    us_spread_2_10: Optional[float] = Field(None, description="US 10Y-2Y Spread (pp)")
+    inverted: Optional[bool] = Field(None, description="Whether the yield curve is inverted")
+    kr_10y: Optional[float] = Field(None, description="KR 10-Year Government Bond Yield (%)")
+    kr_3y: Optional[float] = Field(None, description="KR 3-Year Government Bond Yield (%)")
+    kr_us_spread_10y: Optional[float] = Field(None, description="KR-US 10Y Spread (pp)")
+    source_updated_at: Optional[str] = Field(
+        None, description="When the source data was last updated"
+    )
+    stale: Optional[bool] = Field(
+        None, description="Whether the data is stale (e.g., weekend)"
+    )
+
+
 class MacroBundleResponse(BaseModel):
     fx: MacroFxSnapshot
     futures: MacroFuturesSnapshot
@@ -181,6 +197,7 @@ class MacroBundleResponse(BaseModel):
     cache_hit: Optional[bool] = Field(None, description="Whether this response was served from cache")
     generated_at: Optional[str] = Field(None, description="When this bundle was originally generated")
     is_market_hours: Optional[bool] = Field(None, description="Whether KRX is currently in market hours")
+    bonds: Optional[MacroBondSnapshot] = Field(None, description="Bond rate snapshot (yields, spreads)")
 
 
 class MacroHistoryPoint(BaseModel):
