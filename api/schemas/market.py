@@ -192,6 +192,24 @@ class MacroBondSnapshot(BaseModel):
     )
 
 
+class MacroBreadthSnapshot(BaseModel):
+    market: Optional[str] = Field(None, description="Market name (e.g. KOSPI)")
+    advancing: Optional[int] = Field(None, description="Number of advancing stocks")
+    declining: Optional[int] = Field(None, description="Number of declining stocks")
+    unchanged: Optional[int] = Field(None, description="Number of unchanged stocks")
+    total: Optional[int] = Field(None, description="Total stocks counted")
+    ad_ratio: Optional[float] = Field(None, description="Advance/Decline ratio")
+    updated_at: Optional[str] = Field(None, description="Last update timestamp")
+
+
+class MacroEvent(BaseModel):
+    date: str = Field(..., description="Event date (YYYY-MM-DD)")
+    type: str = Field(..., description="Event type (fomc, us_cpi, etc.)")
+    title_key: str = Field(..., description="i18n key for event title")
+    importance: Optional[str] = Field(None, description="Importance level (high/medium)")
+    d_day: int = Field(0, description="Days until event (0=today, positive=future)")
+
+
 class MacroVolatilitySnapshot(BaseModel):
     vix: Optional[float] = Field(None, description="CBOE VIX index value")
     vix_change_pct: Optional[float] = Field(None, description="VIX daily change %")
@@ -217,6 +235,8 @@ class MacroBundleResponse(BaseModel):
     volatility: Optional[MacroVolatilitySnapshot] = Field(
         None, description="Volatility snapshot (VIX, VKOSPI)"
     )
+    breadth: Optional[MacroBreadthSnapshot] = Field(None, description="Market breadth (A/D ratio)")
+    events: Optional[List[MacroEvent]] = Field(None, description="Upcoming macro events")
 
 
 class MacroHistoryPoint(BaseModel):
