@@ -1065,8 +1065,8 @@ function MetricCard({
   const isStale = stale ?? (decay != null ? decay < 0.1 : (ageSec != null && ageSec > 600));
 
   return (
-    <Card>
-      <div className="space-y-2">
+    <Card className="h-full">
+      <div className="flex h-full flex-col gap-2">
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-1 text-sm text-[var(--foreground-muted)]">
             {icon}
@@ -1106,7 +1106,7 @@ function MetricCard({
         {interpretationText && (
           <p className="text-xs italic text-[var(--foreground-muted)]">{interpretationText}</p>
         )}
-        <div className="flex items-center justify-between">
+        <div className="mt-auto flex items-center justify-between pt-2 border-t border-[var(--border)]">
           <p className={`text-xs ${isStale ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--foreground-muted)]'}`}>
             {ageLabel}
           </p>

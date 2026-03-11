@@ -50,7 +50,7 @@ export default function Card({
           </h3>
         </div>
       )}
-      <div className={paddingStyles[padding]}>{children}</div>
+      <div className={`${paddingStyles[padding]} h-full`}>{children}</div>
     </div>
   );
 }
