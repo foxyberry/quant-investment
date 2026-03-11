@@ -632,7 +632,7 @@ export default function MacroPage() {
       )}
 
       {/* Metric Cards (KR only) */}
-      {marketMode === 'kr' && <div className="grid gap-4 lg:grid-cols-3">
+      {marketMode === 'kr' && <div className="grid gap-4 lg:grid-cols-3 lg:auto-rows-fr">
         <MetricCard
           title="USD/KRW"
           icon={<DollarSign className="h-4 w-4" />}
@@ -739,7 +739,7 @@ export default function MacroPage() {
 
         {/* Global Macro (DXY, commodities, MSCI) */}
         {bundleQuery.data?.global_macro && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:auto-rows-fr gap-4">
             {GLOBAL_ITEMS.map((item) => {
               const point = bundleQuery.data?.global_macro?.[item.key];
               const fractionDigits = item.key === 'gold' ? 0 : item.key === 'copper' ? 4 : 2;

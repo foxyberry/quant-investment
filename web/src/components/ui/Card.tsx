@@ -36,6 +36,7 @@ export default function Card({
   return (
     <div
       className={`
+        flex flex-col
         rounded-lg
         bg-[var(--background-secondary)]
         ${bordered ? 'border border-[var(--border)]' : ''}
@@ -50,7 +51,7 @@ export default function Card({
           </h3>
         </div>
       )}
-      <div className={`${paddingStyles[padding]} h-full`}>{children}</div>
+      <div className={`${paddingStyles[padding]} flex-1`}>{children}</div>
     </div>
   );
 }
