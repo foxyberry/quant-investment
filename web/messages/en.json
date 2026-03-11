@@ -202,7 +202,13 @@
     "interp_flow_foreign_strong_sell": "Foreigners selling heavily → strong selling pressure",
     "interp_flow_foreign_sell": "Foreigners selling → selling dominant",
     "interp_flow_neutral": "Balanced flow among foreign, institutional, and retail",
-    "interp_flow_unavailable": "Weekend/off-hours — flow data not collected"
+    "interp_flow_unavailable": "Weekend/off-hours — flow data not collected",
+    "signalStale": "Stale",
+    "signalFading": "Fading",
+    "afterHoursNotice": "After hours — extended decay",
+    "marketOpen": "Market open",
+    "marketClosed": "Market closed",
+    "signalStrength": "({pct}%)"
   },
   "screening": {
     "title": "Stock Screening",

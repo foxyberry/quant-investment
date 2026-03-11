@@ -346,6 +346,7 @@ export interface MacroSignalComponent {
   decay: number;
   weight: number;
   contribution: number;
+  half_life_sec?: number | null;
 }
 
 export interface MacroReasonDetail {
@@ -390,6 +391,7 @@ export interface MacroBundle {
   interpretation?: MacroInterpretation | null;
   cache_hit?: boolean | null;
   generated_at?: string | null;
+  is_market_hours?: boolean | null;
 }
 
 export interface MacroHistoryPoint {
