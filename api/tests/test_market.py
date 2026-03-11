@@ -290,7 +290,9 @@ class TestMacroEndpoints:
     def test_get_macro_bundle(self, client):
         with patch("api.routers.market._macro_service") as mock_macro_service, patch(
             "api.routers.market._bond_service"
-        ) as mock_bond_service, patch("api.routers.market._volatility_service") as mock_vol_service:
+        ) as mock_bond_service, patch("api.routers.market._volatility_service") as mock_vol_service, patch(
+            "api.routers.market._global_macro_service"
+        ) as mock_global_service:
             mock_macro_service.get_bundle.return_value = {
                 "fx": {
                     "pair": "USD/KRW",
@@ -327,6 +329,7 @@ class TestMacroEndpoints:
             }
             mock_bond_service.get_snapshot.return_value = None
             mock_vol_service.get_snapshot.return_value = None
+            mock_global_service.get_snapshot.return_value = None
 
             response = client.get("/api/market/macro/bundle")
 
@@ -337,11 +340,14 @@ class TestMacroEndpoints:
             assert "freshness" in payload
             assert payload.get("bonds") is None
             assert payload.get("volatility") is None
+            assert payload.get("global_macro") is None
 
     def test_get_macro_bundle_with_bonds(self, client):
         with patch("api.routers.market._macro_service") as mock_macro_service, patch(
             "api.routers.market._bond_service"
-        ) as mock_bond_service, patch("api.routers.market._volatility_service") as mock_vol_service:
+        ) as mock_bond_service, patch("api.routers.market._volatility_service") as mock_vol_service, patch(
+            "api.routers.market._global_macro_service"
+        ) as mock_global_service:
             mock_macro_service.get_bundle.return_value = {
                 "fx": {
                     "pair": "USD/KRW",
@@ -388,6 +394,7 @@ class TestMacroEndpoints:
                 "stale": False,
             }
             mock_vol_service.get_snapshot.return_value = None
+            mock_global_service.get_snapshot.return_value = None
 
             response = client.get("/api/market/macro/bundle")
 
@@ -397,11 +404,14 @@ class TestMacroEndpoints:
             assert payload["bonds"]["inverted"] is True
             assert payload["bonds"]["kr_us_spread_10y"] == -0.90
             assert payload.get("volatility") is None
+            assert payload.get("global_macro") is None
 
     def test_get_macro_bundle_with_volatility(self, client):
         with patch("api.routers.market._macro_service") as mock_macro_service, patch(
             "api.routers.market._bond_service"
-        ) as mock_bond_service, patch("api.routers.market._volatility_service") as mock_vol_service:
+        ) as mock_bond_service, patch("api.routers.market._volatility_service") as mock_vol_service, patch(
+            "api.routers.market._global_macro_service"
+        ) as mock_global_service:
             mock_macro_service.get_bundle.return_value = {
                 "fx": {
                     "pair": "USD/KRW",
@@ -437,6 +447,7 @@ class TestMacroEndpoints:
                 },
             }
             mock_bond_service.get_snapshot.return_value = None
+            mock_global_service.get_snapshot.return_value = None
             mock_vol_service.get_snapshot.return_value = {
                 "vix": 21.3,
                 "vix_change_pct": 2.51,
@@ -455,6 +466,68 @@ class TestMacroEndpoints:
             assert payload["volatility"]["vix"] == 21.3
             assert payload["volatility"]["fear_greed"] == "elevated"
             assert payload["volatility"]["vkospi_vix_ratio"] == 0.887
+            assert payload.get("global_macro") is None
+
+    def test_get_macro_bundle_with_global_macro(self, client):
+        with patch("api.routers.market._macro_service") as mock_macro_service, patch(
+            "api.routers.market._bond_service"
+        ) as mock_bond_service, patch("api.routers.market._volatility_service") as mock_vol_service, patch(
+            "api.routers.market._global_macro_service"
+        ) as mock_global_service:
+            mock_macro_service.get_bundle.return_value = {
+                "fx": {
+                    "pair": "USD/KRW",
+                    "value": 1340.5,
+                    "change_pct": 0.12,
+                    "updated_at": "2026-03-07T13:00:00+00:00",
+                },
+                "futures": {
+                    "symbol": "069500.KS",
+                    "value": 400.2,
+                    "basis": 1.4,
+                    "change_pct": -0.22,
+                    "updated_at": "2026-03-07T13:00:00+00:00",
+                },
+                "flow": {
+                    "market": "KOSPI",
+                    "foreign_net": -1500000000.0,
+                    "institution_net": 900000000.0,
+                    "individual_net": 600000000.0,
+                    "window_min": 5,
+                    "updated_at": "2026-03-07T12:58:00+00:00",
+                },
+                "signal": {
+                    "macro_score": 0.64,
+                    "regime": "risk_off",
+                    "reason": "risk_off: fx=0.80 (decay=1.00)",
+                    "updated_at": "2026-03-07T13:00:00+00:00",
+                },
+                "freshness": {
+                    "fx_age_sec": 5,
+                    "futures_age_sec": 3,
+                    "flow_age_sec": 120,
+                },
+            }
+            mock_bond_service.get_snapshot.return_value = None
+            mock_vol_service.get_snapshot.return_value = None
+            mock_global_service.get_snapshot.return_value = {
+                "dxy": {"value": 103.2, "change_pct": 0.15, "as_of": "2026-03-11T00:00:00"},
+                "wti": {"value": 78.1, "change_pct": -0.22, "as_of": "2026-03-11T00:00:00"},
+                "gold": {"value": 2100.0, "change_pct": 0.3, "as_of": "2026-03-11T00:00:00"},
+                "copper": {"value": 4.2, "change_pct": 0.4, "as_of": "2026-03-11T00:00:00"},
+                "msci_em": {"value": 42.0, "change_pct": 0.5, "as_of": "2026-03-11T00:00:00"},
+                "msci_dm": {"value": 84.0, "change_pct": 0.6, "as_of": "2026-03-11T00:00:00"},
+                "em_dm_ratio": 0.5,
+                "copper_gold_ratio": 0.002,
+            }
+
+            response = client.get("/api/market/macro/bundle")
+
+            assert response.status_code == 200
+            payload = response.json()
+            assert payload["global_macro"]["dxy"]["value"] == 103.2
+            assert payload["global_macro"]["em_dm_ratio"] == 0.5
+            assert payload["global_macro"]["copper_gold_ratio"] == 0.002
 
     def test_get_macro_history(self, client):
         with patch("api.routers.market._macro_service") as mock_macro_service:

@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Query
 from api.schemas.market import (
     MacroBondSnapshot,
     MacroBundleResponse,
+    MacroGlobalSnapshot,
     MacroHistoryResponse,
     MacroVolatilitySnapshot,
     OHLCVResponse,
@@ -20,6 +21,7 @@ from api.schemas.market import (
 )
 from api.services.bond_rate_service import get_bond_rate_service
 from api.schemas.analysis import SearchResult
+from api.services.global_macro_service import get_global_macro_service
 from api.services.market_service import MarketService
 from api.services.macro_market_service import get_macro_market_service
 from api.services.volatility_service import get_volatility_service
@@ -40,6 +42,7 @@ _service = MarketService()
 _macro_service = get_macro_market_service(_service)
 _bond_service = get_bond_rate_service()
 _volatility_service = get_volatility_service()
+_global_macro_service = get_global_macro_service()
 
 
 @router.get(
@@ -175,6 +178,16 @@ def get_macro_bundle(
     except Exception:
         logger.warning("Failed to fetch volatility snapshot", exc_info=True)
         result["volatility"] = None
+    try:
+        gm_snapshot = _global_macro_service.get_snapshot()
+        if gm_snapshot:
+            gm = MacroGlobalSnapshot(**gm_snapshot)
+            result["global_macro"] = gm.model_dump()
+        else:
+            result["global_macro"] = None
+    except Exception:
+        logger.warning("Failed to fetch global macro snapshot", exc_info=True)
+        result["global_macro"] = None
     return MacroBundleResponse(**result)
 
 

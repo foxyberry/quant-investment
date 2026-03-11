@@ -221,6 +221,23 @@ class MacroVolatilitySnapshot(BaseModel):
     vkospi_vix_ratio: Optional[float] = Field(None, description="VKOSPI/VIX ratio (auxiliary)")
 
 
+class MacroQuotePoint(BaseModel):
+    value: Optional[float] = Field(None)
+    change_pct: Optional[float] = Field(None)
+    as_of: Optional[str] = Field(None)
+
+
+class MacroGlobalSnapshot(BaseModel):
+    dxy: Optional[MacroQuotePoint] = None
+    wti: Optional[MacroQuotePoint] = None
+    gold: Optional[MacroQuotePoint] = None
+    copper: Optional[MacroQuotePoint] = None
+    msci_em: Optional[MacroQuotePoint] = None
+    msci_dm: Optional[MacroQuotePoint] = None
+    em_dm_ratio: Optional[float] = Field(None, description="EEM/EFA ratio")
+    copper_gold_ratio: Optional[float] = Field(None, description="Copper/Gold ratio")
+
+
 class MacroBundleResponse(BaseModel):
     fx: MacroFxSnapshot
     futures: MacroFuturesSnapshot
@@ -234,6 +251,9 @@ class MacroBundleResponse(BaseModel):
     bonds: Optional[MacroBondSnapshot] = Field(None, description="Bond rate snapshot (yields, spreads)")
     volatility: Optional[MacroVolatilitySnapshot] = Field(
         None, description="Volatility snapshot (VIX, VKOSPI)"
+    )
+    global_macro: Optional[MacroGlobalSnapshot] = Field(
+        None, description="Global macro snapshot (DXY, commodities, MSCI)"
     )
     breadth: Optional[MacroBreadthSnapshot] = Field(None, description="Market breadth (A/D ratio)")
     events: Optional[List[MacroEvent]] = Field(None, description="Upcoming macro events")

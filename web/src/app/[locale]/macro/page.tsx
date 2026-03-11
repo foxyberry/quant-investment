@@ -152,6 +152,16 @@ const REGIME_COLORS: Record<MacroRegime, string> = {
 };
 
 type WindowOption = '60m' | '6h' | '1d' | '7d' | '30d';
+type GlobalItemKey = 'dxy' | 'wti' | 'gold' | 'copper' | 'msci_em' | 'msci_dm';
+
+const GLOBAL_ITEMS = [
+  { key: 'dxy', titleKey: 'globalDxy', icon: <DollarSign />, source: 'ICE', unit: '' },
+  { key: 'wti', titleKey: 'globalWti', icon: <Activity />, source: 'NYMEX', unit: 'USD/bbl' },
+  { key: 'gold', titleKey: 'globalGold', icon: <Activity />, source: 'COMEX', unit: 'USD/oz' },
+  { key: 'copper', titleKey: 'globalCopper', icon: <Activity />, source: 'COMEX', unit: 'USD/lb' },
+  { key: 'msci_em', titleKey: 'globalMsciEm', icon: <TrendingUp />, source: 'NYSE Arca', unit: 'USD' },
+  { key: 'msci_dm', titleKey: 'globalMsciDm', icon: <TrendingUp />, source: 'NYSE Arca', unit: 'USD' },
+] as const satisfies ReadonlyArray<{ key: GlobalItemKey; titleKey: string; icon: ReactNode; source: string; unit: string }>;
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -534,6 +544,46 @@ export default function MacroPage() {
               ageLabel={bundleQuery.data.volatility.vkospi_as_of ? formatDateTime(bundleQuery.data.volatility.vkospi_as_of, locale) : '-'}
               staleLabel={t('staleWarning')}
             />
+          </div>
+        </section>
+      )}
+
+      {bundleQuery.data?.global_macro && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold flex items-center gap-2 text-[var(--foreground)]">
+            <TrendingUp className="h-5 w-5 text-blue-500" />
+            {t('globalTitle')}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {GLOBAL_ITEMS.map((item) => {
+              const point = bundleQuery.data?.global_macro?.[item.key];
+              const fractionDigits = item.key === 'gold' ? 0 : item.key === 'copper' ? 4 : 2;
+              return (
+                <MetricCard
+                  key={item.key}
+                  title={t(item.titleKey)}
+                  icon={item.icon}
+                  value={formatNumber(point?.value ?? null, locale, fractionDigits)}
+                  unit={item.unit}
+                  changePct={point?.change_pct}
+                  source={item.source}
+                  items={
+                    item.key === 'msci_em'
+                      ? [
+                          {
+                            label: t('globalEmDmRatio'),
+                            value: formatNumber(bundleQuery.data?.global_macro?.em_dm_ratio ?? null, locale, 3),
+                            hint: t('globalEmDmRatioHint'),
+                          },
+                        ]
+                      : []
+                  }
+                  ageSec={null}
+                  ageLabel={point?.as_of ? formatDateTime(point.as_of, locale) : '-'}
+                  staleLabel={t('staleWarning')}
+                />
+              );
+            })}
           </div>
         </section>
       )}
