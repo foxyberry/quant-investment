@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, usePathname } from '@/i18n/navigation';
+import { queryKeys } from '@/lib/queryKeys';
+import { getMacroBundle, getMacroHistory } from '@/lib/api';
 import {
   LayoutDashboard,
   Search,
@@ -67,6 +70,21 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const [kiwoomStatus, setKiwoomStatus] = useState<KiwoomConnectionStatus>(DEFAULT_KIWOOM_STATUS);
   const previousStatusRef = useRef<KiwoomConnectionState | null>(null);
   const failCountRef = useRef(0);
+
+  const queryClient = useQueryClient();
+
+  const prefetchMacro = useCallback(() => {
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.market.macroBundle(),
+      queryFn: () => getMacroBundle(),
+      staleTime: 10 * 1000,
+    });
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.market.macroHistory('60m'),
+      queryFn: () => getMacroHistory('60m'),
+      staleTime: 30 * 1000,
+    });
+  }, [queryClient]);
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -175,6 +193,8 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                     <Link
                       href={item.href}
                       onClick={onClose}
+                      onMouseEnter={item.href === '/macro' ? prefetchMacro : undefined}
+                      onFocus={item.href === '/macro' ? prefetchMacro : undefined}
                       className={`
                         flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition-colors
                         ${
