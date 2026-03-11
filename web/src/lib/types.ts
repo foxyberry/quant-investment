@@ -332,6 +332,9 @@ export interface MacroFuturesSnapshot {
   updated_at: string | null;
 }
 
+export type FlowAlignment = 'aligned_buy' | 'aligned_sell' | 'foreign_lead' | 'institution_lead' | 'unknown';
+export type FlowStrength = 'strong' | 'moderate' | 'weak';
+
 export interface MacroInvestorFlowSnapshot {
   market: string; // e.g. KOSPI
   foreign_net: number | null;
@@ -339,6 +342,11 @@ export interface MacroInvestorFlowSnapshot {
   individual_net: number | null;
   window_min: number | null;
   updated_at: string | null;
+  alignment?: FlowAlignment | null;
+  foreign_strength?: FlowStrength | null;
+  kosdaq_foreign_net?: number | null;
+  kosdaq_institution_net?: number | null;
+  kosdaq_individual_net?: number | null;
 }
 
 export interface MacroSignalComponent {

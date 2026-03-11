@@ -212,6 +212,16 @@ def run_investor_flow_collector(
 
             data = _fetch_investor_flow(market)
             if data is not None:
+                # Also collect KOSDAQ and embed as nested field
+                if market == "KOSPI":
+                    kosdaq = _fetch_investor_flow("KOSDAQ")
+                    if kosdaq is not None:
+                        data["kosdaq"] = {
+                            "foreign_net": kosdaq.get("foreign_net"),
+                            "institution_net": kosdaq.get("institution_net"),
+                            "individual_net": kosdaq.get("individual_net"),
+                        }
+
                 _atomic_write_json(path, data)
                 logger.debug("Investor flow updated: foreign=%s", data.get("foreign_net"))
 
