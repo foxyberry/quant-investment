@@ -158,7 +158,37 @@ class MacroMarketService:
         "30d": 21600,    # 6-hour buckets → ~120 pts
     }
 
+    # Target max points per window (downsample if exceeded)
+    _DOWNSAMPLE_TARGETS: Dict[str, int] = {
+        "60m": 0,    # no limit
+        "6h": 0,     # no limit
+        "1d": 300,
+        "7d": 250,
+        "30d": 200,
+    }
+
+    # History cache: window → (monotonic_time, result_dict)
+    _HISTORY_CACHE_TTL: Dict[str, int] = {
+        "60m": 30,
+        "6h": 60,
+        "1d": 60,
+        "7d": 300,
+        "30d": 300,
+    }
+
     def get_history(self, window: str = "60m") -> Dict[str, Any]:
+        now_mono = time.monotonic()
+        normalized = (window or "60m").strip().lower()
+
+        # Check history cache
+        with self._lock:
+            cached = getattr(self, "_history_cache", {}).get(normalized)
+            if cached:
+                cached_at, cached_result = cached
+                ttl = self._HISTORY_CACHE_TTL.get(normalized, 60)
+                if (now_mono - cached_at) < ttl:
+                    return {"window": cached_result["window"], "points": list(cached_result["points"])}
+
         now = datetime.now(timezone.utc)
         delta = self._parse_window(window)
         min_ts = now - delta
@@ -175,7 +205,9 @@ class MacroMarketService:
             self._flush_to_db()
             db_points = self._query_db_history(min_ts, now)
             if db_points:
-                return {"window": window, "points": self._downsample_points(db_points, window)}
+                result = {"window": window, "points": self._downsample_points(db_points, window)}
+                self._cache_history(normalized, now_mono, result)
+                return result
 
         # Reverse scan: deque is chronological, so iterate from newest.
         # Stop early once we pass the time boundary.
@@ -198,7 +230,16 @@ class MacroMarketService:
                 })
         points.reverse()  # restore chronological order
 
-        return {"window": window, "points": self._downsample_points(points, window)}
+        result = {"window": window, "points": self._downsample_points(points, window)}
+        self._cache_history(normalized, now_mono, result)
+        return result
+
+    def _cache_history(self, window: str, mono_time: float, result: Dict[str, Any]) -> None:
+        """Store history result in per-window TTL cache."""
+        with self._lock:
+            if not hasattr(self, "_history_cache"):
+                self._history_cache: Dict[str, tuple] = {}
+            self._history_cache[window] = (mono_time, result)
 
     @classmethod
     def _downsample_points(
@@ -211,7 +252,9 @@ class MacroMarketService:
         """
         normalized = (window or "60m").strip().lower()
         bucket_sec = cls._DOWNSAMPLE_BUCKETS.get(normalized, 0)
-        if bucket_sec <= 0 or len(points) <= 500:
+        target = cls._DOWNSAMPLE_TARGETS.get(normalized, 0)
+        # Skip if no bucket size or point count is within target
+        if bucket_sec <= 0 or (target > 0 and len(points) <= target) or (target <= 0 and len(points) <= 500):
             return points
 
         buckets: Dict[int, Dict[str, Any]] = {}
@@ -923,6 +966,9 @@ class MacroMarketService:
             self._history.append(point)
             self._db_buffer.append(point)
             self._db_tick_count += 1
+            # Invalidate history cache — new data available
+            if hasattr(self, "_history_cache"):
+                self._history_cache.clear()
             if self._db_tick_count >= self._DB_FLUSH_INTERVAL:
                 should_flush = True
 
@@ -1086,13 +1132,21 @@ class MacroMarketService:
             logger.warning("Failed to fetch historical futures data: %s", exc)
             return {}
 
+    # KST market hours for hourly interpolation (00:00-09:00 UTC = 09:00-18:00 KST)
+    _BACKFILL_HOURS_UTC = list(range(0, 10))  # 0..9 UTC = 9..18 KST
+
     def _merge_daily_backfill(
         self,
         fx_daily: Dict[date, float],
         futures_daily: Dict[date, float],
         last_ts: datetime,
     ) -> List[Dict[str, Any]]:
-        """Merge daily FX + futures into backfill history points."""
+        """Merge daily FX + futures into hourly-interpolated backfill points.
+
+        For each trading day, generates hourly points during KST market hours
+        (09:00-18:00 KST = 00:00-09:00 UTC) with linearly interpolated values.
+        This ensures ~270 points for 30 days instead of ~30 daily points.
+        """
         all_dates = sorted(set(fx_daily.keys()) | set(futures_daily.keys()))
         if not all_dates:
             return []
@@ -1101,28 +1155,22 @@ class MacroMarketService:
         prev_fx: Optional[float] = None
         prev_fut: Optional[float] = None
 
-        for d in all_dates:
-            # Use 9:00 UTC (≈ 18:00 KST, after market close)
-            dt = datetime(d.year, d.month, d.day, 9, 0, tzinfo=timezone.utc)
-            if dt <= last_ts:
-                # Track previous values for change calculation
-                prev_fx = fx_daily.get(d, prev_fx)
-                prev_fut = futures_daily.get(d, prev_fut)
+        for idx, d in enumerate(all_dates):
+            if d.weekday() > 4:  # skip weekends
                 continue
 
+            # Get current day's close values
             fx_val = fx_daily.get(d)
             fut_val = futures_daily.get(d)
 
-            # Compute daily change percentages
+            # Compute daily change for macro_score
             fx_change = None
             if fx_val is not None and prev_fx is not None and prev_fx > 0:
                 fx_change = ((fx_val - prev_fx) / prev_fx) * 100
-
             fut_change = None
             if fut_val is not None and prev_fut is not None and prev_fut > 0:
                 fut_change = ((fut_val - prev_fut) / prev_fut) * 100
 
-            # Simplified signal (no basis, no flow — reweighted 55/45)
             fx_raw = self._clip((fx_change or 0) / 1.5, -1.0, 1.0)
             fut_raw = self._clip(-(fut_change or 0) / 3.0, -1.0, 1.0)
 
@@ -1145,14 +1193,32 @@ class MacroMarketService:
                 else:
                     regime = "neutral"
 
-            points.append({
-                "timestamp": dt.isoformat(),
-                "fx_value": fx_val,
-                "futures_value": fut_val,
-                "foreign_net": None,
-                "macro_score": macro_score,
-                "regime": regime,
-            })
+            # Generate hourly points within market hours
+            # Interpolate from previous day's close to current day's close (no look-ahead)
+            n_hours = len(self._BACKFILL_HOURS_UTC)
+            for hi, h in enumerate(self._BACKFILL_HOURS_UTC):
+                dt = datetime(d.year, d.month, d.day, h, 0, tzinfo=timezone.utc)
+                if dt <= last_ts:
+                    continue
+
+                frac = hi / max(n_hours - 1, 1)
+                h_fx = None
+                if fx_val is not None:
+                    start_fx = prev_fx if prev_fx is not None else fx_val
+                    h_fx = round(start_fx + frac * (fx_val - start_fx), 2)
+                h_fut = None
+                if fut_val is not None:
+                    start_fut = prev_fut if prev_fut is not None else fut_val
+                    h_fut = round(start_fut + frac * (fut_val - start_fut), 2)
+
+                points.append({
+                    "timestamp": dt.isoformat(),
+                    "fx_value": h_fx,
+                    "futures_value": h_fut,
+                    "foreign_net": None,
+                    "macro_score": macro_score,
+                    "regime": regime,
+                })
 
             prev_fx = fx_val if fx_val is not None else prev_fx
             prev_fut = fut_val if fut_val is not None else prev_fut
@@ -1167,6 +1233,9 @@ class MacroMarketService:
             batch = self._db_buffer[:]
             self._db_buffer.clear()
             self._db_tick_count = 0
+            # Invalidate history cache on new data
+            if hasattr(self, "_history_cache"):
+                self._history_cache.clear()
         try:
             db: Session = SessionLocal()
             try:
