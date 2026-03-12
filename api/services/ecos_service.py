@@ -22,6 +22,8 @@ class EcosService:
 
     def __init__(self) -> None:
         self._api_key = os.getenv("ECOS_API_KEY")
+        if not self._api_key:
+            logger.warning("ECOS_API_KEY not set — KR bond rates will be unavailable")
         self._lock = threading.RLock()
         self._cache: Dict[str, Optional[float]] = {}
         self._cache_time: Dict[str, float] = {}

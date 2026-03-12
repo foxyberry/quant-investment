@@ -39,7 +39,7 @@ def test_fetch_vkospi_snapshot_with_primary_and_range_change():
         index=pd.to_datetime(["2026-03-10", "2026-03-11"]),
     )
 
-    def fake_get_index_ohlcv_by_date(fromdate, todate, ticker):
+    def fake_get_index_ohlcv_by_date(fromdate, todate, ticker, **kwargs):
         if fromdate == todate:
             return today_df
         return range_df
