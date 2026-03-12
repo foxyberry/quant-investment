@@ -212,6 +212,7 @@
     "fxVolatility": "FX 변동성",
     "vixBar": "VIX",
     "dataCoverage": "커버리지 {pct}%",
+    "dataCoverageLabel": "데이터 커버리지",
     "quality_ok": "데이터 최신",
     "quality_stale": "데이터 지연",
     "quality_missing": "데이터 없음",
