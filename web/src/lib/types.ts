@@ -486,6 +486,7 @@ export interface MacroHistoryPoint {
   foreign_net: number | null;
   macro_score: number | null;
   regime: MacroRegime;
+  vix: number | null;
 }
 
 export interface MacroHistoryResponse {

@@ -67,6 +67,7 @@ def init_db() -> None:
     _migrate_json_data()
     _migrate_portfolio_json()
     _migrate_saved_screening_to_execution_history()
+    _migrate_macro_history_vix()
 
 
 def _get_column_names(conn, table_name: str):
@@ -389,3 +390,17 @@ def _migrate_saved_screening_to_execution_history() -> None:
         logger.error("Saved screening migration failed: %s", e)
     finally:
         db.close()
+
+
+def _migrate_macro_history_vix() -> None:
+    """Add vix column to macro_history table if missing."""
+    try:
+        with engine.begin() as conn:
+            existing_columns = _get_column_names(conn, "macro_history")
+            if existing_columns is None:
+                return
+            if "vix" not in existing_columns:
+                conn.execute(text("ALTER TABLE macro_history ADD COLUMN vix FLOAT"))
+                logger.info("Added macro_history.vix column")
+    except Exception as e:
+        logger.warning("macro_history vix migration skipped: %s", e)

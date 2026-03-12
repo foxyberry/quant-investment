@@ -284,6 +284,7 @@ class MacroHistoryPoint(BaseModel):
     foreign_net: Optional[float] = Field(None, description="Foreign net flow")
     macro_score: Optional[float] = Field(None, description="Macro score")
     regime: str = Field(..., description="Regime at timestamp")
+    vix: Optional[float] = Field(None, description="VIX index value at timestamp")
 
 
 class MacroHistoryResponse(BaseModel):

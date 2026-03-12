@@ -175,6 +175,7 @@ class MacroMarketService:
                     "foreign_net": p.get("foreign_net"),
                     "macro_score": p.get("macro_score"),
                     "regime": p.get("regime", "unknown"),
+                    "vix": p.get("vix"),
                 })
         points.reverse()  # restore chronological order
 
@@ -788,6 +789,16 @@ class MacroMarketService:
         futures = bundle.get("futures", {})
         flow = bundle.get("flow", {})
 
+        # Fetch VIX from volatility service (lazy import to avoid circular deps)
+        vix_value: float | None = None
+        try:
+            from api.services.volatility_service import get_volatility_service
+            vol = get_volatility_service().get_snapshot()
+            if vol:
+                vix_value = self._to_float(vol.get("vix"))
+        except Exception as exc:
+            logger.debug("VIX fetch for history point failed: %s", exc)
+
         point = {
             "timestamp": self._to_iso(now),
             "fx_value": self._to_float(fx.get("value")),
@@ -795,6 +806,7 @@ class MacroMarketService:
             "foreign_net": self._to_float(flow.get("foreign_net")),
             "macro_score": self._to_float(signal.get("macro_score")),
             "regime": signal.get("regime", "unknown"),
+            "vix": vix_value,
         }
         should_flush = False
         with self._lock:
@@ -834,6 +846,7 @@ class MacroMarketService:
                         "foreign_net": row.foreign_net,
                         "macro_score": row.macro_score,
                         "regime": row.regime or "unknown",
+                        "vix": getattr(row, "vix", None),
                     })
                 if rows:
                     logger.info("Loaded %d macro history rows from DB", len(rows))
@@ -1058,6 +1071,7 @@ class MacroMarketService:
                         foreign_net=point.get("foreign_net"),
                         macro_score=point.get("macro_score"),
                         regime=point.get("regime"),
+                        vix=point.get("vix"),
                     ))
                 db.commit()
             finally:
@@ -1091,6 +1105,7 @@ class MacroMarketService:
                         "foreign_net": r.foreign_net,
                         "macro_score": r.macro_score,
                         "regime": r.regime or "unknown",
+                        "vix": getattr(r, "vix", None),
                     }
                     for r in rows
                 ]
