@@ -449,6 +449,15 @@ export interface MacroUsMarketSnapshot {
   fed_funds_as_of: string | null;
 }
 
+export type DataQualityLevel = 'ok' | 'stale' | 'missing';
+
+export interface MacroDataQuality {
+  fx: DataQualityLevel | null;
+  futures: DataQualityLevel | null;
+  flow: DataQualityLevel | null;
+  volatility: DataQualityLevel | null;
+}
+
 export interface MacroBundle {
   fx?: MacroFxSnapshot | null;
   futures?: MacroFuturesSnapshot | null;
@@ -462,6 +471,7 @@ export interface MacroBundle {
   events?: MacroEvent[] | null;
   interpretation?: MacroInterpretation | null;
   us_market?: MacroUsMarketSnapshot | null;
+  data_quality?: MacroDataQuality | null;
   cache_hit?: boolean | null;
   generated_at?: string | null;
   is_market_hours?: boolean | null;
@@ -492,6 +502,7 @@ export interface MacroHistoryPoint {
 export interface MacroHistoryResponse {
   window: string;
   points: MacroHistoryPoint[];
+  data_coverage_pct?: number | null;
 }
 
 // Broker-agnostic types (unified broker router)

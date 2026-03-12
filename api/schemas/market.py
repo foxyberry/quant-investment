@@ -255,6 +255,13 @@ class MacroUsMarketSnapshot(BaseModel):
     fed_funds_as_of: Optional[str] = Field(None, description="Fed Funds Rate observation date")
 
 
+class MacroDataQuality(BaseModel):
+    fx: Optional[Literal["ok", "stale", "missing"]] = Field(None, description="FX data quality")
+    futures: Optional[Literal["ok", "stale", "missing"]] = Field(None, description="Futures data quality")
+    flow: Optional[Literal["ok", "stale", "missing"]] = Field(None, description="Investor flow data quality")
+    volatility: Optional[Literal["ok", "stale", "missing"]] = Field(None, description="Volatility data quality")
+
+
 class MacroBundleResponse(BaseModel):
     fx: Optional[MacroFxSnapshot] = None
     futures: Optional[MacroFuturesSnapshot] = None
@@ -275,6 +282,7 @@ class MacroBundleResponse(BaseModel):
     breadth: Optional[MacroBreadthSnapshot] = Field(None, description="Market breadth (A/D ratio)")
     events: Optional[List[MacroEvent]] = Field(None, description="Upcoming macro events")
     us_market: Optional[MacroUsMarketSnapshot] = Field(None, description="US market data (S&P 500, Fed Funds Rate)")
+    data_quality: Optional[MacroDataQuality] = Field(None, description="Per-series data quality status")
 
 
 class MacroHistoryPoint(BaseModel):
@@ -290,3 +298,4 @@ class MacroHistoryPoint(BaseModel):
 class MacroHistoryResponse(BaseModel):
     window: str = Field(..., description="Requested window string")
     points: List[MacroHistoryPoint] = Field(default_factory=list, description="History points")
+    data_coverage_pct: Optional[float] = Field(None, description="Percentage of non-null macro_score points (0-100)")
