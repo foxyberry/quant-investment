@@ -160,6 +160,8 @@
     "flowUnit": "亿韩元",
     "fxSource": "Naver金融",
     "futuresSource": "KODEX 200 vs KOSPI",
+    "futuresInvestorLabel": "投资者分类 (代理)",
+    "sharesUnit": "股",
     "flowSource": "Naver Stock",
     "alignmentAlignedBuy": "同步买入",
     "alignmentAlignedSell": "同步卖出",

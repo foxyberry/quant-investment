@@ -160,6 +160,8 @@
     "flowUnit": "100M KRW",
     "fxSource": "Naver Finance",
     "futuresSource": "KODEX 200 vs KOSPI",
+    "futuresInvestorLabel": "Investor Breakdown (proxy)",
+    "sharesUnit": "shares",
     "flowSource": "Naver Stock",
     "alignmentAlignedBuy": "Aligned Buy",
     "alignmentAlignedSell": "Aligned Sell",
