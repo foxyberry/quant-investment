@@ -22,4 +22,5 @@ class MacroHistory(Base):
     foreign_net = Column(Float, nullable=True)
     macro_score = Column(Float, nullable=True)
     regime = Column(String(32), nullable=True, default="unknown")
+    vix = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

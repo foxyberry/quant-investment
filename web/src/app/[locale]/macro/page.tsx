@@ -1058,6 +1058,7 @@ export default function MacroPage() {
                   tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
                   width={50}
                 />
+                <YAxis yAxisId="vix" orientation="right" hide domain={[0, 'auto']} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'var(--background-secondary)',
@@ -1074,6 +1075,7 @@ export default function MacroPage() {
                     if (name === t('macroScore')) return [formatPercent(v), name];
                     if (name === t('fxChangePct')) return [`${v > 0 ? '+' : ''}${v.toFixed(3)}%`, name];
                     if (name === t('fxVolatility')) return [`${(v * 100).toFixed(3)}%`, name];
+                    if (name === t('vixBar')) return [v.toFixed(2), name];
                     return [String(value), name];
                   }}
                 />
@@ -1082,6 +1084,13 @@ export default function MacroPage() {
                   align="right"
                   iconType="line"
                   wrapperStyle={{ fontSize: 11, paddingBottom: 4 }}
+                />
+                <Bar
+                  yAxisId="vix"
+                  dataKey="vix"
+                  name={t('vixBar')}
+                  fill="rgba(239,68,68,0.18)"
+                  barSize={8}
                 />
                 <Bar
                   yAxisId="score"
