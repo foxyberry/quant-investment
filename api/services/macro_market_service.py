@@ -113,6 +113,15 @@ class MacroMarketService:
 
         interpretation = self._build_interpretation(fx, futures, flow)
 
+        # Derive execution posture from regime + confidence + entry_signal
+        posture, posture_rationale = self._derive_posture(
+            signal.get("regime", "unknown"),
+            signal.get("confidence_band"),
+            interpretation.get("entry_signal", "wait"),
+        )
+        interpretation["posture"] = posture
+        interpretation["posture_rationale"] = posture_rationale
+
         breadth = self._get_breadth_snapshot()
         events = self._get_upcoming_events()
 
@@ -828,6 +837,43 @@ class MacroMarketService:
         if negative >= 2:
             return "caution"
         return "wait"
+
+    @staticmethod
+    def _derive_posture(
+        regime: str,
+        confidence_band: Optional[str],
+        entry_signal: str,
+    ) -> tuple:
+        """Derive execution posture from regime + confidence + entry_signal.
+
+        Returns (posture, posture_rationale_key) where rationale_key is an
+        i18n key the frontend maps to a translated explanation.
+
+        Posture matrix:
+          risk_on + caution entry              → wait (override)
+          risk_on + high conf + buy_favorable  → risk_on_full
+          risk_on + medium conf                → risk_on_small
+          neutral / low conf                   → wait
+          risk_off + any                       → risk_off_defensive
+          risk_off + high conf + caution       → hedge_bias
+        """
+        if regime == "risk_off":
+            if confidence_band == "high" and entry_signal == "caution":
+                return "hedge_bias", "posture_hedge_bias"
+            return "risk_off_defensive", "posture_risk_off_defensive"
+
+        if regime == "risk_on":
+            # Caution entry overrides risk-on → demote to wait
+            if entry_signal == "caution":
+                return "wait", "posture_wait_neutral"
+            if confidence_band == "high" and entry_signal == "buy_favorable":
+                return "risk_on_full", "posture_risk_on_full"
+            if confidence_band in ("high", "medium"):
+                return "risk_on_small", "posture_risk_on_small"
+            return "wait", "posture_wait_low_confidence"
+
+        # neutral or unknown
+        return "wait", "posture_wait_neutral"
 
     def _append_history(self, bundle: Dict[str, Any], now: datetime) -> None:
         signal = bundle.get("signal", {})

@@ -415,6 +415,8 @@ export interface MacroGlobalSnapshot {
 
 export type MacroEntrySignal = 'buy_favorable' | 'wait' | 'caution';
 
+export type MacroPosture = 'wait' | 'risk_on_small' | 'risk_on_full' | 'risk_off_defensive' | 'hedge_bias';
+
 export interface MacroInterpretation {
   entry_signal: MacroEntrySignal;
   // KR mode fields
@@ -425,6 +427,9 @@ export interface MacroInterpretation {
   vix_interpretation?: string | null;
   curve_interpretation?: string | null;
   sp500_interpretation?: string | null;
+  // Execution posture
+  posture?: MacroPosture | null;
+  posture_rationale?: string | null;
 }
 
 export interface MacroBreadthSnapshot {
