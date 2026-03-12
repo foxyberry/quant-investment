@@ -31,7 +31,7 @@ import {
   ReferenceArea,
   Legend,
 } from 'recharts';
-import type { MacroRegime } from '@/lib/types';
+import type { MacroRegime, DataQualityLevel } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -404,6 +404,30 @@ export default function MacroPage() {
     return segments;
   }, [historyQuery.data?.points]);
 
+  // Detect null-gap regions (consecutive points with null macro_score)
+  const nullGaps = useMemo(() => {
+    const points = historyQuery.data?.points ?? [];
+    if (points.length < 2) return [];
+    const gaps: { x1: string; x2: string }[] = [];
+    let gapStart: number | null = null;
+    for (let i = 0; i < points.length; i++) {
+      if (points[i].macro_score == null) {
+        if (gapStart == null) gapStart = i;
+      } else {
+        if (gapStart != null) {
+          gaps.push({ x1: points[gapStart].timestamp, x2: points[i - 1].timestamp });
+          gapStart = null;
+        }
+      }
+    }
+    if (gapStart != null) {
+      gaps.push({ x1: points[gapStart].timestamp, x2: points[points.length - 1].timestamp });
+    }
+    return gaps;
+  }, [historyQuery.data?.points]);
+
+  const dataCoveragePct = historyQuery.data?.data_coverage_pct ?? null;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -609,6 +633,8 @@ export default function MacroPage() {
           staleLabel={t('staleWarning')}
           interpretationText={interpretation?.fx_interpretation ? t(`interp_fx_${interpretation.fx_interpretation}`) : undefined}
           decay={bundleQuery.data?.signal?.reason_detail?.components?.fx?.decay}
+          quality={bundleQuery.data?.data_quality?.fx}
+          qualityLabel={bundleQuery.data?.data_quality?.fx ? t(`quality_${bundleQuery.data.data_quality.fx}`) : undefined}
         />
         <MetricCard
           title={t('futures')}
@@ -633,6 +659,8 @@ export default function MacroPage() {
           staleLabel={t('staleWarning')}
           interpretationText={interpretation?.futures_interpretation ? t(`interp_futures_${interpretation.futures_interpretation}`) : undefined}
           decay={bundleQuery.data?.signal?.reason_detail?.components?.futures?.decay}
+          quality={bundleQuery.data?.data_quality?.futures}
+          qualityLabel={bundleQuery.data?.data_quality?.futures ? t(`quality_${bundleQuery.data.data_quality.futures}`) : undefined}
         />
         <MetricCard
           title={t('investorFlow')}
@@ -681,6 +709,8 @@ export default function MacroPage() {
           staleLabel={t('staleWarning')}
           interpretationText={interpretation?.flow_interpretation ? t(`interp_flow_${interpretation.flow_interpretation}`) : undefined}
           decay={bundleQuery.data?.signal?.reason_detail?.components?.flow?.decay}
+          quality={bundleQuery.data?.data_quality?.flow}
+          qualityLabel={bundleQuery.data?.data_quality?.flow ? t(`quality_${bundleQuery.data.data_quality.flow}`) : undefined}
         />
       </div>}
 
@@ -983,6 +1013,11 @@ export default function MacroPage() {
               <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />{t('regimeRiskOn')}</span>
               <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-red-400" />{t('regimeRiskOff')}</span>
               <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-400" />{t('regimeNeutral')}</span>
+              {dataCoveragePct != null && (
+                <span className={`ml-1 ${dataCoveragePct < 50 ? 'text-amber-500' : 'text-[var(--foreground-muted)]'}`}>
+                  {t('dataCoverage', { pct: dataCoveragePct.toFixed(0) })}
+                </span>
+              )}
             </div>
           </div>
           <div className="relative inline-flex shrink-0 rounded-full bg-[var(--background-secondary)] p-0.5">
@@ -1028,6 +1063,11 @@ export default function MacroPage() {
           <div className="relative h-72" aria-busy={historyQuery.isLoading}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <defs>
+                  <pattern id="nullGapPattern" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                    <rect width="2" height="6" fill="var(--foreground-muted)" opacity="0.3" />
+                  </pattern>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 {regimeSegments.map((seg, i) => (
                   <ReferenceArea
@@ -1036,6 +1076,15 @@ export default function MacroPage() {
                     x2={seg.x2}
                     fill={REGIME_COLORS[seg.regime]}
                     fillOpacity={1}
+                  />
+                ))}
+                {nullGaps.map((gap, i) => (
+                  <ReferenceArea
+                    key={`gap-${i}`}
+                    x1={gap.x1}
+                    x2={gap.x2}
+                    fill="url(#nullGapPattern)"
+                    fillOpacity={0.4}
                   />
                 ))}
                 <XAxis
@@ -1410,6 +1459,12 @@ const FREQ_STYLES: Record<FrequencyBadge, { color: string; bg: string }> = {
   'weekly': { color: 'text-slate-500 dark:text-slate-500', bg: 'bg-slate-100 dark:bg-slate-700/40' },
 };
 
+const QUALITY_DOT: Record<DataQualityLevel, string> = {
+  ok: 'bg-emerald-500',
+  stale: 'bg-amber-500',
+  missing: 'bg-red-500',
+};
+
 function MetricCard({
   title,
   icon,
@@ -1429,6 +1484,8 @@ function MetricCard({
   frequencyBadge,
   frequencyLabel,
   tooltipText,
+  quality,
+  qualityLabel,
 }: {
   title: string;
   icon: ReactNode;
@@ -1448,8 +1505,10 @@ function MetricCard({
   frequencyBadge?: FrequencyBadge;
   frequencyLabel?: string;
   tooltipText?: string;
+  quality?: DataQualityLevel | null;
+  qualityLabel?: string;
 }) {
-  const isStale = stale ?? (decay != null ? decay < 0.1 : (ageSec != null && ageSec > 600));
+  const isStale = quality === 'stale' || (stale ?? (decay != null ? decay < 0.1 : (ageSec != null && ageSec > 600)));
 
   return (
     <Card className="h-full">
@@ -1458,6 +1517,13 @@ function MetricCard({
           <div className="inline-flex items-center gap-1.5 text-sm text-[var(--foreground-muted)]">
             {icon}
             {title}
+            {quality && (
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${QUALITY_DOT[quality] ?? 'bg-slate-500'}`}
+                title={qualityLabel}
+                aria-label={`Data quality: ${quality}`}
+              />
+            )}
             {tooltipText && (
               <span className="group relative cursor-help">
                 <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-[9px] font-bold text-slate-500 dark:text-slate-400">?</span>

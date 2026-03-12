@@ -5,6 +5,7 @@ Provides endpoints for OHLCV data, quotes, and technical indicators.
 """
 
 import logging
+from datetime import datetime, timezone
 from typing import Annotated, List, Literal
 
 from fastapi import APIRouter, HTTPException, Query
@@ -12,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Query
 from api.schemas.market import (
     MacroBondSnapshot,
     MacroBundleResponse,
+    MacroDataQuality,
     MacroGlobalSnapshot,
     MacroHistoryResponse,
     MacroUsMarketSnapshot,
@@ -239,7 +241,74 @@ def get_macro_bundle(
         except Exception:
             logger.warning("Failed to compute US scoring", exc_info=True)
 
+    # --- Data quality assessment ---
+    dq = _compute_data_quality(result, is_kr)
+    result["data_quality"] = dq.model_dump()
+
     return MacroBundleResponse(**result)
+
+
+def _compute_data_quality(bundle: dict, is_kr: bool) -> MacroDataQuality:
+    """Derive per-series quality from freshness ages and presence.
+
+    Thresholds (seconds):
+      FX:         1200 (20 min)
+      Futures:    1200 (20 min)
+      Flow:       1800 (30 min)
+      Volatility: 7200 (2 h)   — external sources update less frequently
+    """
+    THRESHOLDS = {
+        "fx": 1200,
+        "futures": 1200,
+        "flow": 1800,
+    }
+
+    freshness = bundle.get("freshness") or {}
+
+    def _series_quality(key: str) -> str:
+        age_key = f"{key}_age_sec"
+        age_sec = freshness.get(age_key)
+        # If the whole section is None, it's missing
+        if bundle.get(key) is None:
+            return "missing"
+        if age_sec is None:
+            return "missing"
+        return "stale" if age_sec > THRESHOLDS.get(key, 3600) else "ok"
+
+    # Volatility uses its own timestamp field
+    def _vol_quality() -> str:
+        vol = bundle.get("volatility")
+        if vol is None:
+            return "missing"
+        if vol.get("vix") is None and vol.get("vkospi") is None:
+            return "missing"
+        # Use vix_as_of or vkospi_as_of to check staleness
+        for ts_key in ("vix_as_of", "vkospi_as_of"):
+            ts = vol.get(ts_key)
+            if ts:
+                try:
+                    dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                    age = (datetime.now(timezone.utc) - dt).total_seconds()
+                    return "stale" if age > 7200 else "ok"
+                except (ValueError, TypeError):
+                    pass
+        return "stale"  # has data but no timestamp → conservative
+
+    if is_kr:
+        return MacroDataQuality(
+            fx=_series_quality("fx"),
+            futures=_series_quality("futures"),
+            flow=_series_quality("flow"),
+            volatility=_vol_quality(),
+        )
+    else:
+        # US mode: fx/futures/flow are not used
+        return MacroDataQuality(
+            fx=None,
+            futures=None,
+            flow=None,
+            volatility=_vol_quality(),
+        )
 
 
 @router.get(
@@ -253,4 +322,13 @@ def get_macro_history(
     = "60m",
 ) -> MacroHistoryResponse:
     result = _macro_service.get_history(window=window)
+
+    # Compute data coverage: % of points with non-null macro_score
+    points = result.get("points", [])
+    if points:
+        non_null = sum(1 for p in points if p.get("macro_score") is not None)
+        result["data_coverage_pct"] = round(non_null / len(points) * 100, 1)
+    else:
+        result["data_coverage_pct"] = 0.0
+
     return MacroHistoryResponse(**result)
