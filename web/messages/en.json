@@ -212,6 +212,7 @@
     "fxVolatility": "FX Volatility",
     "vixBar": "VIX",
     "dataCoverage": "Coverage {pct}%",
+    "dataCoverageLabel": "Data Coverage",
     "quality_ok": "Data is fresh",
     "quality_stale": "Data is stale",
     "quality_missing": "Data is missing",

@@ -212,6 +212,7 @@
     "fxVolatility": "汇率波动性",
     "vixBar": "VIX",
     "dataCoverage": "覆盖率 {pct}%",
+    "dataCoverageLabel": "数据覆盖率",
     "quality_ok": "数据最新",
     "quality_stale": "数据延迟",
     "quality_missing": "数据缺失",

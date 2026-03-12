@@ -331,7 +331,7 @@ export default function MacroPage() {
   const bundleQuery = useMacroBundle(marketMode);
   const [historyWindow, setHistoryWindow] = useState<WindowOption>('60m');
   const historyQuery = useMacroHistory(historyWindow, isKrMode);
-  usePrefetchMacroHistory(isKrMode);
+  usePrefetchMacroHistory(isKrMode, historyWindow);
   // OHLCV chart uses KODEX 200 ETF as proxy — yfinance doesn't have KOSPI200 futures data
   const futuresOhlcv = useOhlcv('069500.KS', 30, isKrMode);
   // US mode: SPY as S&P 500 proxy (equivalent of KODEX 200 for US)
@@ -1046,10 +1046,10 @@ export default function MacroPage() {
                   type="button"
                   onClick={() => setHistoryWindow(w)}
                   aria-pressed={isActive}
-                  className={`relative z-10 rounded-full px-3 py-1 text-xs font-medium transition-all duration-200 ${
+                  className={`relative z-10 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 ${
                     isActive
-                      ? 'bg-[var(--accent)] text-white shadow-sm'
-                      : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+                      ? 'bg-blue-500 text-white shadow-md ring-1 ring-blue-400/50'
+                      : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--background)]/50'
                   }`}
                 >
                   {t(`window${labelMap[w]}`)}
@@ -1067,14 +1067,39 @@ export default function MacroPage() {
             </p>
           </div>
         ) : (!historyQuery.data?.points || historyQuery.data.points.length === 0) ? (
-          <div className="flex h-72 flex-col items-center justify-center gap-2">
-            <p className="text-sm text-[var(--foreground-muted)]">
-              {historyQuery.isLoading ? t('loadingHistory') : t('noHistory')}
-            </p>
-            {historyWindow !== '60m' && (
-              <p className="text-xs text-[var(--foreground-muted)]">{t('historyAccumulating')}</p>
-            )}
-          </div>
+          historyQuery.isLoading ? (
+            /* Loading skeleton */
+            <div className="h-72 space-y-3 p-4" role="status" aria-live="polite">
+              <span className="sr-only">{t('loadingHistory')}</span>
+              <div className="flex items-end gap-2 h-52">
+                <div className="w-10 space-y-3">
+                  {[...Array(5)].map((_, i) => <div key={i} className="h-3 w-8 animate-pulse rounded bg-[var(--border)]" />)}
+                </div>
+                <div className="flex-1 relative h-full">
+                  <div className="absolute inset-0 flex flex-col justify-between">
+                    {[...Array(4)].map((_, i) => <div key={i} className="h-px w-full bg-[var(--border)] opacity-50" />)}
+                  </div>
+                  <svg className="absolute inset-0 w-full h-full animate-pulse" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <polyline points="0,60 20,55 40,45 60,50 80,40 100,35" fill="none" stroke="var(--border)" strokeWidth="1" />
+                    <polyline points="0,70 20,65 40,75 60,60 80,55 100,50" fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray="3 2" />
+                  </svg>
+                </div>
+                <div className="w-10 space-y-3">
+                  {[...Array(5)].map((_, i) => <div key={i} className="h-3 w-8 animate-pulse rounded bg-[var(--border)]" />)}
+                </div>
+              </div>
+              <div className="flex justify-between">
+                {[...Array(6)].map((_, i) => <div key={i} className="h-3 w-10 animate-pulse rounded bg-[var(--border)]" />)}
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-72 flex-col items-center justify-center gap-2">
+              <p className="text-sm text-[var(--foreground-muted)]">{t('noHistory')}</p>
+              {historyWindow !== '60m' && (
+                <p className="text-xs text-[var(--foreground-muted)]">{t('historyAccumulating')}</p>
+              )}
+            </div>
+          )
         ) : (
           <div className="relative h-72" aria-busy={historyQuery.isLoading}>
             <ResponsiveContainer width="100%" height="100%">
@@ -1108,6 +1133,8 @@ export default function MacroPage() {
                   tickFormatter={(v: string) => formatShortTime(v, locale, historyWindow)}
                   tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }}
                   stroke="var(--border)"
+                  interval={Math.max(0, Math.floor((chartData.length / ({ '60m': 12, '6h': 12, '1d': 12, '7d': 7, '30d': 9 }[historyWindow] ?? 12)) - 1))}
+                  minTickGap={30}
                 />
                 <YAxis
                   yAxisId="fx"
@@ -1160,6 +1187,7 @@ export default function MacroPage() {
                   name={t('vixBar')}
                   fill="rgba(239,68,68,0.18)"
                   barSize={8}
+                  isAnimationActive={chartData.length < 150}
                 />
                 <Bar
                   yAxisId="score"
@@ -1167,6 +1195,7 @@ export default function MacroPage() {
                   name={t('fxVolatility')}
                   fill="rgba(139,92,246,0.15)"
                   barSize={6}
+                  isAnimationActive={chartData.length < 150}
                 />
                 <Line
                   yAxisId="fx"
@@ -1177,6 +1206,7 @@ export default function MacroPage() {
                   strokeWidth={2}
                   dot={false}
                   connectNulls
+                  isAnimationActive={chartData.length < 150}
                 />
                 <Line
                   yAxisId="score"
@@ -1188,6 +1218,7 @@ export default function MacroPage() {
                   strokeDasharray="5 3"
                   dot={false}
                   connectNulls
+                  isAnimationActive={chartData.length < 150}
                 />
                 <Line
                   yAxisId="score"
@@ -1199,6 +1230,7 @@ export default function MacroPage() {
                   strokeDasharray="3 2"
                   dot={false}
                   connectNulls
+                  isAnimationActive={chartData.length < 150}
                 />
               </ComposedChart>
             </ResponsiveContainer>
@@ -1220,18 +1252,21 @@ export default function MacroPage() {
           const requested = windowMinutes[historyWindow];
           const actualLabel = spanMin < 60 ? `${Math.round(spanMin)}m` : `${(spanMin / 60).toFixed(1)}h`;
           const requestedLabel = historyWindow === '60m' ? '1h' : historyWindow === '6h' ? '6h' : historyWindow === '1d' ? '1d' : historyWindow === '7d' ? '1w' : '1m';
-          if (spanMin < requested * 0.5) {
+          const coveragePctVal = Math.min(100, (spanMin / requested) * 100);
+          if (coveragePctVal < 80) {
             return (
-              <p className="mt-2 text-center text-xs text-[var(--foreground-muted)]">
-                {t('dataRangeHintStrong', { actual: actualLabel, requested: requestedLabel })}
-              </p>
-            );
-          }
-          if (spanMin < requested * 0.8) {
-            return (
-              <p className="mt-2 text-center text-xs text-[var(--foreground-muted)]">
-                {t('dataRangeHintWeak', { actual: actualLabel, requested: requestedLabel })}
-              </p>
+              <div className="mt-3 space-y-1">
+                <div className="flex items-center justify-between text-xs text-[var(--foreground-muted)]">
+                  <span>{t('dataCoverageLabel')}</span>
+                  <span>{actualLabel} / {requestedLabel} ({coveragePctVal.toFixed(0)}%)</span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--border)]">
+                  <div
+                    className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                    style={{ width: `${coveragePctVal}%` }}
+                  />
+                </div>
+              </div>
             );
           }
           // Check if values are flat (market closed)
