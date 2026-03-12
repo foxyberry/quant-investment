@@ -160,6 +160,8 @@
     "flowUnit": "억원",
     "fxSource": "네이버 금융",
     "futuresSource": "KODEX 200 vs KOSPI",
+    "futuresInvestorLabel": "투자자별 수급 (프록시)",
+    "sharesUnit": "주",
     "flowSource": "네이버 증권",
     "alignmentAlignedBuy": "동행 매수",
     "alignmentAlignedSell": "동행 매도",

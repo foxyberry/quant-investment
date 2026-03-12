@@ -330,6 +330,9 @@ export interface MacroFuturesSnapshot {
   basis: number | null;
   change_pct: number | null;
   updated_at: string | null;
+  foreign_net: number | null;
+  institution_net: number | null;
+  individual_net: number | null;
 }
 
 export type FlowAlignment = 'aligned_buy' | 'aligned_sell' | 'foreign_lead' | 'institution_lead' | 'unknown';

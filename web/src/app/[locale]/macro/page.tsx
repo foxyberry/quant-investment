@@ -59,6 +59,12 @@ function formatFlowBillion(value: number | null, locale: string): string {
   return prefix + formatNumber(Math.round(billion), locale, 0);
 }
 
+function formatShares(value: number | null, locale: string): string {
+  if (value == null || Number.isNaN(value)) return '-';
+  const prefix = value > 0 ? '+' : '';
+  return prefix + formatNumber(value, locale, 0);
+}
+
 const ALIGNMENT_STYLES: Record<string, { color: string; bg: string }> = {
   aligned_buy: { color: 'text-emerald-400', bg: 'bg-emerald-900/30' },
   aligned_sell: { color: 'text-red-400', bg: 'bg-red-900/30' },
@@ -162,6 +168,71 @@ function FlowGrid({
             <div key={key} className="flex items-center justify-between gap-2">
               <span className="text-xs text-[var(--foreground-muted)]">{label}</span>
               <FlowValueCell value={kosdaqValues[key]} locale={locale} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// FuturesInvestorGrid — Investor breakdown for futures proxy ETF (shares)
+// ---------------------------------------------------------------------------
+
+function ShareValueCell({ value, locale }: { value: number | null; locale: string }) {
+  const formatted = formatShares(value, locale);
+  const color =
+    value == null ? 'text-[var(--foreground-muted)]'
+    : value > 0 ? 'text-emerald-400'
+    : value < 0 ? 'text-red-400'
+    : 'text-[var(--foreground-muted)]';
+  return <span className={`text-sm font-medium tabular-nums ${color}`}>{formatted}</span>;
+}
+
+function FuturesInvestorGrid({
+  futures,
+  locale,
+  t,
+}: {
+  futures: import('@/lib/types').MacroFuturesSnapshot | null;
+  locale: string;
+  t: (key: string) => string;
+}) {
+  const hasBasis = futures?.basis != null;
+  const hasInvestor = futures != null && (
+    futures.foreign_net != null ||
+    futures.institution_net != null ||
+    futures.individual_net != null
+  );
+
+  return (
+    <div className="space-y-2">
+      {/* Basis row — always shown */}
+      <div className="space-y-0.5">
+        <p className="text-sm text-[var(--foreground-muted)]">
+          {t('basis')}: {hasBasis ? `${futures!.basis! > 0 ? '+' : ''}${formatNumber(futures!.basis!, locale, 3)}%` : '-'}
+        </p>
+        <p className="text-[10px] text-[var(--foreground-muted)] opacity-60">{t('basisExplain')}</p>
+      </div>
+
+      {/* Investor breakdown */}
+      {hasInvestor && (
+        <div className="space-y-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground-muted)] opacity-70">
+            {t('futuresInvestorLabel')}
+          </p>
+          {([
+            { key: 'foreign', label: t('foreign'), value: futures!.foreign_net },
+            { key: 'institution', label: t('institution'), value: futures!.institution_net },
+            { key: 'individual', label: t('individual'), value: futures!.individual_net },
+          ] as const).map(({ key, label, value }) => (
+            <div key={key} className="flex items-center justify-between gap-2">
+              <span className="text-xs text-[var(--foreground-muted)]">{label}</span>
+              <div className="flex items-center gap-1">
+                <ShareValueCell value={value ?? null} locale={locale} />
+                <span className="text-[10px] text-[var(--foreground-muted)]">{t('sharesUnit')}</span>
+              </div>
             </div>
           ))}
         </div>
@@ -545,9 +616,14 @@ export default function MacroPage() {
           frequencyBadge="real-time"
           frequencyLabel={t('freq_realtime')}
           tooltipText={t('explainFutures')}
-          items={[
-            { label: t('basis'), value: bundleQuery.data?.futures?.basis != null ? `${bundleQuery.data!.futures!.basis > 0 ? '+' : ''}${formatNumber(bundleQuery.data!.futures!.basis, locale, 3)}%` : '-', hint: t('basisExplain') },
-          ]}
+          items={[]}
+          customBody={
+            <FuturesInvestorGrid
+              futures={bundleQuery.data?.futures ?? null}
+              locale={locale}
+              t={t}
+            />
+          }
           ageSec={bundleQuery.data?.freshness?.futures_age_sec ?? null}
           ageLabel={formatAge(bundleQuery.data?.freshness?.futures_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}

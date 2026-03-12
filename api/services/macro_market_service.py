@@ -305,6 +305,42 @@ class MacroMarketService:
             logger.debug("Naver stock API failed for %s: %s", code, exc)
             return None
 
+    def _fetch_naver_stock_trend(self, code: str) -> Dict[str, Any] | None:
+        """Fetch investor trend data for a stock/ETF from Naver trend API.
+
+        Returns the most recent day's entry with foreignerPureBuyQuant,
+        organPureBuyQuant, individualPureBuyQuant (share quantities).
+        """
+        try:
+            import requests
+        except ImportError:
+            return None
+        try:
+            url = f"https://m.stock.naver.com/api/stock/{code}/trend"
+            r = requests.get(url, headers={"Accept": "application/json"}, timeout=10)
+            r.raise_for_status()
+            body = r.json()
+            if isinstance(body, list) and len(body) > 0:
+                # Pick the entry with the latest bizdate (YYYYMMDD)
+                return max(body, key=lambda x: x.get("bizdate", ""))
+            return None
+        except Exception as exc:
+            logger.debug("Naver stock trend API failed for %s: %s", code, exc)
+            return None
+
+    @staticmethod
+    def _parse_naver_quantity(raw: str | int | float | None) -> int | None:
+        """Parse Naver quantity string like '+3,398' or '-282,363' to int."""
+        if raw is None:
+            return None
+        if isinstance(raw, (int, float)):
+            return int(raw)
+        try:
+            cleaned = raw.replace(",", "").replace("+", "").strip()
+            return int(cleaned)
+        except (TypeError, ValueError):
+            return None
+
     def _fetch_naver_index(self, index: str) -> Dict[str, Any] | None:
         """Fetch realtime index data from Naver Stock mobile API."""
         try:
@@ -345,12 +381,21 @@ class MacroMarketService:
                             theoretical = kpi200_value * self._KODEX_KPI200_MULTIPLIER
                             basis = round((fut_value - theoretical) / theoretical * 100, 3)
 
+                # Investor breakdown (share quantities) for the ETF
+                investor = self._fetch_naver_stock_trend(futures_code)
+                foreign_net = self._parse_naver_quantity(investor.get("foreignerPureBuyQuant")) if investor else None
+                institution_net = self._parse_naver_quantity(investor.get("organPureBuyQuant")) if investor else None
+                individual_net = self._parse_naver_quantity(investor.get("individualPureBuyQuant")) if investor else None
+
                 return {
                     "symbol": self.futures_ticker,
                     "value": fut_value,
                     "basis": basis,
                     "change_pct": change_pct,
                     "updated_at": self._to_iso(updated_at or now),
+                    "foreign_net": foreign_net,
+                    "institution_net": institution_net,
+                    "individual_net": individual_net,
                 }
         except Exception as exc:
             logger.debug("Naver futures snapshot failed, falling back: %s", exc)

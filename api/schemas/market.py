@@ -123,6 +123,9 @@ class MacroFuturesSnapshot(BaseModel):
     basis: Optional[float] = Field(None, description="Futures basis versus spot proxy")
     change_pct: Optional[float] = Field(None, description="Short-term futures change percent")
     updated_at: Optional[str] = Field(None, description="Last update timestamp")
+    foreign_net: Optional[int] = Field(None, description="Foreign net buy shares (proxy ETF)")
+    institution_net: Optional[int] = Field(None, description="Institutional net buy shares (proxy ETF)")
+    individual_net: Optional[int] = Field(None, description="Individual net buy shares (proxy ETF)")
 
 
 class MacroInvestorFlowSnapshot(BaseModel):
