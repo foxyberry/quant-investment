@@ -161,6 +161,7 @@ class MacroSignal(BaseModel):
     reason: Optional[str] = Field(None, description="Human-readable scoring reason (backward compat)")
     reason_detail: Optional[MacroReasonDetail] = Field(None, description="Structured scoring breakdown")
     updated_at: Optional[str] = Field(None, description="Signal timestamp")
+    market_mode: Optional[str] = Field(None, description="Market mode used for scoring (kr/us)")
 
 
 class MacroFreshness(BaseModel):
@@ -171,9 +172,14 @@ class MacroFreshness(BaseModel):
 
 class MacroInterpretation(BaseModel):
     entry_signal: Literal["buy_favorable", "wait", "caution"] = Field(..., description="Entry signal")
-    fx_interpretation: str = Field(..., description="FX direction interpretation")
-    futures_interpretation: str = Field(..., description="Futures basis interpretation")
-    flow_interpretation: str = Field(..., description="Investor flow interpretation")
+    # KR mode fields
+    fx_interpretation: Optional[str] = Field(None, description="FX direction interpretation")
+    futures_interpretation: Optional[str] = Field(None, description="Futures basis interpretation")
+    flow_interpretation: Optional[str] = Field(None, description="Investor flow interpretation")
+    # US mode fields
+    vix_interpretation: Optional[str] = Field(None, description="VIX level interpretation")
+    curve_interpretation: Optional[str] = Field(None, description="Treasury curve interpretation")
+    sp500_interpretation: Optional[str] = Field(None, description="S&P 500 change interpretation")
 
 
 class MacroBondSnapshot(BaseModel):

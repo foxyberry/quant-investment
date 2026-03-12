@@ -26,6 +26,7 @@ from api.services.global_macro_service import get_global_macro_service
 from api.services.market_service import MarketService
 from api.services.macro_market_service import get_macro_market_service
 from api.services.us_market_service import get_us_market_service
+from api.services.us_scoring_service import get_us_scoring_service
 from api.services.volatility_service import get_volatility_service
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ _bond_service = get_bond_rate_service()
 _volatility_service = get_volatility_service()
 _global_macro_service = get_global_macro_service()
 _us_market_service = get_us_market_service()
+_us_scoring_service = get_us_scoring_service()
 
 
 @router.get(
@@ -205,7 +207,7 @@ def get_macro_bundle(
         logger.warning("Failed to fetch global macro snapshot", exc_info=True)
         result["global_macro"] = None
 
-    # US market data — only in US mode
+    # US market data + scoring — only in US mode
     if not is_kr:
         try:
             us_snapshot = _us_market_service.get_snapshot()
@@ -217,6 +219,25 @@ def get_macro_bundle(
         except Exception:
             logger.warning("Failed to fetch US market snapshot", exc_info=True)
             result["us_market"] = None
+
+        # Compute US composite score from VIX, Treasury curve, S&P 500
+        try:
+            vol_data = result.get("volatility") or {}
+            bonds_data = result.get("bonds") or {}
+            us_market_data = result.get("us_market") or {}
+            us_bundle = _us_scoring_service.compute_us_bundle(
+                vix=vol_data.get("vix"),
+                vix_as_of=vol_data.get("vix_as_of"),
+                spread_2_10=bonds_data.get("us_spread_2_10"),
+                bonds_updated_at=bonds_data.get("source_updated_at"),
+                sp500_value=us_market_data.get("sp500_value"),
+                sp500_change_pct=us_market_data.get("sp500_change_pct"),
+                sp500_as_of=us_market_data.get("sp500_as_of"),
+            )
+            result["signal"] = us_bundle["signal"]
+            result["interpretation"] = us_bundle["interpretation"]
+        except Exception:
+            logger.warning("Failed to compute US scoring", exc_info=True)
 
     return MacroBundleResponse(**result)
 

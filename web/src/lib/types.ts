@@ -360,11 +360,7 @@ export interface MacroSignalComponent {
 export interface MacroReasonDetail {
   version: number;
   summary: string;
-  components: {
-    fx: MacroSignalComponent;
-    futures: MacroSignalComponent;
-    flow: MacroSignalComponent;
-  };
+  components: Record<string, MacroSignalComponent>;
 }
 
 export interface MacroSignal {
@@ -373,6 +369,7 @@ export interface MacroSignal {
   reason: string | null;
   reason_detail?: MacroReasonDetail | null;
   updated_at: string | null;
+  market_mode?: string | null;
 }
 
 export interface MacroFreshness {
@@ -413,9 +410,14 @@ export type MacroEntrySignal = 'buy_favorable' | 'wait' | 'caution';
 
 export interface MacroInterpretation {
   entry_signal: MacroEntrySignal;
-  fx_interpretation: string;
-  futures_interpretation: string;
-  flow_interpretation: string;
+  // KR mode fields
+  fx_interpretation?: string | null;
+  futures_interpretation?: string | null;
+  flow_interpretation?: string | null;
+  // US mode fields
+  vix_interpretation?: string | null;
+  curve_interpretation?: string | null;
+  sp500_interpretation?: string | null;
 }
 
 export interface MacroBreadthSnapshot {
