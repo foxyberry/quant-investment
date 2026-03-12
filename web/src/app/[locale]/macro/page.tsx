@@ -248,6 +248,15 @@ const GLOBAL_ITEMS = [
   { key: 'msci_dm', titleKey: 'globalMsciDm', icon: <TrendingUp />, source: 'NYSE Arca', unit: 'USD' },
 ] as const satisfies ReadonlyArray<{ key: GlobalItemKey; titleKey: string; icon: ReactNode; source: string; unit: string }>;
 
+const GLOBAL_EXPLAIN_KEYS: Record<GlobalItemKey, string> = {
+  dxy: 'explainDxy',
+  wti: 'explainWti',
+  gold: 'explainGold',
+  copper: 'explainCopper',
+  msci_em: 'explainMsciEm',
+  msci_dm: 'explainMsciDm',
+};
+
 // ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
@@ -448,6 +457,9 @@ export default function MacroPage() {
           unit={t('fxUnit')}
           changePct={bundleQuery.data?.fx.change_pct ?? null}
           source={t('fxSource')}
+          frequencyBadge="real-time"
+          frequencyLabel={t('freq_realtime')}
+          tooltipText={t('explainFx')}
           items={[]}
           ageSec={bundleQuery.data?.freshness.fx_age_sec ?? null}
           ageLabel={formatAge(bundleQuery.data?.freshness.fx_age_sec ?? null, t)}
@@ -462,6 +474,9 @@ export default function MacroPage() {
           unit={t('futuresUnit')}
           changePct={bundleQuery.data?.futures.change_pct ?? null}
           source={t('futuresSource')}
+          frequencyBadge="real-time"
+          frequencyLabel={t('freq_realtime')}
+          tooltipText={t('explainFutures')}
           items={[
             { label: t('basis'), value: bundleQuery.data?.futures.basis != null ? `${bundleQuery.data.futures.basis > 0 ? '+' : ''}${formatNumber(bundleQuery.data.futures.basis, locale, 3)}%` : '-', hint: t('basisExplain') },
           ]}
@@ -481,6 +496,9 @@ export default function MacroPage() {
           }
           unit={t('flowUnit')}
           source={t('flowSource')}
+          frequencyBadge="intraday"
+          frequencyLabel={t('freq_intraday')}
+          tooltipText={t('explainFlow')}
           valueBadge={
             (() => {
               const alignment = bundleQuery.data?.flow.alignment;
@@ -518,12 +536,53 @@ export default function MacroPage() {
         />
       </div>}
 
-      {bundleQuery.data?.bonds && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2 text-[var(--foreground)]">
-            <Landmark className="h-5 w-5 text-blue-500" />
-            {t('bondsTitle')}
-          </h2>
+      {/* ── Global Overlay ── */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold flex items-center gap-2 text-[var(--foreground)]">
+          <TrendingUp className="h-5 w-5 text-blue-500" />
+          {t('globalOverlayTitle')}
+        </h2>
+
+        {/* Global Macro (DXY, commodities, MSCI) */}
+        {bundleQuery.data?.global_macro && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {GLOBAL_ITEMS.map((item) => {
+              const point = bundleQuery.data?.global_macro?.[item.key];
+              const fractionDigits = item.key === 'gold' ? 0 : item.key === 'copper' ? 4 : 2;
+              return (
+                <MetricCard
+                  key={item.key}
+                  title={t(item.titleKey)}
+                  icon={item.icon}
+                  value={formatNumber(point?.value ?? null, locale, fractionDigits)}
+                  unit={item.unit}
+                  changePct={point?.change_pct}
+                  source={item.source}
+                  frequencyBadge="intraday"
+                  frequencyLabel={t('freq_intraday')}
+                  tooltipText={t(GLOBAL_EXPLAIN_KEYS[item.key])}
+                  items={
+                    item.key === 'msci_em'
+                      ? [
+                          {
+                            label: t('globalEmDmRatio'),
+                            value: formatNumber(bundleQuery.data?.global_macro?.em_dm_ratio ?? null, locale, 3),
+                            hint: t('globalEmDmRatioHint'),
+                          },
+                        ]
+                      : []
+                  }
+                  ageSec={null}
+                  ageLabel={point?.as_of ? formatDateTime(point.as_of, locale) : '-'}
+                  staleLabel={t('staleWarning')}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Bonds */}
+        {bundleQuery.data?.bonds && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <MetricCard
               title={t('bondsUsTreasury')}
@@ -532,6 +591,9 @@ export default function MacroPage() {
               unit="%"
               changePct={null}
               source={t('bondsFredSource')}
+              frequencyBadge="daily"
+              frequencyLabel={t('freq_daily')}
+              tooltipText={t('explainBondsUs')}
               items={[
                 { label: t('bondsUs2y'), value: bundleQuery.data.bonds.us_2y != null ? `${formatNumber(bundleQuery.data.bonds.us_2y, locale, 3)}%` : '-' },
                 {
@@ -565,6 +627,9 @@ export default function MacroPage() {
               unit="%"
               changePct={null}
               source={t('bondsEcosSource')}
+              frequencyBadge="daily"
+              frequencyLabel={t('freq_daily')}
+              tooltipText={t('explainBondsKr')}
               items={[
                 { label: t('bondsKr3y'), value: bundleQuery.data.bonds.kr_3y != null ? `${formatNumber(bundleQuery.data.bonds.kr_3y, locale, 3)}%` : '-' },
               ]}
@@ -580,6 +645,9 @@ export default function MacroPage() {
               unit="pp"
               changePct={null}
               source="FRED + ECOS"
+              frequencyBadge="daily"
+              frequencyLabel={t('freq_daily')}
+              tooltipText={t('explainBondsSpread')}
               items={[]}
               ageSec={null}
               ageLabel={bundleQuery.data.bonds.source_updated_at ? formatDateTime(bundleQuery.data.bonds.source_updated_at, locale) : '-'}
@@ -592,16 +660,11 @@ export default function MacroPage() {
               }
             />
           </div>
-        </section>
-      )}
+        )}
 
-      {bundleQuery.data?.volatility && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2 text-[var(--foreground)]">
-            <ShieldAlert className="h-5 w-5 text-red-500" />
-            {t('volatilityTitle')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Volatility — VKOSPI hidden in US mode */}
+        {bundleQuery.data?.volatility && (
+          <div className={`grid grid-cols-1 ${isKrMode ? 'md:grid-cols-2' : ''} gap-4`}>
             <MetricCard
               title={t('volatilityVix')}
               icon={<Activity className="h-4 w-4" />}
@@ -609,6 +672,9 @@ export default function MacroPage() {
               unit=""
               changePct={bundleQuery.data.volatility.vix_change_pct}
               source="CBOE"
+              frequencyBadge="intraday"
+              frequencyLabel={t('freq_intraday')}
+              tooltipText={t('explainVix')}
               items={[
                 {
                   label: t('volatilityFearGreed'),
@@ -637,69 +703,40 @@ export default function MacroPage() {
                     : undefined
               }
             />
-            <MetricCard
-              title={t('volatilityVkospi')}
-              icon={<Activity className="h-4 w-4" />}
-              value={formatNumber(bundleQuery.data.volatility.vkospi, locale, 2)}
-              unit=""
-              changePct={bundleQuery.data.volatility.vkospi_change_pct}
-              source="KRX"
-              items={[
-                {
-                  label: t('volatilityRatio'),
-                  value: bundleQuery.data.volatility.vkospi_vix_ratio != null
-                    ? formatNumber(bundleQuery.data.volatility.vkospi_vix_ratio, locale, 2)
-                    : '-',
-                  hint: t('volatilityRatioHint'),
-                },
-              ]}
-              ageSec={null}
-              ageLabel={bundleQuery.data.volatility.vkospi_as_of ? formatDateTime(bundleQuery.data.volatility.vkospi_as_of, locale) : '-'}
-              staleLabel={t('staleWarning')}
-            />
+            {isKrMode && (
+              <MetricCard
+                title={t('volatilityVkospi')}
+                icon={<Activity className="h-4 w-4" />}
+                value={formatNumber(bundleQuery.data.volatility.vkospi, locale, 2)}
+                unit=""
+                changePct={bundleQuery.data.volatility.vkospi_change_pct}
+                source="KRX"
+                frequencyBadge="daily"
+              frequencyLabel={t('freq_daily')}
+                tooltipText={t('explainVkospi')}
+                items={[
+                  {
+                    label: t('volatilityRatio'),
+                    value: bundleQuery.data.volatility.vkospi_vix_ratio != null
+                      ? formatNumber(bundleQuery.data.volatility.vkospi_vix_ratio, locale, 2)
+                      : '-',
+                    hint: t('volatilityRatioHint'),
+                  },
+                ]}
+                ageSec={null}
+                ageLabel={bundleQuery.data.volatility.vkospi_as_of ? formatDateTime(bundleQuery.data.volatility.vkospi_as_of, locale) : '-'}
+                staleLabel={t('staleWarning')}
+              />
+            )}
           </div>
-        </section>
-      )}
+        )}
+      </div>
 
-      {bundleQuery.data?.global_macro && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2 text-[var(--foreground)]">
-            <TrendingUp className="h-5 w-5 text-blue-500" />
-            {t('globalTitle')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {GLOBAL_ITEMS.map((item) => {
-              const point = bundleQuery.data?.global_macro?.[item.key];
-              const fractionDigits = item.key === 'gold' ? 0 : item.key === 'copper' ? 4 : 2;
-              return (
-                <MetricCard
-                  key={item.key}
-                  title={t(item.titleKey)}
-                  icon={item.icon}
-                  value={formatNumber(point?.value ?? null, locale, fractionDigits)}
-                  unit={item.unit}
-                  changePct={point?.change_pct}
-                  source={item.source}
-                  items={
-                    item.key === 'msci_em'
-                      ? [
-                          {
-                            label: t('globalEmDmRatio'),
-                            value: formatNumber(bundleQuery.data?.global_macro?.em_dm_ratio ?? null, locale, 3),
-                            hint: t('globalEmDmRatioHint'),
-                          },
-                        ]
-                      : []
-                  }
-                  ageSec={null}
-                  ageLabel={point?.as_of ? formatDateTime(point.as_of, locale) : '-'}
-                  staleLabel={t('staleWarning')}
-                />
-              );
-            })}
-          </div>
-        </section>
-      )}
+      {/* ── Market-Specific Section ── */}
+      <h2 className="text-lg font-semibold flex items-center gap-2 text-[var(--foreground)]">
+        <BarChart3 className="h-5 w-5 text-indigo-500" />
+        {isKrMode ? t('marketSpecificKR') : t('marketSpecificUS')}
+      </h2>
 
       {/* Market Breadth + Events (KR only) */}
       {marketMode === 'kr' && (bundleQuery.data?.breadth || bundleQuery.data?.events) && (
@@ -1179,6 +1216,15 @@ function SignalBar({ label, contribution, nullLabel, t }: { label: string; contr
 // Metric Card (enhanced)
 // ---------------------------------------------------------------------------
 
+type FrequencyBadge = 'real-time' | 'intraday' | 'daily' | 'weekly';
+
+const FREQ_STYLES: Record<FrequencyBadge, { color: string; bg: string }> = {
+  'real-time': { color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+  'intraday': { color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+  'daily': { color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-700/40' },
+  'weekly': { color: 'text-slate-500 dark:text-slate-500', bg: 'bg-slate-100 dark:bg-slate-700/40' },
+};
+
 function MetricCard({
   title,
   icon,
@@ -1195,6 +1241,9 @@ function MetricCard({
   interpretationText,
   decay,
   customBody,
+  frequencyBadge,
+  frequencyLabel,
+  tooltipText,
 }: {
   title: string;
   icon: ReactNode;
@@ -1211,6 +1260,9 @@ function MetricCard({
   interpretationText?: string;
   decay?: number | null;
   customBody?: ReactNode;
+  frequencyBadge?: FrequencyBadge;
+  frequencyLabel?: string;
+  tooltipText?: string;
 }) {
   const isStale = stale ?? (decay != null ? decay < 0.1 : (ageSec != null && ageSec > 600));
 
@@ -1218,9 +1270,25 @@ function MetricCard({
     <Card className="h-full">
       <div className="flex h-full flex-col gap-2">
         <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-1 text-sm text-[var(--foreground-muted)]">
+          <div className="inline-flex items-center gap-1.5 text-sm text-[var(--foreground-muted)]">
             {icon}
             {title}
+            {tooltipText && (
+              <span className="group relative cursor-help">
+                <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-[9px] font-bold text-slate-500 dark:text-slate-400">?</span>
+                <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 w-48 -translate-x-1/2 rounded-lg bg-slate-900 dark:bg-slate-700 px-2.5 py-1.5 text-[11px] leading-snug text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                  {tooltipText}
+                </span>
+              </span>
+            )}
+            {frequencyBadge && (() => {
+              const fs = FREQ_STYLES[frequencyBadge];
+              return (
+                <span className={`rounded px-1 py-0.5 text-[9px] font-medium leading-none ${fs.bg} ${fs.color}`}>
+                  {frequencyLabel ?? frequencyBadge}
+                </span>
+              );
+            })()}
           </div>
           {isStale && (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
