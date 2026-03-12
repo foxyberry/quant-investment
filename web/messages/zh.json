@@ -115,6 +115,10 @@
   "macro": {
     "title": "宏观监控",
     "subtitle": "整合查看汇率、期货与投资者资金流",
+    "subtitleKR": "整合查看汇率、期货与投资者资金流",
+    "subtitleUS": "整合查看VIX、利率与标普500",
+    "modeTabKR": "韩国市场",
+    "modeTabUS": "美国市场",
     "refresh": "刷新",
     "regime": "状态",
     "regime_risk_on": "风险偏好",

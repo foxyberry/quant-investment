@@ -115,6 +115,10 @@
   "macro": {
     "title": "Macro Monitor",
     "subtitle": "Combined view of FX, futures, and investor flow",
+    "subtitleKR": "Combined view of FX, futures, and investor flow",
+    "subtitleUS": "Combined view of VIX, rates, and S&P 500",
+    "modeTabKR": "Korea Market",
+    "modeTabUS": "US Market",
     "refresh": "Refresh",
     "regime": "Regime",
     "regime_risk_on": "Risk-On",

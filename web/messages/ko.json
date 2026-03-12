@@ -115,6 +115,10 @@
   "macro": {
     "title": "매크로 모니터",
     "subtitle": "환율, 선물, 수급을 통합해서 확인합니다",
+    "subtitleKR": "환율, 선물, 수급을 통합해서 확인합니다",
+    "subtitleUS": "VIX, 금리, S&P 500을 통합해서 확인합니다",
+    "modeTabKR": "한국 시장",
+    "modeTabUS": "미국 시장",
     "refresh": "새로고침",
     "regime": "레짐",
     "regime_risk_on": "위험선호",

@@ -416,29 +416,11 @@ export default function MacroPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('title')}</h1>
-          <p className="mt-1 text-[var(--foreground-muted)]">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Market Mode Toggle */}
-          <div className="inline-flex rounded-lg border border-[var(--border)] overflow-hidden">
-            {(['kr', 'us'] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setMarketMode(mode)}
-                aria-pressed={marketMode === mode}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  marketMode === mode
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:bg-[var(--background)]'
-                }`}
-              >
-                {t(mode === 'kr' ? 'modeKR' : 'modeUS')}
-              </button>
-            ))}
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('title')}</h1>
+            <p className="mt-1 text-[var(--foreground-muted)]">{t(isKrMode ? 'subtitleKR' : 'subtitleUS')}</p>
           </div>
           <button
             type="button"
@@ -452,6 +434,33 @@ export default function MacroPage() {
             <RefreshCw className="h-4 w-4" />
             {t('refresh')}
           </button>
+        </div>
+
+        {/* Market Mode Tabs */}
+        <div className="flex border-b border-[var(--border)]">
+          {(['kr', 'us'] as const).map((mode) => {
+            const active = marketMode === mode;
+            const flag = mode === 'kr' ? '\u{1F1F0}\u{1F1F7}' : '\u{1F1FA}\u{1F1F8}';
+            return (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setMarketMode(mode)}
+                aria-pressed={active}
+                className={`relative flex items-center gap-2 px-5 py-3 text-sm font-semibold transition-colors ${
+                  active
+                    ? 'text-[var(--accent)]'
+                    : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+                }`}
+              >
+                <span className="text-base">{flag}</span>
+                {t(mode === 'kr' ? 'modeTabKR' : 'modeTabUS')}
+                {active && (
+                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[var(--accent)]" />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
