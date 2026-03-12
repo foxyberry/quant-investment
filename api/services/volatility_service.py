@@ -96,6 +96,20 @@ class VolatilityService:
             logger.warning("Failed to fetch VIX snapshot", exc_info=True)
             return None, None, None
 
+    @staticmethod
+    def _safe_get_index_ohlcv(stock_mod: Any, fromdate: str, todate: str, ticker: str) -> Any:
+        """Call pykrx get_index_ohlcv_by_date with name_display=False fallback.
+
+        pykrx >=1.2.4 may crash with KeyError('지수명') when IndexTicker
+        returns an empty DataFrame.  Passing name_display=False avoids the
+        broken name-lookup path.  If the kwarg is unsupported (older versions),
+        fall back to the original call.
+        """
+        try:
+            return stock_mod.get_index_ohlcv_by_date(fromdate, todate, ticker, name_display=False)
+        except TypeError:
+            return stock_mod.get_index_ohlcv_by_date(fromdate, todate, ticker)
+
     def _fetch_vkospi(self) -> Tuple[Optional[float], Optional[float], Optional[str]]:
         try:
             from pykrx import stock
@@ -112,30 +126,18 @@ class VolatilityService:
         ticker = "1205"
 
         try:
-            df_today = stock.get_index_ohlcv_by_date(
-                today.strftime("%Y%m%d"),
-                today.strftime("%Y%m%d"),
-                ticker,
-            )
+            df_today = self._safe_get_index_ohlcv(stock, today.strftime("%Y%m%d"), today.strftime("%Y%m%d"), ticker)
 
             df_range = None
             if df_today is None or getattr(df_today, "empty", True):
-                df_range = stock.get_index_ohlcv_by_date(
-                    start_5d.strftime("%Y%m%d"),
-                    today.strftime("%Y%m%d"),
-                    ticker,
-                )
+                df_range = self._safe_get_index_ohlcv(stock, start_5d.strftime("%Y%m%d"), today.strftime("%Y%m%d"), ticker)
                 if df_range is None or getattr(df_range, "empty", True):
                     return None, None, None
                 base_df = df_range
             else:
                 base_df = df_today
                 # Change% needs at least previous close; fetch short range for robustness.
-                df_range = stock.get_index_ohlcv_by_date(
-                    start_5d.strftime("%Y%m%d"),
-                    today.strftime("%Y%m%d"),
-                    ticker,
-                )
+                df_range = self._safe_get_index_ohlcv(stock, start_5d.strftime("%Y%m%d"), today.strftime("%Y%m%d"), ticker)
 
             closes = self._extract_close_series(base_df)
             if not closes:

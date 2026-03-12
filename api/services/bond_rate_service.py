@@ -22,6 +22,10 @@ class BondRateService:
         us_2y = self.fred.get_series("DGS2")
         us_spread_2_10 = self.fred.get_series("T10Y2Y")
 
+        # Calculate spread from individual yields when T10Y2Y is unavailable
+        if us_spread_2_10 is None and us_10y is not None and us_2y is not None:
+            us_spread_2_10 = round(us_10y - us_2y, 4)
+
         kr_10y = self.ecos.get_stat_value("817Y002", "010210000")
         kr_3y = self.ecos.get_stat_value("817Y002", "010200000")
 
