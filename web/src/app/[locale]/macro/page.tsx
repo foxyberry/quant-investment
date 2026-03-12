@@ -334,6 +334,8 @@ export default function MacroPage() {
   usePrefetchMacroHistory(isKrMode);
   // OHLCV chart uses KODEX 200 ETF as proxy — yfinance doesn't have KOSPI200 futures data
   const futuresOhlcv = useOhlcv('069500.KS', 30, isKrMode);
+  // US mode: SPY as S&P 500 proxy (equivalent of KODEX 200 for US)
+  const spyOhlcv = useOhlcv('SPY', 30, !isKrMode);
 
   const regime = bundleQuery.data?.signal?.regime ?? 'unknown';
   const interpretation = bundleQuery.data?.interpretation;
@@ -427,7 +429,8 @@ export default function MacroPage() {
             onClick={() => {
               void bundleQuery.refetch();
               void historyQuery.refetch();
-              void futuresOhlcv.refetch();
+              if (isKrMode) void futuresOhlcv.refetch();
+              else void spyOhlcv.refetch();
             }}
             className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background)]"
           >
@@ -1295,6 +1298,21 @@ export default function MacroPage() {
           />
         </div>
       )}
+
+      {/* SPY OHLCV Chart (US only) */}
+      {marketMode === 'us' && <Card>
+        <h3 className="mb-4 text-base font-semibold text-[var(--foreground)]">{t('spyChartTitle')}</h3>
+        {spyOhlcv.isLoading ? (
+          <p className="text-sm text-[var(--foreground-muted)]">{t('spyChartLoading')}</p>
+        ) : spyOhlcv.isError || !spyOhlcv.data?.data?.length ? (
+          <p className="inline-flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+            <ShieldAlert className="h-4 w-4" />
+            {t('spyChartError')}
+          </p>
+        ) : (
+          <CandleChart data={spyOhlcv.data.data} height={320} showVolume showChangeRate showMA />
+        )}
+      </Card>}
 
       {bundleQuery.isError && (
         <p className="inline-flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
