@@ -148,6 +148,16 @@ class MacroMarketService:
 
         return bundle
 
+    # Downsample bucket sizes (seconds) per window.
+    # Windows with small point counts are left as-is (bucket_sec=0).
+    _DOWNSAMPLE_BUCKETS: Dict[str, int] = {
+        "60m": 0,        # ~60 pts max, no downsampling
+        "6h": 0,         # ~360 pts max, acceptable
+        "1d": 300,       # 5-min buckets → ~288 pts
+        "7d": 3600,      # 1-hour buckets → ~168 pts
+        "30d": 21600,    # 6-hour buckets → ~120 pts
+    }
+
     def get_history(self, window: str = "60m") -> Dict[str, Any]:
         now = datetime.now(timezone.utc)
         delta = self._parse_window(window)
@@ -165,7 +175,7 @@ class MacroMarketService:
             self._flush_to_db()
             db_points = self._query_db_history(min_ts, now)
             if db_points:
-                return {"window": window, "points": db_points}
+                return {"window": window, "points": self._downsample_points(db_points, window)}
 
         # Reverse scan: deque is chronological, so iterate from newest.
         # Stop early once we pass the time boundary.
@@ -188,7 +198,38 @@ class MacroMarketService:
                 })
         points.reverse()  # restore chronological order
 
-        return {"window": window, "points": points}
+        return {"window": window, "points": self._downsample_points(points, window)}
+
+    @classmethod
+    def _downsample_points(
+        cls, points: List[Dict[str, Any]], window: str
+    ) -> List[Dict[str, Any]]:
+        """Downsample history points by bucketing into fixed time intervals.
+
+        For each bucket, take the *last* value of every field (snapshot semantics).
+        This keeps the data accurate while reducing SVG DOM nodes for Recharts.
+        """
+        normalized = (window or "60m").strip().lower()
+        bucket_sec = cls._DOWNSAMPLE_BUCKETS.get(normalized, 0)
+        if bucket_sec <= 0 or len(points) <= 500:
+            return points
+
+        buckets: Dict[int, Dict[str, Any]] = {}
+        for p in points:
+            ts_str = p.get("timestamp")
+            if not ts_str:
+                continue
+            dt = cls._safe_datetime(ts_str)
+            if not dt:
+                continue
+            epoch = int(dt.timestamp())
+            bucket_key = (epoch // bucket_sec) * bucket_sec
+            # Last-write wins: later points in the same bucket overwrite earlier ones
+            buckets[bucket_key] = p
+
+        # Fallback to original if bucketing produced nothing (e.g. all timestamps invalid)
+        downsampled = [buckets[k] for k in sorted(buckets)]
+        return downsampled if downsampled else points
 
     def _is_krx_market_hours(self) -> bool:
         """Check if current KST time is within KRX market hours (Mon-Fri 09:00-15:40)."""
@@ -1237,7 +1278,8 @@ class MacroMarketService:
             return 0.0
         return float(math.exp(-math.log(2.0) * (age / float(half_life_sec))))
 
-    def _safe_datetime(self, value: Any) -> Optional[datetime]:
+    @staticmethod
+    def _safe_datetime(value: Any) -> Optional[datetime]:
         if value is None:
             return None
         if isinstance(value, datetime):
