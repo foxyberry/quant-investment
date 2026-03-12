@@ -198,6 +198,28 @@ def _calc_pbr_from_statements(ticker: str, info: dict) -> Optional[float]:
         return None
 
 
+def _get_equity_from_statements(ticker: str) -> Optional[float]:
+    """Get stockholders equity from balance sheet.
+
+    Returns None if the data is unavailable.
+    """
+    import math
+
+    try:
+        _, balance_sheet, _ = _get_financial_statements(ticker)
+        if balance_sheet is None or balance_sheet.empty:
+            return None
+
+        for label in ("Stockholders Equity", "Common Stock Equity", "Total Equity Gross Minority Interest"):
+            if label in balance_sheet.index:
+                val = balance_sheet.iloc[balance_sheet.index.get_loc(label), 0]
+                if val is not None and math.isfinite(float(val)):
+                    return float(val)
+        return None
+    except Exception:
+        return None
+
+
 def _is_korean_ticker(ticker: str) -> bool:
     """Return True if ticker looks like a Korean stock (.KS or .KQ suffix)."""
     return ticker.endswith(".KS") or ticker.endswith(".KQ")
@@ -923,6 +945,12 @@ class PegRatioCondition(BaseCondition):
     def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
         info = _get_info(ticker)
         peg = info.get("pegRatio")
+        source = "pegRatio"
+
+        # Fallback to trailingPegRatio for Korean stocks
+        if peg is None and _is_korean_ticker(ticker):
+            peg = info.get("trailingPegRatio")
+            source = "trailingPegRatio"
 
         if peg is None:
             return ConditionResult(
@@ -945,6 +973,7 @@ class PegRatioCondition(BaseCondition):
             condition_name=self.name,
             details={
                 "peg_ratio": float(peg),
+                "peg_source": source,
                 "min_peg": self.min_peg,
                 "max_peg": self.max_peg,
             },
@@ -1603,6 +1632,11 @@ class RoicCondition(BaseCondition):
 
         total_debt = info.get("totalDebt", 0)
         total_equity = info.get("totalStockholderEquity", 0)
+
+        # Fallback: get equity from balance sheet for Korean stocks
+        if not total_equity and _is_korean_ticker(ticker):
+            total_equity = _get_equity_from_statements(ticker) or 0
+
         invested_capital = total_debt + total_equity
 
         if invested_capital <= 0:
