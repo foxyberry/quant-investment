@@ -31,7 +31,7 @@ import {
   ReferenceArea,
   Legend,
 } from 'recharts';
-import type { MacroRegime, DataQualityLevel } from '@/lib/types';
+import type { MacroRegime, DataQualityLevel, ConfidenceBand } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -483,6 +483,11 @@ export default function MacroPage() {
             <p className="mt-2 text-xs text-slate-300">
               {formatDateTime(bundleQuery.data?.signal?.updated_at ?? null, locale)}
             </p>
+            <ConfidenceBadge
+              confidence={bundleQuery.data?.signal?.signal_confidence ?? null}
+              band={bundleQuery.data?.signal?.confidence_band ?? null}
+              t={t}
+            />
           </div>
 
           {/* Right panel: Entry signal + Insight + Signal bars */}
@@ -561,6 +566,11 @@ export default function MacroPage() {
             <p className="mt-2 text-xs text-slate-300">
               {formatDateTime(bundleQuery.data?.signal?.updated_at ?? null, locale)}
             </p>
+            <ConfidenceBadge
+              confidence={bundleQuery.data?.signal?.signal_confidence ?? null}
+              band={bundleQuery.data?.signal?.confidence_band ?? null}
+              t={t}
+            />
           </div>
 
           <div className="flex-1 space-y-4 text-center lg:text-left">
@@ -1354,6 +1364,35 @@ function RegimeGauge({
         <span>{t('regimeNeutral')}</span>
         <span>{t('regimeRiskOn')}</span>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Confidence Badge — shown below the gauge
+// ---------------------------------------------------------------------------
+
+const CONFIDENCE_COLORS: Record<string, { text: string; ring: string; bg: string }> = {
+  high: { text: 'text-emerald-400', ring: 'ring-emerald-500/40', bg: 'bg-emerald-900/30' },
+  medium: { text: 'text-amber-400', ring: 'ring-amber-500/40', bg: 'bg-amber-900/30' },
+  low: { text: 'text-red-400', ring: 'ring-red-500/40', bg: 'bg-red-900/30' },
+};
+
+function ConfidenceBadge({
+  confidence,
+  band,
+  t,
+}: {
+  confidence: number | null;
+  band: ConfidenceBand | null;
+  t: (key: string, values?: Record<string, string | number>) => string;
+}) {
+  if (confidence == null || band == null) return null;
+  const colors = CONFIDENCE_COLORS[band] ?? CONFIDENCE_COLORS.low;
+  return (
+    <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${colors.bg} ${colors.ring} ${colors.text}`}>
+      <span>{confidence}%</span>
+      <span className="opacity-70">{t(`confidence_${band}`)}</span>
     </div>
   );
 }

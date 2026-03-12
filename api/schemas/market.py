@@ -165,6 +165,8 @@ class MacroSignal(BaseModel):
     reason_detail: Optional[MacroReasonDetail] = Field(None, description="Structured scoring breakdown")
     updated_at: Optional[str] = Field(None, description="Signal timestamp")
     market_mode: Optional[str] = Field(None, description="Market mode used for scoring (kr/us)")
+    signal_confidence: Optional[int] = Field(None, description="Signal confidence (0-100)")
+    confidence_band: Optional[Literal["low", "medium", "high"]] = Field(None, description="Confidence band")
 
 
 class MacroFreshness(BaseModel):

@@ -366,6 +366,8 @@ export interface MacroReasonDetail {
   components: Record<string, MacroSignalComponent>;
 }
 
+export type ConfidenceBand = 'low' | 'medium' | 'high';
+
 export interface MacroSignal {
   macro_score: number | null;
   regime: MacroRegime;
@@ -373,6 +375,8 @@ export interface MacroSignal {
   reason_detail?: MacroReasonDetail | null;
   updated_at: string | null;
   market_mode?: string | null;
+  signal_confidence?: number | null;
+  confidence_band?: ConfidenceBand | null;
 }
 
 export interface MacroFreshness {

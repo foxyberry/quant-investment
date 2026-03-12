@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 import math
-import math
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
@@ -248,6 +247,8 @@ class UsScoringService:
                 "reason_detail": None,
                 "updated_at": now.isoformat(),
                 "market_mode": "us",
+                "signal_confidence": 0,
+                "confidence_band": "low",
             }
 
         score = weighted_sum / weight_sum
@@ -267,6 +268,21 @@ class UsScoringService:
             f"sp500={components.get('sp500', {}).get('raw', 'n/a')})"
         )
 
+        # --- Confidence (reuse KR service's static method) ---
+        from api.services.macro_market_service import MacroMarketService
+
+        total_keys = ["vix", "curve", "sp500"]
+        weights = {"vix": self.VIX_WEIGHT, "curve": self.CURVE_WEIGHT, "sp500": self.SP500_WEIGHT}
+        weighted_for_confidence = [
+            (weights[k], components[k]["raw"], components[k]["decay"], True)
+            for k in total_keys if k in components
+        ]
+        # Add placeholders for missing components
+        for k in total_keys:
+            if k not in components:
+                weighted_for_confidence.append((weights[k], 0.0, 0.0, False))
+        confidence, band = MacroMarketService._compute_confidence(weighted_for_confidence)
+
         return {
             "macro_score": score,
             "regime": regime,
@@ -278,6 +294,8 @@ class UsScoringService:
             },
             "updated_at": now.isoformat(),
             "market_mode": "us",
+            "signal_confidence": confidence,
+            "confidence_band": band,
         }
 
     # ------------------------------------------------------------------

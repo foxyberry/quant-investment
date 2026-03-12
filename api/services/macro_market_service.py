@@ -625,12 +625,17 @@ class MacroMarketService:
             fx_hl, futures_hl, flow_hl,
         )
 
+        # --- Confidence score (0-100) ---
+        signal_confidence, confidence_band = self._compute_confidence(weighted)
+
         return {
             "macro_score": macro_score,
             "regime": regime,
             "reason": reason_detail["summary"],
             "reason_detail": reason_detail,
             "updated_at": self._to_iso(now),
+            "signal_confidence": signal_confidence,
+            "confidence_band": confidence_band,
         }
 
     def _build_reason_detail(
@@ -672,6 +677,47 @@ class MacroMarketService:
                 "flow": _component(flow_raw, flow_decay, weights["flow"], flow_hl),
             },
         }
+
+    @staticmethod
+    def _compute_confidence(weighted: list) -> tuple:
+        """Compute signal confidence (0-100) and band.
+
+        Components:
+          1. Availability (0-100): each missing component = -33 penalty
+          2. Freshness (0-100): average decay across available components × 100
+          3. Agreement (0-100): all same sign = 100, mixed = proportional
+        Final = (availability × 0.25) + (freshness × 0.40) + (agreement × 0.35)
+        """
+        available_count = sum(1 for _, _, _, avail in weighted if avail)
+        availability_score = (available_count / len(weighted)) * 100
+
+        # Average decay across available components
+        decays = [decay for _, _, decay, avail in weighted if avail]
+        freshness_score = (sum(decays) / len(decays) * 100) if decays else 0
+
+        # Agreement: check sign direction of raw scores
+        raws = [raw for _, raw, _, avail in weighted if avail]
+        if len(raws) >= 2:
+            positive = sum(1 for r in raws if r > 0.05)
+            negative = sum(1 for r in raws if r < -0.05)
+            dominant = max(positive, negative)
+            agreement_score = (dominant / len(raws)) * 100
+        else:
+            agreement_score = 50  # single component — medium
+
+        confidence = round(
+            availability_score * 0.25 + freshness_score * 0.40 + agreement_score * 0.35
+        )
+        confidence = max(0, min(100, confidence))
+
+        if confidence >= 70:
+            band = "high"
+        elif confidence >= 40:
+            band = "medium"
+        else:
+            band = "low"
+
+        return confidence, band
 
     # ------------------------------------------------------------------
     # Background history collector
