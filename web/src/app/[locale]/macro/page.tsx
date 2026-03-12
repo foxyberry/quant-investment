@@ -199,30 +199,32 @@ interface SignalContrib {
   effective: number | null; // raw * decay
 }
 
-function getSignalContributions(signal: { reason_detail?: { components: { fx: { raw: number; decay: number }; futures: { raw: number; decay: number }; flow: { raw: number; decay: number } } } | null; reason?: string | null }): { fx: SignalContrib; futures: SignalContrib; flow: SignalContrib } {
+const NIL_CONTRIB: SignalContrib = { raw: null, decay: null, effective: null };
+
+function toContrib(c?: { raw?: number; decay?: number } | null): SignalContrib {
+  if (!c) return NIL_CONTRIB;
+  const raw = c.raw ?? null;
+  const decay = c.decay ?? null;
+  return { raw, decay, effective: (raw != null && decay != null) ? raw * decay : null };
+}
+
+function getSignalContributions(signal: { reason_detail?: { components?: Record<string, { raw: number; decay: number }> } | null; reason?: string | null }): Record<string, SignalContrib> {
   const detail = signal.reason_detail;
   if (detail?.components) {
-    const nil: SignalContrib = { raw: null, decay: null, effective: null };
-    const toContrib = (c?: { raw?: number; decay?: number } | null): SignalContrib => {
-      if (!c) return nil;
-      const raw = c.raw ?? null;
-      const decay = c.decay ?? null;
-      return { raw, decay, effective: (raw != null && decay != null) ? raw * decay : null };
-    };
-    return {
-      fx: toContrib(detail.components?.fx),
-      futures: toContrib(detail.components?.futures),
-      flow: toContrib(detail.components?.flow),
-    };
+    const result: Record<string, SignalContrib> = {};
+    for (const [key, comp] of Object.entries(detail.components)) {
+      result[key] = toContrib(comp);
+    }
+    return result;
   }
   // Fallback: parse legacy reason string -- decay unknown, treat as full strength
   const reason = signal.reason;
-  if (!reason) return { fx: { raw: null, decay: null, effective: null }, futures: { raw: null, decay: null, effective: null }, flow: { raw: null, decay: null, effective: null } };
+  if (!reason) return {};
   const extract = (key: string): SignalContrib => {
     const match = reason.match(new RegExp(`${key}=([\\-\\d.]+)`));
-    if (!match) return { raw: null, decay: null, effective: null };
+    if (!match) return NIL_CONTRIB;
     const val = parseFloat(match[1]);
-    if (Number.isNaN(val)) return { raw: null, decay: null, effective: null };
+    if (Number.isNaN(val)) return NIL_CONTRIB;
     return { raw: val, decay: null, effective: val }; // legacy: no decay info, treat raw as effective
   };
   return { fx: extract('fx'), futures: extract('futures'), flow: extract('flow') };
@@ -412,15 +414,15 @@ export default function MacroPage() {
               <ul className="space-y-1 text-sm text-slate-400">
                 <li className="flex items-start gap-2">
                   <TrendingUp className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
-                  {t(`interp_fx_${interpretation.fx_interpretation}`)}
+                  {t(`interp_fx_${interpretation.fx_interpretation ?? 'unavailable'}`)}
                 </li>
                 <li className="flex items-start gap-2">
                   <CandlestickChart className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
-                  {t(`interp_futures_${interpretation.futures_interpretation}`)}
+                  {t(`interp_futures_${interpretation.futures_interpretation ?? 'unavailable'}`)}
                 </li>
                 <li className="flex items-start gap-2">
                   <Users className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
-                  {t(`interp_flow_${interpretation.flow_interpretation}`)}
+                  {t(`interp_flow_${interpretation.flow_interpretation ?? 'unavailable'}`)}
                 </li>
               </ul>
             )}
@@ -439,9 +441,75 @@ export default function MacroPage() {
                 </div>
               )}
               <div className="grid gap-3 md:grid-cols-3">
-                <SignalBar label={t('fxSignal')} contribution={contributions.fx} nullLabel={t('flowUnavailable')} t={t} />
-                <SignalBar label={t('futuresSignal')} contribution={contributions.futures} nullLabel={t('flowUnavailable')} t={t} />
-                <SignalBar label={t('flowSignal')} contribution={contributions.flow} nullLabel={t('flowUnavailable')} t={t} />
+                <SignalBar label={t('fxSignal')} contribution={contributions.fx ?? NIL_CONTRIB} nullLabel={t('flowUnavailable')} t={t} />
+                <SignalBar label={t('futuresSignal')} contribution={contributions.futures ?? NIL_CONTRIB} nullLabel={t('flowUnavailable')} t={t} />
+                <SignalBar label={t('flowSignal')} contribution={contributions.flow ?? NIL_CONTRIB} nullLabel={t('flowUnavailable')} t={t} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>}
+
+      {/* Gauge Hero — US mode */}
+      {marketMode === 'us' && <div className="rounded-xl border border-[var(--border)] bg-gradient-to-b from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 p-6 text-white">
+        <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
+          <div className="flex flex-col items-center">
+            <RegimeGauge
+              score={bundleQuery.data?.signal?.macro_score ?? null}
+              regime={regime}
+              t={t}
+            />
+            <p className="mt-2 text-xs text-slate-300">
+              {formatDateTime(bundleQuery.data?.signal?.updated_at ?? null, locale)}
+            </p>
+          </div>
+
+          <div className="flex-1 space-y-4 text-center lg:text-left">
+            {interpretation && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wider text-slate-400">{t('entryAssessment')}</p>
+                <p className={`text-2xl font-bold ${
+                  interpretation.entry_signal === 'buy_favorable' ? 'text-emerald-400' :
+                  interpretation.entry_signal === 'caution' ? 'text-red-400' : 'text-amber-400'
+                }`}>
+                  {t(`entry_${interpretation.entry_signal}`)}
+                </p>
+                <p className="text-sm text-slate-300">
+                  {t(`entryDesc_${interpretation.entry_signal}`)}
+                </p>
+              </div>
+            )}
+
+            <p className="text-sm text-slate-300">
+              {t(`insight${regime === 'risk_on' ? 'RiskOn' : regime === 'risk_off' ? 'RiskOff' : regime === 'neutral' ? 'Neutral' : 'Unknown'}`)}
+            </p>
+
+            {interpretation && (
+              <ul className="space-y-1 text-sm text-slate-400">
+                <li className="flex items-start gap-2">
+                  <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                  {t(`interp_vix_${interpretation.vix_interpretation ?? 'unavailable'}`)}
+                </li>
+                <li className="flex items-start gap-2">
+                  <Landmark className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                  {t(`interp_curve_${interpretation.curve_interpretation ?? 'unavailable'}`)}
+                </li>
+                <li className="flex items-start gap-2">
+                  <BarChart3 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+                  {t(`interp_sp500_${interpretation.sp500_interpretation ?? 'unavailable'}`)}
+                </li>
+              </ul>
+            )}
+
+            <div className="space-y-1 pt-2">
+              <div className="flex items-center justify-between text-xs text-slate-400 px-0.5">
+                <span>{t('signalLegendRiskOn')}</span>
+                <span>{t('signalLegendRiskOff')}</span>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                <SignalBar label={t('usVixSignal')} contribution={contributions.vix ?? NIL_CONTRIB} nullLabel={t('flowUnavailable')} t={t} />
+                <SignalBar label={t('usCurveSignal')} contribution={contributions.curve ?? NIL_CONTRIB} nullLabel={t('flowUnavailable')} t={t} />
+                <SignalBar label={t('usSP500Signal')} contribution={contributions.sp500 ?? NIL_CONTRIB} nullLabel={t('flowUnavailable')} t={t} />
               </div>
             </div>
           </div>
@@ -464,7 +532,7 @@ export default function MacroPage() {
           ageSec={bundleQuery.data?.freshness?.fx_age_sec ?? null}
           ageLabel={formatAge(bundleQuery.data?.freshness?.fx_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
-          interpretationText={interpretation ? t(`interp_fx_${interpretation.fx_interpretation}`) : undefined}
+          interpretationText={interpretation?.fx_interpretation ? t(`interp_fx_${interpretation.fx_interpretation}`) : undefined}
           decay={bundleQuery.data?.signal?.reason_detail?.components?.fx?.decay}
         />
         <MetricCard
@@ -483,7 +551,7 @@ export default function MacroPage() {
           ageSec={bundleQuery.data?.freshness?.futures_age_sec ?? null}
           ageLabel={formatAge(bundleQuery.data?.freshness?.futures_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
-          interpretationText={interpretation ? t(`interp_futures_${interpretation.futures_interpretation}`) : undefined}
+          interpretationText={interpretation?.futures_interpretation ? t(`interp_futures_${interpretation.futures_interpretation}`) : undefined}
           decay={bundleQuery.data?.signal?.reason_detail?.components?.futures?.decay}
         />
         <MetricCard
@@ -531,7 +599,7 @@ export default function MacroPage() {
           ageSec={bundleQuery.data?.freshness?.flow_age_sec ?? null}
           ageLabel={formatAge(bundleQuery.data?.freshness?.flow_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
-          interpretationText={interpretation ? t(`interp_flow_${interpretation.flow_interpretation}`) : undefined}
+          interpretationText={interpretation?.flow_interpretation ? t(`interp_flow_${interpretation.flow_interpretation}`) : undefined}
           decay={bundleQuery.data?.signal?.reason_detail?.components?.flow?.decay}
         />
       </div>}
