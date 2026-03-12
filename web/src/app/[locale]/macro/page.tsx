@@ -100,14 +100,18 @@ function formatDateTime(value: string | null, locale: string): string {
   }).format(date);
 }
 
-function formatShortTime(value: string | null, locale: string): string {
+function formatShortTime(value: string | null, locale: string, window?: string): string {
   if (!value) return '';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : locale === 'zh' ? 'zh-CN' : 'en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
+  const loc = locale === 'ko' ? 'ko-KR' : locale === 'zh' ? 'zh-CN' : 'en-US';
+  if (window === '30d') {
+    return new Intl.DateTimeFormat(loc, { month: '2-digit', day: '2-digit' }).format(date);
+  }
+  if (window === '7d') {
+    return new Intl.DateTimeFormat(loc, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date);
+  }
+  return new Intl.DateTimeFormat(loc, { hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
 interface SignalContrib {
@@ -750,7 +754,7 @@ export default function MacroPage() {
                 ))}
                 <XAxis
                   dataKey="timestamp"
-                  tickFormatter={(v: string) => formatShortTime(v, locale)}
+                  tickFormatter={(v: string) => formatShortTime(v, locale, historyWindow)}
                   tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }}
                   stroke="var(--border)"
                 />
