@@ -59,11 +59,6 @@ function formatFlowBillion(value: number | null, locale: string): string {
   return prefix + formatNumber(Math.round(billion), locale, 0);
 }
 
-function formatShares(value: number | null, locale: string): string {
-  if (value == null || Number.isNaN(value)) return '-';
-  const prefix = value > 0 ? '+' : '';
-  return prefix + formatNumber(value, locale, 0);
-}
 
 const ALIGNMENT_STYLES: Record<string, { color: string; bg: string }> = {
   aligned_buy: { color: 'text-emerald-400', bg: 'bg-emerald-900/30' },
@@ -177,18 +172,8 @@ function FlowGrid({
 }
 
 // ---------------------------------------------------------------------------
-// FuturesInvestorGrid — Investor breakdown for futures proxy ETF (shares)
+// FuturesInvestorGrid — Real KOSPI200 futures investor breakdown (억원)
 // ---------------------------------------------------------------------------
-
-function ShareValueCell({ value, locale }: { value: number | null; locale: string }) {
-  const formatted = formatShares(value, locale);
-  const color =
-    value == null ? 'text-[var(--foreground-muted)]'
-    : value > 0 ? 'text-emerald-400'
-    : value < 0 ? 'text-red-400'
-    : 'text-[var(--foreground-muted)]';
-  return <span className={`text-sm font-medium tabular-nums ${color}`}>{formatted}</span>;
-}
 
 function FuturesInvestorGrid({
   futures,
@@ -230,8 +215,8 @@ function FuturesInvestorGrid({
             <div key={key} className="flex items-center justify-between gap-2">
               <span className="text-xs text-[var(--foreground-muted)]">{label}</span>
               <div className="flex items-center gap-1">
-                <ShareValueCell value={value ?? null} locale={locale} />
-                <span className="text-[10px] text-[var(--foreground-muted)]">{t('sharesUnit')}</span>
+                <FlowValueCell value={value ?? null} locale={locale} />
+                <span className="text-[10px] text-[var(--foreground-muted)]">{t('billionUnit')}</span>
               </div>
             </div>
           ))}
@@ -347,8 +332,8 @@ export default function MacroPage() {
   const [historyWindow, setHistoryWindow] = useState<WindowOption>('60m');
   const historyQuery = useMacroHistory(historyWindow, isKrMode);
   usePrefetchMacroHistory(isKrMode);
-  const futuresTicker = bundleQuery.data?.futures?.symbol || '069500.KS';
-  const futuresOhlcv = useOhlcv(futuresTicker, 30, isKrMode);
+  // OHLCV chart uses KODEX 200 ETF as proxy — yfinance doesn't have KOSPI200 futures data
+  const futuresOhlcv = useOhlcv('069500.KS', 30, isKrMode);
 
   const regime = bundleQuery.data?.signal?.regime ?? 'unknown';
   const interpretation = bundleQuery.data?.interpretation;
