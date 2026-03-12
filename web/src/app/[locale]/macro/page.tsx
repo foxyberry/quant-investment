@@ -87,6 +87,89 @@ const STRENGTH_KEYS: Record<string, string> = {
   weak: 'strengthWeak',
 };
 
+// ---------------------------------------------------------------------------
+// FlowGrid — Two-column KOSPI / KOSDAQ investor-flow breakdown
+// Replaces the plain text list with a structured, scannable grid.
+// ---------------------------------------------------------------------------
+
+function FlowValueCell({ value, locale }: { value: number | null; locale: string }) {
+  const formatted = formatFlowBillion(value, locale);
+  const color =
+    value == null ? 'text-[var(--foreground-muted)]'
+    : value > 0 ? 'text-emerald-400'
+    : value < 0 ? 'text-red-400'
+    : 'text-[var(--foreground-muted)]';
+  return <span className={`text-sm font-medium tabular-nums ${color}`}>{formatted}</span>;
+}
+
+type ActorKey = 'foreign' | 'institution' | 'individual';
+
+function FlowGrid({
+  flow,
+  locale,
+  t,
+}: {
+  flow: import('@/lib/types').MacroInvestorFlowSnapshot | null;
+  locale: string;
+  t: (key: string) => string;
+}) {
+  const hasKosdaq = flow != null && (
+    flow.kosdaq_foreign_net != null ||
+    flow.kosdaq_institution_net != null ||
+    flow.kosdaq_individual_net != null
+  );
+
+  const actors: { key: ActorKey; label: string }[] = [
+    { key: 'foreign', label: t('foreign') },
+    { key: 'institution', label: t('institution') },
+    { key: 'individual', label: t('individual') },
+  ];
+
+  const kospiValues: Record<ActorKey, number | null> = {
+    foreign: flow?.foreign_net ?? null,
+    institution: flow?.institution_net ?? null,
+    individual: flow?.individual_net ?? null,
+  };
+
+  const kosdaqValues: Record<ActorKey, number | null> = {
+    foreign: flow?.kosdaq_foreign_net ?? null,
+    institution: flow?.kosdaq_institution_net ?? null,
+    individual: flow?.kosdaq_individual_net ?? null,
+  };
+
+  return (
+    <div className={`grid gap-3 ${hasKosdaq ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+      {/* KOSPI column */}
+      <div className="space-y-1.5">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground-muted)] opacity-70">
+          {t('kospiLabel')}
+        </p>
+        {actors.map(({ key, label }) => (
+          <div key={key} className="flex items-center justify-between gap-2">
+            <span className="text-xs text-[var(--foreground-muted)]">{label}</span>
+            <FlowValueCell value={kospiValues[key]} locale={locale} />
+          </div>
+        ))}
+      </div>
+
+      {/* KOSDAQ column */}
+      {hasKosdaq && (
+        <div className="space-y-1.5 sm:border-l sm:border-[var(--border)] sm:pl-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--foreground-muted)] opacity-70">
+            {t('kosdaqLabel')}
+          </p>
+          {actors.map(({ key, label }) => (
+            <div key={key} className="flex items-center justify-between gap-2">
+              <span className="text-xs text-[var(--foreground-muted)]">{label}</span>
+              <FlowValueCell value={kosdaqValues[key]} locale={locale} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function formatDateTime(value: string | null, locale: string): string {
   if (!value) return '-';
   const date = new Date(value);
@@ -396,16 +479,14 @@ export default function MacroPage() {
               );
             })()
           }
-          items={[
-            { label: `${t('kospiLabel')} ${t('foreign')}`, value: formatFlowBillion(bundleQuery.data?.flow.foreign_net ?? null, locale) },
-            { label: `${t('kospiLabel')} ${t('institution')}`, value: formatFlowBillion(bundleQuery.data?.flow.institution_net ?? null, locale) },
-            { label: `${t('kospiLabel')} ${t('individual')}`, value: formatFlowBillion(bundleQuery.data?.flow.individual_net ?? null, locale) },
-            ...((bundleQuery.data?.flow.kosdaq_foreign_net != null || bundleQuery.data?.flow.kosdaq_institution_net != null || bundleQuery.data?.flow.kosdaq_individual_net != null) ? [
-              { label: `${t('kosdaqLabel')} ${t('foreign')}`, value: formatFlowBillion(bundleQuery.data?.flow.kosdaq_foreign_net ?? null, locale) },
-              { label: `${t('kosdaqLabel')} ${t('institution')}`, value: formatFlowBillion(bundleQuery.data?.flow.kosdaq_institution_net ?? null, locale) },
-              { label: `${t('kosdaqLabel')} ${t('individual')}`, value: formatFlowBillion(bundleQuery.data?.flow.kosdaq_individual_net ?? null, locale) },
-            ] : []),
-          ]}
+          items={[]}
+          customBody={
+            <FlowGrid
+              flow={bundleQuery.data?.flow ?? null}
+              locale={locale}
+              t={t}
+            />
+          }
           ageSec={bundleQuery.data?.freshness.flow_age_sec ?? null}
           ageLabel={formatAge(bundleQuery.data?.freshness.flow_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
@@ -1080,6 +1161,7 @@ function MetricCard({
   valueBadge,
   interpretationText,
   decay,
+  customBody,
 }: {
   title: string;
   icon: ReactNode;
@@ -1095,6 +1177,7 @@ function MetricCard({
   valueBadge?: ReactNode;
   interpretationText?: string;
   decay?: number | null;
+  customBody?: ReactNode;
 }) {
   const isStale = stale ?? (decay != null ? decay < 0.1 : (ageSec != null && ageSec > 600));
 
@@ -1127,7 +1210,7 @@ function MetricCard({
             </span>
           )}
         </div>
-        {items.map((item) => (
+        {customBody ?? items.map((item) => (
           <div key={item.label} className="space-y-0.5">
             <p className="text-sm text-[var(--foreground-muted)]">
               {item.label}: {item.value}
