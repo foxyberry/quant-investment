@@ -185,6 +185,11 @@ class MacroInterpretation(BaseModel):
     vix_interpretation: Optional[str] = Field(None, description="VIX level interpretation")
     curve_interpretation: Optional[str] = Field(None, description="Treasury curve interpretation")
     sp500_interpretation: Optional[str] = Field(None, description="S&P 500 change interpretation")
+    # Execution posture
+    posture: Optional[Literal["wait", "risk_on_small", "risk_on_full", "risk_off_defensive", "hedge_bias"]] = Field(
+        None, description="Execution posture hint"
+    )
+    posture_rationale: Optional[str] = Field(None, description="Posture rationale key for i18n")
 
 
 class MacroBondSnapshot(BaseModel):

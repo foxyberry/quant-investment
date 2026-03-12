@@ -334,6 +334,14 @@ class UsScoringService:
         sp500_interp = self.interpret_sp500(sp500_change_pct)
         entry = self.derive_entry_signal(vix_interp, curve_interp, sp500_interp)
 
+        # Execution posture (reuse KR service's static method)
+        from api.services.macro_market_service import MacroMarketService
+        posture, posture_rationale = MacroMarketService._derive_posture(
+            signal.get("regime", "unknown"),
+            signal.get("confidence_band"),
+            entry,
+        )
+
         return {
             "signal": signal,
             "interpretation": {
@@ -341,6 +349,8 @@ class UsScoringService:
                 "vix_interpretation": vix_interp,
                 "curve_interpretation": curve_interp,
                 "sp500_interpretation": sp500_interp,
+                "posture": posture,
+                "posture_rationale": posture_rationale,
             },
         }
 

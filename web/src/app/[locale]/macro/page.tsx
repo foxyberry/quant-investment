@@ -31,7 +31,7 @@ import {
   ReferenceArea,
   Legend,
 } from 'recharts';
-import type { MacroRegime, DataQualityLevel, ConfidenceBand } from '@/lib/types';
+import type { MacroRegime, DataQualityLevel, ConfidenceBand, MacroPosture } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -624,6 +624,15 @@ export default function MacroPage() {
           </div>
         </div>
       </div>}
+
+      {/* Execution Posture Panel */}
+      {interpretation?.posture && (
+        <PosturePanel
+          posture={interpretation.posture}
+          rationale={interpretation.posture_rationale ?? null}
+          t={t}
+        />
+      )}
 
       {/* Metric Cards (KR only) */}
       {marketMode === 'kr' && <div className="grid gap-4 lg:grid-cols-3">
@@ -1393,6 +1402,50 @@ function ConfidenceBadge({
     <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ${colors.bg} ${colors.ring} ${colors.text}`}>
       <span>{confidence}%</span>
       <span className="opacity-70">{t(`confidence_${band}`)}</span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Posture Panel — execution hint below gauge hero
+// ---------------------------------------------------------------------------
+
+const POSTURE_CONFIG: Record<string, { icon: string; color: string; bg: string; border: string }> = {
+  risk_on_full: { icon: '🟢', color: 'text-emerald-400', bg: 'bg-emerald-900/20', border: 'border-emerald-700/40' },
+  risk_on_small: { icon: '🟡', color: 'text-emerald-300', bg: 'bg-emerald-900/10', border: 'border-emerald-700/30' },
+  wait: { icon: '⏸️', color: 'text-amber-400', bg: 'bg-amber-900/20', border: 'border-amber-700/40' },
+  risk_off_defensive: { icon: '🛡️', color: 'text-red-400', bg: 'bg-red-900/20', border: 'border-red-700/40' },
+  hedge_bias: { icon: '⚠️', color: 'text-red-300', bg: 'bg-red-900/10', border: 'border-red-700/30' },
+};
+
+function PosturePanel({
+  posture,
+  rationale,
+  t,
+}: {
+  posture: MacroPosture;
+  rationale: string | null;
+  t: (key: string) => string;
+}) {
+  const cfg = POSTURE_CONFIG[posture] ?? POSTURE_CONFIG.wait;
+  return (
+    <div className={`flex items-start gap-3 rounded-lg border px-4 py-3 ${cfg.bg} ${cfg.border}`}>
+      <span className="text-xl" role="img" aria-hidden>{cfg.icon}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className={`text-sm font-semibold ${cfg.color}`}>
+            {t(`postureLabel_${posture}`)}
+          </span>
+          <span className="rounded bg-slate-700/50 px-1.5 py-0.5 text-[9px] font-medium text-slate-400">
+            {t('postureAdvisory')}
+          </span>
+        </div>
+        {rationale && (
+          <p className="mt-0.5 text-xs text-[var(--foreground-muted)]">
+            {t(rationale)}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
