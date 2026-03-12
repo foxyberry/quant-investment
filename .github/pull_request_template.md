@@ -6,13 +6,25 @@
 - Closes #
 - Refs #
 
-## Scope
-- In scope:
-- Out of scope:
+## Workflow (Required)
+### 1) Direction Review
+- Scope and acceptance criteria:
+- Key risks/tradeoffs:
+
+### 2) Implementation Delegation
+- Delegated tasks:
+- Integration notes:
+
+### 3) Code Review
+- Findings (ordered by severity):
+
+### 4) Fixes Applied
+- What was fixed from review:
+- Remaining known limitations (if any):
 
 ## Validation
-- [ ] `python3 -m py_compile ...`
-- [ ] API smoke test on `8765`
+- [ ] Unit/integration tests pass
+- [ ] Lint/type checks pass
 - [ ] UI/manual verification (if applicable)
 
 Commands/Results:
@@ -30,4 +42,5 @@ Commands/Results:
 - [ ] No direct changes to unrelated files
 - [ ] Docs updated (`README.md`, `WORKFLOW.md`, `AGENTS.md` if needed)
 - [ ] Reviewer can reproduce with listed commands
-- [ ] Codex self-review completed and summarized in PR comments
+- [ ] Final consolidated PR comment includes direction/review/fixes/validation
+- [ ] Self-review is `LGTM` before merge

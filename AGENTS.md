@@ -31,6 +31,27 @@ Execution workflow is documented in:
 3. Keep at least 2 minutes between each issue creation.
 4. During issue execution, keep at least 2 minutes between each PR merge operation.
 
+## Default Issue Workflow (Auto, Unless User Overrides)
+For every issue, follow this execution order by default with Claude Code MCP collaboration:
+1. Direction review
+   - Clarify scope, acceptance criteria, and risks before coding.
+2. Implementation delegation
+   - Delegate implementation tasks where useful, then integrate results.
+3. Code review
+   - Perform structured review focused on correctness, regressions, and tests.
+4. Fix review findings
+   - Apply fixes from review findings before finalizing.
+5. Merge
+   - Merge only after validations pass and self-review is `LGTM`.
+
+Operational rules:
+- Do not require the user to restate this workflow each time.
+- Keep one final consolidated PR comment that summarizes:
+  - direction decisions,
+  - review findings,
+  - fixes applied,
+  - final validation results.
+
 ## Issue Lock Rule (Mandatory for Codex)
 - Goal: prevent duplicate agent work on the same issue.
 - On issue start, Codex must immediately:
