@@ -277,7 +277,10 @@
     "globalMsciEm": "MSCI EM (EEM)",
     "globalMsciDm": "MSCI DM (EFA)",
     "globalEmDmRatio": "EM/DM Ratio",
-    "globalEmDmRatioHint": "EEM/EFA — above 0.5 signals EM outperformance vs DM"
+    "globalEmDmRatioHint": "EEM/EFA — above 0.5 signals EM outperformance vs DM",
+    "modeKR": "KR",
+    "modeUS": "US",
+    "usModePlaceholder": "US mode indicators are coming soon. Global overlay data is available above."
   },
   "screening": {
     "title": "Stock Screening",

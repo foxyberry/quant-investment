@@ -235,6 +235,7 @@ const REGIME_COLORS: Record<MacroRegime, string> = {
   unknown: 'rgba(156, 163, 175, 0.04)',
 };
 
+type MarketMode = 'kr' | 'us';
 type WindowOption = '60m' | '6h' | '1d' | '7d' | '30d';
 type GlobalItemKey = 'dxy' | 'wti' | 'gold' | 'copper' | 'msci_em' | 'msci_dm';
 
@@ -255,11 +256,13 @@ export default function MacroPage() {
   const t = useTranslations('macro');
   const locale = useLocale();
   const bundleQuery = useMacroBundle();
+  const [marketMode, setMarketMode] = useState<MarketMode>('kr');
+  const isKrMode = marketMode === 'kr';
   const [historyWindow, setHistoryWindow] = useState<WindowOption>('60m');
-  const historyQuery = useMacroHistory(historyWindow);
-  usePrefetchMacroHistory(); // prefetch all windows on mount for instant tab switching
+  const historyQuery = useMacroHistory(historyWindow, isKrMode);
+  usePrefetchMacroHistory(isKrMode);
   const futuresTicker = bundleQuery.data?.futures.symbol || '069500.KS';
-  const futuresOhlcv = useOhlcv(futuresTicker, 30);
+  const futuresOhlcv = useOhlcv(futuresTicker, 30, isKrMode);
 
   const regime = bundleQuery.data?.signal.regime ?? 'unknown';
   const interpretation = bundleQuery.data?.interpretation;
@@ -323,22 +326,42 @@ export default function MacroPage() {
           <h1 className="text-2xl font-bold text-[var(--foreground)]">{t('title')}</h1>
           <p className="mt-1 text-[var(--foreground-muted)]">{t('subtitle')}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            void bundleQuery.refetch();
-            void historyQuery.refetch();
-            void futuresOhlcv.refetch();
-          }}
-          className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background)]"
-        >
-          <RefreshCw className="h-4 w-4" />
-          {t('refresh')}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Market Mode Toggle */}
+          <div className="inline-flex rounded-lg border border-[var(--border)] overflow-hidden">
+            {(['kr', 'us'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setMarketMode(mode)}
+                aria-pressed={marketMode === mode}
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  marketMode === mode
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:bg-[var(--background)]'
+                }`}
+              >
+                {t(mode === 'kr' ? 'modeKR' : 'modeUS')}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              void bundleQuery.refetch();
+              void historyQuery.refetch();
+              void futuresOhlcv.refetch();
+            }}
+            className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background)]"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {t('refresh')}
+          </button>
+        </div>
       </div>
 
-      {/* Gauge Hero — Regime + Entry Assessment unified */}
-      <div className="rounded-xl border border-[var(--border)] bg-gradient-to-b from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 p-6 text-white">
+      {/* Gauge Hero — Regime + Entry Assessment unified (KR only) */}
+      {marketMode === 'kr' && <div className="rounded-xl border border-[var(--border)] bg-gradient-to-b from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 p-6 text-white">
         <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
           {/* Gauge */}
           <div className="flex flex-col items-center">
@@ -414,10 +437,10 @@ export default function MacroPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
-      {/* Metric Cards */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      {/* Metric Cards (KR only) */}
+      {marketMode === 'kr' && <div className="grid gap-4 lg:grid-cols-3">
         <MetricCard
           title="USD/KRW"
           icon={<DollarSign className="h-4 w-4" />}
@@ -493,7 +516,7 @@ export default function MacroPage() {
           interpretationText={interpretation ? t(`interp_flow_${interpretation.flow_interpretation}`) : undefined}
           decay={bundleQuery.data?.signal.reason_detail?.components?.flow?.decay}
         />
-      </div>
+      </div>}
 
       {bundleQuery.data?.bonds && (
         <section className="space-y-3">
@@ -678,8 +701,8 @@ export default function MacroPage() {
         </section>
       )}
 
-      {/* Market Breadth + Events */}
-      {(bundleQuery.data?.breadth || bundleQuery.data?.events) && (
+      {/* Market Breadth + Events (KR only) */}
+      {marketMode === 'kr' && (bundleQuery.data?.breadth || bundleQuery.data?.events) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {bundleQuery.data?.breadth && (() => {
             const b = bundleQuery.data.breadth;
@@ -766,8 +789,8 @@ export default function MacroPage() {
         </div>
       )}
 
-      {/* Timeline Chart */}
-      <Card>
+      {/* Timeline Chart (KR only) */}
+      {marketMode === 'kr' && <Card>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div className="flex flex-col gap-1">
             <h3 className="text-base font-semibold text-[var(--foreground)]">{t('historyChart')}</h3>
@@ -962,10 +985,10 @@ export default function MacroPage() {
           }
           return null;
         })()}
-      </Card>
+      </Card>}
 
-      {/* Futures OHLCV Chart */}
-      <Card>
+      {/* Futures OHLCV Chart (KR only) */}
+      {marketMode === 'kr' && <Card>
         <h3 className="mb-4 text-base font-semibold text-[var(--foreground)]">{t('futuresChartTitle')}</h3>
         {futuresOhlcv.isLoading ? (
           <p className="text-sm text-[var(--foreground-muted)]">{t('futuresChartLoading')}</p>
@@ -977,7 +1000,17 @@ export default function MacroPage() {
         ) : (
           <CandleChart data={futuresOhlcv.data.data} height={320} showVolume showChangeRate showMA />
         )}
-      </Card>
+      </Card>}
+
+      {/* US Mode Placeholder */}
+      {marketMode === 'us' && (
+        <Card>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Activity className="mb-3 h-8 w-8 text-[var(--foreground-muted)] opacity-50" />
+            <p className="text-sm text-[var(--foreground-muted)]">{t('usModePlaceholder')}</p>
+          </div>
+        </Card>
+      )}
 
       {bundleQuery.isError && (
         <p className="inline-flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">

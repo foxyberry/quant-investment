@@ -277,7 +277,10 @@
     "globalMsciEm": "MSCI新兴市场（EEM）",
     "globalMsciDm": "MSCI发达市场（EFA）",
     "globalEmDmRatio": "EM/DM比率",
-    "globalEmDmRatioHint": "EEM/EFA — 高于0.5表示新兴市场跑赢发达市场"
+    "globalEmDmRatioHint": "EEM/EFA — 高于0.5表示新兴市场跑赢发达市场",
+    "modeKR": "KR",
+    "modeUS": "US",
+    "usModePlaceholder": "美国模式指标即将上线。请查看上方的全球覆盖数据。"
   },
   "screening": {
     "title": "股票筛选",
