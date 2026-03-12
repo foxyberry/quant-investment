@@ -46,10 +46,11 @@ export default function MacroFlowCard() {
     );
   }
 
+  const regime = data.signal?.regime;
   const regimeClass =
-    data.signal.regime === 'risk_on'
+    regime === 'risk_on'
       ? 'text-emerald-600 dark:text-emerald-400'
-      : data.signal.regime === 'risk_off'
+      : regime === 'risk_off'
       ? 'text-red-600 dark:text-red-400'
       : 'text-amber-600 dark:text-amber-400';
 
@@ -59,7 +60,7 @@ export default function MacroFlowCard() {
         <div className="flex items-center justify-between">
           <span className="text-sm text-[var(--foreground-muted)]">{t('macroRegime')}</span>
           <span className={`text-sm font-semibold uppercase ${regimeClass}`}>
-            {t(`macroRegime_${data.signal.regime}`)}
+            {t(`macroRegime_${regime ?? 'unknown'}`)}
           </span>
         </div>
 
@@ -68,26 +69,26 @@ export default function MacroFlowCard() {
             <span className="inline-flex items-center gap-1 text-[var(--foreground-muted)]">
               <DollarSign className="h-4 w-4" /> USD/KRW
             </span>
-            <span className="font-medium text-[var(--foreground)]">{formatNumber(data.fx.value, locale, 2)}</span>
+            <span className="font-medium text-[var(--foreground)]">{formatNumber(data.fx?.value ?? null, locale, 2)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1 text-[var(--foreground-muted)]">
               <CandlestickChart className="h-4 w-4" /> {t('futures')}
             </span>
-            <span className="font-medium text-[var(--foreground)]">{formatNumber(data.futures.basis, locale, 2)}</span>
+            <span className="font-medium text-[var(--foreground)]">{formatNumber(data.futures?.basis ?? null, locale, 2)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1 text-[var(--foreground-muted)]">
               <Users className="h-4 w-4" /> {t('investorFlow')}
             </span>
-            <span className="font-medium text-[var(--foreground)]">{formatNumber(data.flow.foreign_net, locale, 0)}</span>
+            <span className="font-medium text-[var(--foreground)]">{formatNumber(data.flow?.foreign_net ?? null, locale, 0)}</span>
           </div>
         </div>
 
         <div className="flex items-center justify-between border-t border-[var(--border)] pt-2 text-xs text-[var(--foreground-muted)]">
           <span className="inline-flex items-center gap-1">
             <Activity className="h-3.5 w-3.5" />
-            {t('macroScore')}: {formatPercent(data.signal.macro_score)}
+            {t('macroScore')}: {formatPercent(data.signal?.macro_score ?? null)}
           </span>
           <Link href="/macro" className="inline-flex items-center gap-1 font-medium text-[var(--color-primary)] hover:opacity-80">
             {t('viewDetails')}

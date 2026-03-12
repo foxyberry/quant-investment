@@ -465,8 +465,8 @@ export async function searchTickers(query: string): Promise<Array<{ ticker: stri
 /**
  * Get macro bundle snapshot (FX + futures + investor flow + regime signal)
  */
-export async function getMacroBundle(): Promise<MacroBundle> {
-  return fetchApi<MacroBundle>('/api/market/macro/bundle');
+export async function getMacroBundle(mode: string = 'kr'): Promise<MacroBundle> {
+  return fetchApi<MacroBundle>(`/api/market/macro/bundle?mode=${encodeURIComponent(mode)}`);
 }
 
 /**

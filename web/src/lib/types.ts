@@ -436,18 +436,27 @@ export interface MacroEvent {
   d_day: number;
 }
 
+export interface MacroUsMarketSnapshot {
+  sp500_value: number | null;
+  sp500_change_pct: number | null;
+  sp500_as_of: string | null;
+  fed_funds_rate: number | null;
+  fed_funds_as_of: string | null;
+}
+
 export interface MacroBundle {
-  fx: MacroFxSnapshot;
-  futures: MacroFuturesSnapshot;
-  flow: MacroInvestorFlowSnapshot;
-  signal: MacroSignal;
-  freshness: MacroFreshness;
+  fx?: MacroFxSnapshot | null;
+  futures?: MacroFuturesSnapshot | null;
+  flow?: MacroInvestorFlowSnapshot | null;
+  signal?: MacroSignal | null;
+  freshness?: MacroFreshness | null;
   bonds?: MacroBondSnapshot | null;
   volatility?: MacroVolatilitySnapshot | null;
   global_macro?: MacroGlobalSnapshot | null;
   breadth?: MacroBreadthSnapshot | null;
   events?: MacroEvent[] | null;
   interpretation?: MacroInterpretation | null;
+  us_market?: MacroUsMarketSnapshot | null;
   cache_hit?: boolean | null;
   generated_at?: string | null;
   is_market_hours?: boolean | null;

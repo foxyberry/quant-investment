@@ -264,16 +264,16 @@ const GLOBAL_EXPLAIN_KEYS: Record<GlobalItemKey, string> = {
 export default function MacroPage() {
   const t = useTranslations('macro');
   const locale = useLocale();
-  const bundleQuery = useMacroBundle();
   const [marketMode, setMarketMode] = useState<MarketMode>('kr');
   const isKrMode = marketMode === 'kr';
+  const bundleQuery = useMacroBundle(marketMode);
   const [historyWindow, setHistoryWindow] = useState<WindowOption>('60m');
   const historyQuery = useMacroHistory(historyWindow, isKrMode);
   usePrefetchMacroHistory(isKrMode);
-  const futuresTicker = bundleQuery.data?.futures.symbol || '069500.KS';
+  const futuresTicker = bundleQuery.data?.futures?.symbol || '069500.KS';
   const futuresOhlcv = useOhlcv(futuresTicker, 30, isKrMode);
 
-  const regime = bundleQuery.data?.signal.regime ?? 'unknown';
+  const regime = bundleQuery.data?.signal?.regime ?? 'unknown';
   const interpretation = bundleQuery.data?.interpretation;
 
   const contributions = useMemo(
@@ -375,12 +375,12 @@ export default function MacroPage() {
           {/* Gauge */}
           <div className="flex flex-col items-center">
             <RegimeGauge
-              score={bundleQuery.data?.signal.macro_score ?? null}
+              score={bundleQuery.data?.signal?.macro_score ?? null}
               regime={regime}
               t={t}
             />
             <p className="mt-2 text-xs text-slate-300">
-              {formatDateTime(bundleQuery.data?.signal.updated_at ?? null, locale)}
+              {formatDateTime(bundleQuery.data?.signal?.updated_at ?? null, locale)}
             </p>
           </div>
 
@@ -453,45 +453,45 @@ export default function MacroPage() {
         <MetricCard
           title="USD/KRW"
           icon={<DollarSign className="h-4 w-4" />}
-          value={formatNumber(bundleQuery.data?.fx.value ?? null, locale, 2)}
+          value={formatNumber(bundleQuery.data?.fx?.value ?? null, locale, 2)}
           unit={t('fxUnit')}
-          changePct={bundleQuery.data?.fx.change_pct ?? null}
+          changePct={bundleQuery.data?.fx?.change_pct ?? null}
           source={t('fxSource')}
           frequencyBadge="real-time"
           frequencyLabel={t('freq_realtime')}
           tooltipText={t('explainFx')}
           items={[]}
-          ageSec={bundleQuery.data?.freshness.fx_age_sec ?? null}
-          ageLabel={formatAge(bundleQuery.data?.freshness.fx_age_sec ?? null, t)}
+          ageSec={bundleQuery.data?.freshness?.fx_age_sec ?? null}
+          ageLabel={formatAge(bundleQuery.data?.freshness?.fx_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
           interpretationText={interpretation ? t(`interp_fx_${interpretation.fx_interpretation}`) : undefined}
-          decay={bundleQuery.data?.signal.reason_detail?.components?.fx?.decay}
+          decay={bundleQuery.data?.signal?.reason_detail?.components?.fx?.decay}
         />
         <MetricCard
           title={t('futures')}
           icon={<CandlestickChart className="h-4 w-4" />}
-          value={formatNumber(bundleQuery.data?.futures.value ?? null, locale, 0)}
+          value={formatNumber(bundleQuery.data?.futures?.value ?? null, locale, 0)}
           unit={t('futuresUnit')}
-          changePct={bundleQuery.data?.futures.change_pct ?? null}
+          changePct={bundleQuery.data?.futures?.change_pct ?? null}
           source={t('futuresSource')}
           frequencyBadge="real-time"
           frequencyLabel={t('freq_realtime')}
           tooltipText={t('explainFutures')}
           items={[
-            { label: t('basis'), value: bundleQuery.data?.futures.basis != null ? `${bundleQuery.data.futures.basis > 0 ? '+' : ''}${formatNumber(bundleQuery.data.futures.basis, locale, 3)}%` : '-', hint: t('basisExplain') },
+            { label: t('basis'), value: bundleQuery.data?.futures?.basis != null ? `${bundleQuery.data!.futures!.basis > 0 ? '+' : ''}${formatNumber(bundleQuery.data!.futures!.basis, locale, 3)}%` : '-', hint: t('basisExplain') },
           ]}
-          ageSec={bundleQuery.data?.freshness.futures_age_sec ?? null}
-          ageLabel={formatAge(bundleQuery.data?.freshness.futures_age_sec ?? null, t)}
+          ageSec={bundleQuery.data?.freshness?.futures_age_sec ?? null}
+          ageLabel={formatAge(bundleQuery.data?.freshness?.futures_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
           interpretationText={interpretation ? t(`interp_futures_${interpretation.futures_interpretation}`) : undefined}
-          decay={bundleQuery.data?.signal.reason_detail?.components?.futures?.decay}
+          decay={bundleQuery.data?.signal?.reason_detail?.components?.futures?.decay}
         />
         <MetricCard
           title={t('investorFlow')}
           icon={<Users className="h-4 w-4" />}
           value={
-            bundleQuery.data?.flow.foreign_net != null
-              ? formatFlowBillion(bundleQuery.data.flow.foreign_net, locale)
+            bundleQuery.data?.flow?.foreign_net != null
+              ? formatFlowBillion(bundleQuery.data!.flow!.foreign_net, locale)
               : t('flowUnavailable')
           }
           unit={t('flowUnit')}
@@ -501,8 +501,8 @@ export default function MacroPage() {
           tooltipText={t('explainFlow')}
           valueBadge={
             (() => {
-              const alignment = bundleQuery.data?.flow.alignment;
-              const strength = bundleQuery.data?.flow.foreign_strength;
+              const alignment = bundleQuery.data?.flow?.alignment;
+              const strength = bundleQuery.data?.flow?.foreign_strength;
               if (!alignment || alignment === 'unknown') return undefined;
               const aStyle = ALIGNMENT_STYLES[alignment] ?? ALIGNMENT_STYLES.unknown;
               const sStyle = strength ? (STRENGTH_STYLES[strength] ?? STRENGTH_STYLES.weak) : null;
@@ -528,11 +528,11 @@ export default function MacroPage() {
               t={t}
             />
           }
-          ageSec={bundleQuery.data?.freshness.flow_age_sec ?? null}
-          ageLabel={formatAge(bundleQuery.data?.freshness.flow_age_sec ?? null, t)}
+          ageSec={bundleQuery.data?.freshness?.flow_age_sec ?? null}
+          ageLabel={formatAge(bundleQuery.data?.freshness?.flow_age_sec ?? null, t)}
           staleLabel={t('staleWarning')}
           interpretationText={interpretation ? t(`interp_flow_${interpretation.flow_interpretation}`) : undefined}
-          decay={bundleQuery.data?.signal.reason_detail?.components?.flow?.decay}
+          decay={bundleQuery.data?.signal?.reason_detail?.components?.flow?.decay}
         />
       </div>}
 
@@ -1039,14 +1039,41 @@ export default function MacroPage() {
         )}
       </Card>}
 
-      {/* US Mode Placeholder */}
+      {/* US Mode — S&P 500 + Fed Funds Rate */}
       {marketMode === 'us' && (
-        <Card>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Activity className="mb-3 h-8 w-8 text-[var(--foreground-muted)] opacity-50" />
-            <p className="text-sm text-[var(--foreground-muted)]">{t('usModePlaceholder')}</p>
-          </div>
-        </Card>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <MetricCard
+            title={t('usSP500')}
+            icon={<BarChart3 />}
+            value={formatNumber(bundleQuery.data?.us_market?.sp500_value ?? null, locale, 2)}
+            unit="USD"
+            changePct={bundleQuery.data?.us_market?.sp500_change_pct ?? null}
+            source="Yahoo Finance"
+            items={[]}
+            ageSec={null}
+            ageLabel=""
+            staleLabel={t('staleWarning')}
+            stale={false}
+            frequencyBadge="daily"
+            frequencyLabel={t('freq_daily')}
+            tooltipText={t('explainSP500')}
+          />
+          <MetricCard
+            title={t('usFedFunds')}
+            icon={<Landmark />}
+            value={bundleQuery.data?.us_market?.fed_funds_rate != null ? `${bundleQuery.data.us_market.fed_funds_rate.toFixed(2)}%` : '-'}
+            unit=""
+            source="FRED"
+            items={[]}
+            ageSec={null}
+            ageLabel=""
+            staleLabel={t('staleWarning')}
+            stale={false}
+            frequencyBadge="daily"
+            frequencyLabel={t('freq_daily')}
+            tooltipText={t('explainFedFunds')}
+          />
+        </div>
       )}
 
       {bundleQuery.isError && (
