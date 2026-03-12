@@ -16,10 +16,10 @@ export function useSearchTickers(query: string) {
   });
 }
 
-export function useMacroBundle() {
+export function useMacroBundle(mode: string = 'kr') {
   return useQuery({
-    queryKey: queryKeys.market.macroBundle(),
-    queryFn: () => getMacroBundle(),
+    queryKey: queryKeys.market.macroBundle(mode),
+    queryFn: () => getMacroBundle(mode),
     refetchInterval: MACRO_POLL_MS,
     staleTime: 10 * 1000,
   });

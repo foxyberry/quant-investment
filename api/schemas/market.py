@@ -238,12 +238,20 @@ class MacroGlobalSnapshot(BaseModel):
     copper_gold_ratio: Optional[float] = Field(None, description="Copper/Gold ratio")
 
 
+class MacroUsMarketSnapshot(BaseModel):
+    sp500_value: Optional[float] = Field(None, description="S&P 500 index value")
+    sp500_change_pct: Optional[float] = Field(None, description="S&P 500 daily change %")
+    sp500_as_of: Optional[str] = Field(None, description="S&P 500 data timestamp")
+    fed_funds_rate: Optional[float] = Field(None, description="Federal Funds Effective Rate (%)")
+    fed_funds_as_of: Optional[str] = Field(None, description="Fed Funds Rate observation date")
+
+
 class MacroBundleResponse(BaseModel):
-    fx: MacroFxSnapshot
-    futures: MacroFuturesSnapshot
-    flow: MacroInvestorFlowSnapshot
-    signal: MacroSignal
-    freshness: MacroFreshness
+    fx: Optional[MacroFxSnapshot] = None
+    futures: Optional[MacroFuturesSnapshot] = None
+    flow: Optional[MacroInvestorFlowSnapshot] = None
+    signal: Optional[MacroSignal] = None
+    freshness: Optional[MacroFreshness] = None
     interpretation: Optional[MacroInterpretation] = None
     cache_hit: Optional[bool] = Field(None, description="Whether this response was served from cache")
     generated_at: Optional[str] = Field(None, description="When this bundle was originally generated")
@@ -257,6 +265,7 @@ class MacroBundleResponse(BaseModel):
     )
     breadth: Optional[MacroBreadthSnapshot] = Field(None, description="Market breadth (A/D ratio)")
     events: Optional[List[MacroEvent]] = Field(None, description="Upcoming macro events")
+    us_market: Optional[MacroUsMarketSnapshot] = Field(None, description="US market data (S&P 500, Fed Funds Rate)")
 
 
 class MacroHistoryPoint(BaseModel):

@@ -5,7 +5,7 @@ Provides endpoints for OHLCV data, quotes, and technical indicators.
 """
 
 import logging
-from typing import Annotated, List
+from typing import Annotated, List, Literal
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -14,6 +14,7 @@ from api.schemas.market import (
     MacroBundleResponse,
     MacroGlobalSnapshot,
     MacroHistoryResponse,
+    MacroUsMarketSnapshot,
     MacroVolatilitySnapshot,
     OHLCVResponse,
     QuoteResponse,
@@ -24,6 +25,7 @@ from api.schemas.analysis import SearchResult
 from api.services.global_macro_service import get_global_macro_service
 from api.services.market_service import MarketService
 from api.services.macro_market_service import get_macro_market_service
+from api.services.us_market_service import get_us_market_service
 from api.services.volatility_service import get_volatility_service
 
 logger = logging.getLogger(__name__)
@@ -43,6 +45,7 @@ _macro_service = get_macro_market_service(_service)
 _bond_service = get_bond_rate_service()
 _volatility_service = get_volatility_service()
 _global_macro_service = get_global_macro_service()
+_us_market_service = get_us_market_service()
 
 
 @router.get(
@@ -156,8 +159,17 @@ def get_technical_indicators(ticker: str) -> TechnicalIndicators:
 )
 def get_macro_bundle(
     force: bool = Query(False, description="Bypass server cache and force fresh data collection"),
+    mode: Literal["kr", "us"] = Query("kr", description="Market mode: 'kr' for Korean market, 'us' for US market"),
 ) -> MacroBundleResponse:
-    result = _macro_service.get_bundle(force_refresh=force)
+    is_kr = mode.lower() == "kr"
+
+    if is_kr:
+        result = _macro_service.get_bundle(force_refresh=force)
+    else:
+        # US mode: start from an empty bundle (all Optional fields default to None)
+        result = MacroBundleResponse().model_dump()
+
+    # Bonds — shared across modes
     try:
         snapshot = _bond_service.get_snapshot()
         if snapshot:
@@ -168,6 +180,8 @@ def get_macro_bundle(
     except Exception:
         logger.warning("Failed to fetch bond snapshot", exc_info=True)
         result["bonds"] = None
+
+    # Volatility — shared across modes
     try:
         vol_snapshot = _volatility_service.get_snapshot()
         if vol_snapshot and (vol_snapshot.get("vix") is not None or vol_snapshot.get("vkospi") is not None):
@@ -178,6 +192,8 @@ def get_macro_bundle(
     except Exception:
         logger.warning("Failed to fetch volatility snapshot", exc_info=True)
         result["volatility"] = None
+
+    # Global macro — shared across modes
     try:
         gm_snapshot = _global_macro_service.get_snapshot()
         if gm_snapshot:
@@ -188,6 +204,20 @@ def get_macro_bundle(
     except Exception:
         logger.warning("Failed to fetch global macro snapshot", exc_info=True)
         result["global_macro"] = None
+
+    # US market data — only in US mode
+    if not is_kr:
+        try:
+            us_snapshot = _us_market_service.get_snapshot()
+            if us_snapshot:
+                us = MacroUsMarketSnapshot(**us_snapshot)
+                result["us_market"] = us.model_dump()
+            else:
+                result["us_market"] = None
+        except Exception:
+            logger.warning("Failed to fetch US market snapshot", exc_info=True)
+            result["us_market"] = None
+
     return MacroBundleResponse(**result)
 
 
