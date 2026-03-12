@@ -1,6 +1,6 @@
 """Macro market aggregation service.
 
-Combines FX, futures proxy, and investor-flow inputs into a single
+Combines FX, futures, and investor-flow inputs into a single
 macro bundle payload with stale-data decay scoring.
 """
 
@@ -306,9 +306,6 @@ class MacroMarketService:
     }
     # KOSPI 200 index code for proper basis calculation
     _KOSPI200_INDEX = "KPI200"
-    # KODEX 200 tracks KOSPI200 at ~100x scale (KODEX price ≈ KPI200 × 100)
-    _KODEX_KPI200_MULTIPLIER = 100.0
-
     @staticmethod
     def _parse_naver_price(raw: str | int | float | None) -> float | None:
         """Parse Naver price string like '76,245' or '5,140.87' to float."""
@@ -341,57 +338,6 @@ class MacroMarketService:
             logger.debug("Naver FX API failed for %s: %s", reuters_code, exc)
             return None
 
-    def _fetch_naver_stock(self, code: str) -> Dict[str, Any] | None:
-        """Fetch realtime stock/ETF data from Naver Stock mobile API."""
-        try:
-            import requests
-        except ImportError:
-            return None
-        try:
-            url = f"https://m.stock.naver.com/api/stock/{code}/basic"
-            r = requests.get(url, headers={"Accept": "application/json"}, timeout=10)
-            r.raise_for_status()
-            return r.json()
-        except Exception as exc:
-            logger.debug("Naver stock API failed for %s: %s", code, exc)
-            return None
-
-    def _fetch_naver_stock_trend(self, code: str) -> Dict[str, Any] | None:
-        """Fetch investor trend data for a stock/ETF from Naver trend API.
-
-        Returns the most recent day's entry with foreignerPureBuyQuant,
-        organPureBuyQuant, individualPureBuyQuant (share quantities).
-        """
-        try:
-            import requests
-        except ImportError:
-            return None
-        try:
-            url = f"https://m.stock.naver.com/api/stock/{code}/trend"
-            r = requests.get(url, headers={"Accept": "application/json"}, timeout=10)
-            r.raise_for_status()
-            body = r.json()
-            if isinstance(body, list) and len(body) > 0:
-                # Pick the entry with the latest bizdate (YYYYMMDD)
-                return max(body, key=lambda x: x.get("bizdate", ""))
-            return None
-        except Exception as exc:
-            logger.debug("Naver stock trend API failed for %s: %s", code, exc)
-            return None
-
-    @staticmethod
-    def _parse_naver_quantity(raw: str | int | float | None) -> int | None:
-        """Parse Naver quantity string like '+3,398' or '-282,363' to int."""
-        if raw is None:
-            return None
-        if isinstance(raw, (int, float)):
-            return int(raw)
-        try:
-            cleaned = raw.replace(",", "").replace("+", "").strip()
-            return int(cleaned)
-        except (TypeError, ValueError):
-            return None
-
     def _fetch_naver_index(self, index: str) -> Dict[str, Any] | None:
         """Fetch realtime index data from Naver Stock mobile API."""
         try:
@@ -407,11 +353,45 @@ class MacroMarketService:
             logger.debug("Naver index API failed for %s: %s", index, exc)
             return None
 
-    def _get_futures_snapshot(self, now: datetime) -> Dict[str, Any]:
-        # Primary: Naver Stock mobile API (realtime)
+    def _fetch_naver_index_trend(self, index: str) -> Dict[str, Any] | None:
+        """Fetch investor trend data for an index from Naver Stock mobile API.
+
+        Returns dict with foreignValue, institutionalValue, personalValue (억원 strings).
+        """
         try:
-            futures_code = self.futures_ticker.replace(".KS", "").replace(".KQ", "")
-            fut_data = self._fetch_naver_stock(futures_code)
+            import requests
+        except ImportError:
+            return None
+        try:
+            url = f"https://m.stock.naver.com/api/index/{index}/trend"
+            r = requests.get(url, headers={"Accept": "application/json"}, timeout=10)
+            r.raise_for_status()
+            body = r.json()
+            if isinstance(body, dict) and body.get("foreignValue") is not None:
+                return body
+            return None
+        except Exception as exc:
+            logger.debug("Naver index trend API failed for %s: %s", index, exc)
+            return None
+
+    # Naver mobile index code for KOSPI 200 futures
+    _FUTURES_INDEX_CODE = "FUT"
+
+    @staticmethod
+    def _parse_naver_trend_value(raw: str | None) -> float | None:
+        """Parse Naver trend value like '+3,024' or '-14,264' to 억원 → KRW (원)."""
+        if raw is None:
+            return None
+        try:
+            cleaned = raw.replace(",", "").replace("+", "").strip()
+            return float(cleaned) * 100_000_000  # 억원 → 원
+        except (TypeError, ValueError):
+            return None
+
+    def _get_futures_snapshot(self, now: datetime) -> Dict[str, Any]:
+        # Primary: Naver Stock mobile API — real KOSPI200 futures (FUT)
+        try:
+            fut_data = self._fetch_naver_index(self._FUTURES_INDEX_CODE)
 
             if fut_data:
                 fut_value = self._parse_naver_price(fut_data.get("closePrice"))
@@ -420,26 +400,22 @@ class MacroMarketService:
                 )
                 updated_at = fut_data.get("localTradedAt")
 
-                # Basis: KODEX 200 premium/discount vs KOSPI 200 index (%)
-                # Only meaningful when futures_ticker is KODEX 200 (069500)
-                # KODEX 200 ≈ KPI200 × 100 (multiplier is fixed; deviation captured in basis %)
+                # Basis: futures premium/discount vs KOSPI 200 spot index (%)
                 basis = None
-                if futures_code == "069500":
-                    kpi200_data = self._fetch_naver_index(self._KOSPI200_INDEX)
-                    if kpi200_data:
-                        kpi200_value = self._parse_naver_price(kpi200_data.get("closePrice"))
-                        if fut_value is not None and kpi200_value is not None and kpi200_value > 0:
-                            theoretical = kpi200_value * self._KODEX_KPI200_MULTIPLIER
-                            basis = round((fut_value - theoretical) / theoretical * 100, 3)
+                kpi200_data = self._fetch_naver_index(self._KOSPI200_INDEX)
+                if kpi200_data:
+                    kpi200_value = self._parse_naver_price(kpi200_data.get("closePrice"))
+                    if fut_value is not None and kpi200_value is not None and kpi200_value > 0:
+                        basis = round((fut_value - kpi200_value) / kpi200_value * 100, 3)
 
-                # Investor breakdown (share quantities) for the ETF
-                investor = self._fetch_naver_stock_trend(futures_code)
-                foreign_net = self._parse_naver_quantity(investor.get("foreignerPureBuyQuant")) if investor else None
-                institution_net = self._parse_naver_quantity(investor.get("organPureBuyQuant")) if investor else None
-                individual_net = self._parse_naver_quantity(investor.get("individualPureBuyQuant")) if investor else None
+                # Real futures investor breakdown (억원) from FUT/trend
+                investor = self._fetch_naver_index_trend(self._FUTURES_INDEX_CODE)
+                foreign_net = self._parse_naver_trend_value(investor.get("foreignValue")) if investor else None
+                institution_net = self._parse_naver_trend_value(investor.get("institutionalValue")) if investor else None
+                individual_net = self._parse_naver_trend_value(investor.get("personalValue")) if investor else None
 
                 return {
-                    "symbol": self.futures_ticker,
+                    "symbol": "KOSPI200_FUT",
                     "value": fut_value,
                     "basis": basis,
                     "change_pct": change_pct,
