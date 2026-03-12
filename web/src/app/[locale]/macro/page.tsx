@@ -981,19 +981,20 @@ export default function MacroPage() {
               <span className="inline-flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-400" />{t('regimeNeutral')}</span>
             </div>
           </div>
-          <div className="inline-flex shrink-0 rounded-lg border border-[var(--border)] overflow-hidden">
+          <div className="relative inline-flex shrink-0 rounded-full bg-[var(--background-secondary)] p-0.5">
             {(['60m', '6h', '1d', '7d', '30d'] as WindowOption[]).map((w) => {
               const labelMap: Record<WindowOption, string> = { '60m': '1h', '6h': '6h', '1d': '1d', '7d': '1w', '30d': '1m' };
+              const isActive = historyWindow === w;
               return (
                 <button
                   key={w}
                   type="button"
                   onClick={() => setHistoryWindow(w)}
-                  aria-pressed={historyWindow === w}
-                  className={`px-3 py-1.5 text-xs font-medium ${
-                    historyWindow === w
-                      ? 'bg-[var(--accent)] text-white font-bold ring-1 ring-[var(--accent)]'
-                      : 'bg-[var(--background-secondary)] text-[var(--foreground-muted)] hover:bg-[var(--background)]'
+                  aria-pressed={isActive}
+                  className={`relative z-10 rounded-full px-3 py-1 text-xs font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-[var(--accent)] text-white shadow-sm'
+                      : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
                   }`}
                 >
                   {t(`window${labelMap[w]}`)}
