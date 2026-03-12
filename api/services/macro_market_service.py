@@ -246,27 +246,28 @@ class MacroMarketService:
         return True
 
     def _get_fx_snapshot(self, now: datetime) -> Dict[str, Any]:
-        # Primary: Naver FX (realtime during KRW market hours)
+        # Primary: read from FX collector cache file
         try:
-            naver = self._fetch_naver_fx("FX_USDKRW")
-            if naver:
-                value = self._parse_naver_price(naver.get("closePrice"))
-                change_pct = self._to_float(
-                    str(naver.get("fluctuationsRatio", "")).replace(",", "") or None
-                )
-                updated_at = naver.get("localTradedAt")
+            from api.services.fx_collector import read_fx_cache, is_fx_cache_stale
+            cache = read_fx_cache()
+            if cache and not is_fx_cache_stale(cache):
+                value = self._to_float(cache.get("value"))
                 if value is not None:
                     self._last_fx_value = value
+                    today = now.date()
+                    if self._session_start_date != today or self._session_start_fx is None:
+                        self._session_start_fx = value
+                        self._session_start_date = today
                     return {
-                        "pair": "USD/KRW",
+                        "pair": cache.get("pair", "USD/KRW"),
                         "value": value,
-                        "change_pct": change_pct,
-                        "updated_at": self._to_iso(updated_at or now),
+                        "change_pct": self._to_float(cache.get("change_pct")),
+                        "updated_at": cache.get("updated_at"),
                     }
         except Exception as exc:
-            logger.debug("Naver FX snapshot failed, falling back: %s", exc)
+            logger.debug("FX cache read failed, falling back to direct fetch: %s", exc)
 
-        # Fallback: Frankfurter (ECB) — daily rate
+        # Fallback: direct Frankfurter fetch (cache stale or missing)
         try:
             rates = self.exchange_service.get_rates(base="USD")
             value = rates.get("rates", {}).get("KRW")

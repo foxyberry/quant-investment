@@ -153,6 +153,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             print(f"WARNING: Investor flow collector failed to start: {e}")
 
         try:
+            from api.services.fx_collector import run_fx_collector
+            threading.Thread(
+                target=run_fx_collector,
+                daemon=True,
+                name="fx-collector",
+            ).start()
+        except Exception as e:
+            print(f"WARNING: FX collector failed to start: {e}")
+
+        try:
             from api.services.market_breadth_collector import run_market_breadth_collector
             threading.Thread(
                 target=run_market_breadth_collector,
