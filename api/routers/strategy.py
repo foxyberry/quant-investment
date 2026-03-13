@@ -26,6 +26,11 @@ from api.schemas.strategy_validation import (
     StrategyValidateRequest,
     StrategyValidateResponse,
 )
+from api.schemas.strategy_comparison import (
+    LeaderboardResponse,
+    StrategyCompareRequest,
+    StrategyCompareResponse,
+)
 from api.schemas.strategy import (
     ConditionsListResponse,
     SavedStrategiesListResponse,
@@ -215,6 +220,49 @@ async def validate_strategy(
             status_code=500,
             detail="Strategy validation failed. Check server logs.",
         )
+
+
+@router.post(
+    "/compare",
+    response_model=StrategyCompareResponse,
+    summary="Compare strategies",
+    description="Compare 2-4 strategies side by side using their latest backtest metrics.",
+)
+async def compare_strategies(data: StrategyCompareRequest) -> StrategyCompareResponse:
+    """Compare multiple strategies using their latest backtest results."""
+    from api.services.strategy_comparison_service import compare_strategies as _compare
+
+    try:
+        return _compare(data.strategy_ids)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Strategy comparison failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Strategy comparison failed.")
+
+
+@router.get(
+    "/leaderboard",
+    response_model=LeaderboardResponse,
+    summary="Strategy leaderboard",
+    description="Ranked list of strategies by backtest performance metrics.",
+)
+async def strategy_leaderboard(
+    sort_by: str = "sharpe_ratio",
+    order: str = "desc",
+    status: str | None = None,
+    limit: int = 20,
+) -> LeaderboardResponse:
+    """Get strategy leaderboard ranked by performance."""
+    from api.services.strategy_comparison_service import get_leaderboard
+
+    try:
+        return get_leaderboard(sort_by=sort_by, order=order, status=status, limit=limit)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Leaderboard failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Leaderboard failed.")
 
 
 @router.get(
