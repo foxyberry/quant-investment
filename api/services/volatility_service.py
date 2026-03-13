@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import threading
 import time
 from datetime import date, datetime, timedelta, timezone
@@ -115,7 +116,8 @@ class VolatilityService:
             from pykrx import stock
         except Exception:
             logger.warning("Failed to import pykrx for VKOSPI fetch", exc_info=True)
-            return None, None, None
+            logger.warning("pykrx unavailable; using VKOSPI proxy from ^KS200")
+            return self._fetch_vkospi_proxy_from_kospi200()
 
         try:
             from zoneinfo import ZoneInfo
@@ -132,7 +134,7 @@ class VolatilityService:
             if df_today is None or getattr(df_today, "empty", True):
                 df_range = self._safe_get_index_ohlcv(stock, start_5d.strftime("%Y%m%d"), today.strftime("%Y%m%d"), ticker)
                 if df_range is None or getattr(df_range, "empty", True):
-                    return None, None, None
+                    return self._fetch_vkospi_proxy_from_kospi200()
                 base_df = df_range
             else:
                 base_df = df_today
@@ -141,7 +143,7 @@ class VolatilityService:
 
             closes = self._extract_close_series(base_df)
             if not closes:
-                return None, None, None
+                return self._fetch_vkospi_proxy_from_kospi200()
 
             value = closes[-1]
             as_of = self._to_iso_ts(base_df.index[-1])
@@ -154,6 +156,63 @@ class VolatilityService:
             return value, change_pct, as_of
         except Exception:
             logger.warning("Failed to fetch VKOSPI snapshot", exc_info=True)
+            # Fall back to a volatility proxy computed from KOSPI200 daily returns.
+            # This keeps the macro card populated when KRX/pykrx index metadata breaks.
+            return self._fetch_vkospi_proxy_from_kospi200()
+
+    def _fetch_vkospi_proxy_from_kospi200(self) -> Tuple[Optional[float], Optional[float], Optional[str]]:
+        """Fallback VKOSPI proxy using 20-day realized volatility of KOSPI200 (^KS200).
+
+        Returns:
+            (value, day_over_day_change_pct, as_of)
+        """
+        try:
+            import yfinance as yf
+        except Exception:
+            logger.warning("Failed to import yfinance for VKOSPI proxy fetch", exc_info=True)
+            return None, None, None
+
+        try:
+            hist = yf.Ticker("^KS200").history(period="60d")
+            closes = self._extract_close_series(hist)
+            if len(closes) < 22:
+                return None, None, None
+
+            returns: list[float] = []
+            for idx in range(1, len(closes)):
+                prev = closes[idx - 1]
+                curr = closes[idx]
+                if prev == 0:
+                    continue
+                returns.append((curr / prev) - 1.0)
+
+            if len(returns) < 21:
+                return None, None, None
+
+            window = 20
+            realized_vols: list[float] = []
+            for end in range(window, len(returns) + 1):
+                window_rets = returns[end - window:end]
+                if len(window_rets) < 2:
+                    continue
+                mean = sum(window_rets) / len(window_rets)
+                variance = sum((r - mean) ** 2 for r in window_rets) / (len(window_rets) - 1)
+                vol = math.sqrt(variance) * math.sqrt(252.0) * 100.0
+                realized_vols.append(vol)
+
+            if not realized_vols:
+                return None, None, None
+
+            value = round(realized_vols[-1], 4)
+            change_pct = None
+            if len(realized_vols) >= 2 and realized_vols[-2] != 0:
+                change_pct = round(((realized_vols[-1] - realized_vols[-2]) / realized_vols[-2]) * 100.0, 4)
+
+            as_of = self._to_iso_ts(hist.index[-1])
+            logger.warning("VKOSPI source unavailable; using ^KS200 realized-vol proxy")
+            return value, change_pct, as_of
+        except Exception:
+            logger.warning("Failed to compute VKOSPI proxy from ^KS200", exc_info=True)
             return None, None, None
 
     def _classify_fear_greed(self, vix: float) -> str:

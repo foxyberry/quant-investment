@@ -26,8 +26,12 @@ class BondRateService:
         if us_spread_2_10 is None and us_10y is not None and us_2y is not None:
             us_spread_2_10 = round(us_10y - us_2y, 4)
 
+        kr_10y_obs_date: Optional[str] = None
         kr_10y = self.ecos.get_stat_value("817Y002", "010210000")
         kr_3y = self.ecos.get_stat_value("817Y002", "010200000")
+        if kr_10y is None:
+            # FRED (OECD) monthly series as a fallback when ECOS is unavailable.
+            kr_10y, kr_10y_obs_date = self.fred.get_series_with_date("IRLTLT01KRM156N")
 
         kr_us_spread = None
         if kr_10y is not None and us_10y is not None:
@@ -38,7 +42,16 @@ class BondRateService:
             inverted = us_spread_2_10 < 0
 
         # Use FRED observation date as source_updated_at if available
-        source_updated_at = obs_date or datetime.now(timezone.utc).isoformat()
+        source_updated_at = obs_date or kr_10y_obs_date
+        if obs_date and kr_10y_obs_date:
+            try:
+                us_dt = datetime.fromisoformat(obs_date)
+                kr_dt = datetime.fromisoformat(kr_10y_obs_date)
+                source_updated_at = max(us_dt, kr_dt).date().isoformat()
+            except ValueError:
+                source_updated_at = obs_date
+        if source_updated_at is None:
+            source_updated_at = datetime.now(timezone.utc).isoformat()
 
         # Stale if all values are None (API keys missing or both sources down)
         all_none = all(v is None for v in (us_10y, us_2y, kr_10y, kr_3y))
