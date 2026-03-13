@@ -35,6 +35,12 @@ from api.schemas.pine_script import (
     PineScriptExportRequest,
     PineScriptExportResponse,
 )
+from api.schemas.strategy_webhook import (
+    WebhookCreateRequest,
+    WebhookListResponse,
+    WebhookResponse,
+    WebhookUpdateRequest,
+)
 from api.schemas.strategy import (
     ConditionsListResponse,
     SavedStrategiesListResponse,
@@ -370,6 +376,65 @@ async def delete_saved_strategy(strategy_id: str) -> None:
             status_code=500,
             detail=f"Failed to delete strategy: {str(e)}",
         )
+
+
+# ---------------------------------------------------------------------------
+# Webhook CRUD
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/saved/{strategy_id}/webhooks",
+    response_model=WebhookListResponse,
+    summary="List webhooks for a strategy",
+)
+async def list_webhooks(strategy_id: str) -> WebhookListResponse:
+    """List all webhook configurations for a strategy."""
+    from api.services.strategy_webhook_service import list_webhooks as _list
+    return _list(strategy_id)
+
+
+@router.post(
+    "/saved/{strategy_id}/webhooks",
+    response_model=WebhookResponse,
+    status_code=201,
+    summary="Create webhook",
+)
+async def create_webhook(strategy_id: str, data: WebhookCreateRequest) -> WebhookResponse:
+    """Create a new webhook for a strategy."""
+    from api.services.strategy_webhook_service import create_webhook as _create
+    try:
+        return _create(strategy_id, data)
+    except Exception as e:
+        logger.error(f"Failed to create webhook: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to create webhook.")
+
+
+@router.put(
+    "/saved/{strategy_id}/webhooks/{webhook_id}",
+    response_model=WebhookResponse,
+    summary="Update webhook",
+)
+async def update_webhook(
+    strategy_id: str, webhook_id: int, data: WebhookUpdateRequest
+) -> WebhookResponse:
+    """Update a webhook configuration."""
+    from api.services.strategy_webhook_service import update_webhook as _update
+    result = _update(strategy_id, webhook_id, data)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Webhook not found")
+    return result
+
+
+@router.delete(
+    "/saved/{strategy_id}/webhooks/{webhook_id}",
+    status_code=204,
+    summary="Delete webhook",
+)
+async def delete_webhook(strategy_id: str, webhook_id: int) -> None:
+    """Delete a webhook."""
+    from api.services.strategy_webhook_service import delete_webhook as _delete
+    if not _delete(strategy_id, webhook_id):
+        raise HTTPException(status_code=404, detail="Webhook not found")
 
 
 @router.get(
