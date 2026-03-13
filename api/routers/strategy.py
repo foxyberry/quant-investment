@@ -41,6 +41,11 @@ from api.schemas.strategy_webhook import (
     WebhookResponse,
     WebhookUpdateRequest,
 )
+from api.schemas.strategy_alert import (
+    AlertConfigResponse,
+    AlertConfigUpsertRequest,
+    AlertHistoryResponse,
+)
 from api.schemas.strategy import (
     ConditionsListResponse,
     SavedStrategiesListResponse,
@@ -435,6 +440,66 @@ async def delete_webhook(strategy_id: str, webhook_id: int) -> None:
     from api.services.strategy_webhook_service import delete_webhook as _delete
     if not _delete(strategy_id, webhook_id):
         raise HTTPException(status_code=404, detail="Webhook not found")
+
+
+# ---------------------------------------------------------------------------
+# Alert Configuration & History
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/saved/{strategy_id}/alerts/config",
+    response_model=AlertConfigResponse,
+    summary="Get alert configuration",
+)
+async def get_alert_config(strategy_id: str) -> AlertConfigResponse:
+    """Get live signal alert configuration for a strategy."""
+    from api.services.strategy_alert_service import get_alert_config as _get
+    result = _get(strategy_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Alert config not found")
+    return result
+
+
+@router.put(
+    "/saved/{strategy_id}/alerts/config",
+    response_model=AlertConfigResponse,
+    summary="Create or update alert configuration",
+)
+async def upsert_alert_config(
+    strategy_id: str, data: AlertConfigUpsertRequest
+) -> AlertConfigResponse:
+    """Create or update live signal alert configuration."""
+    from api.services.strategy_alert_service import upsert_alert_config as _upsert
+    try:
+        return _upsert(strategy_id, data)
+    except Exception as e:
+        logger.error(f"Failed to upsert alert config: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to update alert config.")
+
+
+@router.delete(
+    "/saved/{strategy_id}/alerts/config",
+    status_code=204,
+    summary="Delete alert configuration",
+)
+async def delete_alert_config(strategy_id: str) -> None:
+    """Delete alert configuration for a strategy."""
+    from api.services.strategy_alert_service import delete_alert_config as _delete
+    if not _delete(strategy_id):
+        raise HTTPException(status_code=404, detail="Alert config not found")
+
+
+@router.get(
+    "/saved/{strategy_id}/alerts/history",
+    response_model=AlertHistoryResponse,
+    summary="Get alert history",
+)
+async def get_alert_history(
+    strategy_id: str, limit: int = 50
+) -> AlertHistoryResponse:
+    """Get fired alert history for a strategy."""
+    from api.services.strategy_alert_service import get_alert_history as _history
+    return _history(strategy_id, limit=limit)
 
 
 @router.get(
