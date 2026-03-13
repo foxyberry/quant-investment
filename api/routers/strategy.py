@@ -31,6 +31,10 @@ from api.schemas.strategy_comparison import (
     StrategyCompareRequest,
     StrategyCompareResponse,
 )
+from api.schemas.pine_script import (
+    PineScriptExportRequest,
+    PineScriptExportResponse,
+)
 from api.schemas.strategy import (
     ConditionsListResponse,
     SavedStrategiesListResponse,
@@ -263,6 +267,49 @@ async def strategy_leaderboard(
     except Exception as e:
         logger.error(f"Leaderboard failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Leaderboard failed.")
+
+
+@router.post(
+    "/export/pine-script",
+    response_model=PineScriptExportResponse,
+    summary="Export strategy as Pine Script v5",
+    description="Transpile a strategy graph into TradingView Pine Script v5 code.",
+)
+async def export_pine_script(data: PineScriptExportRequest) -> PineScriptExportResponse:
+    """Export a strategy graph as Pine Script v5."""
+    from api.services.pine_script_exporter import export_pine_script as _export
+
+    try:
+        pine_code = _export(
+            graph=data.graph,
+            strategy_name=data.strategy_name,
+            take_profit=data.take_profit,
+            stop_loss=data.stop_loss,
+        )
+        # Extract used/skipped conditions
+        nodes = data.graph.get("nodes", [])
+        used, skipped = [], []
+        from api.services.pine_script_exporter import _PINE_COMPILERS
+        for node in nodes:
+            nd = node.get("data", {})
+            if nd.get("node_type") != "condition":
+                continue
+            ct = nd.get("condition_type", "")
+            if ct in _PINE_COMPILERS:
+                used.append(ct)
+            else:
+                skipped.append(ct)
+        return PineScriptExportResponse(
+            pine_script=pine_code,
+            strategy_name=data.strategy_name,
+            conditions_used=used,
+            conditions_skipped=skipped,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Pine Script export failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Pine Script export failed.")
 
 
 @router.get(
