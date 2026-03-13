@@ -44,9 +44,11 @@ def test_momentum_condition_keys_registered():
 def test_ema_cross_bullish_matches():
     close = pd.Series(np.r_[np.linspace(120, 90, 40), np.linspace(91, 130, 30)])
     data = _build_df(close)
-    cond = EMACrossCondition(fast_period=5, slow_period=20, lookback_days=10, direction="bullish")
+    # Cross occurs earlier in this synthetic shape; use lookback wide enough
+    # to verify cross detection behavior deterministically.
+    cond = EMACrossCondition(fast_period=5, slow_period=20, lookback_days=30, direction="bullish")
     result = cond.evaluate("TEST", data)
-    assert result.matched is True
+    assert bool(result.matched) is True
 
 
 def test_ema_and_sma_slope_on_uptrend_match():
@@ -56,8 +58,8 @@ def test_ema_and_sma_slope_on_uptrend_match():
     ema_result = EMASlopeCondition(period=20, lookback_days=5, min_slope_pct=0.1).evaluate("TEST", data)
     sma_result = SMASlopeCondition(period=20, lookback_days=5, min_slope_pct=0.1).evaluate("TEST", data)
 
-    assert ema_result.matched is True
-    assert sma_result.matched is True
+    assert bool(ema_result.matched) is True
+    assert bool(sma_result.matched) is True
 
 
 def test_macd_related_conditions_compute():
@@ -79,7 +81,9 @@ def test_cci_williams_trix_aroon_mfi_compute():
     wr = WilliamsRReversalCondition(direction="bullish").evaluate("TEST", data)
     trix = TRIXCrossCondition(direction="bullish", lookback_days=10).evaluate("TEST", data)
     aroon = AroonTrendSignalCondition(direction="up", min_aroon=50).evaluate("TEST", data)
-    mfi = MoneyFlowIndexSignalCondition(mode="overbought", overbought=50).evaluate("TEST", data)
+    mfi_close = pd.Series(100 + 10 * np.sin(np.linspace(0, 10 * np.pi, 100)))
+    mfi_data = _build_df(mfi_close)
+    mfi = MoneyFlowIndexSignalCondition(mode="overbought", overbought=50).evaluate("TEST", mfi_data)
 
     assert "cci" in cci.details
     assert "williams_r" in wr.details

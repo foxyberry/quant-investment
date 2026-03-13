@@ -86,7 +86,7 @@ def test_dso_trend_filter_handles_missing_data(monkeypatch):
 def test_dso_trend_filter_registered_metadata():
     metadata = get_condition_metadata()
     assert "dso_trend_filter" in metadata
-    assert metadata["dso_trend_filter"]["category"] == "Fundamental"
+    assert metadata["dso_trend_filter"]["category"] == "fundamental"
 
 
 def test_dso_trend_filter_supports_alternative_row_labels(monkeypatch):

@@ -506,7 +506,8 @@
         "long_ma": 91.09964064942392,
         "short_period": 20,
         "long_period": 60,
-        "cross_day": null
+        "cross_day": null,
+        "cross_date": null
       }
     },
     "ma_cross_up": {
@@ -516,7 +517,8 @@
         "long_ma": 93.70474207912505,
         "short_period": 5,
         "long_period": 20,
-        "cross_day": null
+        "cross_day": null,
+        "cross_date": null
       }
     },
     "ma_ribbon_alignment": {

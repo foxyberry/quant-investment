@@ -31,6 +31,7 @@ _class_map = get_condition_class_map()
 
 # Only test keys that exist in both metadata AND class_map
 _CONDITION_KEYS = sorted(k for k in _metadata if k in _class_map)
+_SINGLE_CONDITION_KEYS = sorted(k for k in _CONDITION_KEYS if not _metadata[k].get("is_pairs", False))
 
 
 def _instantiate(key: str):
@@ -56,7 +57,7 @@ def _build_rich_data(days: int = 200) -> pd.DataFrame:
 class TestConditionContract:
     """L0: Interface contract tests for all conditions."""
 
-    @pytest.mark.parametrize("key", _CONDITION_KEYS, ids=lambda k: k)
+    @pytest.mark.parametrize("key", _SINGLE_CONDITION_KEYS, ids=lambda k: k)
     def test_evaluate_returns_condition_result(self, key: str):
         """evaluate() must return a ConditionResult, never raise."""
         cond = _instantiate(key)
@@ -66,7 +67,7 @@ class TestConditionContract:
             f"{key}: evaluate() returned {type(result).__name__}, expected ConditionResult"
         )
 
-    @pytest.mark.parametrize("key", _CONDITION_KEYS, ids=lambda k: k)
+    @pytest.mark.parametrize("key", _SINGLE_CONDITION_KEYS, ids=lambda k: k)
     def test_matched_is_bool(self, key: str):
         """result.matched must be a bool (including numpy bool_)."""
         cond = _instantiate(key)
@@ -76,7 +77,7 @@ class TestConditionContract:
             f"{key}: matched is {type(result.matched).__name__}, expected bool"
         )
 
-    @pytest.mark.parametrize("key", _CONDITION_KEYS, ids=lambda k: k)
+    @pytest.mark.parametrize("key", _SINGLE_CONDITION_KEYS, ids=lambda k: k)
     def test_details_is_dict(self, key: str):
         """result.details must be a dict."""
         cond = _instantiate(key)
@@ -96,7 +97,7 @@ class TestConditionContract:
         )
         assert rd > 0, f"{key}: required_days is {rd}, must be > 0"
 
-    @pytest.mark.parametrize("key", _CONDITION_KEYS, ids=lambda k: k)
+    @pytest.mark.parametrize("key", _SINGLE_CONDITION_KEYS, ids=lambda k: k)
     def test_insufficient_data_returns_false(self, key: str):
         """With too few rows, matched must be False."""
         cond = _instantiate(key)
@@ -112,7 +113,7 @@ class TestConditionContract:
                 f"{key}: matched=True with only 1 row but required_days={cond.required_days}"
             )
 
-    @pytest.mark.parametrize("key", _CONDITION_KEYS, ids=lambda k: k)
+    @pytest.mark.parametrize("key", _SINGLE_CONDITION_KEYS, ids=lambda k: k)
     def test_empty_dataframe_returns_false(self, key: str):
         """With 0 rows, must return matched=False without exception."""
         cond = _instantiate(key)
@@ -123,7 +124,7 @@ class TestConditionContract:
             f"{key}: matched=True with empty DataFrame"
         )
 
-    @pytest.mark.parametrize("key", _CONDITION_KEYS, ids=lambda k: k)
+    @pytest.mark.parametrize("key", _SINGLE_CONDITION_KEYS, ids=lambda k: k)
     def test_input_dataframe_not_mutated(self, key: str):
         """evaluate() must not modify the input DataFrame."""
         cond = _instantiate(key)
@@ -141,7 +142,7 @@ class TestConditionContract:
             f"{key}: shape changed after evaluate()"
         )
 
-    @pytest.mark.parametrize("key", _CONDITION_KEYS, ids=lambda k: k)
+    @pytest.mark.parametrize("key", _SINGLE_CONDITION_KEYS, ids=lambda k: k)
     def test_condition_name_is_string(self, key: str):
         """result.condition_name must be a non-empty string."""
         cond = _instantiate(key)

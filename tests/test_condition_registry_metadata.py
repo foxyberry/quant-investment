@@ -39,7 +39,9 @@ RECOMMENDED_DEFAULTS = [
 RECOMMENDED_KEYS = [
     "price_lag_compare",
     "ma_touch",
+    "volume_ma_ratio",
     "volume_lag_compare",
+    "return_pct_range",
     "ma_cross_up",
     "above_ma",
     "rsi_oversold",
@@ -56,7 +58,9 @@ RECOMMENDED_KEYS = [
 RECOMMENDED_ORDERS = {
     "price_lag_compare": 10,
     "ma_touch": 10,
+    "volume_ma_ratio": 12,
     "volume_lag_compare": 11,
+    "return_pct_range": 13,
     "ma_cross_up": 20,
     "above_ma": 30,
     "rsi_oversold": 40,
