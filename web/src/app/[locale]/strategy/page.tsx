@@ -27,7 +27,7 @@ import {
   Loader2, Zap, RotateCcw, Save, TestTube, FolderOpen, X,
   ChevronRight, ChevronDown, Home, Calendar, Search,
   AlignHorizontalSpaceAround, AlignVerticalSpaceAround, Route,
-  ChevronLeft, ChevronUp,
+  ChevronLeft, ChevronUp, FileCode,
 } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
@@ -50,7 +50,7 @@ import { SAMPLE_STRATEGY_PRESETS, PRESET_CATEGORY_ORDER, type SampleStrategyPres
 import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
 import { useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
 import type { StrategyResultItem, SavedStrategy, NodeIntermediateResult } from '@/lib/api';
-import { runStrategyStream, saveExecution } from '@/lib/api';
+import { runStrategyStream, saveExecution, exportPineScript } from '@/lib/api';
 
 const nodeTypes: NodeTypes = {
   universeNode: UniverseNode,
@@ -1163,6 +1163,41 @@ function StrategyPageInner() {
     URL.revokeObjectURL(url);
   }, [results]);
 
+  const [isExportingPine, setIsExportingPine] = useState(false);
+
+  const handleExportPineScript = useCallback(async () => {
+    const typedNodes = nodes as unknown as Node<StrategyNodeData>[];
+    const graph = serializeGraph(typedNodes, edges);
+    const conditionNodes = typedNodes.filter(n => n.data?.node_type === 'condition');
+    if (conditionNodes.length === 0) {
+      showToast(t('noConditionsToExport'), 'warning');
+      return;
+    }
+    setIsExportingPine(true);
+    try {
+      const resp = await exportPineScript({
+        graph,
+        strategy_name: strategyName || 'QuantCanvas Strategy',
+      });
+      const blob = new Blob([resp.pine_script], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(strategyName || 'strategy').replace(/\s+/g, '_')}.pine`;
+      a.click();
+      URL.revokeObjectURL(url);
+      if (resp.conditions_skipped.length > 0) {
+        showToast(`${t('pineExportSkipped')}: ${resp.conditions_skipped.join(', ')}`, 'warning');
+      } else {
+        showToast(t('pineExportSuccess'), 'success');
+      }
+    } catch {
+      showToast(t('pineExportFailed'), 'error');
+    } finally {
+      setIsExportingPine(false);
+    }
+  }, [nodes, edges, strategyName, showToast, t]);
+
   const handleSave = useCallback(() => {
     if (!strategyName.trim()) {
       setShowSaveDialog(true);
@@ -1466,6 +1501,20 @@ function StrategyPageInner() {
         >
           <TestTube className="h-3 w-3" />
           {t('backtest')}
+        </button>
+        <button
+          type="button"
+          onClick={handleExportPineScript}
+          disabled={isExportingPine}
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+          title={t('exportPineScript')}
+        >
+          {isExportingPine ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <FileCode className="h-3 w-3" />
+          )}
+          {t('exportPineScript')}
         </button>
         <button
           type="button"

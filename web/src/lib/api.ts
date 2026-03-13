@@ -1446,6 +1446,31 @@ export async function getLeaderboard(params?: {
   return fetchApi<LeaderboardResponse>(`/api/strategy/leaderboard${qs ? `?${qs}` : ''}`);
 }
 
+// Pine Script export
+
+export interface PineScriptExportRequest {
+  graph: StrategyGraph;
+  strategy_name?: string;
+  take_profit?: number;
+  stop_loss?: number;
+}
+
+export interface PineScriptExportResponse {
+  pine_script: string;
+  strategy_name: string;
+  conditions_used: string[];
+  conditions_skipped: string[];
+}
+
+export async function exportPineScript(
+  data: PineScriptExportRequest
+): Promise<PineScriptExportResponse> {
+  return fetchApi<PineScriptExportResponse>('/api/strategy/export/pine-script', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 // Graph backtest types
 
 export interface GraphBacktestRequest {
