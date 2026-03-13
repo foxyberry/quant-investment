@@ -971,6 +971,13 @@
       "ichimoku": "일목균형표",
       "fundamental": "펀더멘탈"
     },
+    "strategyStatus": {
+      "draft": "초안",
+      "backtested": "백테스트 완료",
+      "validated": "검증됨",
+      "production": "운영 중",
+      "retired": "중단됨"
+    },
     "loadSelected": "불러오기",
     "deleteConfirm": "이 전략을 삭제할까요?",
     "unsavedChanges": "저장되지 않은 변경 사항이 있습니다",

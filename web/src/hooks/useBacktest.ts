@@ -6,8 +6,10 @@ import {
   getBacktestStrategies,
   runBacktest,
   runOptimize,
+  runGraphBacktest,
   type BacktestRequest,
   type OptimizeRequest,
+  type GraphBacktestRequest,
 } from '@/lib/api';
 
 export function useBacktestStrategies(enabled: boolean = true) {
@@ -28,5 +30,11 @@ export function useRunBacktest() {
 export function useRunOptimize() {
   return useMutation({
     mutationFn: (request: OptimizeRequest) => runOptimize(request),
+  });
+}
+
+export function useRunGraphBacktest() {
+  return useMutation({
+    mutationFn: (request: GraphBacktestRequest) => runGraphBacktest(request),
   });
 }

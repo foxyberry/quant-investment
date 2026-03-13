@@ -1061,11 +1061,14 @@ import type { StrategyGraph } from './strategy/graphSerializer';
 
 // Saved strategy types
 
+export type StrategyStatus = 'draft' | 'backtested' | 'validated' | 'production' | 'retired';
+
 export interface SavedStrategy {
   id: string;
   name: string;
   description: string | null;
   graph: StrategyGraph;
+  status: StrategyStatus;
   created_at: string;
   updated_at: string;
 }
@@ -1302,6 +1305,65 @@ export async function getSectors(market: string = 'KOSPI'): Promise<SectorListRe
 export async function deleteSavedStrategy(id: string): Promise<void> {
   return fetchApi<void>(`/api/strategy/saved/${encodeURIComponent(id)}`, {
     method: 'DELETE',
+  });
+}
+
+/**
+ * Update the lifecycle status of a saved strategy
+ */
+export async function updateStrategyStatus(
+  id: string,
+  status: StrategyStatus
+): Promise<SavedStrategy> {
+  return fetchApi<SavedStrategy>(
+    `/api/strategy/saved/${encodeURIComponent(id)}/status`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }
+  );
+}
+
+// Graph backtest types
+
+export interface GraphBacktestRequest {
+  graph: StrategyGraph;
+  ticker: string;
+  strategy_id?: string;
+  period?: string;
+  start?: string;
+  end?: string;
+  cash?: number;
+  commission?: number;
+  take_profit?: number;
+  stop_loss?: number;
+  include_trades?: boolean;
+  include_equity_curve?: boolean;
+}
+
+export interface GraphBacktestResponse {
+  ticker: string;
+  strategy: string;
+  period: string;
+  cash: number;
+  metrics: BacktestMetrics;
+  trades: BacktestTrade[];
+  equity_curve: EquityPoint[];
+  compiled_conditions: string[];
+  skipped_conditions: string[];
+  warnings: string[];
+  strategy_status?: string | null;
+}
+
+/**
+ * Run a backtest using a strategy graph
+ */
+export async function runGraphBacktest(
+  request: GraphBacktestRequest
+): Promise<GraphBacktestResponse> {
+  return fetchApi<GraphBacktestResponse>('/api/backtest/run-graph', {
+    method: 'POST',
+    body: JSON.stringify(request),
   });
 }
 

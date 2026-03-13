@@ -971,6 +971,13 @@
       "ichimoku": "一目均衡表",
       "fundamental": "基本面"
     },
+    "strategyStatus": {
+      "draft": "草稿",
+      "backtested": "已回测",
+      "validated": "已验证",
+      "production": "生产中",
+      "retired": "已停用"
+    },
     "loadSelected": "加载",
     "deleteConfirm": "删除该策略？",
     "unsavedChanges": "您有未保存的更改",
