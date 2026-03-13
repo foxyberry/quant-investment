@@ -10,8 +10,9 @@ import {
   updateSavedStrategy,
   deleteSavedStrategy,
   updateStrategyStatus,
+  validateStrategy,
 } from '@/lib/api';
-import type { StrategyStatus } from '@/lib/api';
+import type { StrategyStatus, StrategyValidateRequest } from '@/lib/api';
 import type { StrategyGraph } from '@/lib/strategy/graphSerializer';
 
 export function useStrategyConditions() {
@@ -83,6 +84,22 @@ export function useUpdateStrategyStatus() {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: StrategyStatus }) =>
       updateStrategyStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.strategy.saved() });
+    },
+  });
+}
+
+export function useValidateStrategy() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      request,
+    }: {
+      id: string;
+      request?: StrategyValidateRequest;
+    }) => validateStrategy(id, request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.strategy.saved() });
     },
