@@ -1324,6 +1324,49 @@ export async function updateStrategyStatus(
   );
 }
 
+// Strategy validation types
+
+export interface StrategyValidateRequest {
+  ticker?: string;
+  period?: string;
+}
+
+export interface IndicatorComparison {
+  name: string;
+  our_value: number | null;
+  reference_value: number | null;
+  difference: number | null;
+  pct_difference: number | null;
+  match: boolean;
+  note: string | null;
+}
+
+export interface StrategyValidateResponse {
+  strategy_id: string;
+  indicators_tested: string[];
+  comparisons: IndicatorComparison[];
+  all_pass: boolean;
+  status_before: string;
+  status_after: string;
+  message: string;
+}
+
+/**
+ * Validate a strategy's indicators via cross-validation
+ */
+export async function validateStrategy(
+  id: string,
+  request: StrategyValidateRequest = {}
+): Promise<StrategyValidateResponse> {
+  return fetchApi<StrategyValidateResponse>(
+    `/api/strategy/saved/${encodeURIComponent(id)}/validate`,
+    {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }
+  );
+}
+
 // Graph backtest types
 
 export interface GraphBacktestRequest {

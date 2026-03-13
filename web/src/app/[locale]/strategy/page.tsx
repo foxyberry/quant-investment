@@ -41,6 +41,7 @@ import SideInspectionPanel from '@/components/strategy/SideInspectionPanel';
 import ChatPanel, { type NodeMapping } from '@/components/strategy/ChatPanel';
 
 import BacktestPanel from '@/components/backtest/BacktestPanel';
+import StrategyPipelineBadge from '@/components/strategy/StrategyPipelineBadge';
 import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph, getDownstreamNodeIds } from '@/lib/strategy/graphSerializer';
@@ -385,6 +386,7 @@ function StrategyPageInner() {
   const [strategyName, setStrategyName] = useState('');
   const [strategyDescription, setStrategyDescription] = useState('');
   const [currentStrategyId, setCurrentStrategyId] = useState<string | null>(null);
+  const [currentStrategyStatus, setCurrentStrategyStatus] = useState<string | null>(null);
   const [isSampleStrategy, setIsSampleStrategy] = useState(false);
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
   const [deployProgress, setDeployProgress] = useState(0);
@@ -1110,6 +1112,7 @@ function StrategyPageInner() {
     setStrategyName('');
     setStrategyDescription('');
     setCurrentStrategyId(null);
+    setCurrentStrategyStatus(null);
     setIsSampleStrategy(false);
   }, [setNodes, setEdges]);
 
@@ -1183,6 +1186,7 @@ function StrategyPageInner() {
         {
           onSuccess: (saved) => {
             setCurrentStrategyId(saved.id);
+            setCurrentStrategyStatus(saved.status || 'draft');
             setIsSampleStrategy(false);
             setShowSaveDialog(false);
             showToast(t('strategySaved'), 'info');
@@ -1281,6 +1285,7 @@ function StrategyPageInner() {
       setStrategyName(name);
       setStrategyDescription(description || '');
       setCurrentStrategyId(strategyId);
+      setCurrentStrategyStatus(null);
       setIsSampleStrategy(sample);
       setShowLoadDialog(false);
       setResults(null);
@@ -1309,6 +1314,7 @@ function StrategyPageInner() {
         strategyId: saved.id,
         sample: false,
       });
+      setCurrentStrategyStatus(saved.status || 'draft');
     },
     [loadGraphIntoCanvas]
   );
@@ -1448,6 +1454,9 @@ function StrategyPageInner() {
           <Save className="h-3 w-3" />
           {t('saveStrategy')}
         </button>
+        {currentStrategyId && currentStrategyStatus && (
+          <StrategyPipelineBadge status={currentStrategyStatus as Parameters<typeof StrategyPipelineBadge>[0]['status']} />
+        )}
         <div className="h-5 w-px bg-[#e1e3e5] dark:bg-[#2e2e30] mx-0.5" />
         {/* Actions */}
         <button
