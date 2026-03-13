@@ -182,6 +182,10 @@ class GraphBacktestRequest(BaseModel):
 
     graph: StrategyGraph = Field(description="Strategy graph from QuantCanvas")
     ticker: str = Field(description="Ticker symbol (e.g., 'AAPL', '005930.KS')")
+    strategy_id: Optional[str] = Field(
+        default=None,
+        description="Saved strategy ID. If provided, backtest results are persisted and status auto-promoted.",
+    )
     period: str = Field(default="1y", description="Data period (e.g., '1y', '6mo')")
     start: Optional[str] = Field(default=None, description="Start date (YYYY-MM-DD)")
     end: Optional[str] = Field(default=None, description="End date (YYYY-MM-DD)")
@@ -226,4 +230,8 @@ class GraphBacktestResponse(BaseModel):
     warnings: List[str] = Field(
         default_factory=list,
         description="Warnings about graph interpretation",
+    )
+    strategy_status: Optional[str] = Field(
+        default=None,
+        description="Updated strategy status after backtest (if strategy_id was provided)",
     )

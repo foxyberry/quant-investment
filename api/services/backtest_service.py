@@ -430,7 +430,7 @@ def run_graph_backtest(request: GraphBacktestRequest) -> GraphBacktestResponse:
         else []
     )
 
-    return GraphBacktestResponse(
+    response = GraphBacktestResponse(
         ticker=request.ticker,
         strategy="graph",
         period=request.period,
@@ -442,3 +442,27 @@ def run_graph_backtest(request: GraphBacktestRequest) -> GraphBacktestResponse:
         skipped_conditions=build_result.skipped_conditions,
         warnings=build_result.warnings,
     )
+
+    # Auto-persist results and promote status if strategy_id provided
+    if request.strategy_id:
+        try:
+            from api.services.strategy_backtest_result_service import save_backtest_result
+            from api.services.strategy_save_service import get_strategy_save_service
+
+            save_backtest_result(request.strategy_id, response)
+
+            svc = get_strategy_save_service()
+            strategy = svc.get_strategy(request.strategy_id)
+            if strategy and strategy.status == "draft":
+                svc.update_status(request.strategy_id, "backtested")
+                response.strategy_status = "backtested"
+            elif strategy:
+                response.strategy_status = strategy.status
+        except Exception:
+            logger.warning(
+                "Failed to persist/promote backtest for strategy %s",
+                request.strategy_id,
+                exc_info=True,
+            )
+
+    return response
