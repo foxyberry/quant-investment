@@ -1367,6 +1367,85 @@ export async function validateStrategy(
   );
 }
 
+// Strategy comparison types
+
+export interface StrategyMetricsSummary {
+  strategy_id: string;
+  strategy_name: string;
+  status: string;
+  ticker: string;
+  period: string;
+  sharpe_ratio: number | null;
+  sortino_ratio: number | null;
+  cagr: number | null;
+  max_drawdown: number | null;
+  win_rate: number | null;
+  total_return: number | null;
+  profit_factor: number | null;
+  total_trades: number;
+  avg_trade_return: number | null;
+  backtested_at: string | null;
+}
+
+export interface StrategyCompareResponse {
+  strategies: StrategyMetricsSummary[];
+  best_sharpe: string | null;
+  best_cagr: string | null;
+  best_win_rate: string | null;
+  lowest_drawdown: string | null;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  strategy_id: string;
+  strategy_name: string;
+  status: string;
+  sharpe_ratio: number | null;
+  cagr: number | null;
+  max_drawdown: number | null;
+  win_rate: number | null;
+  total_return: number | null;
+  total_trades: number;
+  backtested_at: string | null;
+}
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  sort_by: string;
+  order: string;
+  total_count: number;
+}
+
+/**
+ * Compare 2-4 strategies side by side
+ */
+export async function compareStrategies(
+  strategyIds: string[]
+): Promise<StrategyCompareResponse> {
+  return fetchApi<StrategyCompareResponse>('/api/strategy/compare', {
+    method: 'POST',
+    body: JSON.stringify({ strategy_ids: strategyIds }),
+  });
+}
+
+/**
+ * Get strategy leaderboard
+ */
+export async function getLeaderboard(params?: {
+  sort_by?: string;
+  order?: string;
+  status?: string;
+  limit?: number;
+}): Promise<LeaderboardResponse> {
+  const searchParams = new URLSearchParams();
+  if (params?.sort_by) searchParams.set('sort_by', params.sort_by);
+  if (params?.order) searchParams.set('order', params.order);
+  if (params?.status) searchParams.set('status', params.status);
+  if (params?.limit) searchParams.set('limit', String(params.limit));
+  const qs = searchParams.toString();
+  return fetchApi<LeaderboardResponse>(`/api/strategy/leaderboard${qs ? `?${qs}` : ''}`);
+}
+
 // Graph backtest types
 
 export interface GraphBacktestRequest {
