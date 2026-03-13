@@ -64,6 +64,8 @@ def init_db() -> None:
     _migrate_buy_rule_template_id()
     _migrate_sell_rule_preset_id()
 
+    _migrate_strategy_status()
+
     _migrate_json_data()
     _migrate_portfolio_json()
     _migrate_saved_screening_to_execution_history()
@@ -166,6 +168,22 @@ def _migrate_sell_rule_preset_id() -> None:
                 logger.info("Added sell_rules.preset_id column")
     except Exception as e:
         logger.warning("sell_rules preset_id migration skipped: %s", e)
+
+
+def _migrate_strategy_status() -> None:
+    """Add status column to strategies table if missing."""
+    try:
+        with engine.begin() as conn:
+            existing_columns = _get_column_names(conn, "strategies")
+            if existing_columns is None:
+                return
+            if "status" not in existing_columns:
+                conn.execute(
+                    text("ALTER TABLE strategies ADD COLUMN status VARCHAR(16) NOT NULL DEFAULT 'draft'")
+                )
+                logger.info("Added strategies.status column")
+    except Exception as e:
+        logger.warning("strategies status migration skipped: %s", e)
 
 
 def _migrate_json_data() -> None:

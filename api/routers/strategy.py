@@ -28,6 +28,7 @@ from api.schemas.strategy import (
     StrategyExecuteResponse,
     StrategyProgressEvent,
     StrategySaveRequest,
+    StrategyStatusUpdateRequest,
     StrategyUpdateRequest,
 )
 from api.schemas.screening import (
@@ -146,6 +147,35 @@ async def update_saved_strategy(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to update strategy: {str(e)}",
+        )
+
+
+@router.patch(
+    "/saved/{strategy_id}/status",
+    response_model=SavedStrategyResponse,
+    summary="Update strategy status",
+    description="Update the lifecycle status of a saved strategy (draft → backtested → validated → production → retired).",
+)
+async def update_strategy_status(
+    strategy_id: str,
+    data: StrategyStatusUpdateRequest,
+) -> SavedStrategyResponse:
+    """Update strategy lifecycle status."""
+    service = get_strategy_save_service()
+    try:
+        strategy = service.update_status(strategy_id, data.status)
+        if strategy is None:
+            raise HTTPException(status_code=404, detail=f"Strategy not found: {strategy_id}")
+        return strategy
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to update strategy status {strategy_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update strategy status. Check server logs.",
         )
 
 

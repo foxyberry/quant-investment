@@ -11,12 +11,22 @@ from datetime import datetime
 from typing import List, Optional
 
 from api.database import SessionLocal
-from api.models.strategy import Strategy
+from api.models.strategy import Strategy, VALID_STATUSES
 from api.schemas.strategy import (
     SavedStrategyResponse,
     StrategySaveRequest,
     StrategyUpdateRequest,
 )
+
+# Allowed transitions: any status can move forward or revert to draft.
+# retired is a terminal state that can only go back to draft.
+_ALLOWED_TRANSITIONS = {
+    "draft": {"backtested", "validated", "production", "retired"},
+    "backtested": {"draft", "validated", "production", "retired"},
+    "validated": {"draft", "production", "retired"},
+    "production": {"draft", "retired"},
+    "retired": {"draft"},
+}
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +37,7 @@ def _row_to_response(row: Strategy) -> SavedStrategyResponse:
         name=row.name,
         description=row.description,
         graph=row.graph,
+        status=row.status or "draft",
         created_at=row.created_at.isoformat() if row.created_at else "",
         updated_at=row.updated_at.isoformat() if row.updated_at else "",
     )
@@ -90,6 +101,7 @@ class StrategySaveService:
             name=data.name,
             description=data.description,
             graph=data.graph.model_dump(),
+            status=data.status if hasattr(data, "status") else "draft",
             created_at=now,
             updated_at=now,
         )
@@ -132,12 +144,45 @@ class StrategySaveService:
                 row.description = data.description
             if data.graph is not None:
                 row.graph = data.graph.model_dump()
+            if hasattr(data, "status") and data.status is not None:
+                row.status = data.status
 
             row.updated_at = datetime.utcnow()
 
             db.commit()
             db.refresh(row)
             logger.info("Updated strategy: %s", strategy_id)
+            return _row_to_response(row)
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    def update_status(self, strategy_id: str, status: str) -> Optional[SavedStrategyResponse]:
+        """Update only the status of a saved strategy.
+
+        Raises:
+            ValueError: If the transition is not allowed.
+        """
+        db = SessionLocal()
+        try:
+            row = db.get(Strategy, strategy_id)
+            if row is None:
+                return None
+            current = row.status or "draft"
+            if status != current:
+                allowed = _ALLOWED_TRANSITIONS.get(current, set())
+                if status not in allowed:
+                    raise ValueError(
+                        f"Invalid transition: '{current}' → '{status}'. "
+                        f"Allowed from '{current}': {', '.join(sorted(allowed))}"
+                    )
+            row.status = status
+            row.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(row)
+            logger.info("Updated strategy %s status to %s", strategy_id, status)
             return _row_to_response(row)
         except Exception:
             db.rollback()
