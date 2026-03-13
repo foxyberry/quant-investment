@@ -978,6 +978,13 @@
       "production": "Production",
       "retired": "Retired"
     },
+    "compareStrategies": "Compare Strategies",
+    "compareDescription": "Select 2-4 strategies to compare their backtest performance side by side.",
+    "selectStrategies": "Select Strategies",
+    "selected": "selected",
+    "runComparison": "Compare",
+    "changeSelection": "Change selection",
+    "metric": "Metric",
     "loadSelected": "Load",
     "deleteConfirm": "Delete this strategy?",
     "unsavedChanges": "You have unsaved changes",

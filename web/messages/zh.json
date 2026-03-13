@@ -978,6 +978,13 @@
       "production": "生产中",
       "retired": "已停用"
     },
+    "compareStrategies": "策略比较",
+    "compareDescription": "选择2-4个策略，对比回测表现。",
+    "selectStrategies": "选择策略",
+    "selected": "已选",
+    "runComparison": "开始比较",
+    "changeSelection": "更改选择",
+    "metric": "指标",
     "loadSelected": "加载",
     "deleteConfirm": "删除该策略？",
     "unsavedChanges": "您有未保存的更改",
