@@ -18,6 +18,10 @@ from api.schemas.strategy_chat import (
     ValidatePayloadRequest,
     ValidatePayloadResponse,
 )
+from api.schemas.strategy_backtest_result import (
+    StrategyBacktestResultResponse,
+    StrategyBacktestResultsListResponse,
+)
 from api.schemas.strategy import (
     ConditionsListResponse,
     SavedStrategiesListResponse,
@@ -177,6 +181,43 @@ async def update_strategy_status(
             status_code=500,
             detail="Failed to update strategy status. Check server logs.",
         )
+
+
+@router.get(
+    "/saved/{strategy_id}/backtest-results",
+    response_model=StrategyBacktestResultsListResponse,
+    summary="List backtest results for a strategy",
+    description="Return all backtest results for a saved strategy, most recent first.",
+)
+async def list_backtest_results(strategy_id: str) -> StrategyBacktestResultsListResponse:
+    """List all backtest results for a strategy."""
+    from api.services.strategy_backtest_result_service import get_results
+
+    results = get_results(strategy_id)
+    return StrategyBacktestResultsListResponse(
+        strategy_id=strategy_id,
+        results=results,
+        total_count=len(results),
+    )
+
+
+@router.get(
+    "/saved/{strategy_id}/backtest-results/latest",
+    response_model=StrategyBacktestResultResponse,
+    summary="Get latest backtest result",
+    description="Return the most recent backtest result for a saved strategy.",
+)
+async def get_latest_backtest_result(strategy_id: str) -> StrategyBacktestResultResponse:
+    """Get the latest backtest result for a strategy."""
+    from api.services.strategy_backtest_result_service import get_latest
+
+    result = get_latest(strategy_id)
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No backtest results found for strategy: {strategy_id}",
+        )
+    return result
 
 
 @router.delete(
