@@ -1016,7 +1016,24 @@
     },
     "logicAndShort": "모두 일치",
     "logicOrShort": "하나 이상 일치",
-    "logicNotShort": "반전"
+    "logicNotShort": "반전",
+    "indicatorDisclosure": {
+      "title": "계산 방식 차이",
+      "rsi_oversold": "저희 RSI는 SMA 스무딩을 사용하고, TradingView는 Wilder의 EWM 방식을 사용합니다. RSI 값이 최대 약 5포인트 차이날 수 있습니다.",
+      "rsi_oversoldDivergence": "예상 차이: 2-8포인트 (변동성 높은 종목일수록 큰 차이)",
+      "rsi_overbought": "저희 RSI는 SMA 스무딩을 사용하고, TradingView는 Wilder의 EWM 방식을 사용합니다. RSI 값이 최대 약 5포인트 차이날 수 있습니다.",
+      "rsi_overboughtDivergence": "예상 차이: 2-8포인트 (변동성 높은 종목일수록 큰 차이)",
+      "rsi_range": "저희 RSI는 SMA 스무딩을 사용하고, TradingView는 Wilder의 EWM 방식을 사용합니다. RSI 값이 최대 약 5포인트 차이날 수 있습니다.",
+      "rsi_rangeDivergence": "예상 차이: 2-8포인트 (변동성 높은 종목일수록 큰 차이)",
+      "stochrsi_signal": "저희 스토캐스틱 RSI는 기본 RSI 계산 방식 차이로 인해 TradingView와 다를 수 있습니다.",
+      "stochrsi_signalDivergence": "예상 차이: RSI 기본 계산에 따라 다름",
+      "bollinger_width": "저희 볼린저 밴드는 표본 표준편차(ddof=1)를 사용하고, TradingView는 모집단 표준편차(ddof=0)를 사용합니다. 밴드 폭이 약 2.6% 차이납니다.",
+      "bollinger_widthDivergence": "예상 차이: 밴드 폭 약 2-3%",
+      "bollinger_percent_b": "저희 볼린저 밴드는 표본 표준편차(ddof=1)를 사용하고, TradingView는 모집단 표준편차(ddof=0)를 사용합니다. %B 값이 약간 다를 수 있습니다.",
+      "bollinger_percent_bDivergence": "예상 차이: 밴드 폭 약 2-3%, %B 약간 차이",
+      "bollinger_squeeze_breakout": "저희 볼린저 밴드는 표본 표준편차(ddof=1)를 사용하고, TradingView는 모집단 표준편차(ddof=0)를 사용합니다. 스퀴즈 감지 시점이 약간 다를 수 있습니다.",
+      "bollinger_squeeze_breakoutDivergence": "예상 차이: 밴드 폭 약 2-3%"
+    }
   },
   "analysis": {
     "title": "차트 & 분석",
@@ -1189,7 +1206,8 @@
     "exitPrice": "청산가",
     "pnl": "손익",
     "return": "수익률",
-    "totalTrades": "합계 ({count}건)"
+    "totalTrades": "합계 ({count}건)",
+    "indicatorDisclosure": "결과가 TradingView와 약간 다를 수 있습니다. RSI 계산 방식 차이(SMA vs EWM, 약 2-8포인트)와 볼린저 밴드 표준편차 차이(ddof=1 vs ddof=0, 약 2-3%)가 있습니다. MACD는 동일합니다. 상세 비교는 교차검증 도구를 사용하세요."
   },
   "conditions": {
     "recommended": "추천",
@@ -1207,19 +1225,32 @@
       "label": "페어 상관관계",
       "desc": "두 종목 간 롤링 피어슨 상관계수",
       "help": "두 종목이 롤링 윈도우 기간 동안 얼마나 함께 움직이는지 측정합니다. 상관계수가 임계값 이상이면 두 종목이 동조하여 움직이고 있어 페어 트레이딩 전략에 적합합니다.",
-      "params": { "ticker2": "비교 종목", "period": "롤링 윈도우 (일)", "min_correlation": "최소 상관계수" }
+      "params": {
+        "ticker2": "비교 종목",
+        "period": "롤링 윈도우 (일)",
+        "min_correlation": "최소 상관계수"
+      }
     },
     "pair_spread_zscore": {
       "label": "스프레드 Z-Score",
       "desc": "로그 스프레드 Z-Score 기반 평균회귀 진입",
       "help": "두 종목 간 로그 가격 스프레드의 Z-Score를 계산합니다. 스프레드가 평균에서 크게 벗어나면 평균회귀 매매 기회를 나타냅니다.",
-      "params": { "ticker2": "비교 종목", "period": "기간 (일)", "zscore_entry": "Z-Score 진입 임계값", "direction": "방향" }
+      "params": {
+        "ticker2": "비교 종목",
+        "period": "기간 (일)",
+        "zscore_entry": "Z-Score 진입 임계값",
+        "direction": "방향"
+      }
     },
     "pair_cointegration": {
       "label": "공적분 검정",
       "desc": "Engle-Granger 공적분 검정",
       "help": "Engle-Granger 방법으로 두 주가가 장기적 균형 관계를 공유하는지 검정합니다. p-value가 낮으면 두 종목이 공적분 관계에 있어 페어 트레이딩에 적합합니다.",
-      "params": { "ticker2": "비교 종목", "period": "기간 (일)", "pvalue_threshold": "최대 p-value" }
+      "params": {
+        "ticker2": "비교 종목",
+        "period": "기간 (일)",
+        "pvalue_threshold": "최대 p-value"
+      }
     },
     "min_price": {
       "label": "최소 가격",

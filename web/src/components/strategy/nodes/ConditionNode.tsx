@@ -3,7 +3,7 @@
 import { memo, useCallback, useState } from 'react';
 import { Handle, Position, useNodeId, useReactFlow } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import { Filter, CheckCircle2, CircleDashed, Info, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { Filter, CheckCircle2, CircleDashed, Info, Eye, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { getDownstreamNodeIds, type StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import type { ConditionParam } from '@/lib/strategy/conditionRegistry';
@@ -61,6 +61,7 @@ function ConditionNode({ data, selected }: NodeProps) {
 
   const [showDesc, setShowDesc] = useState(false);
   const [showInsight, setShowInsight] = useState(false);
+  const [showDisclosure, setShowDisclosure] = useState(false);
 
   // Check if condition has params configured
   const hasParams = nodeData.params && Object.keys(nodeData.params).length > 0;
@@ -393,6 +394,41 @@ function ConditionNode({ data, selected }: NodeProps) {
                     </div>
                   )}
                 </div>
+
+                {/* Indicator Disclosure — show for RSI/MACD/BB conditions */}
+                {t.has(`indicatorDisclosure.${currentMeta.key}`) && (
+                  <div className="rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
+                    <button
+                      type="button"
+                      onClick={() => setShowDisclosure((prev) => !prev)}
+                      className="w-full flex items-center justify-between gap-1.5 p-3"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase">
+                          {t('indicatorDisclosure.title')}
+                        </span>
+                      </div>
+                      {showDisclosure ? (
+                        <ChevronUp className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                      )}
+                    </button>
+                    {showDisclosure && (
+                      <div className="px-3 pb-3 space-y-1.5">
+                        <p className="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
+                          {t(`indicatorDisclosure.${currentMeta.key}`)}
+                        </p>
+                        {t.has(`indicatorDisclosure.${currentMeta.key}Divergence`) && (
+                          <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed font-medium">
+                            {t(`indicatorDisclosure.${currentMeta.key}Divergence`)}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             );
           })()}

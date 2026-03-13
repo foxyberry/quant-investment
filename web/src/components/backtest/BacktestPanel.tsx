@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import { X, Loader2, AlertCircle, TrendingUp, BarChart3 } from 'lucide-react';
+import { X, Loader2, AlertCircle, TrendingUp, BarChart3, Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useBacktestStrategies, useRunBacktest } from '@/hooks/useBacktest';
 import type {
@@ -480,6 +480,16 @@ export default function BacktestPanel({ isOpen, onClose }: BacktestPanelProps) {
 
               {/* Metrics grid */}
               <MetricsCards metrics={result.metrics} />
+
+              {/* Indicator disclosure banner */}
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-3">
+                <div className="flex items-start gap-2">
+                  <Info className="h-3.5 w-3.5 text-[#1313ec] dark:text-blue-400 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
+                    {t('indicatorDisclosure')}
+                  </p>
+                </div>
+              </div>
 
               {/* Trade summary strip */}
               <TradeSummary
