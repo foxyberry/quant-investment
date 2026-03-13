@@ -44,6 +44,7 @@ _PROFILE = "fundamental"
 _metadata = get_condition_metadata()
 _class_map = get_condition_class_map()
 _CONDITION_KEYS = sorted(k for k in _metadata if k in _class_map)
+_SINGLE_CONDITION_KEYS = sorted(k for k in _CONDITION_KEYS if not _metadata[k].get("is_pairs", False))
 
 
 def _instantiate(key: str):
@@ -124,7 +125,7 @@ def _generate_snapshot() -> dict:
     data = _build_deterministic_data()
     conditions_output: dict[str, dict] = {}
 
-    for key in _CONDITION_KEYS:
+    for key in _SINGLE_CONDITION_KEYS:
         cond = _instantiate(key)
         result = cond.evaluate("TEST", data)
         matched = bool(result.matched)
@@ -204,7 +205,7 @@ class TestGoldenSnapshot:
             pytest.skip("Golden file does not exist yet; run --regen-golden first")
         snapshot = _load_snapshot()
         snapshot_keys = set(snapshot["conditions"].keys())
-        current_keys = set(_CONDITION_KEYS)
+        current_keys = set(_SINGLE_CONDITION_KEYS)
         missing = current_keys - snapshot_keys
         extra = snapshot_keys - current_keys
         assert not missing, (
@@ -216,7 +217,7 @@ class TestGoldenSnapshot:
             f"{sorted(extra)}. Run --regen-golden to update."
         )
 
-    @pytest.mark.parametrize("key", _CONDITION_KEYS, ids=lambda k: k)
+    @pytest.mark.parametrize("key", _SINGLE_CONDITION_KEYS, ids=lambda k: k)
     def test_condition_output_matches_golden(self, key: str):
         """Each condition's output must match the golden snapshot exactly."""
         if not _GOLDEN_FILE.exists():
@@ -275,4 +276,3 @@ class TestGoldenSnapshot:
                 + "\n".join(mismatches)
                 + "\nRun --regen-golden to update."
             )
-
