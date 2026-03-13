@@ -22,6 +22,10 @@ from api.schemas.strategy_backtest_result import (
     StrategyBacktestResultResponse,
     StrategyBacktestResultsListResponse,
 )
+from api.schemas.strategy_validation import (
+    StrategyValidateRequest,
+    StrategyValidateResponse,
+)
 from api.schemas.strategy import (
     ConditionsListResponse,
     SavedStrategiesListResponse,
@@ -180,6 +184,36 @@ async def update_strategy_status(
         raise HTTPException(
             status_code=500,
             detail="Failed to update strategy status. Check server logs.",
+        )
+
+
+@router.post(
+    "/saved/{strategy_id}/validate",
+    response_model=StrategyValidateResponse,
+    summary="Validate strategy indicators",
+    description="Run cross-validation on a strategy's indicators. "
+    "If all checks pass and strategy is 'backtested', promotes to 'validated'.",
+)
+async def validate_strategy(
+    strategy_id: str,
+    data: StrategyValidateRequest = StrategyValidateRequest(),
+) -> StrategyValidateResponse:
+    """Run cross-validation on a strategy's indicators and optionally promote."""
+    from api.services.strategy_validation_service import validate_strategy as _validate
+
+    try:
+        return _validate(
+            strategy_id=strategy_id,
+            ticker=data.ticker,
+            period=data.period,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Strategy validation failed for {strategy_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Strategy validation failed. Check server logs.",
         )
 
 
