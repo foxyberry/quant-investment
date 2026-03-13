@@ -16,6 +16,7 @@ from api.database import init_db
 from api.routers import analysis_router, broker_router, exchange_rates_router, execution_history_router, health_router, portfolio_router, screening_router, settings_router
 from api.services.broker_settings_service import get_broker_settings_service
 from api.routers.backtest import router as backtest_router
+from api.routers.cross_validation import router as cross_validation_router
 from api.routers.market import router as market_router
 from api.routers.search import router as search_router
 from api.routers.agent_task import router as agent_task_router
@@ -249,6 +250,7 @@ def create_app() -> FastAPI:
     app.include_router(search_router)
     app.include_router(strategy_router)
     app.include_router(backtest_router)
+    app.include_router(cross_validation_router)
     app.include_router(agent_task_router)
     app.include_router(kiwoom_router)
     app.include_router(broker_router)
