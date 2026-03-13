@@ -1016,7 +1016,24 @@
     },
     "logicAndShort": "All match",
     "logicOrShort": "Any match",
-    "logicNotShort": "Invert"
+    "logicNotShort": "Invert",
+    "indicatorDisclosure": {
+      "title": "Calculation Difference",
+      "rsi_oversold": "Our RSI uses SMA smoothing, while TradingView uses Wilder's EWM method. This can cause up to ~5pt difference in RSI values.",
+      "rsi_oversoldDivergence": "Expected divergence: 2-8 points (higher on volatile stocks)",
+      "rsi_overbought": "Our RSI uses SMA smoothing, while TradingView uses Wilder's EWM method. This can cause up to ~5pt difference in RSI values.",
+      "rsi_overboughtDivergence": "Expected divergence: 2-8 points (higher on volatile stocks)",
+      "rsi_range": "Our RSI uses SMA smoothing, while TradingView uses Wilder's EWM method. This can cause up to ~5pt difference in RSI values.",
+      "rsi_rangeDivergence": "Expected divergence: 2-8 points (higher on volatile stocks)",
+      "stochrsi_signal": "Our Stochastic RSI may differ from TradingView due to underlying RSI calculation method differences.",
+      "stochrsi_signalDivergence": "Expected divergence: varies depending on RSI base calculation",
+      "bollinger_width": "Our Bollinger Bands use sample std (ddof=1), while TradingView uses population std (ddof=0). This causes ~2.6% band width difference.",
+      "bollinger_widthDivergence": "Expected divergence: ~2-3% in band width",
+      "bollinger_percent_b": "Our Bollinger Bands use sample std (ddof=1), while TradingView uses population std (ddof=0). This may slightly shift %B values.",
+      "bollinger_percent_bDivergence": "Expected divergence: ~2-3% in band width, slight %B shift",
+      "bollinger_squeeze_breakout": "Our Bollinger Bands use sample std (ddof=1), while TradingView uses population std (ddof=0). Squeeze detection threshold may trigger slightly differently.",
+      "bollinger_squeeze_breakoutDivergence": "Expected divergence: ~2-3% in band width"
+    }
   },
   "analysis": {
     "title": "Charts & Analysis",
@@ -1189,7 +1206,8 @@
     "exitPrice": "Exit Price",
     "pnl": "P&L",
     "return": "Return",
-    "totalTrades": "Total ({count} trades)"
+    "totalTrades": "Total ({count} trades)",
+    "indicatorDisclosure": "Results may differ slightly from TradingView due to RSI calculation method (SMA vs EWM, ~2-8pt) and Bollinger Band std deviation (ddof=1 vs ddof=0, ~2-3%). MACD values match exactly. Use the cross-validation tool for detailed comparison."
   },
   "conditions": {
     "recommended": "REC",
@@ -1207,19 +1225,32 @@
       "label": "Pair Correlation",
       "desc": "Rolling Pearson correlation between two tickers",
       "help": "Measures how closely two stocks move together over a rolling window. A correlation above the threshold suggests the pair moves in sync, useful for pairs trading strategies.",
-      "params": { "ticker2": "Companion ticker", "period": "Rolling window (days)", "min_correlation": "Min correlation" }
+      "params": {
+        "ticker2": "Companion ticker",
+        "period": "Rolling window (days)",
+        "min_correlation": "Min correlation"
+      }
     },
     "pair_spread_zscore": {
       "label": "Spread Z-Score",
       "desc": "Log spread z-score for mean-reversion entry",
       "help": "Calculates the z-score of the log price spread between two tickers. When the spread deviates significantly from its mean, it signals a potential mean-reversion trade opportunity.",
-      "params": { "ticker2": "Companion ticker", "period": "Lookback (days)", "zscore_entry": "Z-score threshold", "direction": "Direction" }
+      "params": {
+        "ticker2": "Companion ticker",
+        "period": "Lookback (days)",
+        "zscore_entry": "Z-score threshold",
+        "direction": "Direction"
+      }
     },
     "pair_cointegration": {
       "label": "Cointegration Test",
       "desc": "Engle-Granger cointegration test",
       "help": "Tests whether two stock prices share a long-term equilibrium relationship using the Engle-Granger method. A low p-value indicates the pair is cointegrated and suitable for pairs trading.",
-      "params": { "ticker2": "Companion ticker", "period": "Lookback (days)", "pvalue_threshold": "Max p-value" }
+      "params": {
+        "ticker2": "Companion ticker",
+        "period": "Lookback (days)",
+        "pvalue_threshold": "Max p-value"
+      }
     },
     "min_price": {
       "label": "Min Price",

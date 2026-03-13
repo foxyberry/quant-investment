@@ -1016,7 +1016,24 @@
     },
     "logicAndShort": "全部匹配",
     "logicOrShort": "任意匹配",
-    "logicNotShort": "取反"
+    "logicNotShort": "取反",
+    "indicatorDisclosure": {
+      "title": "计算差异",
+      "rsi_oversold": "我们的RSI使用SMA平滑法，而TradingView使用Wilder的EWM方法。RSI值可能相差约5个点。",
+      "rsi_oversoldDivergence": "预期差异：2-8个点（波动性越大差异越大）",
+      "rsi_overbought": "我们的RSI使用SMA平滑法，而TradingView使用Wilder的EWM方法。RSI值可能相差约5个点。",
+      "rsi_overboughtDivergence": "预期差异：2-8个点（波动性越大差异越大）",
+      "rsi_range": "我们的RSI使用SMA平滑法，而TradingView使用Wilder的EWM方法。RSI值可能相差约5个点。",
+      "rsi_rangeDivergence": "预期差异：2-8个点（波动性越大差异越大）",
+      "stochrsi_signal": "由于基础RSI计算方法不同，我们的随机RSI可能与TradingView不同。",
+      "stochrsi_signalDivergence": "预期差异：取决于RSI基础计算",
+      "bollinger_width": "我们的布林带使用样本标准差(ddof=1)，而TradingView使用总体标准差(ddof=0)。带宽相差约2.6%。",
+      "bollinger_widthDivergence": "预期差异：带宽约2-3%",
+      "bollinger_percent_b": "我们的布林带使用样本标准差(ddof=1)，而TradingView使用总体标准差(ddof=0)。%B值可能略有不同。",
+      "bollinger_percent_bDivergence": "预期差异：带宽约2-3%，%B略有偏差",
+      "bollinger_squeeze_breakout": "我们的布林带使用样本标准差(ddof=1)，而TradingView使用总体标准差(ddof=0)。挤压检测时机可能略有不同。",
+      "bollinger_squeeze_breakoutDivergence": "预期差异：带宽约2-3%"
+    }
   },
   "analysis": {
     "title": "图表与分析",
@@ -1189,7 +1206,8 @@
     "exitPrice": "平仓价",
     "pnl": "盈亏",
     "return": "收益",
-    "totalTrades": "总计（{count} 笔交易）"
+    "totalTrades": "总计（{count} 笔交易）",
+    "indicatorDisclosure": "结果可能与TradingView略有不同。RSI计算方法差异(SMA vs EWM，约2-8点)和布林带标准差差异(ddof=1 vs ddof=0，约2-3%)。MACD完全一致。使用交叉验证工具进行详细比较。"
   },
   "conditions": {
     "recommended": "推荐",
@@ -1207,19 +1225,32 @@
       "label": "配对相关性",
       "desc": "两只股票的滚动皮尔逊相关系数",
       "help": "衡量两只股票在滚动窗口期间的联动程度。相关系数超过阈值表明两只股票同步运动，适合配对交易策略。",
-      "params": { "ticker2": "配对股票", "period": "滚动窗口（天）", "min_correlation": "最低相关系数" }
+      "params": {
+        "ticker2": "配对股票",
+        "period": "滚动窗口（天）",
+        "min_correlation": "最低相关系数"
+      }
     },
     "pair_spread_zscore": {
       "label": "价差Z分数",
       "desc": "对数价差Z分数均值回归入场",
       "help": "计算两只股票对数价差的Z分数。当价差显著偏离均值时，表明存在均值回归交易机会。",
-      "params": { "ticker2": "配对股票", "period": "回溯期（天）", "zscore_entry": "Z分数阈值", "direction": "方向" }
+      "params": {
+        "ticker2": "配对股票",
+        "period": "回溯期（天）",
+        "zscore_entry": "Z分数阈值",
+        "direction": "方向"
+      }
     },
     "pair_cointegration": {
       "label": "协整检验",
       "desc": "Engle-Granger协整检验",
       "help": "使用Engle-Granger方法检验两只股票价格是否存在长期均衡关系。p值较低表明配对具有协整关系，适合配对交易。",
-      "params": { "ticker2": "配对股票", "period": "回溯期（天）", "pvalue_threshold": "最大p值" }
+      "params": {
+        "ticker2": "配对股票",
+        "period": "回溯期（天）",
+        "pvalue_threshold": "最大p值"
+      }
     },
     "min_price": {
       "label": "最低价格",
