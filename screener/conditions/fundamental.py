@@ -163,6 +163,68 @@ def clear_info_cache(include_persistent: bool = False) -> None:
 # Helper – range check used by every condition
 # ---------------------------------------------------------------------------
 
+def _calc_pbr_from_statements(ticker: str, info: dict) -> Optional[float]:
+    """Calculate P/B ratio from balance sheet when yfinance priceToBook is None.
+
+    Uses marketCap / stockholders equity from the most recent balance sheet.
+    Returns None if the data is unavailable or yields non-finite values.
+    """
+    import math
+
+    try:
+        market_cap = info.get("marketCap")
+        if not market_cap:
+            fi = yf.Ticker(ticker).fast_info
+            market_cap = fi.get("marketCap") if hasattr(fi, "get") else getattr(fi, "market_cap", None)
+        if not market_cap or not math.isfinite(float(market_cap)) or market_cap <= 0:
+            return None
+
+        _, balance_sheet, _ = _get_financial_statements(ticker)
+        if balance_sheet is None or balance_sheet.empty:
+            return None
+
+        equity = None
+        for label in ("Stockholders Equity", "Common Stock Equity", "Total Equity Gross Minority Interest"):
+            if label in balance_sheet.index:
+                equity = balance_sheet.iloc[balance_sheet.index.get_loc(label), 0]
+                break
+
+        if equity is None or not math.isfinite(float(equity)) or equity <= 0:
+            return None
+
+        result = float(market_cap / equity)
+        return result if math.isfinite(result) else None
+    except Exception:
+        return None
+
+
+def _get_equity_from_statements(ticker: str) -> Optional[float]:
+    """Get stockholders equity from balance sheet.
+
+    Returns None if the data is unavailable.
+    """
+    import math
+
+    try:
+        _, balance_sheet, _ = _get_financial_statements(ticker)
+        if balance_sheet is None or balance_sheet.empty:
+            return None
+
+        for label in ("Stockholders Equity", "Common Stock Equity", "Total Equity Gross Minority Interest"):
+            if label in balance_sheet.index:
+                val = balance_sheet.iloc[balance_sheet.index.get_loc(label), 0]
+                if val is not None and math.isfinite(float(val)):
+                    return float(val)
+        return None
+    except Exception:
+        return None
+
+
+def _is_korean_ticker(ticker: str) -> bool:
+    """Return True if ticker looks like a Korean stock (.KS or .KQ suffix)."""
+    return ticker.endswith(".KS") or ticker.endswith(".KQ")
+
+
 def _in_range(
     value: float,
     lo: Optional[float],
@@ -171,7 +233,11 @@ def _in_range(
     """Return True when *value* is within [lo, hi].
 
     ``None`` on either bound means that side is unbounded.
+    Returns False for NaN or infinite values.
     """
+    import math
+    if not math.isfinite(value):
+        return False
     if lo is not None and value < lo:
         return False
     if hi is not None and value > hi:
@@ -223,6 +289,13 @@ class PERatioCondition(BaseCondition):
     def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
         info = _get_info(ticker)
         pe = info.get("trailingPE")
+        source = "trailing"
+
+        # Fallback to forwardPE for Korean stocks where yfinance
+        # returns trailingPE=None but forwardPE is available
+        if pe is None and _is_korean_ticker(ticker):
+            pe = info.get("forwardPE")
+            source = "forward"
 
         if pe is None or pe <= 0:
             return ConditionResult(
@@ -238,6 +311,7 @@ class PERatioCondition(BaseCondition):
             condition_name=self.name,
             details={
                 "pe_ratio": float(pe),
+                "pe_source": source,
                 "min_pe": self.min_pe,
                 "max_pe": self.max_pe,
             },
@@ -295,6 +369,14 @@ class PBRatioCondition(BaseCondition):
     def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
         info = _get_info(ticker)
         pb = info.get("priceToBook")
+        source = "yfinance"
+
+        # Fallback: calculate PBR from balance sheet for Korean stocks
+        # where yfinance returns priceToBook=None
+        if pb is None and _is_korean_ticker(ticker):
+            pb = _calc_pbr_from_statements(ticker, info)
+            if pb is not None:
+                source = "balance_sheet"
 
         if pb is None:
             return ConditionResult(
@@ -317,6 +399,7 @@ class PBRatioCondition(BaseCondition):
             condition_name=self.name,
             details={
                 "pb_ratio": float(pb),
+                "pb_source": source,
                 "min_pb": self.min_pb,
                 "max_pb": self.max_pb,
             },
@@ -589,7 +672,27 @@ class EarningsYieldCondition(BaseCondition):
     def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
         info = _get_info(ticker)
         eps = info.get("trailingEps")
-        price = info.get("currentPrice")
+        price = info.get("currentPrice") or info.get("regularMarketPrice")
+        source = "trailing"
+
+        # Fallback: derive earnings yield from forwardPE for Korean stocks
+        # where yfinance returns trailingEps=None but forwardPE is available
+        if eps is None and _is_korean_ticker(ticker) and info.get("forwardPE") is not None:
+            forward_pe = info["forwardPE"]
+            if forward_pe > 0:
+                earnings_yield = 100.0 / forward_pe
+                matched = _in_range(earnings_yield, self.min_yield, self.max_yield)
+                return ConditionResult(
+                    matched=matched,
+                    condition_name=self.name,
+                    details={
+                        "earnings_yield_pct": float(earnings_yield),
+                        "forward_pe": float(forward_pe),
+                        "yield_source": "forward_pe",
+                        "min_yield": self.min_yield,
+                        "max_yield": self.max_yield,
+                    },
+                )
 
         if eps is None or price is None or price == 0:
             return ConditionResult(
@@ -615,6 +718,7 @@ class EarningsYieldCondition(BaseCondition):
                 "earnings_yield_pct": float(earnings_yield),
                 "trailing_eps": float(eps),
                 "current_price": float(price),
+                "yield_source": source,
                 "min_yield": self.min_yield,
                 "max_yield": self.max_yield,
             },
@@ -841,6 +945,12 @@ class PegRatioCondition(BaseCondition):
     def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
         info = _get_info(ticker)
         peg = info.get("pegRatio")
+        source = "pegRatio"
+
+        # Fallback to trailingPegRatio for Korean stocks
+        if peg is None and _is_korean_ticker(ticker):
+            peg = info.get("trailingPegRatio")
+            source = "trailingPegRatio"
 
         if peg is None:
             return ConditionResult(
@@ -863,6 +973,7 @@ class PegRatioCondition(BaseCondition):
             condition_name=self.name,
             details={
                 "peg_ratio": float(peg),
+                "peg_source": source,
                 "min_peg": self.min_peg,
                 "max_peg": self.max_peg,
             },
@@ -1521,6 +1632,11 @@ class RoicCondition(BaseCondition):
 
         total_debt = info.get("totalDebt", 0)
         total_equity = info.get("totalStockholderEquity", 0)
+
+        # Fallback: get equity from balance sheet for Korean stocks
+        if not total_equity and _is_korean_ticker(ticker):
+            total_equity = _get_equity_from_statements(ticker) or 0
+
         invested_capital = total_debt + total_equity
 
         if invested_capital <= 0:
