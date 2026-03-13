@@ -5,8 +5,9 @@ Pydantic models for the visual strategy builder graph serialization and executio
 """
 
 from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
+from api.models.strategy import VALID_STATUSES
 from api.schemas.screening import normalize_universe_values
 
 
@@ -353,12 +354,27 @@ class ConditionsListResponse(BaseModel):
     categories: List[str]
 
 
+VALID_STRATEGY_STATUSES = VALID_STATUSES
+
+
+def _validate_strategy_status(v: str) -> str:
+    if v not in VALID_STRATEGY_STATUSES:
+        raise ValueError(f"Invalid status '{v}'. Valid: {', '.join(sorted(VALID_STRATEGY_STATUSES))}")
+    return v
+
+
 class StrategySaveRequest(BaseModel):
     """Request to save a strategy graph."""
 
     name: str = Field(..., description="Strategy name")
     description: Optional[str] = Field(None, description="Strategy description")
     graph: StrategyGraph
+    status: str = Field(default="draft", description="Strategy lifecycle status")
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        return _validate_strategy_status(v)
 
 
 class StrategyUpdateRequest(BaseModel):
@@ -367,6 +383,25 @@ class StrategyUpdateRequest(BaseModel):
     name: Optional[str] = Field(None, description="Strategy name")
     description: Optional[str] = Field(None, description="Strategy description")
     graph: Optional[StrategyGraph] = None
+    status: Optional[str] = Field(None, description="Strategy lifecycle status")
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            return _validate_strategy_status(v)
+        return v
+
+
+class StrategyStatusUpdateRequest(BaseModel):
+    """Request to update only the strategy status."""
+
+    status: str = Field(..., description="New status: draft, backtested, validated, production, retired")
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        return _validate_strategy_status(v)
 
 
 class SavedStrategyResponse(BaseModel):
@@ -376,6 +411,7 @@ class SavedStrategyResponse(BaseModel):
     name: str
     description: Optional[str] = None
     graph: StrategyGraph
+    status: str = "draft"
     created_at: str
     updated_at: str
 
