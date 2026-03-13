@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from api.schemas.strategy import StrategyGraph
+
 
 class StrategyParamInfo(BaseModel):
     """Schema for a single strategy parameter."""
@@ -173,3 +175,55 @@ class OptimizeResponse(BaseModel):
     best_metrics: BacktestMetrics
     trades: List[TradeRecord] = Field(default_factory=list)
     equity_curve: List[EquityPoint] = Field(default_factory=list)
+
+
+class GraphBacktestRequest(BaseModel):
+    """Request to run a backtest using a QuantCanvas strategy graph."""
+
+    graph: StrategyGraph = Field(description="Strategy graph from QuantCanvas")
+    ticker: str = Field(description="Ticker symbol (e.g., 'AAPL', '005930.KS')")
+    period: str = Field(default="1y", description="Data period (e.g., '1y', '6mo')")
+    start: Optional[str] = Field(default=None, description="Start date (YYYY-MM-DD)")
+    end: Optional[str] = Field(default=None, description="End date (YYYY-MM-DD)")
+    cash: float = Field(default=10_000_000, description="Initial cash amount")
+    commission: float = Field(default=0.001, description="Commission rate")
+    take_profit: Optional[float] = Field(
+        default=None,
+        ge=0.001,
+        le=1.0,
+        description="Fixed take-profit ratio (e.g. 0.05 = 5%)",
+    )
+    stop_loss: Optional[float] = Field(
+        default=None,
+        ge=0.001,
+        le=1.0,
+        description="Fixed stop-loss ratio (e.g. 0.03 = 3%)",
+    )
+    include_trades: bool = Field(default=True)
+    include_equity_curve: bool = Field(default=True)
+    max_trades: int = Field(default=500, ge=1, le=5000)
+    max_equity_points: int = Field(default=1000, ge=10, le=5000)
+
+
+class GraphBacktestResponse(BaseModel):
+    """Response from a graph-based backtest run."""
+
+    ticker: str
+    strategy: str = Field(default="graph", description="Always 'graph' for graph-based backtests")
+    period: str
+    cash: float
+    metrics: BacktestMetrics
+    trades: List[TradeRecord] = Field(default_factory=list)
+    equity_curve: List[EquityPoint] = Field(default_factory=list)
+    compiled_conditions: List[str] = Field(
+        default_factory=list,
+        description="Condition types that were compiled into the strategy",
+    )
+    skipped_conditions: List[str] = Field(
+        default_factory=list,
+        description="Condition types that were skipped (unsupported for backtesting)",
+    )
+    warnings: List[str] = Field(
+        default_factory=list,
+        description="Warnings about graph interpretation",
+    )

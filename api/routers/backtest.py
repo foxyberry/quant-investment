@@ -11,6 +11,8 @@ from fastapi import APIRouter, HTTPException
 from api.schemas.backtest import (
     BacktestRequest,
     BacktestResponse,
+    GraphBacktestRequest,
+    GraphBacktestResponse,
     OptimizeRequest,
     OptimizeResponse,
     StrategiesListResponse,
@@ -19,6 +21,7 @@ from api.services.backtest_service import (
     get_strategies,
     optimize_backtest,
     run_backtest,
+    run_graph_backtest,
 )
 
 logger = logging.getLogger(__name__)
@@ -55,6 +58,26 @@ def run(request: BacktestRequest) -> BacktestResponse:
     except Exception as e:
         logger.exception("Backtest execution failed")
         raise HTTPException(status_code=500, detail=f"Backtest failed: {str(e)}")
+
+
+@router.post(
+    "/run-graph",
+    response_model=GraphBacktestResponse,
+    summary="Run a backtest from a strategy graph",
+    description="Run a backtest using a QuantCanvas strategy graph. "
+    "Converts graph conditions into a backtesting strategy and executes it. "
+    "Unsupported conditions (fundamental, pairs) are skipped with warnings.",
+)
+def run_graph(request: GraphBacktestRequest) -> GraphBacktestResponse:
+    """Run a backtest from a QuantCanvas strategy graph."""
+    try:
+        result = run_graph_backtest(request)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception("Graph backtest execution failed")
+        raise HTTPException(status_code=500, detail=f"Graph backtest failed: {str(e)}")
 
 
 @router.post(
