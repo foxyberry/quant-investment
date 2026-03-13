@@ -1793,8 +1793,21 @@ function StrategyPageInner() {
                   className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors mb-1 group"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{s.name}</span>
-                    <span className="text-[10px] text-gray-400">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{s.name}</span>
+                      {s.status && s.status !== 'draft' && (
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium leading-none shrink-0 ${
+                          s.status === 'backtested' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                          s.status === 'validated' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                          s.status === 'production' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
+                          s.status === 'retired' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                          'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                        }`}>
+                          {t(`strategyStatus.${s.status}` as Parameters<typeof t>[0])}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-gray-400 shrink-0 ml-1">
                       {new Date(s.updated_at).toLocaleDateString()}
                     </span>
                   </div>

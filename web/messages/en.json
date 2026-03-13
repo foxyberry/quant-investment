@@ -971,6 +971,13 @@
       "ichimoku": "Ichimoku",
       "fundamental": "Fundamental"
     },
+    "strategyStatus": {
+      "draft": "Draft",
+      "backtested": "Backtested",
+      "validated": "Validated",
+      "production": "Production",
+      "retired": "Retired"
+    },
     "loadSelected": "Load",
     "deleteConfirm": "Delete this strategy?",
     "unsavedChanges": "You have unsaved changes",
