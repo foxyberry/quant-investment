@@ -19,6 +19,8 @@ from api.schemas.backtest import (
     BacktestRequest,
     BacktestResponse,
     EquityPoint,
+    GraphBacktestRequest,
+    GraphBacktestResponse,
     OptimizeRequest,
     OptimizeResponse,
     StrategyInfo,
@@ -373,4 +375,70 @@ def optimize_backtest(request: OptimizeRequest) -> OptimizeResponse:
         best_metrics=metrics,
         trades=trades,
         equity_curve=equity_curve,
+    )
+
+
+def run_graph_backtest(request: GraphBacktestRequest) -> GraphBacktestResponse:
+    """Run a backtest using a QuantCanvas strategy graph.
+
+    Converts graph conditions into a compiled strategy and runs it through
+    the BacktestEngine.
+
+    Args:
+        request: GraphBacktestRequest with graph, ticker, period, etc.
+
+    Returns:
+        GraphBacktestResponse with metrics, trades, equity curve, and warnings.
+
+    Raises:
+        ValueError: If no backtestable conditions are found.
+    """
+    from api.services.strategy_builder import build_strategy_from_graph
+
+    # Build strategy from graph
+    build_result = build_strategy_from_graph(
+        graph=request.graph,
+        take_profit=request.take_profit,
+        stop_loss=request.stop_loss,
+    )
+
+    engine = BacktestEngine(commission=request.commission)
+
+    # Run backtest
+    result = engine.run(
+        strategy=build_result.strategy_cls,
+        ticker=request.ticker,
+        period=request.period,
+        start=request.start,
+        end=request.end,
+        cash=request.cash,
+    )
+
+    # Calculate metrics
+    perf = calculate_metrics(result)
+    metrics = _metrics_to_schema(perf)
+
+    # Extract trades and equity curve
+    trades = (
+        _extract_trades(result, max_trades=request.max_trades)
+        if request.include_trades
+        else []
+    )
+    equity_curve = (
+        _extract_equity_curve(result, max_points=request.max_equity_points)
+        if request.include_equity_curve
+        else []
+    )
+
+    return GraphBacktestResponse(
+        ticker=request.ticker,
+        strategy="graph",
+        period=request.period,
+        cash=request.cash,
+        metrics=metrics,
+        trades=trades,
+        equity_curve=equity_curve,
+        compiled_conditions=build_result.compiled_conditions,
+        skipped_conditions=build_result.skipped_conditions,
+        warnings=build_result.warnings,
     )
