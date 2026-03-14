@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from api.database import SessionLocal
+from api.models.strategy import Strategy
 from api.models.strategy_webhook import StrategyWebhook
 from api.schemas.strategy_webhook import (
     WebhookCreateRequest,
@@ -62,10 +63,12 @@ def list_webhooks(strategy_id: str) -> WebhookListResponse:
         db.close()
 
 
-def create_webhook(strategy_id: str, data: WebhookCreateRequest) -> WebhookResponse:
-    """Create a new webhook for a strategy."""
+def create_webhook(strategy_id: str, data: WebhookCreateRequest) -> Optional[WebhookResponse]:
+    """Create a new webhook for a strategy. Returns None if strategy not found."""
     db = SessionLocal()
     try:
+        if not db.query(Strategy).filter(Strategy.id == strategy_id).first():
+            return None
         wh = StrategyWebhook(
             strategy_id=strategy_id,
             url=data.url,
@@ -118,7 +121,7 @@ def update_webhook(
             wh.url = data.url
         if data.events is not None:
             wh.events = data.events
-        if data.secret is not None:
+        if "secret" in data.model_fields_set:
             wh.secret = data.secret
         if data.active is not None:
             wh.active = data.active

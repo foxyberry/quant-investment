@@ -176,6 +176,61 @@ class TestWebhookValidation:
             WebhookCreateRequest(url="https://a.com/hook", events=[])
 
 
+    def test_ssrf_localhost(self):
+        with pytest.raises(Exception, match="internal"):
+            WebhookCreateRequest(
+                url="http://localhost:8080/hook", events=["status_changed"]
+            )
+
+    def test_ssrf_private_ip(self):
+        with pytest.raises(Exception, match="internal"):
+            WebhookCreateRequest(
+                url="http://192.168.1.1/hook", events=["status_changed"]
+            )
+
+    def test_ssrf_metadata_ip(self):
+        with pytest.raises(Exception, match="internal"):
+            WebhookCreateRequest(
+                url="http://169.254.169.254/latest/meta-data",
+                events=["status_changed"],
+            )
+
+    def test_ssrf_loopback_ip(self):
+        with pytest.raises(Exception, match="internal"):
+            WebhookCreateRequest(
+                url="http://127.0.0.1/hook", events=["status_changed"]
+            )
+
+    def test_create_webhook_nonexistent_strategy(self, patch_session):
+        from api.services.strategy_webhook_service import create_webhook
+
+        req = WebhookCreateRequest(
+            url="https://example.com/hook", events=["status_changed"]
+        )
+        result = create_webhook("nonexistent-id", req)
+        assert result is None
+
+    def test_update_webhook_remove_secret(self, patch_session, strategy_row):
+        from api.services.strategy_webhook_service import create_webhook, update_webhook
+
+        created = create_webhook(
+            "test-strat-1",
+            WebhookCreateRequest(
+                url="https://a.com/hook",
+                events=["status_changed"],
+                secret="mysecret",
+            ),
+        )
+        assert created.has_secret is True
+        updated = update_webhook(
+            "test-strat-1",
+            created.id,
+            WebhookUpdateRequest(secret=None),
+        )
+        assert updated is not None
+        assert updated.has_secret is False
+
+
 class TestWebhookDispatcher:
     """Tests for webhook event dispatching."""
 

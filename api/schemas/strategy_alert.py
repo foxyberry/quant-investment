@@ -35,7 +35,10 @@ class AlertConfigUpsertRequest(BaseModel):
     @field_validator("tickers")
     @classmethod
     def validate_tickers(cls, v: List[str]) -> List[str]:
-        return [t.upper().strip() for t in v if t.strip()]
+        cleaned = [t.upper().strip() for t in v if t.strip()]
+        if not cleaned:
+            raise ValueError("At least one non-blank ticker is required")
+        return cleaned
 
 
 class AlertConfigResponse(BaseModel):

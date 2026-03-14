@@ -10,7 +10,7 @@ import queue
 import threading
 import time
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
 from api.schemas.strategy_chat import (
@@ -495,7 +495,7 @@ async def delete_alert_config(strategy_id: str) -> None:
     summary="Get alert history",
 )
 async def get_alert_history(
-    strategy_id: str, limit: int = 50
+    strategy_id: str, limit: int = Query(50, ge=1, le=200)
 ) -> AlertHistoryResponse:
     """Get fired alert history for a strategy."""
     from api.services.strategy_alert_service import get_alert_history as _history
