@@ -31,19 +31,5 @@
     "shadcn",
     "stitch",
     "codex"
-  ],
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "TaskCreate|TaskUpdate",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/agent-task-tracker.py",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  }
+  ]
 }

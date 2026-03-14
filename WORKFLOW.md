@@ -69,7 +69,7 @@ Next-Run Defaults:
 ## Validation Rule
 Run at minimum:
 ```bash
-python3 -m py_compile api/main.py api/database.py api/routers/agent_task.py .claude/hooks/agent-task-tracker.py
+python3 -m py_compile api/main.py api/database.py api/routers/agent_task.py
 python3 -m uvicorn api.main:app --port 8765
 ```
 
