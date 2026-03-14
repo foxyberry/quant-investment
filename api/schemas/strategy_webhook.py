@@ -4,7 +4,9 @@ Strategy Webhook Schemas.
 Pydantic models for webhook configuration and event payloads.
 """
 
+import ipaddress
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -37,6 +39,7 @@ class WebhookCreateRequest(BaseModel):
     def validate_url(cls, v: str) -> str:
         if not v.startswith(("http://", "https://")):
             raise ValueError("URL must start with http:// or https://")
+        _check_ssrf(v)
         return v
 
     @field_validator("events")
@@ -59,8 +62,10 @@ class WebhookUpdateRequest(BaseModel):
     @field_validator("url")
     @classmethod
     def validate_url(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and not v.startswith(("http://", "https://")):
-            raise ValueError("URL must start with http:// or https://")
+        if v is not None:
+            if not v.startswith(("http://", "https://")):
+                raise ValueError("URL must start with http:// or https://")
+            _check_ssrf(v)
         return v
 
     @field_validator("events")
@@ -71,6 +76,51 @@ class WebhookUpdateRequest(BaseModel):
             if invalid:
                 raise ValueError(f"Invalid events: {invalid}. Valid: {VALID_WEBHOOK_EVENTS}")
         return v
+
+
+def _is_blocked_ip(addr: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """Return True if the IP should be blocked for webhook delivery."""
+    return (
+        addr.is_private
+        or addr.is_loopback
+        or addr.is_link_local
+        or addr.is_reserved
+        or addr.is_multicast
+        or addr.is_unspecified
+    )
+
+
+def _check_ssrf(url: str) -> None:
+    """Block internal/metadata network addresses to prevent SSRF."""
+    import socket
+
+    parsed = urlparse(url)
+    hostname = (parsed.hostname or "").lower().rstrip(".")
+    if not hostname or hostname == "localhost":
+        raise ValueError("Webhook URL must not target internal addresses")
+    # Check literal IP first
+    try:
+        addr = ipaddress.ip_address(hostname)
+        if _is_blocked_ip(addr):
+            raise ValueError("Webhook URL must not target internal/private addresses")
+        return
+    except ValueError:
+        pass  # hostname is a domain name
+    # DNS resolution check
+    try:
+        for info in socket.getaddrinfo(hostname, None):
+            resolved_ip = info[4][0]
+            try:
+                addr = ipaddress.ip_address(resolved_ip)
+                if _is_blocked_ip(addr):
+                    raise ValueError(
+                        "Webhook URL must not target internal/private addresses"
+                    )
+            except ValueError as e:
+                if "internal" in str(e) or "private" in str(e):
+                    raise
+    except socket.gaierror:
+        pass  # DNS resolution failed; allow (will fail at dispatch time)
 
 
 class WebhookResponse(BaseModel):

@@ -208,3 +208,31 @@ class TestAlertValidation:
     def test_ticker_normalization(self):
         req = AlertConfigUpsertRequest(tickers=["  aapl  ", "msft"])
         assert req.tickers == ["AAPL", "MSFT"]
+
+    def test_blank_tickers_rejected(self):
+        with pytest.raises(Exception, match="non-blank"):
+            AlertConfigUpsertRequest(tickers=["  ", ""])
+
+    def test_upsert_nonexistent_strategy(self, patch_session):
+        from api.services.strategy_alert_service import upsert_alert_config
+
+        req = AlertConfigUpsertRequest(tickers=["AAPL"])
+        result = upsert_alert_config("nonexistent-id", req)
+        assert result is None
+
+    def test_history_limit_clamped(self, patch_session, strategy_row):
+        from api.services.strategy_alert_service import (
+            get_alert_history,
+            record_alert,
+        )
+
+        for i in range(5):
+            record_alert("test-strat-1", f"T{i}", ["cond"])
+
+        # Negative limit clamped to 1
+        history = get_alert_history("test-strat-1", limit=-10)
+        assert len(history.alerts) == 1
+
+        # Excessive limit clamped to max_limit
+        history = get_alert_history("test-strat-1", limit=9999)
+        assert len(history.alerts) == 5  # all 5 returned (within 200 cap)

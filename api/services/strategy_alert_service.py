@@ -8,6 +8,7 @@ import logging
 from typing import Optional
 
 from api.database import SessionLocal
+from api.models.strategy import Strategy
 from api.models.strategy_alert import StrategyAlertConfig, StrategyAlertHistory
 from api.schemas.strategy_alert import (
     AlertConfigResponse,
@@ -59,10 +60,12 @@ def get_alert_config(strategy_id: str) -> Optional[AlertConfigResponse]:
 
 def upsert_alert_config(
     strategy_id: str, data: AlertConfigUpsertRequest
-) -> AlertConfigResponse:
-    """Create or update alert configuration for a strategy."""
+) -> Optional[AlertConfigResponse]:
+    """Create or update alert configuration. Returns None if strategy not found."""
     db = SessionLocal()
     try:
+        if not db.query(Strategy).filter(Strategy.id == strategy_id).first():
+            return None
         cfg = (
             db.query(StrategyAlertConfig)
             .filter(StrategyAlertConfig.strategy_id == strategy_id)
@@ -108,8 +111,9 @@ def delete_alert_config(strategy_id: str) -> bool:
 
 
 def get_alert_history(
-    strategy_id: str, limit: int = 50
+    strategy_id: str, limit: int = 50, max_limit: int = 200
 ) -> AlertHistoryResponse:
+    limit = max(1, min(limit, max_limit))
     """Get alert history for a strategy."""
     db = SessionLocal()
     try:
