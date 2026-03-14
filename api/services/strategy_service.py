@@ -1005,6 +1005,7 @@ def _compute_node_survivors(
     node_meta: Dict[str, dict],
     child_ids_set: set,
     cache: Dict[str, set],
+    child_to_parent: Optional[Dict[str, str]] = None,
 ) -> set:
     """Compute the set of result indices that survive up to this node.
 
@@ -1043,11 +1044,23 @@ def _compute_node_survivors(
                     own_passers.add(i)
         # Intersect with upstream survivors (pipeline filtering)
         upstream_ids = incoming.get(node_id, [])
+        # If this condition is a child of a logic group and has no direct
+        # upstream edges, inherit the parent group's upstream so that
+        # intermediate counts reflect cumulative pipeline filtering.
+        if not upstream_ids and child_to_parent and node_id in child_to_parent:
+            parent_id = child_to_parent[node_id]
+            parent = nodes_by_id.get(parent_id)
+            if parent and parent.data.child_node_ids:
+                upstream_ids = [
+                    uid
+                    for uid in incoming.get(parent_id, [])
+                    if uid not in set(parent.data.child_node_ids)
+                ]
         if upstream_ids:
             upstream = set.intersection(*(
                 _compute_node_survivors(
                     uid, all_results, nodes_by_id, incoming,
-                    node_meta, child_ids_set, cache,
+                    node_meta, child_ids_set, cache, child_to_parent,
                 )
                 for uid in upstream_ids
             ))
@@ -1065,7 +1078,7 @@ def _compute_node_survivors(
         child_sets = [
             _compute_node_survivors(
                 sid, all_results, nodes_by_id, incoming,
-                node_meta, child_ids_set, cache,
+                node_meta, child_ids_set, cache, child_to_parent,
             )
             for sid in source_ids
             if nodes_by_id.get(sid) and nodes_by_id[sid].data.node_type != "universe"
@@ -1090,7 +1103,7 @@ def _compute_node_survivors(
                 upstream = set.intersection(*(
                     _compute_node_survivors(
                         uid, all_results, nodes_by_id, incoming,
-                        node_meta, child_ids_set, cache,
+                        node_meta, child_ids_set, cache, child_to_parent,
                     )
                     for uid in upstream_ids
                 ))
@@ -1108,7 +1121,7 @@ def _compute_node_survivors(
                 child_sets.append(
                     _compute_node_survivors(
                         sid, all_results, nodes_by_id, incoming,
-                        node_meta, child_ids_set, cache,
+                        node_meta, child_ids_set, cache, child_to_parent,
                     )
                 )
         # Top-level nodes not connected via edges
@@ -1121,7 +1134,7 @@ def _compute_node_survivors(
                 child_sets.append(
                     _compute_node_survivors(
                         n.id, all_results, nodes_by_id, incoming,
-                        node_meta, child_ids_set, cache,
+                        node_meta, child_ids_set, cache, child_to_parent,
                     )
                 )
         if not child_sets:
@@ -1300,9 +1313,12 @@ def execute_strategy(
         if edge.target in incoming:
             incoming[edge.target].append(edge.source)
     child_ids_set: set[str] = set()
+    child_to_parent: Dict[str, str] = {}
     for n in graph.nodes:
         if n.data.child_node_ids:
             child_ids_set.update(n.data.child_node_ids)
+            for cid in n.data.child_node_ids:
+                child_to_parent[cid] = n.id
 
     # Compute per-node survivors using graph-aware cumulative filtering
     survivor_cache: Dict[str, set] = {}
@@ -1315,7 +1331,7 @@ def execute_strategy(
 
         survivor_indices = _compute_node_survivors(
             node_id, all_results, nodes_by_id, incoming,
-            node_meta, child_ids_set, survivor_cache,
+            node_meta, child_ids_set, survivor_cache, child_to_parent,
         )
         passing_stocks: List[StrategyResultItem] = []
         for i in sorted(survivor_indices):
