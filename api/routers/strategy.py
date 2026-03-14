@@ -408,7 +408,12 @@ async def create_webhook(strategy_id: str, data: WebhookCreateRequest) -> Webhoo
     """Create a new webhook for a strategy."""
     from api.services.strategy_webhook_service import create_webhook as _create
     try:
-        return _create(strategy_id, data)
+        result = _create(strategy_id, data)
+        if result is None:
+            raise HTTPException(status_code=404, detail="Strategy not found.")
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to create webhook: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create webhook.")
@@ -471,7 +476,12 @@ async def upsert_alert_config(
     """Create or update live signal alert configuration."""
     from api.services.strategy_alert_service import upsert_alert_config as _upsert
     try:
-        return _upsert(strategy_id, data)
+        result = _upsert(strategy_id, data)
+        if result is None:
+            raise HTTPException(status_code=404, detail="Strategy not found.")
+        return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to upsert alert config: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to update alert config.")
