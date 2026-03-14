@@ -203,6 +203,7 @@
     "noHistory": "No history data",
     "historyAccumulating": "Data is still accumulating — try a shorter time range",
     "marketClosedHint": "Market is closed — values will update when trading resumes",
+    "volatility": "Volatility",
     "dataRangeHint": "Showing {actual} of data (requested {requested}) — data is still accumulating",
     "dataRangeHintStrong": "Showing {actual} of {requested} — data is still accumulating, try a shorter range",
     "dataRangeHintWeak": "Showing {actual} of {requested}",
