@@ -3446,7 +3446,9 @@
     "materials": "Materials",
     "realEstate": "Real Estate",
     "utilities": "Utilities",
-    "communication": "Communication"
+    "communication": "Communication",
+    "pnl": "P&L",
+    "weight": "Weight"
   },
   "factors": {
     "valuation": "Valuation",

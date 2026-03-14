@@ -3446,7 +3446,9 @@
     "materials": "소재",
     "realEstate": "부동산",
     "utilities": "유틸리티",
-    "communication": "통신"
+    "communication": "통신",
+    "pnl": "손익",
+    "weight": "비중"
   },
   "factors": {
     "valuation": "밸류에이션",

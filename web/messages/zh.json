@@ -3446,7 +3446,9 @@
     "materials": "材料",
     "realEstate": "房地产",
     "utilities": "公用事业",
-    "communication": "通信"
+    "communication": "通信",
+    "pnl": "损益",
+    "weight": "比重"
   },
   "factors": {
     "valuation": "估值",
