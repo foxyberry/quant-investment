@@ -22,14 +22,6 @@ interface AllocationChartsProps {
   activeMarketFilter?: string | null;
 }
 
-// Color palette for treemap cells (muted, distinct hues)
-const TREEMAP_COLORS = [
-  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1',
-  '#14b8a6', '#e11d48', '#0ea5e9', '#a855f7', '#22c55e',
-  '#eab308', '#d946ef', '#64748b', '#f43f5e', '#0891b2',
-];
-
 // Market donut colors
 export const MARKET_COLORS: Record<string, string> = {
   KOSPI: '#3b82f6',
@@ -160,45 +152,84 @@ const MARKET_I18N_KEY: Record<string, string> = {
   unknown: 'unknown',
 };
 
-interface TreemapContentProps {
+// --- PnL Heatmap color helpers ---
+
+function getPnlColor(pnlPct: number | null): string {
+  if (pnlPct == null || Math.abs(pnlPct) < 0.5) return '#6b7280';
+  const maxPnl = 10;
+  const clamped = Math.min(Math.abs(pnlPct), maxPnl);
+  const ratio = (clamped - 0.5) / (maxPnl - 0.5);
+  const lightness = 70 - ratio * 45;
+  return pnlPct > 0
+    ? `hsl(142, 70%, ${lightness}%)`
+    : `hsl(0, 70%, ${lightness}%)`;
+}
+
+function getPnlTextColor(pnlPct: number | null): string {
+  if (pnlPct != null && Math.abs(pnlPct) > 1.5) return '#ffffff';
+  return 'rgba(255, 255, 255, 0.85)';
+}
+
+interface HeatmapContentProps {
   x: number;
   y: number;
   width: number;
   height: number;
-  name: string;
-  pct: number;
-  fill: string;
+  name?: string;
+  ticker?: string;
+  pnl_pct?: number | null;
 }
 
-function TreemapContent({ x, y, width, height, name, pct, fill }: TreemapContentProps) {
-  if (width < 40 || height < 30) return null;
-  const fontSize = Math.min(width / 8, height / 3, 14);
-  const showPct = width > 55 && height > 40;
+function HeatmapContent({ x, y, width, height, name, ticker, pnl_pct }: HeatmapContentProps) {
+  if (width < 4 || height < 4) return null;
+
+  const bgColor = getPnlColor(pnl_pct ?? null);
+  const textColor = getPnlTextColor(pnl_pct ?? null);
+  const fontSize = Math.floor(Math.min(width / 7, height / 3.5, 14));
+  const displayTicker = ((ticker || '').split('.')[0] || name || '').trim();
+  const showTicker = width > 35 && height > 20 && fontSize >= 8 && displayTicker.length > 0;
+  const showPnl = width > 50 && height > 35 && fontSize >= 8;
+
+  const displayPnl = pnl_pct != null
+    ? `${pnl_pct >= 0 ? '+' : ''}${pnl_pct.toFixed(1)}%`
+    : '';
 
   return (
     <g>
-      <rect x={x} y={y} width={width} height={height} rx={4} fill={fill} stroke="var(--background-secondary)" strokeWidth={2} />
-      <text
-        x={x + width / 2}
-        y={y + height / 2 - (showPct ? 6 : 0)}
-        textAnchor="middle"
-        dominantBaseline="central"
-        fill="#fff"
-        fontSize={fontSize}
-        fontWeight={600}
-      >
-        {name}
-      </text>
-      {showPct && (
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={bgColor}
+        stroke="var(--background)"
+        strokeWidth={1.5}
+        rx={2}
+      />
+      {showTicker && (
         <text
           x={x + width / 2}
-          y={y + height / 2 + fontSize}
+          y={y + height / 2 - (showPnl ? fontSize * 0.6 : 0)}
           textAnchor="middle"
           dominantBaseline="central"
-          fill="rgba(255,255,255,0.8)"
-          fontSize={fontSize * 0.8}
+          fill={textColor}
+          fontSize={fontSize}
+          fontWeight={700}
         >
-          {pct.toFixed(1)}%
+          {displayTicker}
+        </text>
+      )}
+      {showPnl && (
+        <text
+          x={x + width / 2}
+          y={y + height / 2 + fontSize * 0.7}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill={textColor}
+          fontSize={fontSize * 0.85}
+          fontWeight={500}
+        >
+          {displayPnl}
         </text>
       )}
     </g>
@@ -224,25 +255,26 @@ function renderDonutLabel(props: any) {
 export default function AllocationCharts({ holdings, formatCurrency, onSectorClick, onMarketClick, onTickerClick, activeSectorFilter, activeMarketFilter }: AllocationChartsProps) {
   const t = useTranslations('allocation');
 
-  const { treemapData, marketData, sectorData, totalInvested } = useMemo(() => {
+  const { heatmapData, holdingsCount, marketData, sectorData, totalInvested } = useMemo(() => {
     const holdingsWithValue = holdings.filter(
       (h) => h.market_value != null && h.market_value > 0
     );
 
     if (holdingsWithValue.length === 0) {
-      return { treemapData: [], marketData: [], sectorData: [], totalInvested: 0 };
+      return { heatmapData: [], holdingsCount: 0, marketData: [], sectorData: [], totalInvested: 0 };
     }
 
     const total = holdingsWithValue.reduce((sum, h) => sum + (h.market_value ?? 0), 0);
 
-    // Treemap: per-stock allocation
-    const treeItems = holdingsWithValue
-      .map((h, i) => ({
+    // Flat heatmap data sorted by value (largest first for optimal treemap layout)
+    const heatmap = holdingsWithValue
+      .map((h) => ({
         name: h.name || h.ticker,
         ticker: h.ticker,
         value: h.market_value ?? 0,
+        pnl_pct: h.pnl_pct ?? null,
+        pnl: h.pnl ?? null,
         pct: ((h.market_value ?? 0) / total) * 100,
-        fill: TREEMAP_COLORS[i % TREEMAP_COLORS.length],
       }))
       .sort((a, b) => b.value - a.value);
 
@@ -279,14 +311,15 @@ export default function AllocationCharts({ holdings, formatCurrency, onSectorCli
       .sort((a, b) => b.value - a.value);
 
     return {
-      treemapData: treeItems,
+      heatmapData: heatmap,
+      holdingsCount: holdingsWithValue.length,
       marketData: mktData,
       sectorData: secData,
       totalInvested: total,
     };
   }, [holdings, t]);
 
-  if (treemapData.length === 0) {
+  if (heatmapData.length === 0) {
     return null;
   }
 
@@ -294,22 +327,35 @@ export default function AllocationCharts({ holdings, formatCurrency, onSectorCli
   const primaryCurrency = holdings[0]?.currency ?? 'KRW';
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Treemap: Stock Allocation */}
-      <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] shadow-sm lg:row-span-2">
+    <div className="space-y-4">
+      {/* PnL Heatmap Treemap */}
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] shadow-sm">
         <div className="border-b border-[var(--border)] px-6 py-4">
           <h3 className="text-lg font-semibold text-[var(--foreground)]">{t('stockAllocation')}</h3>
           <p className="text-sm text-[var(--foreground-muted)] mt-1">
-            {treemapData.length} {t('totalHoldings')} &middot; {formatCurrency(totalInvested, primaryCurrency)}
+            {holdingsCount} {t('totalHoldings')} &middot; {formatCurrency(totalInvested, primaryCurrency)}
           </p>
         </div>
         <div className="p-4">
-          <ResponsiveContainer width="100%" height={360}>
+          <ResponsiveContainer width="100%" height={420}>
             <Treemap
-              data={treemapData}
+              data={heatmapData}
               dataKey="value"
               stroke="none"
-              content={<TreemapContent x={0} y={0} width={0} height={0} name="" pct={0} fill="" />}
+              isAnimationActive={false}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              content={(props: any) => (
+                <HeatmapContent
+                  key={`cell-${props.index}`}
+                  x={props.x}
+                  y={props.y}
+                  width={props.width}
+                  height={props.height}
+                  name={props.name}
+                  ticker={props.ticker}
+                  pnl_pct={props.pnl_pct}
+                />
+              )}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onClick={onTickerClick ? (node: any) => {
                 if (node?.ticker) onTickerClick(node.ticker);
@@ -320,188 +366,199 @@ export default function AllocationCharts({ holdings, formatCurrency, onSectorCli
                 content={({ payload }) => {
                   if (!payload || payload.length === 0) return null;
                   const d = payload[0].payload;
+                  if (!d.ticker) return null;
                   return (
                     <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 shadow-lg text-sm">
                       <div className="font-semibold text-[var(--foreground)]">{d.name}</div>
                       <div className="text-[var(--foreground-muted)]">{d.ticker}</div>
-                      <div className="mt-1 text-[var(--foreground)]">{d.pct.toFixed(1)}%</div>
+                      <div className="mt-1 text-[var(--foreground)]">
+                        {t('pnl')}: {d.pnl_pct != null ? `${d.pnl_pct >= 0 ? '+' : ''}${d.pnl_pct.toFixed(2)}%` : '-'}
+                      </div>
+                      <div className="text-[var(--foreground)]">
+                        {t('weight')}: {d.pct?.toFixed(1)}%
+                      </div>
+                      <div className="text-[var(--foreground-muted)]">
+                        {formatCurrency(d.value, primaryCurrency)}
+                      </div>
                     </div>
                   );
                 }}
               />
             </Treemap>
           </ResponsiveContainer>
-          {/* Legend: top 5 stocks */}
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--foreground-muted)]">
-            {treemapData.slice(0, 5).map((item) => (
-              <span key={item.ticker} className="flex items-center gap-1">
-                <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: item.fill }} />
-                {item.name} {item.pct.toFixed(1)}%
-              </span>
-            ))}
-            {treemapData.length > 5 && (
-              <span className="text-[var(--foreground-muted)]">+{treemapData.length - 5} {t('others').toLowerCase()}</span>
+          {/* Gradient legend */}
+          <div className="mt-3 flex items-center justify-center gap-2 text-xs text-[var(--foreground-muted)]">
+            <span>-10%</span>
+            <div
+              className="h-3 w-48 rounded"
+              style={{
+                background: 'linear-gradient(to right, hsl(0, 70%, 30%), hsl(0, 70%, 55%), #6b7280, hsl(142, 70%, 55%), hsl(142, 70%, 30%))',
+              }}
+            />
+            <span>+10%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Donuts side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Market Donut */}
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] shadow-sm">
+          <div className="border-b border-[var(--border)] px-6 py-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-[var(--foreground)]">{t('marketAllocation')}</h3>
+            {activeMarketFilter && (
+              <button
+                type="button"
+                onClick={() => onMarketClick?.(null)}
+                className="text-xs text-[var(--color-primary)] hover:underline"
+              >
+                {t('clearFilter')}
+              </button>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Market Donut */}
-      <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] shadow-sm">
-        <div className="border-b border-[var(--border)] px-6 py-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-[var(--foreground)]">{t('marketAllocation')}</h3>
-          {activeMarketFilter && (
-            <button
-              type="button"
-              onClick={() => onMarketClick?.(null)}
-              className="text-xs text-[var(--color-primary)] hover:underline"
-            >
-              {t('clearFilter')}
-            </button>
-          )}
-        </div>
-        <div className="p-4 flex items-center gap-4">
-          <div className="w-1/2 flex-shrink-0">
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie
-                  data={marketData}
-                  dataKey="value"
-                  nameKey="displayName"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="50%"
-                  outerRadius="90%"
-                  strokeWidth={2}
-                  stroke="var(--background-secondary)"
-                  label={renderDonutLabel}
-                  labelLine={false}
-                  onClick={onMarketClick ? (_: unknown, index: number) => {
-                    const clicked = marketData[index]?.name;
-                    if (clicked) onMarketClick(activeMarketFilter === clicked ? null : clicked);
-                  } : undefined}
-                  style={onMarketClick ? { cursor: 'pointer' } : undefined}
+          <div className="p-4 flex items-center gap-4">
+            <div className="w-1/2 flex-shrink-0">
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie
+                    data={marketData}
+                    dataKey="value"
+                    nameKey="displayName"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="50%"
+                    outerRadius="90%"
+                    strokeWidth={2}
+                    stroke="var(--background-secondary)"
+                    label={renderDonutLabel}
+                    labelLine={false}
+                    onClick={onMarketClick ? (_: unknown, index: number) => {
+                      const clicked = marketData[index]?.name;
+                      if (clicked) onMarketClick(activeMarketFilter === clicked ? null : clicked);
+                    } : undefined}
+                    style={onMarketClick ? { cursor: 'pointer' } : undefined}
+                  >
+                    {marketData.map((entry) => (
+                      <Cell
+                        key={entry.name}
+                        fill={entry.color}
+                        opacity={activeMarketFilter && activeMarketFilter !== entry.name ? 0.3 : 1}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    content={({ payload }) => {
+                      if (!payload || payload.length === 0) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 shadow-lg text-sm">
+                          <div className="font-semibold text-[var(--foreground)]">{d.displayName}</div>
+                          <div className="text-[var(--foreground)]">{d.pct.toFixed(1)}%</div>
+                        </div>
+                      );
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-col gap-2 text-sm">
+              {marketData.map((item) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  onClick={() => onMarketClick?.(activeMarketFilter === item.name ? null : item.name)}
+                  className={`flex items-center gap-2 rounded-md px-2 py-1 transition-colors text-left ${
+                    activeMarketFilter === item.name
+                      ? 'bg-[var(--color-primary)]/10 ring-1 ring-[var(--color-primary)]'
+                      : 'hover:bg-[var(--background)]/50'
+                  } ${activeMarketFilter && activeMarketFilter !== item.name ? 'opacity-40' : ''}`}
                 >
-                  {marketData.map((entry) => (
-                    <Cell
-                      key={entry.name}
-                      fill={entry.color}
-                      opacity={activeMarketFilter && activeMarketFilter !== entry.name ? 0.3 : 1}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  content={({ payload }) => {
-                    if (!payload || payload.length === 0) return null;
-                    const d = payload[0].payload;
-                    return (
-                      <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 shadow-lg text-sm">
-                        <div className="font-semibold text-[var(--foreground)]">{d.displayName}</div>
-                        <div className="text-[var(--foreground)]">{d.pct.toFixed(1)}%</div>
-                      </div>
-                    );
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-col gap-2 text-sm">
-            {marketData.map((item) => (
-              <button
-                key={item.name}
-                type="button"
-                onClick={() => onMarketClick?.(activeMarketFilter === item.name ? null : item.name)}
-                className={`flex items-center gap-2 rounded-md px-2 py-1 transition-colors text-left ${
-                  activeMarketFilter === item.name
-                    ? 'bg-[var(--color-primary)]/10 ring-1 ring-[var(--color-primary)]'
-                    : 'hover:bg-[var(--background)]/50'
-                } ${activeMarketFilter && activeMarketFilter !== item.name ? 'opacity-40' : ''}`}
-              >
-                <span className="inline-block h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                <span className="text-[var(--foreground)]">{item.displayName}</span>
-                <span className="text-[var(--foreground-muted)] ml-auto">{item.pct.toFixed(1)}%</span>
-              </button>
-            ))}
+                  <span className="inline-block h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                  <span className="text-[var(--foreground)]">{item.displayName}</span>
+                  <span className="text-[var(--foreground-muted)] ml-auto">{item.pct.toFixed(1)}%</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Sector Donut */}
-      <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] shadow-sm">
-        <div className="border-b border-[var(--border)] px-6 py-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-[var(--foreground)]">{t('sectorAllocation')}</h3>
-          {activeSectorFilter && (
-            <button
-              type="button"
-              onClick={() => onSectorClick?.(null)}
-              className="text-xs text-[var(--color-primary)] hover:underline"
-            >
-              {t('clearFilter')}
-            </button>
-          )}
-        </div>
-        <div className="p-4 flex items-center gap-4">
-          <div className="w-1/2 flex-shrink-0">
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie
-                  data={sectorData}
-                  dataKey="value"
-                  nameKey="displayName"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="50%"
-                  outerRadius="90%"
-                  strokeWidth={2}
-                  stroke="var(--background-secondary)"
-                  label={renderDonutLabel}
-                  labelLine={false}
-                  onClick={onSectorClick ? (_: unknown, index: number) => {
-                    const clicked = sectorData[index]?.name;
-                    if (clicked) onSectorClick(activeSectorFilter === clicked ? null : clicked);
-                  } : undefined}
-                  style={onSectorClick ? { cursor: 'pointer' } : undefined}
-                >
-                  {sectorData.map((entry) => (
-                    <Cell
-                      key={entry.name}
-                      fill={entry.color}
-                      opacity={activeSectorFilter && activeSectorFilter !== entry.name ? 0.3 : 1}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  content={({ payload }) => {
-                    if (!payload || payload.length === 0) return null;
-                    const d = payload[0].payload;
-                    return (
-                      <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 shadow-lg text-sm">
-                        <div className="font-semibold text-[var(--foreground)]">{d.displayName}</div>
-                        <div className="text-[var(--foreground)]">{d.pct.toFixed(1)}%</div>
-                      </div>
-                    );
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex flex-col gap-2 text-sm">
-            {sectorData.map((item) => (
+        {/* Sector Donut */}
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] shadow-sm">
+          <div className="border-b border-[var(--border)] px-6 py-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-[var(--foreground)]">{t('sectorAllocation')}</h3>
+            {activeSectorFilter && (
               <button
-                key={item.name}
                 type="button"
-                onClick={() => onSectorClick?.(activeSectorFilter === item.name ? null : item.name)}
-                className={`flex items-center gap-2 rounded-md px-2 py-1 transition-colors text-left ${
-                  activeSectorFilter === item.name
-                    ? 'bg-[var(--color-primary)]/10 ring-1 ring-[var(--color-primary)]'
-                    : 'hover:bg-[var(--background)]/50'
-                } ${activeSectorFilter && activeSectorFilter !== item.name ? 'opacity-40' : ''}`}
+                onClick={() => onSectorClick?.(null)}
+                className="text-xs text-[var(--color-primary)] hover:underline"
               >
-                <span className="inline-block h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                <span className="text-[var(--foreground)]">{item.displayName}</span>
-                <span className="text-[var(--foreground-muted)] ml-auto">{item.pct.toFixed(1)}%</span>
+                {t('clearFilter')}
               </button>
-            ))}
+            )}
+          </div>
+          <div className="p-4 flex items-center gap-4">
+            <div className="w-1/2 flex-shrink-0">
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie
+                    data={sectorData}
+                    dataKey="value"
+                    nameKey="displayName"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="50%"
+                    outerRadius="90%"
+                    strokeWidth={2}
+                    stroke="var(--background-secondary)"
+                    label={renderDonutLabel}
+                    labelLine={false}
+                    onClick={onSectorClick ? (_: unknown, index: number) => {
+                      const clicked = sectorData[index]?.name;
+                      if (clicked) onSectorClick(activeSectorFilter === clicked ? null : clicked);
+                    } : undefined}
+                    style={onSectorClick ? { cursor: 'pointer' } : undefined}
+                  >
+                    {sectorData.map((entry) => (
+                      <Cell
+                        key={entry.name}
+                        fill={entry.color}
+                        opacity={activeSectorFilter && activeSectorFilter !== entry.name ? 0.3 : 1}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    content={({ payload }) => {
+                      if (!payload || payload.length === 0) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <div className="rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 shadow-lg text-sm">
+                          <div className="font-semibold text-[var(--foreground)]">{d.displayName}</div>
+                          <div className="text-[var(--foreground)]">{d.pct.toFixed(1)}%</div>
+                        </div>
+                      );
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-col gap-2 text-sm">
+              {sectorData.map((item) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  onClick={() => onSectorClick?.(activeSectorFilter === item.name ? null : item.name)}
+                  className={`flex items-center gap-2 rounded-md px-2 py-1 transition-colors text-left ${
+                    activeSectorFilter === item.name
+                      ? 'bg-[var(--color-primary)]/10 ring-1 ring-[var(--color-primary)]'
+                      : 'hover:bg-[var(--background)]/50'
+                  } ${activeSectorFilter && activeSectorFilter !== item.name ? 'opacity-40' : ''}`}
+                >
+                  <span className="inline-block h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                  <span className="text-[var(--foreground)]">{item.displayName}</span>
+                  <span className="text-[var(--foreground-muted)] ml-auto">{item.pct.toFixed(1)}%</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

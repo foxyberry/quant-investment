@@ -1207,19 +1207,32 @@
       "label": "配对相关性",
       "desc": "两只股票的滚动皮尔逊相关系数",
       "help": "衡量两只股票在滚动窗口期间的联动程度。相关系数超过阈值表明两只股票同步运动，适合配对交易策略。",
-      "params": { "ticker2": "配对股票", "period": "滚动窗口（天）", "min_correlation": "最低相关系数" }
+      "params": {
+        "ticker2": "配对股票",
+        "period": "滚动窗口（天）",
+        "min_correlation": "最低相关系数"
+      }
     },
     "pair_spread_zscore": {
       "label": "价差Z分数",
       "desc": "对数价差Z分数均值回归入场",
       "help": "计算两只股票对数价差的Z分数。当价差显著偏离均值时，表明存在均值回归交易机会。",
-      "params": { "ticker2": "配对股票", "period": "回溯期（天）", "zscore_entry": "Z分数阈值", "direction": "方向" }
+      "params": {
+        "ticker2": "配对股票",
+        "period": "回溯期（天）",
+        "zscore_entry": "Z分数阈值",
+        "direction": "方向"
+      }
     },
     "pair_cointegration": {
       "label": "协整检验",
       "desc": "Engle-Granger协整检验",
       "help": "使用Engle-Granger方法检验两只股票价格是否存在长期均衡关系。p值较低表明配对具有协整关系，适合配对交易。",
-      "params": { "ticker2": "配对股票", "period": "回溯期（天）", "pvalue_threshold": "最大p值" }
+      "params": {
+        "ticker2": "配对股票",
+        "period": "回溯期（天）",
+        "pvalue_threshold": "最大p值"
+      }
     },
     "min_price": {
       "label": "最低价格",
@@ -3388,7 +3401,9 @@
     "materials": "材料",
     "realEstate": "房地产",
     "utilities": "公用事业",
-    "communication": "通信"
+    "communication": "通信",
+    "pnl": "损益",
+    "weight": "比重"
   },
   "factors": {
     "valuation": "估值",
