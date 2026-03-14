@@ -155,7 +155,7 @@ const MARKET_I18N_KEY: Record<string, string> = {
 // --- PnL Heatmap color helpers ---
 
 function getPnlColor(pnlPct: number | null): string {
-  if (pnlPct == null || Math.abs(pnlPct) < 0.5) return '#6b7280';
+  if (pnlPct == null || !Number.isFinite(pnlPct) || Math.abs(pnlPct) < 0.5) return '#6b7280';
   const maxPnl = 10;
   const clamped = Math.min(Math.abs(pnlPct), maxPnl);
   const ratio = (clamped - 0.5) / (maxPnl - 0.5);
@@ -190,7 +190,7 @@ function HeatmapContent({ x, y, width, height, name, ticker, pnl_pct }: HeatmapC
   const showTicker = width > 35 && height > 20 && fontSize >= 8 && displayTicker.length > 0;
   const showPnl = width > 50 && height > 35 && fontSize >= 8;
 
-  const displayPnl = pnl_pct != null
+  const displayPnl = pnl_pct != null && Number.isFinite(pnl_pct)
     ? `${pnl_pct >= 0 ? '+' : ''}${pnl_pct.toFixed(1)}%`
     : '';
 
@@ -344,21 +344,25 @@ export default function AllocationCharts({ holdings, formatCurrency, onSectorCli
               stroke="none"
               isAnimationActive={false}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              content={(props: any) => (
-                <HeatmapContent
-                  key={`cell-${props.index}`}
-                  x={props.x}
-                  y={props.y}
-                  width={props.width}
-                  height={props.height}
-                  name={props.name}
-                  ticker={props.ticker}
-                  pnl_pct={props.pnl_pct}
-                />
-              )}
+              content={(props: any) => {
+                const d = props.payload ?? props;
+                return (
+                  <HeatmapContent
+                    key={`cell-${props.index}`}
+                    x={props.x}
+                    y={props.y}
+                    width={props.width}
+                    height={props.height}
+                    name={d.name}
+                    ticker={d.ticker}
+                    pnl_pct={d.pnl_pct}
+                  />
+                );
+              }}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               onClick={onTickerClick ? (node: any) => {
-                if (node?.ticker) onTickerClick(node.ticker);
+                const ticker = node?.payload?.ticker ?? node?.ticker;
+                if (ticker) onTickerClick(ticker);
               } : undefined}
               style={onTickerClick ? { cursor: 'pointer' } : undefined}
             >
@@ -372,10 +376,10 @@ export default function AllocationCharts({ holdings, formatCurrency, onSectorCli
                       <div className="font-semibold text-[var(--foreground)]">{d.name}</div>
                       <div className="text-[var(--foreground-muted)]">{d.ticker}</div>
                       <div className="mt-1 text-[var(--foreground)]">
-                        {t('pnl')}: {d.pnl_pct != null ? `${d.pnl_pct >= 0 ? '+' : ''}${d.pnl_pct.toFixed(2)}%` : '-'}
+                        {t('pnl')}: {d.pnl_pct != null && Number.isFinite(d.pnl_pct) ? `${d.pnl_pct >= 0 ? '+' : ''}${d.pnl_pct.toFixed(2)}%` : '-'}
                       </div>
                       <div className="text-[var(--foreground)]">
-                        {t('weight')}: {d.pct?.toFixed(1)}%
+                        {t('weight')}: {d.pct != null ? `${d.pct.toFixed(1)}%` : '-'}
                       </div>
                       <div className="text-[var(--foreground-muted)]">
                         {formatCurrency(d.value, primaryCurrency)}
