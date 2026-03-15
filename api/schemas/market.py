@@ -267,6 +267,9 @@ class MacroDataQuality(BaseModel):
     futures: Optional[Literal["ok", "stale", "missing"]] = Field(None, description="Futures data quality")
     flow: Optional[Literal["ok", "stale", "missing"]] = Field(None, description="Investor flow data quality")
     volatility: Optional[Literal["ok", "stale", "missing"]] = Field(None, description="Volatility data quality")
+    overall: Optional[Literal["sufficient", "insufficient"]] = Field(
+        None, description="Overall data sufficiency: insufficient when 2+ core sources (fx/futures/flow) are missing or stale"
+    )
 
 
 class MacroBundleResponse(BaseModel):
