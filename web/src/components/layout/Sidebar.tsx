@@ -165,7 +165,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           lg:translate-x-0
         `}
         role="navigation"
-        aria-label="Sidebar navigation"
+        aria-label={tNav('sidebarNavigation')}
       >
         <div className="flex h-full flex-col">
           <div className={`px-4 py-5 ${isCollapsed ? 'flex justify-center' : ''}`}>
@@ -176,7 +176,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               {!isCollapsed && (
                 <div>
                   <span className="text-lg font-bold text-white">Quant</span>
-                  <p className="text-[10px] uppercase tracking-widest text-slate-500">Fintech Platform</p>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500">{tNav('fintechPlatform')}</p>
                 </div>
               )}
             </Link>
