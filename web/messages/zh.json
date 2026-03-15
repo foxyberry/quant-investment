@@ -222,6 +222,7 @@
     "quality_ok": "数据最新",
     "quality_stale": "数据延迟",
     "quality_missing": "数据缺失",
+    "dataInsufficientBanner": "可用数据源不足。宏观评分可能不可靠，请检查数据收集器。",
     "confidence_high": "高置信度",
     "confidence_medium": "中置信度",
     "confidence_low": "低置信度",

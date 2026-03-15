@@ -295,19 +295,30 @@ def _compute_data_quality(bundle: dict, is_kr: bool) -> MacroDataQuality:
         return "stale"  # has data but no timestamp → conservative
 
     if is_kr:
+        fx_q = _series_quality("fx")
+        futures_q = _series_quality("futures")
+        flow_q = _series_quality("flow")
+        vol_q = _vol_quality()
+        # Insufficient when 2+ core sources (fx/futures/flow) are missing or stale
+        bad_count = sum(1 for q in (fx_q, futures_q, flow_q) if q in ("missing", "stale"))
+        overall = "insufficient" if bad_count >= 2 else "sufficient"
         return MacroDataQuality(
-            fx=_series_quality("fx"),
-            futures=_series_quality("futures"),
-            flow=_series_quality("flow"),
-            volatility=_vol_quality(),
+            fx=fx_q,
+            futures=futures_q,
+            flow=flow_q,
+            volatility=vol_q,
+            overall=overall,
         )
     else:
-        # US mode: fx/futures/flow are not used
+        # US mode: fx/futures/flow are not used; US scoring uses VIX/bonds/S&P500
+        # which have separate display logic. Overall is always "sufficient" here
+        # because the KR-specific gating (2/3 core sources) doesn't apply.
         return MacroDataQuality(
             fx=None,
             futures=None,
             flow=None,
             volatility=_vol_quality(),
+            overall="sufficient",
         )
 
 

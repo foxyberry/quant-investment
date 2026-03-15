@@ -222,6 +222,7 @@
     "quality_ok": "데이터 최신",
     "quality_stale": "데이터 지연",
     "quality_missing": "데이터 없음",
+    "dataInsufficientBanner": "데이터 소스가 충분하지 않습니다. 매크로 점수가 투자 판단에 신뢰할 수 없을 수 있습니다. 데이터 수집기를 확인해 주세요.",
     "confidence_high": "높은 신뢰도",
     "confidence_medium": "보통 신뢰도",
     "confidence_low": "낮은 신뢰도",

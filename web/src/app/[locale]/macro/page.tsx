@@ -469,6 +469,12 @@ export default function MacroPage() {
 
       {/* Gauge Hero — Regime + Entry Assessment unified (KR only) */}
       {marketMode === 'kr' && <div className="rounded-xl border border-[var(--border)] bg-gradient-to-b from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 p-6 text-white">
+        {bundleQuery.data?.data_quality?.overall === 'insufficient' && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-900/20 px-4 py-3 text-sm text-amber-300">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>{t('dataInsufficientBanner')}</span>
+          </div>
+        )}
         <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-10">
           {/* Gauge */}
           <div className="flex flex-col items-center">

@@ -465,6 +465,7 @@ export interface MacroDataQuality {
   futures: DataQualityLevel | null;
   flow: DataQualityLevel | null;
   volatility: DataQualityLevel | null;
+  overall: 'sufficient' | 'insufficient' | null;
 }
 
 export interface MacroBundle {

@@ -222,6 +222,7 @@
     "quality_ok": "Data is fresh",
     "quality_stale": "Data is stale",
     "quality_missing": "Data is missing",
+    "dataInsufficientBanner": "Insufficient data sources available. The macro score may not be reliable for investment decisions. Please check data collectors.",
     "confidence_high": "High confidence",
     "confidence_medium": "Medium confidence",
     "confidence_low": "Low confidence",
