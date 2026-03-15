@@ -221,7 +221,7 @@ class CalmarRatioFilterCondition(BaseCondition):
             return _insufficient(self.name)
         close = data["close"].tail(self.lookback_days)
         total_return = close.iloc[-1] / close.iloc[0] - 1.0
-        ann_return = float((1.0 + total_return) ** (252 / max(1, len(close))) - 1.0)
+        ann_return = float((1.0 + total_return) ** (252 / max(1, len(close) - 1)) - 1.0)
         rolling_peak = close.cummax()
         max_dd = float(abs((close / rolling_peak - 1.0).min()))
         calmar = 0.0 if max_dd == 0 else ann_return / max_dd

@@ -79,7 +79,7 @@ class BollingerSqueezeBreakoutCondition(BaseCondition):
         std = data["close"].rolling(self.period).std(ddof=0)
         upper = ma + (self.std_mult * std)
         lower = ma - (self.std_mult * std)
-        prev_width_pct = ((upper.iloc[-2] - lower.iloc[-2]) / ma.iloc[-2]) * 100.0 if ma.iloc[-2] else np.nan
+        prev_width_pct = ((upper.iloc[-2] - lower.iloc[-2]) / ma.iloc[-2]) * 100.0 if (not pd.isna(ma.iloc[-2]) and ma.iloc[-2] != 0) else np.nan
         breakout = data["close"].iloc[-1] > upper.iloc[-1]
         if pd.isna(prev_width_pct) or pd.isna(upper.iloc[-1]):
             return _insufficient(self.name)

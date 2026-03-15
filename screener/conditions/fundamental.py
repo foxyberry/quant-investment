@@ -1619,15 +1619,15 @@ class RoicCondition(BaseCondition):
     def evaluate(self, ticker: str, data: pd.DataFrame) -> ConditionResult:
         info = _get_info(ticker)
 
-        operating_income = info.get("operatingIncome") or info.get("ebitda", 0)
-        if not operating_income:
+        operating_income = info.get("operatingIncome") if info.get("operatingIncome") is not None else info.get("ebitda")
+        if operating_income is None:
             return ConditionResult(
                 matched=False,
                 condition_name=self.name,
                 details={"error": "No operating income data"},
             )
 
-        tax_rate = info.get("effectiveTaxRate") or 0.21
+        tax_rate = info.get("effectiveTaxRate") if info.get("effectiveTaxRate") is not None else 0.21
         nopat = operating_income * (1 - tax_rate)
 
         total_debt = info.get("totalDebt", 0)

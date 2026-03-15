@@ -209,6 +209,12 @@ class PriceChangeCondition(BaseCondition):
 
         current_price = data['close'].iloc[-1]
         past_price = data['close'].iloc[-(self.days + 1)]
+        if past_price == 0 or pd.isna(past_price):
+            return ConditionResult(
+                matched=False,
+                condition_name=self.name,
+                details={"error": "Past price is zero or missing"}
+            )
         change_pct = (current_price - past_price) / past_price * 100
 
         matched = True
