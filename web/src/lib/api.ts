@@ -33,6 +33,9 @@ import type {
   TigerSettingsUpsert,
   IBKRSettings,
   IBKRSettingsUpsert,
+  TelegramSettings,
+  TelegramSettingsUpsert,
+  TelegramTestResult,
   Trade,
   TradeHistoryResponse,
   SellRecordCreate,
@@ -920,6 +923,23 @@ export async function saveIbkrSettings(payload: IBKRSettingsUpsert): Promise<IBK
 
 export async function testIbkrConnection(): Promise<BrokerConnectionStatus> {
   return fetchApi<BrokerConnectionStatus>('/api/settings/brokers/ibkr/test', {
+    method: 'POST',
+  });
+}
+
+export async function getTelegramSettings(): Promise<TelegramSettings> {
+  return fetchApi<TelegramSettings>('/api/settings/telegram');
+}
+
+export async function saveTelegramSettings(payload: TelegramSettingsUpsert): Promise<TelegramSettings> {
+  return fetchApi<TelegramSettings>('/api/settings/telegram', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function testTelegramNotification(): Promise<TelegramTestResult> {
+  return fetchApi<TelegramTestResult>('/api/settings/telegram/test', {
     method: 'POST',
   });
 }

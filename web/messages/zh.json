@@ -3344,7 +3344,22 @@
     "ibkrAccountIdPlaceholder": "留空自动发现",
     "saveIbkr": "保存 IBKR 设置",
     "testIbkr": "测试 IBKR 连接",
-    "ibkrSaved": "IBKR 设置已保存。"
+    "ibkrSaved": "IBKR 设置已保存。",
+    "notifications": "通知",
+    "telegramConfigTitle": "Telegram 通知",
+    "telegramConfigDesc": "通过 Telegram 机器人接收策略提醒。请先在 @BotFather 创建机器人并获取 Chat ID。",
+    "telegramBotToken": "机器人令牌",
+    "telegramBotTokenPlaceholder": "123456:ABC-DEF...",
+    "telegramBotTokenPlaceholderMasked": "令牌已保存。输入新令牌将替换现有令牌。",
+    "telegramBotTokenStored": "机器人令牌已加密存储。",
+    "telegramBotTokenMissing": "未存储机器人令牌。",
+    "telegramChatId": "Chat ID",
+    "telegramChatIdPlaceholder": "您的 Telegram Chat ID",
+    "telegramEnabled": "启用 Telegram 通知",
+    "saveTelegram": "保存 Telegram 设置",
+    "testTelegram": "发送测试消息",
+    "telegramSaved": "Telegram 设置已保存。",
+    "telegramTestSuccess": "测试消息发送成功。"
   },
   "kiwoom": {
     "title": "Kiwoom",

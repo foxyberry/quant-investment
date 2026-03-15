@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Globe, DollarSign, PlugZap, RefreshCw, Link2Off } from 'lucide-react';
+import { Globe, DollarSign, PlugZap, RefreshCw, Link2Off, Bell } from 'lucide-react';
 import { useUserSettings } from '@/contexts/UserSettingsContext';
 import { BASE_CURRENCIES, CURRENCY_LABELS } from '@/lib/format';
 import type { BaseCurrency } from '@/lib/format';
@@ -18,8 +18,11 @@ import {
   getIbkrSettings,
   saveIbkrSettings,
   testIbkrConnection,
+  getTelegramSettings,
+  saveTelegramSettings,
+  testTelegramNotification,
 } from '@/lib/api';
-import type { BrokerConnectionStatus, BrokerConnectionState, TigerSettingsUpsert, IBKRSettingsUpsert } from '@/lib/types';
+import type { BrokerConnectionStatus, BrokerConnectionState, TigerSettingsUpsert, IBKRSettingsUpsert, TelegramSettingsUpsert } from '@/lib/types';
 
 const LOCALE_LABELS: Record<string, string> = {
   en: 'English',
@@ -59,6 +62,15 @@ export default function SettingsPage() {
   const [savingIbkr, setSavingIbkr] = useState(false);
   const [testingIbkr, setTestingIbkr] = useState(false);
   const [ibkrMessage, setIbkrMessage] = useState<string | null>(null);
+  const [telegramForm, setTelegramForm] = useState<TelegramSettingsUpsert>({
+    bot_token: '',
+    chat_id: '',
+    enabled: true,
+  });
+  const [telegramHasBotToken, setTelegramHasBotToken] = useState(false);
+  const [savingTelegram, setSavingTelegram] = useState(false);
+  const [testingTelegram, setTestingTelegram] = useState(false);
+  const [telegramMessage, setTelegramMessage] = useState<string | null>(null);
 
   const statusTextKey: Record<BrokerConnectionState, string> = {
     connected: 'connected',
@@ -82,10 +94,11 @@ export default function SettingsPage() {
       setLoadingBrokers(true);
       setBrokerError(null);
       try {
-        const [brokerResult, tigerResult, ibkrResult] = await Promise.allSettled([
+        const [brokerResult, tigerResult, ibkrResult, telegramResult] = await Promise.allSettled([
           getSettingsBrokerStatuses(),
           getTigerSettings(),
           getIbkrSettings(),
+          getTelegramSettings(),
         ]);
         if (brokerResult.status === 'fulfilled') {
           setBrokers(brokerResult.value);
@@ -109,8 +122,18 @@ export default function SettingsPage() {
             account_id: ibkrSettings.account_id ?? '',
           });
         }
+        if (telegramResult.status === 'fulfilled') {
+          const tgSettings = telegramResult.value;
+          setTelegramForm((prev) => ({
+            ...prev,
+            chat_id: tgSettings.chat_id ?? '',
+            enabled: tgSettings.enabled,
+            bot_token: '',
+          }));
+          setTelegramHasBotToken(tgSettings.has_bot_token);
+        }
         // Show error only if all requests failed
-        const allFailed = [brokerResult, tigerResult, ibkrResult].every(
+        const allFailed = [brokerResult, tigerResult, ibkrResult, telegramResult].every(
           (r) => r.status === 'rejected'
         );
         if (allFailed) {
@@ -232,6 +255,34 @@ export default function SettingsPage() {
       setIbkrMessage(e instanceof Error ? e.message : t('testFailed'));
     } finally {
       setTestingIbkr(false);
+    }
+  };
+
+  const handleSaveTelegram = async () => {
+    setSavingTelegram(true);
+    setTelegramMessage(null);
+    try {
+      const response = await saveTelegramSettings(telegramForm);
+      setTelegramHasBotToken(response.has_bot_token);
+      setTelegramForm((prev) => ({ ...prev, bot_token: '' }));
+      setTelegramMessage(t('telegramSaved'));
+    } catch (e) {
+      setTelegramMessage(e instanceof Error ? e.message : t('saveFailed'));
+    } finally {
+      setSavingTelegram(false);
+    }
+  };
+
+  const handleTelegramTest = async () => {
+    setTestingTelegram(true);
+    setTelegramMessage(null);
+    try {
+      const result = await testTelegramNotification();
+      setTelegramMessage(result.success ? t('telegramTestSuccess') : result.message);
+    } catch (e) {
+      setTelegramMessage(e instanceof Error ? e.message : t('testFailed'));
+    } finally {
+      setTestingTelegram(false);
     }
   };
 
@@ -542,6 +593,80 @@ export default function SettingsPage() {
               className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background-secondary)] disabled:opacity-60"
             >
               {testingIbkr ? t('testing') : t('testIbkr')}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Notifications Section */}
+      <section className="space-y-6">
+        <h2 className="text-lg font-semibold text-[var(--foreground)]">{t('notifications')}</h2>
+
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-4">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-purple-50 p-3 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400">
+              <Bell className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-[var(--foreground)]">{t('telegramConfigTitle')}</h3>
+              <p className="mt-1 text-sm text-[var(--foreground-muted)]">{t('telegramConfigDesc')}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="text-sm text-[var(--foreground-muted)]">
+              {t('telegramBotToken')}
+              <input
+                type="password"
+                value={telegramForm.bot_token}
+                onChange={(e) => setTelegramForm((prev) => ({ ...prev, bot_token: e.target.value }))}
+                placeholder={telegramHasBotToken ? t('telegramBotTokenPlaceholderMasked') : t('telegramBotTokenPlaceholder')}
+                className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+              />
+              <span className="mt-1 block text-xs text-[var(--foreground-muted)]">
+                {telegramHasBotToken ? t('telegramBotTokenStored') : t('telegramBotTokenMissing')}
+              </span>
+            </label>
+            <label className="text-sm text-[var(--foreground-muted)]">
+              {t('telegramChatId')}
+              <input
+                value={telegramForm.chat_id}
+                onChange={(e) => setTelegramForm((prev) => ({ ...prev, chat_id: e.target.value }))}
+                placeholder={t('telegramChatIdPlaceholder')}
+                className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+              />
+            </label>
+          </div>
+
+          <label className="mt-3 flex items-center gap-2 text-sm text-[var(--foreground)]">
+            <input
+              type="checkbox"
+              checked={telegramForm.enabled}
+              onChange={(e) => setTelegramForm((prev) => ({ ...prev, enabled: e.target.checked }))}
+            />
+            {t('telegramEnabled')}
+          </label>
+
+          {telegramMessage && (
+            <p className="mt-3 text-sm text-[var(--foreground-muted)]">{telegramMessage}</p>
+          )}
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleSaveTelegram}
+              disabled={savingTelegram}
+              className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {savingTelegram ? t('saving') : t('saveTelegram')}
+            </button>
+            <button
+              type="button"
+              onClick={handleTelegramTest}
+              disabled={testingTelegram}
+              className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background-secondary)] disabled:opacity-60"
+            >
+              {testingTelegram ? t('testing') : t('testTelegram')}
             </button>
           </div>
         </div>

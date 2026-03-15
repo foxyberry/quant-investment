@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-VALID_CHANNELS = {"webhook", "in_app"}
+VALID_CHANNELS = {"webhook", "in_app", "telegram"}
 
 
 class AlertConfigUpsertRequest(BaseModel):

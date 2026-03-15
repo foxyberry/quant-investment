@@ -3344,7 +3344,22 @@
     "ibkrAccountIdPlaceholder": "Auto-discovered if empty",
     "saveIbkr": "Save IBKR Settings",
     "testIbkr": "Test IBKR Connection",
-    "ibkrSaved": "IBKR settings saved."
+    "ibkrSaved": "IBKR settings saved.",
+    "notifications": "Notifications",
+    "telegramConfigTitle": "Telegram Notifications",
+    "telegramConfigDesc": "Receive strategy alerts via Telegram bot. Create a bot with @BotFather and get your Chat ID.",
+    "telegramBotToken": "Bot Token",
+    "telegramBotTokenPlaceholder": "123456:ABC-DEF...",
+    "telegramBotTokenPlaceholderMasked": "A token is already stored. Enter a new token to replace it.",
+    "telegramBotTokenStored": "Bot token is stored encrypted.",
+    "telegramBotTokenMissing": "No bot token is stored.",
+    "telegramChatId": "Chat ID",
+    "telegramChatIdPlaceholder": "Your Telegram chat ID",
+    "telegramEnabled": "Enable Telegram notifications",
+    "saveTelegram": "Save Telegram Settings",
+    "testTelegram": "Send Test Message",
+    "telegramSaved": "Telegram settings saved.",
+    "telegramTestSuccess": "Test message sent successfully."
   },
   "kiwoom": {
     "title": "Kiwoom",
