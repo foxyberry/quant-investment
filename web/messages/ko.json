@@ -1004,6 +1004,7 @@
     "pineExportSuccess": "Pine Script 내보내기 완료",
     "pineExportSkipped": "일부 조건이 건너뛰어졌습니다",
     "pineExportFailed": "Pine Script 내보내기 실패",
+    "pineExportAllSkipped": "Pine Script으로 내보낼 수 있는 조건이 없습니다. MA, RSI, MACD, 볼린저 밴드 조건을 사용해 보세요.",
     "loadSelected": "불러오기",
     "deleteConfirm": "이 전략을 삭제할까요?",
     "unsavedChanges": "저장되지 않은 변경 사항이 있습니다",

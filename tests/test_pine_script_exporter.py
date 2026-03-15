@@ -138,14 +138,20 @@ class TestExportPineScript:
         assert "loss=close * 0.02" in code
         assert "profit=" not in code
 
-    def test_no_exportable_conditions_raises(self):
+    def test_no_exportable_conditions_returns_stub(self):
         graph = _make_graph(("unknown_condition", {}))
-        with pytest.raises(ValueError, match="No exportable conditions"):
-            export_pine_script(graph)
+        code = export_pine_script(graph)
+        assert "//@version=5" in code
+        assert "No exportable conditions found" in code
+        assert "Skipped unsupported conditions: unknown_condition" in code
+        # Should NOT contain strategy.entry (no real conditions)
+        assert "strategy.entry" not in code
 
-    def test_empty_graph_raises(self):
-        with pytest.raises(ValueError, match="No exportable conditions"):
-            export_pine_script({"nodes": [], "edges": []})
+    def test_empty_graph_returns_stub(self):
+        code = export_pine_script({"nodes": [], "edges": []})
+        assert "//@version=5" in code
+        assert "No exportable conditions found" in code
+        assert "strategy.entry" not in code
 
     def test_skipped_conditions_in_comments(self):
         graph = _make_graph(

@@ -228,9 +228,18 @@ def export_pine_script(
             skipped.append(ct)
 
     if not conditions:
-        raise ValueError(
-            f"No exportable conditions found. Skipped: {skipped or 'none'}"
-        )
+        # Return a stub script with comments instead of raising an error,
+        # so the frontend can show a graceful warning.
+        stub_lines = [
+            "//@version=5",
+            f'strategy("{safe_name}", overlay=true)',
+            "",
+            "// No exportable conditions found.",
+        ]
+        if skipped:
+            stub_lines.append(f"// Skipped unsupported conditions: {', '.join(_sanitize_string(str(s)) for s in skipped)}")
+        stub_lines.append("")
+        return "\n".join(stub_lines)
 
     # Build script
     lines = [
