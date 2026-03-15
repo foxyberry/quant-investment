@@ -1004,6 +1004,7 @@
     "pineExportSuccess": "Pine Script 导出成功",
     "pineExportSkipped": "部分条件已跳过",
     "pineExportFailed": "Pine Script 导出失败",
+    "pineExportAllSkipped": "没有可导出为 Pine Script 的条件。请尝试使用 MA、RSI、MACD 或布林带条件。",
     "loadSelected": "加载",
     "deleteConfirm": "删除该策略？",
     "unsavedChanges": "您有未保存的更改",

@@ -1179,6 +1179,7 @@ function StrategyPageInner() {
         graph,
         strategy_name: strategyName || 'QuantCanvas Strategy',
       });
+      const allSkipped = resp.conditions_used.length === 0;
       const blob = new Blob([resp.pine_script], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1186,7 +1187,9 @@ function StrategyPageInner() {
       a.download = `${(strategyName || 'strategy').replace(/\s+/g, '_')}.pine`;
       a.click();
       URL.revokeObjectURL(url);
-      if (resp.conditions_skipped.length > 0) {
+      if (allSkipped) {
+        showToast(t('pineExportAllSkipped'), 'warning');
+      } else if (resp.conditions_skipped.length > 0) {
         showToast(`${t('pineExportSkipped')}: ${resp.conditions_skipped.join(', ')}`, 'warning');
       } else {
         showToast(t('pineExportSuccess'), 'success');

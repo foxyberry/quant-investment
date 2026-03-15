@@ -1004,6 +1004,7 @@
     "pineExportSuccess": "Pine Script exported successfully",
     "pineExportSkipped": "Some conditions were skipped",
     "pineExportFailed": "Pine Script export failed",
+    "pineExportAllSkipped": "No conditions support Pine Script export. Try using MA, RSI, MACD, or Bollinger Band conditions.",
     "loadSelected": "Load",
     "deleteConfirm": "Delete this strategy?",
     "unsavedChanges": "You have unsaved changes",
