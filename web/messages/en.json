@@ -22,7 +22,9 @@
     "up": "Up",
     "down": "Down",
     "below": "Below",
-    "above": "Above"
+    "above": "Above",
+    "siteTitle": "Quant Investment",
+    "siteDescription": "Quantitative investment analysis and portfolio management platform"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -39,7 +41,10 @@
     "collapseSidebar": "Collapse sidebar",
     "openNavMenu": "Open navigation menu",
     "closeNavMenu": "Close navigation menu",
-    "watchlist": "Watchlist"
+    "watchlist": "Watchlist",
+    "sidebarNavigation": "Sidebar navigation",
+    "fintechPlatform": "Fintech Platform",
+    "switchToLocale": "Switch to {locale}"
   },
   "dashboard": {
     "title": "Dashboard",

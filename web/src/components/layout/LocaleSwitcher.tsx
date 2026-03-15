@@ -1,6 +1,6 @@
 'use client';
 
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { Globe } from 'lucide-react';
 import type { Locale } from '@/i18n/routing';
@@ -20,6 +20,7 @@ interface LocaleSwitcherProps {
 
 export default function LocaleSwitcher({ variant = 'default' }: LocaleSwitcherProps) {
   const locale = useLocale() as Locale;
+  const tNav = useTranslations('nav');
   const router = useRouter();
   const pathname = usePathname();
 
@@ -47,7 +48,7 @@ export default function LocaleSwitcher({ variant = 'default' }: LocaleSwitcherPr
       type="button"
       onClick={handleSwitch}
       className={`${baseClasses} ${variantClasses}`}
-      aria-label={`Switch to ${nextLocale}`}
+      aria-label={tNav('switchToLocale', { locale: localeLabels[nextLocale] })}
     >
       <Globe className="h-4 w-4" />
       <span>{localeLabels[locale]}</span>

@@ -22,7 +22,9 @@
     "up": "上",
     "down": "下",
     "below": "低于",
-    "above": "高于"
+    "above": "高于",
+    "siteTitle": "量化投资",
+    "siteDescription": "量化投资分析与投资组合管理平台"
   },
   "nav": {
     "dashboard": "仪表盘",
@@ -39,7 +41,10 @@
     "collapseSidebar": "收起侧边栏",
     "openNavMenu": "打开导航菜单",
     "closeNavMenu": "关闭导航菜单",
-    "watchlist": "自选股"
+    "watchlist": "自选股",
+    "sidebarNavigation": "侧边栏导航",
+    "fintechPlatform": "金融科技平台",
+    "switchToLocale": "切换到 {locale}"
   },
   "dashboard": {
     "title": "仪表盘",
