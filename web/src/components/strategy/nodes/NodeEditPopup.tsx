@@ -454,9 +454,11 @@ export default function NodeEditPopup({
       offset={12}
       align="center"
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        className="nodrag nowheel w-[360px] rounded-xl border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] shadow-xl"
+        className="nodrag nowheel nopan w-[360px] rounded-xl border border-[#e1e3e5] dark:border-[#2e2e30] bg-white dark:bg-[#0b0b0c] shadow-xl"
         style={{ transform: `scale(${popupScale})`, transformOrigin: 'top center' }}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 space-y-4 max-h-[480px] overflow-y-auto">
           {children}
