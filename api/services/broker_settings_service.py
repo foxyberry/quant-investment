@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import os
 import re
+import urllib.request
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 from brokers import refresh_broker
 
@@ -39,6 +43,14 @@ class TigerSettingsView:
 class IBKRSettingsView:
     gateway_url: str | None
     account_id: str | None
+    updated_at: str | None
+
+
+@dataclass
+class TelegramSettingsView:
+    has_bot_token: bool
+    chat_id: str | None
+    enabled: bool
     updated_at: str | None
 
 
@@ -266,6 +278,114 @@ class BrokerSettingsService:
             db.close()
 
         refresh_broker("ibkr")
+
+    # -- Telegram settings ---------------------------------------------------
+
+    def get_telegram_settings(self) -> TelegramSettingsView:
+        db = SessionLocal()
+        try:
+            row = db.get(BrokerCredential, "telegram")
+            if not row:
+                return TelegramSettingsView(
+                    has_bot_token=False,
+                    chat_id=None,
+                    enabled=False,
+                    updated_at=None,
+                )
+
+            data = json.loads(row.config_json)
+            return TelegramSettingsView(
+                has_bot_token=bool(data.get("bot_token_encrypted")),
+                chat_id=data.get("chat_id"),
+                enabled=bool(data.get("enabled", False)),
+                updated_at=row.updated_at.isoformat() if row.updated_at else None,
+            )
+        finally:
+            db.close()
+
+    def save_telegram_settings(self, payload: dict[str, Any]) -> TelegramSettingsView:
+        chat_id = (payload.get("chat_id") or "").strip()
+        bot_token = payload.get("bot_token")
+        enabled = bool(payload.get("enabled", True))
+
+        if not chat_id:
+            raise ValueError("chat_id is required")
+
+        db = SessionLocal()
+        try:
+            row = db.get(BrokerCredential, "telegram")
+            existing_data: dict[str, Any] = {}
+            if row:
+                existing_data = json.loads(row.config_json)
+            else:
+                row = BrokerCredential(
+                    broker="telegram",
+                    account_id=chat_id,
+                    is_enabled=True,
+                    config_json="{}",
+                )
+
+            encrypted_token = existing_data.get("bot_token_encrypted")
+            if isinstance(bot_token, str) and bot_token.strip():
+                encrypted_token = self._encrypt(bot_token.strip())
+
+            merged = {
+                "chat_id": chat_id,
+                "bot_token_encrypted": encrypted_token,
+                "enabled": enabled,
+            }
+
+            if not merged.get("bot_token_encrypted"):
+                raise ValueError("bot_token is required")
+
+            row.account_id = chat_id
+            row.is_enabled = enabled
+            row.config_json = json.dumps(merged)
+            db.merge(row)
+            db.commit()
+        finally:
+            db.close()
+
+        return self.get_telegram_settings()
+
+    def send_telegram_message(
+        self,
+        chat_id: str,
+        bot_token_encrypted: str,
+        message: str = "Quant Investment test notification",
+    ) -> bool:
+        """Send a message via the Telegram Bot API.
+
+        Parameters
+        ----------
+        chat_id:
+            Target chat / group / channel ID.
+        bot_token_encrypted:
+            Fernet-encrypted bot token stored in config_json.
+        message:
+            Text content to send.
+
+        Returns
+        -------
+        bool
+            True on success, False on failure.
+        """
+        try:
+            token = self._decrypt(bot_token_encrypted)
+            url = f"https://api.telegram.org/bot{token}/sendMessage"
+            payload = json.dumps({"chat_id": chat_id, "text": message}).encode("utf-8")
+            req = urllib.request.Request(
+                url,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+                return bool(body.get("ok"))
+        except Exception:
+            logger.warning("Telegram sendMessage failed", exc_info=True)
+            return False
 
 
 _broker_settings_service = BrokerSettingsService()

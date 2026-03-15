@@ -15,6 +15,11 @@ from api.schemas.broker import (
     TigerSettingsRequest,
     TigerSettingsResponse,
 )
+from api.schemas.telegram import (
+    TelegramSettingsRequest,
+    TelegramSettingsResponse,
+    TelegramTestResponse,
+)
 from api.services.broker_service import BrokerService
 from api.services.broker_settings_service import get_broker_settings_service
 
@@ -184,3 +189,84 @@ def test_ibkr_connection() -> BrokerConnectionResponse:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+# -- Telegram settings -------------------------------------------------------
+
+
+@router.get(
+    "/telegram",
+    response_model=TelegramSettingsResponse,
+    summary="Get Telegram notification settings",
+)
+def get_telegram_settings() -> TelegramSettingsResponse:
+    view = _settings_service.get_telegram_settings()
+    return TelegramSettingsResponse(
+        has_bot_token=view.has_bot_token,
+        chat_id=view.chat_id,
+        enabled=view.enabled,
+        updated_at=view.updated_at,
+    )
+
+
+@router.put(
+    "/telegram",
+    response_model=TelegramSettingsResponse,
+    summary="Save Telegram notification settings",
+)
+def save_telegram_settings(request: TelegramSettingsRequest) -> TelegramSettingsResponse:
+    try:
+        view = _settings_service.save_telegram_settings(request.model_dump())
+        return TelegramSettingsResponse(
+            has_bot_token=view.has_bot_token,
+            chat_id=view.chat_id,
+            enabled=view.enabled,
+            updated_at=view.updated_at,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post(
+    "/telegram/test",
+    response_model=TelegramTestResponse,
+    summary="Send test Telegram notification",
+)
+def test_telegram_notification() -> TelegramTestResponse:
+    view = _settings_service.get_telegram_settings()
+    if not view.has_bot_token or not view.chat_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Telegram settings are not configured. Save bot_token and chat_id first.",
+        )
+
+    import json as _json
+
+    from api.database import SessionLocal as _SessionLocal
+    from api.models.broker_credential import BrokerCredential as _BC
+
+    db = _SessionLocal()
+    try:
+        row = db.get(_BC, "telegram")
+        if not row:
+            raise HTTPException(status_code=400, detail="Telegram settings not found")
+        data = _json.loads(row.config_json)
+        encrypted_token = data.get("bot_token_encrypted", "")
+    finally:
+        db.close()
+
+    if not encrypted_token:
+        raise HTTPException(
+            status_code=400,
+            detail="Bot token is missing. Please save your bot token first.",
+        )
+
+    ok = _settings_service.send_telegram_message(view.chat_id, encrypted_token)
+    if ok:
+        return TelegramTestResponse(success=True, message="Test message sent successfully")
+    return TelegramTestResponse(
+        success=False,
+        message="Failed to send test message. Check your bot token and chat ID.",
+    )

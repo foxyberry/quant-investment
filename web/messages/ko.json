@@ -3345,7 +3345,22 @@
     "ibkrAccountIdPlaceholder": "비워두면 자동 검색",
     "saveIbkr": "IBKR 설정 저장",
     "testIbkr": "IBKR 연결 테스트",
-    "ibkrSaved": "IBKR 설정이 저장되었습니다."
+    "ibkrSaved": "IBKR 설정이 저장되었습니다.",
+    "notifications": "알림",
+    "telegramConfigTitle": "텔레그램 알림",
+    "telegramConfigDesc": "텔레그램 봇을 통해 전략 알림을 받을 수 있습니다. @BotFather에서 봇을 생성하고 Chat ID를 확인하세요.",
+    "telegramBotToken": "봇 토큰",
+    "telegramBotTokenPlaceholder": "123456:ABC-DEF...",
+    "telegramBotTokenPlaceholderMasked": "토큰이 이미 저장되어 있습니다. 새 토큰을 입력하면 교체됩니다.",
+    "telegramBotTokenStored": "봇 토큰이 암호화되어 저장되어 있습니다.",
+    "telegramBotTokenMissing": "저장된 봇 토큰이 없습니다.",
+    "telegramChatId": "Chat ID",
+    "telegramChatIdPlaceholder": "텔레그램 Chat ID",
+    "telegramEnabled": "텔레그램 알림 활성화",
+    "saveTelegram": "텔레그램 설정 저장",
+    "testTelegram": "테스트 메시지 전송",
+    "telegramSaved": "텔레그램 설정이 저장되었습니다.",
+    "telegramTestSuccess": "테스트 메시지가 전송되었습니다."
   },
   "kiwoom": {
     "title": "키움",

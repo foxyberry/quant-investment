@@ -596,6 +596,24 @@ export interface IBKRSettingsUpsert {
   account_id?: string | null;
 }
 
+export interface TelegramSettings {
+  has_bot_token: boolean;
+  chat_id: string | null;
+  enabled: boolean;
+  updated_at: string | null;
+}
+
+export interface TelegramSettingsUpsert {
+  bot_token: string;
+  chat_id: string;
+  enabled: boolean;
+}
+
+export interface TelegramTestResult {
+  success: boolean;
+  message: string;
+}
+
 // Execution history types
 export interface ExecutionHistorySummary {
   id: string;

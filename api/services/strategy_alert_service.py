@@ -159,3 +159,54 @@ def record_alert(
         return _history_to_entry(entry)
     finally:
         db.close()
+
+
+def fire_alert(
+    strategy_id: str,
+    ticker: str,
+    matched_conditions: list,
+    price_at_signal: Optional[float] = None,
+    channels: Optional[list[str]] = None,
+) -> AlertHistoryEntry:
+    """Record alert and dispatch to configured channels."""
+    entry = record_alert(strategy_id, ticker, matched_conditions, price_at_signal)
+    channels = channels or []
+
+    if "telegram" in channels:
+        try:
+            from api.models.broker_credential import BrokerCredential
+            from api.services.broker_settings_service import get_broker_settings_service
+
+            import json as _json
+
+            svc = get_broker_settings_service()
+            view = svc.get_telegram_settings()
+            if view.enabled and view.has_bot_token and view.chat_id:
+                db = SessionLocal()
+                try:
+                    row = db.get(BrokerCredential, "telegram")
+                    if row:
+                        data = _json.loads(row.config_json)
+                        conditions_str = ", ".join(str(c) for c in matched_conditions)
+                        price_str = f"{price_at_signal}" if price_at_signal is not None else "N/A"
+                        msg = (
+                            f"Signal: {ticker}\n"
+                            f"Conditions: {conditions_str}\n"
+                            f"Price: {price_str}"
+                        )
+                        svc.send_telegram_message(
+                            view.chat_id,
+                            data.get("bot_token_encrypted", ""),
+                            msg,
+                        )
+                finally:
+                    db.close()
+        except Exception:
+            logger.warning(
+                "Failed to send Telegram alert for %s/%s",
+                strategy_id,
+                ticker,
+                exc_info=True,
+            )
+
+    return entry
