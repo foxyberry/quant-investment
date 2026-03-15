@@ -58,7 +58,7 @@ class MATouchCondition(BaseCondition):
         current_price = close.iloc[-1]
         ma_value = ma.iloc[-1]
 
-        if pd.isna(ma_value):
+        if pd.isna(ma_value) or ma_value == 0:
             return ConditionResult(
                 matched=False,
                 condition_name=self.name,
@@ -130,7 +130,7 @@ class AboveMACondition(BaseCondition):
         current_price = close.iloc[-1]
         ma_value = ma.iloc[-1]
 
-        if pd.isna(ma_value):
+        if pd.isna(ma_value) or ma_value == 0:
             return ConditionResult(
                 matched=False,
                 condition_name=self.name,
@@ -199,7 +199,7 @@ class BelowMACondition(BaseCondition):
         current_price = close.iloc[-1]
         ma_value = ma.iloc[-1]
 
-        if pd.isna(ma_value):
+        if pd.isna(ma_value) or ma_value == 0:
             return ConditionResult(
                 matched=False,
                 condition_name=self.name,
