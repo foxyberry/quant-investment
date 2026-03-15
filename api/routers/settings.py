@@ -257,7 +257,16 @@ def test_telegram_notification() -> TelegramTestResponse:
     finally:
         db.close()
 
+    if not encrypted_token:
+        raise HTTPException(
+            status_code=400,
+            detail="Bot token is missing. Please save your bot token first.",
+        )
+
     ok = _settings_service.send_telegram_message(view.chat_id, encrypted_token)
     if ok:
         return TelegramTestResponse(success=True, message="Test message sent successfully")
-    return TelegramTestResponse(success=False, message="Failed to send test message")
+    return TelegramTestResponse(
+        success=False,
+        message="Failed to send test message. Check your bot token and chat ID.",
+    )

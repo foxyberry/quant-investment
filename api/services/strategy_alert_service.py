@@ -188,10 +188,11 @@ def fire_alert(
                     if row:
                         data = _json.loads(row.config_json)
                         conditions_str = ", ".join(str(c) for c in matched_conditions)
+                        price_str = f"{price_at_signal}" if price_at_signal is not None else "N/A"
                         msg = (
                             f"Signal: {ticker}\n"
                             f"Conditions: {conditions_str}\n"
-                            f"Price: {price_at_signal}"
+                            f"Price: {price_str}"
                         )
                         svc.send_telegram_message(
                             view.chat_id,
