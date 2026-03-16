@@ -429,6 +429,17 @@ class BrokerSettingsService:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 body = json.loads(resp.read().decode("utf-8"))
                 return bool(body.get("ok"))
+        except urllib.error.HTTPError as exc:
+            detail = ""
+            try:
+                body = json.loads(exc.read().decode("utf-8"))
+                detail = body.get("description", "")
+            except Exception:
+                pass
+            logger.warning("Telegram sendMessage failed: %s %s", exc.code, detail)
+            raise RuntimeError(
+                detail or f"Telegram API error {exc.code}"
+            ) from exc
         except Exception:
             logger.warning("Telegram sendMessage failed", exc_info=True)
             return False
