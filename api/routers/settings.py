@@ -263,7 +263,14 @@ def test_telegram_notification() -> TelegramTestResponse:
             detail="Bot token is missing. Please save your bot token first.",
         )
 
-    ok = _settings_service.send_telegram_message(view.chat_id, encrypted_token)
+    try:
+        ok = _settings_service.send_telegram_message(view.chat_id, encrypted_token)
+    except RuntimeError:
+        # Decryption failure — encryption key changed since the token was saved.
+        return TelegramTestResponse(
+            success=False,
+            message="Encryption key mismatch. Please re-save your bot token.",
+        )
     if ok:
         return TelegramTestResponse(success=True, message="Test message sent successfully")
     return TelegramTestResponse(

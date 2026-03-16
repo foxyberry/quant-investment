@@ -64,11 +64,14 @@ class BrokerSettingsService:
             raise RuntimeError("cryptography package is required for encrypted broker settings")
         key = os.environ.get(self.ENCRYPTION_KEY_ENV)
         if not key:
+            # Try loading from .env file before generating a new one.
+            key = self._load_env_key()
+        if not key:
             # Auto-generate a key and persist it in .env for convenience.
             key = Fernet.generate_key().decode("utf-8")
-            os.environ[self.ENCRYPTION_KEY_ENV] = key
             self._persist_env_key(key)
             logger.info("Auto-generated %s and saved to .env", self.ENCRYPTION_KEY_ENV)
+        os.environ[self.ENCRYPTION_KEY_ENV] = key
         try:
             key_bytes = key.encode("utf-8")
             # Validate key format early.
@@ -76,6 +79,24 @@ class BrokerSettingsService:
             return Fernet(key_bytes)
         except Exception as exc:
             raise RuntimeError(f"Invalid {self.ENCRYPTION_KEY_ENV} format") from exc
+
+    def _load_env_key(self) -> str | None:
+        """Try to read the encryption key from the project .env file."""
+        import pathlib
+
+        env_path = pathlib.Path(__file__).resolve().parents[2] / ".env"
+        try:
+            if not env_path.exists():
+                return None
+            for line in env_path.read_text().splitlines():
+                if line.startswith(f"{self.ENCRYPTION_KEY_ENV}="):
+                    val = line.split("=", 1)[1].strip()
+                    if val:
+                        logger.info("Loaded %s from %s", self.ENCRYPTION_KEY_ENV, env_path)
+                        return val
+        except OSError:
+            pass
+        return None
 
     def _persist_env_key(self, key: str) -> None:
         """Append the encryption key to the project .env file."""
@@ -394,8 +415,9 @@ class BrokerSettingsService:
         bool
             True on success, False on failure.
         """
+        # Let decryption errors propagate so callers can distinguish key mismatch.
+        token = self._decrypt(bot_token_encrypted)
         try:
-            token = self._decrypt(bot_token_encrypted)
             url = f"https://api.telegram.org/bot{token}/sendMessage"
             payload = json.dumps({"chat_id": chat_id, "text": message}).encode("utf-8")
             req = urllib.request.Request(
