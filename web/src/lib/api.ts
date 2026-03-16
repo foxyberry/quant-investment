@@ -69,7 +69,12 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
+    let detail = '';
+    try {
+      const body = await response.json();
+      detail = body.detail || body.message || '';
+    } catch { /* ignore parse errors */ }
+    throw new Error(detail || `API Error: ${response.status}`);
   }
 
   if (response.status === 204 || response.headers.get('content-length') === '0') {
@@ -305,7 +310,12 @@ export async function importHoldingsCsv(
 export async function exportHoldingsCsv(): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/portfolio/holdings/export`);
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
+    let detail = '';
+    try {
+      const body = await response.json();
+      detail = body.detail || body.message || '';
+    } catch { /* ignore parse errors */ }
+    throw new Error(detail || `API Error: ${response.status}`);
   }
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
@@ -436,7 +446,12 @@ export async function downloadHoldingsTemplate(minimal: boolean = false): Promis
     `${API_BASE_URL}/api/portfolio/holdings/template?minimal=${minimal}`
   );
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
+    let detail = '';
+    try {
+      const body = await response.json();
+      detail = body.detail || body.message || '';
+    } catch { /* ignore parse errors */ }
+    throw new Error(detail || `API Error: ${response.status}`);
   }
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
