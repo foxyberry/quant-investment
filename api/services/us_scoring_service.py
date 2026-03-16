@@ -342,6 +342,10 @@ class UsScoringService:
             entry,
         )
 
+        # Demote entry_signal to match posture when they conflict
+        if posture == "wait" and entry == "buy_favorable":
+            entry = "wait"
+
         return {
             "signal": signal,
             "interpretation": {

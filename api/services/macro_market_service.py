@@ -121,6 +121,9 @@ class MacroMarketService:
         )
         interpretation["posture"] = posture
         interpretation["posture_rationale"] = posture_rationale
+        # Demote entry_signal to match posture when they conflict
+        if posture == "wait" and interpretation.get("entry_signal") == "buy_favorable":
+            interpretation["entry_signal"] = "wait"
 
         breadth = self._get_breadth_snapshot()
         events = self._get_upcoming_events()
