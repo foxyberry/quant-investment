@@ -96,7 +96,8 @@ function GroupNode({ id, data, selected }: NodeProps) {
 
   const dynamicMinHeight = useMemo(() => {
     if (childCount <= 1) return 220;
-    return 220 + (childCount - 1) * 120;
+    // Each child ~120px + 16px spacing, plus header (60px) and bottom padding (28px)
+    return 60 + childCount * 136 + 28;
   }, [childCount]);
 
   const handleOperatorChange = useCallback(

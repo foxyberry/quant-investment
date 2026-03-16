@@ -68,9 +68,17 @@ const GROUP_PADDING_TOP = 60;
 const GROUP_PADDING_BOTTOM = 28;
 const GROUP_PADDING_X = 24;
 const CHILD_SPACING = 16;
-const CHILD_HEIGHT = 80;
+const CHILD_HEIGHT_DEFAULT = 120;
 const GROUP_MIN_WIDTH = 380;
 const GROUP_MIN_HEIGHT = 220;
+
+/** Get the effective height of a child node inside a group, preferring measured height. */
+function getChildHeight(child: Node): number {
+  if (child.type === 'groupNode') {
+    return (child.style?.height as number) || GROUP_MIN_HEIGHT;
+  }
+  return (child.measured?.height as number) || CHILD_HEIGHT_DEFAULT;
+}
 
 type LayoutNodeData = {
   node_type: string;
@@ -723,10 +731,7 @@ function StrategyPageInner() {
           const relativePosition = {
             x: GROUP_PADDING_X,
             y: GROUP_PADDING_TOP + childrenInGroup.reduce((acc, child) => {
-              const h = child.type === 'groupNode'
-                ? ((child.style?.height as number) || GROUP_MIN_HEIGHT)
-                : CHILD_HEIGHT;
-              return acc + h + CHILD_SPACING;
+              return acc + getChildHeight(child) + CHILD_SPACING;
             }, 0),
           };
 
@@ -899,40 +904,64 @@ function StrategyPageInner() {
   useEffect(() => {
     setNodes((currentNodes) => {
       let changed = false;
+      // Collect child position/size fixes per group
+      const childFixes = new Map<string, { x: number; y: number }>();
+
       const updated = currentNodes.map((node) => {
         if (node.type !== 'groupNode') return node;
 
         const children = currentNodes.filter((n) => n.parentId === node.id);
         if (children.length === 0) return node;
 
-        const totalChildrenHeight = children.reduce((acc, child) => {
-          const h = child.type === 'groupNode'
-            ? ((child.style?.height as number) || GROUP_MIN_HEIGHT)
-            : CHILD_HEIGHT;
-          return acc + h + CHILD_SPACING;
-        }, 0);
+        // Calculate correct y-position for each child and total height
+        let yOffset = GROUP_PADDING_TOP;
+        for (const child of children) {
+          const expectedY = yOffset;
+          const expectedX = GROUP_PADDING_X;
+          if (
+            Math.abs((child.position?.y ?? 0) - expectedY) > 1 ||
+            Math.abs((child.position?.x ?? 0) - expectedX) > 1
+          ) {
+            childFixes.set(child.id, { x: expectedX, y: expectedY });
+          }
+          yOffset += getChildHeight(child) + CHILD_SPACING;
+        }
 
+        const totalChildrenHeight = yOffset - GROUP_PADDING_TOP;
         const newHeight = Math.max(
           GROUP_MIN_HEIGHT,
           GROUP_PADDING_TOP + totalChildrenHeight + GROUP_PADDING_BOTTOM
         );
-        const newWidth = Math.max(GROUP_MIN_WIDTH, GROUP_MIN_WIDTH);
         const curH = Number(node.style?.height || GROUP_MIN_HEIGHT);
         const curW = Number(node.style?.width || GROUP_MIN_WIDTH);
 
-        if (curH < newHeight || curW < newWidth) {
+        if (curH < newHeight || curW < GROUP_MIN_WIDTH) {
           changed = true;
           return {
             ...node,
             style: {
               ...node.style,
-              width: Math.max(curW, newWidth),
+              width: Math.max(curW, GROUP_MIN_WIDTH),
               height: Math.max(curH, newHeight),
             },
           };
         }
         return node;
       });
+
+      // Apply child position fixes
+      if (childFixes.size > 0) {
+        changed = true;
+        const final = updated.map((n) => {
+          const fix = childFixes.get(n.id);
+          if (fix) {
+            return { ...n, position: fix };
+          }
+          return n;
+        });
+        return final;
+      }
+
       return changed ? updated : currentNodes;
     });
   }, [childNodeCount, setNodes]);
@@ -1028,10 +1057,7 @@ function StrategyPageInner() {
                 // Calculate stacked position within group
                 const childrenInGroup = nds.filter((n) => n.parentId === group.id);
                 const relY = GROUP_PADDING_TOP + childrenInGroup.reduce((acc, child) => {
-                  const h = child.type === 'groupNode'
-                    ? ((child.style?.height as number) || GROUP_MIN_HEIGHT)
-                    : CHILD_HEIGHT;
-                  return acc + h + CHILD_SPACING;
+                  return acc + getChildHeight(child) + CHILD_SPACING;
                 }, 0);
 
                 // Update the node with parent relationship
@@ -1397,7 +1423,7 @@ function StrategyPageInner() {
               const childIndex = n.data.child_node_ids.indexOf(childId);
               childNode.position = {
                 x: GROUP_PADDING_X,
-                y: GROUP_PADDING_TOP + childIndex * (CHILD_HEIGHT + CHILD_SPACING),
+                y: GROUP_PADDING_TOP + childIndex * (CHILD_HEIGHT_DEFAULT + CHILD_SPACING),
               };
             }
           }
