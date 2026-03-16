@@ -1114,9 +1114,26 @@ def _compute_node_survivors(
 
     if node.data.node_type == "output":
         child_sets = []
-        resolved_ids: set[str] = set()
+        # Walk graph backward to find ALL nodes reachable from the output
+        # via incoming edges and child_node_ids.  This prevents intermediate
+        # nodes (e.g. conditions feeding into an OR) from being treated as
+        # independent top-level nodes and AND-intersected with the OR result.
+        reachable: set[str] = set()
+
+        def _collect_reachable(nid: str) -> None:
+            if nid in reachable:
+                return
+            reachable.add(nid)
+            for uid in incoming.get(nid, []):
+                _collect_reachable(uid)
+            rn = nodes_by_id.get(nid)
+            if rn and rn.data.child_node_ids:
+                for cid in rn.data.child_node_ids:
+                    _collect_reachable(cid)
+
+        _collect_reachable(node_id)
+
         for sid in incoming.get(node_id, []):
-            resolved_ids.add(sid)
             if nodes_by_id.get(sid) and nodes_by_id[sid].data.node_type != "universe":
                 child_sets.append(
                     _compute_node_survivors(
@@ -1124,12 +1141,12 @@ def _compute_node_survivors(
                         node_meta, child_ids_set, cache, child_to_parent,
                     )
                 )
-        # Top-level nodes not connected via edges
+        # Top-level nodes not reachable from output via any path
         for n in nodes_by_id.values():
             if (
                 n.data.node_type in ("logic", "condition")
                 and n.id not in child_ids_set
-                and n.id not in resolved_ids
+                and n.id not in reachable
             ):
                 child_sets.append(
                     _compute_node_survivors(
