@@ -734,10 +734,40 @@ function StrategyPageInner() {
       }
 
       // Normal drop (not inside a group, or invalid type for group)
+      // Auto-connect: if a node is selected and the connection is valid,
+      // place new node to its right and auto-create an edge.
+      const selectedNode = selectedNodeId
+        ? nodes.find((n) => n.id === selectedNodeId)
+        : null;
+
+      // Check if auto-connect is possible before deciding position
+      let canAutoConnect = false;
+      if (selectedNode) {
+        const sourceType = selectedNode.type;
+        const allowedTargets: Record<string, string[]> = {
+          universeNode: ['conditionNode', 'groupNode', 'sectorNode'],
+          sectorNode: ['conditionNode', 'groupNode'],
+          conditionNode: ['conditionNode', 'groupNode', 'outputNode'],
+          groupNode: ['conditionNode', 'groupNode', 'outputNode'],
+        };
+        const allowed = sourceType ? allowedTargets[sourceType] : undefined;
+        const sourceAlreadyConnected = edges.some(
+          (e) => e.source === selectedNode.id && (e.sourceHandle ?? null) === null
+        );
+        canAutoConnect = !!(allowed && allowed.includes(nodeType) && !sourceAlreadyConnected);
+      }
+
+      const autoConnectPosition = selectedNode && canAutoConnect
+        ? {
+            x: (selectedNode.position?.x ?? 0) + ((selectedNode.style?.width as number) || 240) + 60,
+            y: selectedNode.position?.y ?? 0,
+          }
+        : position;
+
       const newNode: Node = {
         id: newNodeId,
         type: nodeType,
-        position,
+        position: autoConnectPosition,
         data: data as unknown as Record<string, unknown>,
         ...(nodeType === 'groupNode'
           ? {
@@ -747,8 +777,19 @@ function StrategyPageInner() {
       };
 
       setNodes((nds) => [...nds, newNode]);
+
+      if (canAutoConnect && selectedNode) {
+        const newEdge: Connection = {
+          source: selectedNode.id,
+          sourceHandle: null,
+          target: newNodeId,
+          targetHandle: null,
+        };
+        setEdges((eds) => addEdge(newEdge, eds));
+        setSelectedNodeId(newNodeId);
+      }
     },
-    [reactFlowInstance, setNodes, setEdges, findGroupAtPosition, nodes, getDefaultParams, showToast, t]
+    [reactFlowInstance, setNodes, setEdges, findGroupAtPosition, nodes, edges, getDefaultParams, showToast, t, selectedNodeId]
   );
 
   // Add condition nodes from chat assistant suggestions
