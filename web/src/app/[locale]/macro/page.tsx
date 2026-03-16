@@ -506,7 +506,7 @@ export default function MacroPage() {
                   {t(`entry_${interpretation.entry_signal}`)}
                 </p>
                 <p className="text-sm text-slate-300">
-                  {t(`entryDesc_${interpretation.entry_signal}`)}
+                  {t(`entryDesc_kr_${interpretation.entry_signal}`)}
                 </p>
               </div>
             )}
@@ -587,7 +587,7 @@ export default function MacroPage() {
                   {t(`entry_${interpretation.entry_signal}`)}
                 </p>
                 <p className="text-sm text-slate-300">
-                  {t(`entryDesc_${interpretation.entry_signal}`)}
+                  {t(`entryDesc_us_${interpretation.entry_signal}`)}
                 </p>
               </div>
             )}
