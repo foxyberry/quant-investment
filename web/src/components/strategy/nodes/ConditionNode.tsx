@@ -140,7 +140,7 @@ function ConditionNode({ data, selected }: NodeProps) {
         <Handle
           type="target"
           position={Position.Left}
-          className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-left-[7px] hover:!scale-125 !transition-transform"
+          className="!w-5 !h-5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-left-[10px] hover:!scale-125 !transition-transform"
         />
       )}
       {isInsideGroup && (
@@ -202,7 +202,7 @@ function ConditionNode({ data, selected }: NodeProps) {
         <Handle
           type="source"
           position={Position.Right}
-          className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-right-[7px] hover:!scale-125 !transition-transform"
+          className="!w-5 !h-5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-right-[10px] hover:!scale-125 !transition-transform"
         />
       )}
       {isInsideGroup && (

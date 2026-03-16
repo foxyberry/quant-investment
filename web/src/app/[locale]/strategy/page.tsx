@@ -581,9 +581,39 @@ function StrategyPageInner() {
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
+      // Click-to-connect: if a node is already selected, try to create
+      // an edge from selected → clicked node before updating selection.
+      if (selectedNodeId && selectedNodeId !== node.id) {
+        const sourceNode = nodes.find((n) => n.id === selectedNodeId);
+        if (sourceNode) {
+          const sourceType = sourceNode.type;
+          const targetType = node.type;
+          const allowedTargets: Record<string, string[]> = {
+            universeNode: ['conditionNode', 'groupNode', 'sectorNode'],
+            sectorNode: ['conditionNode', 'groupNode'],
+            conditionNode: ['conditionNode', 'groupNode', 'outputNode'],
+            groupNode: ['conditionNode', 'groupNode', 'outputNode'],
+          };
+          const allowed = sourceType ? allowedTargets[sourceType] : undefined;
+          const sourceAlreadyConnected = edges.some(
+            (e) => e.source === selectedNodeId && (e.sourceHandle ?? null) === null
+          );
+          const targetAlreadyConnected = edges.some(
+            (e) => e.target === node.id && (e.targetHandle ?? null) === null
+          );
+          if (allowed && allowed.includes(targetType!) && !sourceAlreadyConnected && !targetAlreadyConnected) {
+            setEdges((eds) => addEdge({
+              source: selectedNodeId,
+              sourceHandle: null,
+              target: node.id,
+              targetHandle: null,
+            }, eds));
+          }
+        }
+      }
       setSelectedNodeId(node.id);
     },
-    []
+    [selectedNodeId, nodes, edges, setEdges]
   );
 
   const onNodeDoubleClick = useCallback(
