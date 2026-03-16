@@ -364,6 +364,8 @@ function StrategyPageInner() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const selectedNodeIdRef = useRef<string | null>(null);
+  selectedNodeIdRef.current = selectedNodeId;
   const [results, setResults] = useState<StrategyResultItem[] | null>(null);
   const [nodeResults, setNodeResults] = useState<Record<string, NodeIntermediateResult> | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -581,9 +583,40 @@ function StrategyPageInner() {
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
+      // Click-to-connect: if a node is already selected, try to create
+      // an edge from selected → clicked node before updating selection.
+      const prevId = selectedNodeIdRef.current;
+      if (prevId && prevId !== node.id) {
+        const sourceNode = nodes.find((n) => n.id === prevId);
+        if (sourceNode) {
+          const sourceType = sourceNode.type;
+          const targetType = node.type;
+          const allowedTargets: Record<string, string[]> = {
+            universeNode: ['conditionNode', 'groupNode', 'sectorNode'],
+            sectorNode: ['conditionNode', 'groupNode'],
+            conditionNode: ['conditionNode', 'groupNode', 'outputNode'],
+            groupNode: ['conditionNode', 'groupNode', 'outputNode'],
+          };
+          const allowed = sourceType ? allowedTargets[sourceType] : undefined;
+          const sourceAlreadyConnected = edges.some(
+            (e) => e.source === prevId && (e.sourceHandle ?? null) === null
+          );
+          const targetAlreadyConnected = edges.some(
+            (e) => e.target === node.id && (e.targetHandle ?? null) === null
+          );
+          if (allowed && allowed.includes(targetType!) && !sourceAlreadyConnected && !targetAlreadyConnected) {
+            setEdges((eds) => addEdge({
+              source: prevId,
+              sourceHandle: null,
+              target: node.id,
+              targetHandle: null,
+            }, eds));
+          }
+        }
+      }
       setSelectedNodeId(node.id);
     },
-    []
+    [nodes, edges, setEdges]
   );
 
   const onNodeDoubleClick = useCallback(
@@ -734,10 +767,61 @@ function StrategyPageInner() {
       }
 
       // Normal drop (not inside a group, or invalid type for group)
+      // Auto-connect: find the nearest compatible source node to the drop position.
+      // Priority: 1) selected node (if compatible), 2) nearest node by distance.
+      const allowedSources: Record<string, string[]> = {
+        conditionNode: ['universeNode', 'sectorNode', 'conditionNode', 'groupNode'],
+        groupNode: ['universeNode', 'sectorNode', 'conditionNode', 'groupNode'],
+        sectorNode: ['universeNode'],
+        outputNode: ['conditionNode', 'groupNode'],
+      };
+      const validSourceTypes = allowedSources[nodeType] ?? [];
+
+      // Find candidates: nodes whose source handle is unused and type is compatible.
+      const candidates = nodes.filter((n) => {
+        if (!n.type || !validSourceTypes.includes(n.type)) return false;
+        if (n.parentId) return false; // skip children inside groups
+        const sourceUsed = edges.some(
+          (e) => e.source === n.id && (e.sourceHandle ?? null) === null
+        );
+        return !sourceUsed;
+      });
+
+      // Sort by distance to drop position, but prefer selected node.
+      const currentSelectedId = selectedNodeIdRef.current;
+      let bestSource: Node | null = null;
+      if (candidates.length > 0) {
+        const selected = currentSelectedId
+          ? candidates.find((n) => n.id === currentSelectedId)
+          : null;
+        if (selected) {
+          bestSource = selected;
+        } else {
+          // Pick nearest by Euclidean distance
+          let minDist = Infinity;
+          for (const c of candidates) {
+            const cx = (c.position?.x ?? 0) + ((c.style?.width as number) || 200) / 2;
+            const cy = (c.position?.y ?? 0) + ((c.style?.height as number) || 80) / 2;
+            const dist = Math.hypot(cx - position.x, cy - position.y);
+            if (dist < minDist) {
+              minDist = dist;
+              bestSource = c;
+            }
+          }
+        }
+      }
+
+      const autoConnectPosition = bestSource
+        ? {
+            x: (bestSource.position?.x ?? 0) + ((bestSource.style?.width as number) || 240) + 60,
+            y: bestSource.position?.y ?? 0,
+          }
+        : position;
+
       const newNode: Node = {
         id: newNodeId,
         type: nodeType,
-        position,
+        position: autoConnectPosition,
         data: data as unknown as Record<string, unknown>,
         ...(nodeType === 'groupNode'
           ? {
@@ -747,8 +831,19 @@ function StrategyPageInner() {
       };
 
       setNodes((nds) => [...nds, newNode]);
+
+      if (bestSource) {
+        const newEdge: Connection = {
+          source: bestSource.id,
+          sourceHandle: null,
+          target: newNodeId,
+          targetHandle: null,
+        };
+        setEdges((eds) => addEdge(newEdge, eds));
+        setSelectedNodeId(newNodeId);
+      }
     },
-    [reactFlowInstance, setNodes, setEdges, findGroupAtPosition, nodes, getDefaultParams, showToast, t]
+    [reactFlowInstance, setNodes, setEdges, findGroupAtPosition, nodes, edges, getDefaultParams, showToast, t]
   );
 
   // Add condition nodes from chat assistant suggestions

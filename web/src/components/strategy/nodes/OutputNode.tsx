@@ -30,7 +30,7 @@ function OutputNode({ data, selected }: NodeProps) {
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-3.5 !h-3.5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-left-[7px] hover:!scale-125 !transition-transform"
+        className="!w-5 !h-5 !bg-[#1313ec] !border-2 !border-white dark:!border-[#1e1e1f] !-left-[10px] hover:!scale-125 !transition-transform"
       />
       {/* Header bar */}
       <div className="px-3 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] bg-[#1313ec]/5 rounded-t-[7px] flex items-center gap-2">
