@@ -22,6 +22,7 @@ from api.routers.search import router as search_router
 from api.routers.agent_task import router as agent_task_router
 from api.routers.kiwoom import router as kiwoom_router
 from api.routers.strategy import router as strategy_router
+from api.routers.portfolio_alerts import router as portfolio_alerts_router
 from api.routers.watchlist import router as watchlist_router
 
 
@@ -192,6 +193,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             get_broker_settings_service().apply_ibkr_settings_to_runtime()
         except Exception as e:
             print(f"WARNING: IBKR settings runtime apply failed: {e}")
+
+        try:
+            from api.services.portfolio_alert_scanner import get_portfolio_alert_scanner
+            get_portfolio_alert_scanner().start()
+        except Exception as e:
+            print(f"WARNING: Portfolio alert scanner failed to start: {e}")
     except Exception as e:
         print(f"WARNING: Database initialization failed: {e}")
         print("Strategy persistence will be unavailable until DB is reachable.")
@@ -256,6 +263,7 @@ def create_app() -> FastAPI:
     app.include_router(broker_router)
     app.include_router(execution_history_router)
     app.include_router(watchlist_router)
+    app.include_router(portfolio_alerts_router)
 
     # Future routers (추후 추가될 라우터)
     # app.include_router(news_router, prefix="/api/v1")
