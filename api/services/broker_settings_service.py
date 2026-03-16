@@ -64,9 +64,11 @@ class BrokerSettingsService:
             raise RuntimeError("cryptography package is required for encrypted broker settings")
         key = os.environ.get(self.ENCRYPTION_KEY_ENV)
         if not key:
-            raise RuntimeError(
-                f"{self.ENCRYPTION_KEY_ENV} is required to save broker credentials"
-            )
+            # Auto-generate a key and persist it in .env for convenience.
+            key = Fernet.generate_key().decode("utf-8")
+            os.environ[self.ENCRYPTION_KEY_ENV] = key
+            self._persist_env_key(key)
+            logger.info("Auto-generated %s and saved to .env", self.ENCRYPTION_KEY_ENV)
         try:
             key_bytes = key.encode("utf-8")
             # Validate key format early.
@@ -74,6 +76,28 @@ class BrokerSettingsService:
             return Fernet(key_bytes)
         except Exception as exc:
             raise RuntimeError(f"Invalid {self.ENCRYPTION_KEY_ENV} format") from exc
+
+    def _persist_env_key(self, key: str) -> None:
+        """Append the encryption key to the project .env file."""
+        import pathlib
+
+        env_path = pathlib.Path(__file__).resolve().parents[2] / ".env"
+        try:
+            lines: list[str] = []
+            if env_path.exists():
+                lines = env_path.read_text().splitlines(keepends=True)
+            # Replace existing empty key or append
+            found = False
+            for i, line in enumerate(lines):
+                if line.startswith(f"{self.ENCRYPTION_KEY_ENV}="):
+                    lines[i] = f"{self.ENCRYPTION_KEY_ENV}={key}\n"
+                    found = True
+                    break
+            if not found:
+                lines.append(f"{self.ENCRYPTION_KEY_ENV}={key}\n")
+            env_path.write_text("".join(lines))
+        except OSError:
+            logger.warning("Could not write %s to %s", self.ENCRYPTION_KEY_ENV, env_path)
 
     def _encrypt(self, raw: str) -> str:
         token = self._get_fernet().encrypt(raw.encode("utf-8"))
