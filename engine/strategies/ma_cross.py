@@ -45,9 +45,10 @@ class SmaCross(Strategy):
         # 골든크로스: 매수
         if crossover(self.sma1, self.sma2):
             self.buy()
-        # 데드크로스: 매도
+        # 데드크로스: 청산 (long-only — self.sell() would open a short)
         elif crossover(self.sma2, self.sma1):
-            self.sell()
+            if self.position:
+                self.position.close()
 
 
 class EmaCross(Strategy):
@@ -73,9 +74,10 @@ class EmaCross(Strategy):
         # 골든크로스: 매수
         if crossover(self.ema1, self.ema2):
             self.buy()
-        # 데드크로스: 매도
+        # 데드크로스: 청산 (long-only — self.sell() would open a short)
         elif crossover(self.ema2, self.ema1):
-            self.sell()
+            if self.position:
+                self.position.close()
 
 
 class MaTouchStrategy(Strategy):
@@ -121,9 +123,9 @@ class MaTouchStrategy(Strategy):
 
                 # 익절
                 if pnl >= self.take_profit:
-                    self.sell()
+                    self.position.close()
                     self.entry_price = None
                 # 손절
                 elif pnl <= -self.stop_loss:
-                    self.sell()
+                    self.position.close()
                     self.entry_price = None
