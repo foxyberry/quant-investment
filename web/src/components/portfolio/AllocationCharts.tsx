@@ -186,8 +186,11 @@ function HeatmapContent({ x, y, width, height, name, ticker, pnl_pct }: HeatmapC
   const bgColor = getPnlColor(pnl_pct ?? null);
   const textColor = getPnlTextColor(pnl_pct ?? null);
   const fontSize = Math.floor(Math.min(width / 7, height / 3.5, 14));
-  const displayTicker = ((ticker || '').split('.')[0] || name || '').trim();
-  const showTicker = width > 35 && height > 20 && fontSize >= 8 && displayTicker.length > 0;
+  const tickerCode = ((ticker || '').split('.')[0] || '').trim();
+  const stockName = (name || '').trim();
+  // Show name if available and different from ticker code, otherwise show ticker code
+  const displayLabel = stockName && stockName !== tickerCode ? stockName : tickerCode;
+  const showLabel = width > 35 && height > 20 && fontSize >= 8 && displayLabel.length > 0;
   const showPnl = width > 50 && height > 35 && fontSize >= 8;
 
   const displayPnl = pnl_pct != null && Number.isFinite(pnl_pct)
@@ -206,7 +209,7 @@ function HeatmapContent({ x, y, width, height, name, ticker, pnl_pct }: HeatmapC
         strokeWidth={1.5}
         rx={2}
       />
-      {showTicker && (
+      {showLabel && (
         <text
           x={x + width / 2}
           y={y + height / 2 - (showPnl ? fontSize * 0.6 : 0)}
@@ -216,7 +219,7 @@ function HeatmapContent({ x, y, width, height, name, ticker, pnl_pct }: HeatmapC
           fontSize={fontSize}
           fontWeight={700}
         >
-          {displayTicker}
+          {displayLabel}
         </text>
       )}
       {showPnl && (
