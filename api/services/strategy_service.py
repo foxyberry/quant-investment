@@ -1312,6 +1312,7 @@ def execute_strategy(
         max_workers=5,
         use_full_universe=True,
         use_cache=True,
+        stock_names=symbols_dict,
     )
 
     eval_started_at = time.perf_counter()
