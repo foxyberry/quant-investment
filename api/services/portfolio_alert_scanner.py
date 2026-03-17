@@ -48,33 +48,41 @@ class AlertSettings:
             self.channels = ["telegram"]
 
 
-def load_config() -> tuple[list[HoldingInfo], AlertSettings]:
-    """Load holdings and alert settings from portfolio.yaml."""
+def _load_holdings_from_db() -> list[HoldingInfo]:
+    """Load current holdings from the database (source of truth)."""
+    try:
+        from api.database import SessionLocal
+        from api.models.portfolio import Holding
+
+        db = SessionLocal()
+        try:
+            rows = db.query(Holding).filter(Holding.quantity > 0).all()
+            return [
+                HoldingInfo(
+                    ticker=row.ticker,
+                    name=row.name or row.ticker,
+                    buy_price=float(row.avg_price or 0),
+                    quantity=int(row.quantity),
+                )
+                for row in rows
+            ]
+        finally:
+            db.close()
+    except Exception:
+        logger.warning("Failed to load holdings from DB", exc_info=True)
+        return []
+
+
+def _load_alert_settings() -> AlertSettings:
+    """Load alert settings from portfolio.yaml."""
     if not _CONFIG_PATH.exists():
-        logger.warning("portfolio.yaml not found at %s", _CONFIG_PATH)
-        return [], AlertSettings(enabled=False)
+        return AlertSettings(enabled=False)
 
     with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
 
-    # Holdings
-    holdings_raw = data.get("holdings", {})
-    holdings: list[HoldingInfo] = []
-    for ticker, info in holdings_raw.items():
-        if not isinstance(info, dict):
-            continue
-        holdings.append(
-            HoldingInfo(
-                ticker=ticker,
-                name=info.get("name", ticker),
-                buy_price=float(info.get("buy_price", 0)),
-                quantity=int(info.get("quantity", 0)),
-            )
-        )
-
-    # Alert settings
     alert_raw = data.get("alert_settings", {})
-    settings = AlertSettings(
+    return AlertSettings(
         enabled=alert_raw.get("enabled", True),
         scan_interval_seconds=alert_raw.get("scan_interval_seconds", 60),
         stop_loss_pct=alert_raw.get("stop_loss_pct", 0.20),
@@ -85,6 +93,11 @@ def load_config() -> tuple[list[HoldingInfo], AlertSettings]:
         channels=alert_raw.get("channels", ["telegram"]),
     )
 
+
+def load_config() -> tuple[list[HoldingInfo], AlertSettings]:
+    """Load holdings from DB and alert settings from YAML."""
+    holdings = _load_holdings_from_db()
+    settings = _load_alert_settings()
     return holdings, settings
 
 

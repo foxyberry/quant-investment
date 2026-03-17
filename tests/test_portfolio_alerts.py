@@ -17,7 +17,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ["DATABASE_URL"] = "sqlite:///test_portfolio_alerts.db"
 
 from api.database import Base, SessionLocal, engine
+import api.models.portfolio  # noqa: F401
 import api.models.portfolio_alert  # noqa: F401
+from api.models.portfolio import Holding
 from api.models.portfolio_alert import PortfolioAlertHistory
 
 
@@ -26,10 +28,11 @@ def _fresh_tables():
     """Create tables before each test, truncate after."""
     Base.metadata.create_all(bind=engine)
     yield
-    # Truncate alert history between tests
+    # Truncate between tests
     db = SessionLocal()
     try:
         db.query(PortfolioAlertHistory).delete()
+        db.query(Holding).delete()
         db.commit()
     finally:
         db.close()
@@ -94,6 +97,54 @@ class TestDedupLogic:
         history = get_history(limit=10)
         assert history.total_count == 2
         assert len(history.alerts) == 2
+
+
+# ---------------------------------------------------------------------------
+# Tests — DB holdings loading
+# ---------------------------------------------------------------------------
+
+
+class TestDBHoldings:
+    def test_load_holdings_from_db(self):
+        from api.services.portfolio_alert_scanner import _load_holdings_from_db
+
+        # Insert a holding into DB
+        db = SessionLocal()
+        db.add(Holding(ticker="005930.KS", name="삼성전자", quantity=10, avg_price=70000, currency="KRW"))
+        db.commit()
+        db.close()
+
+        holdings = _load_holdings_from_db()
+        assert len(holdings) == 1
+        assert holdings[0].ticker == "005930.KS"
+        assert holdings[0].name == "삼성전자"
+        assert holdings[0].buy_price == 70000
+        assert holdings[0].quantity == 10
+
+    def test_zero_quantity_excluded(self):
+        from api.services.portfolio_alert_scanner import _load_holdings_from_db
+
+        db = SessionLocal()
+        db.add(Holding(ticker="AAPL", name="Apple", quantity=10, avg_price=150, currency="USD"))
+        db.add(Holding(ticker="SOLD", name="Sold Stock", quantity=0, avg_price=100, currency="USD"))
+        db.commit()
+        db.close()
+
+        holdings = _load_holdings_from_db()
+        assert len(holdings) == 1
+        assert holdings[0].ticker == "AAPL"
+
+    def test_load_config_uses_db(self):
+        from api.services.portfolio_alert_scanner import load_config
+
+        db = SessionLocal()
+        db.add(Holding(ticker="MSFT", name="Microsoft", quantity=5, avg_price=400, currency="USD"))
+        db.commit()
+        db.close()
+
+        holdings, settings = load_config()
+        assert len(holdings) == 1
+        assert holdings[0].ticker == "MSFT"
 
 
 # ---------------------------------------------------------------------------
