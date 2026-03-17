@@ -36,6 +36,7 @@ const MA_CONFIGS = [
   { period: 20, color: '#3b82f6', lineWidth: 1 as LineWidth },
   { period: 60, color: '#8b5cf6', lineWidth: 1 as LineWidth },
   { period: 120, color: '#ef4444', lineWidth: 1 as LineWidth },
+  { period: 240, color: '#10b981', lineWidth: 1 as LineWidth },
 ] as const;
 
 /** Calculate Simple Moving Average from OHLCV data */
