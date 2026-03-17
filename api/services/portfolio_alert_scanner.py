@@ -120,33 +120,103 @@ def _is_market_hours() -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _is_finite(val: float) -> bool:
+    """Check if a price value is finite and positive."""
+    import math
+    return math.isfinite(val) and val > 0
+
+
 def _fetch_prices(tickers: list[str]) -> Dict[str, float]:
     """Fetch latest prices for a batch of tickers via yfinance."""
     try:
         import yfinance as yf
 
         prices: Dict[str, float] = {}
-        # Batch download — single HTTP request for all tickers
-        data = yf.download(tickers, period="1d", interval="1m", progress=False, threads=True)
-        if data.empty:
-            return prices
 
-        close = data.get("Close")
-        if close is None:
-            return prices
+        kr_tickers = [t for t in tickers if t.endswith((".KS", ".KQ"))]
+        us_tickers = [t for t in tickers if t not in kr_tickers]
 
-        if len(tickers) == 1:
-            # Single ticker: close is a Series
-            last_val = close.dropna().iloc[-1] if not close.dropna().empty else None
-            if last_val is not None:
-                prices[tickers[0]] = float(last_val)
-        else:
-            # Multiple tickers: close is a DataFrame
-            for t in tickers:
-                if t in close.columns:
-                    col = close[t].dropna()
-                    if not col.empty:
-                        prices[t] = float(col.iloc[-1])
+        def _extract_batch_prices(batch_tickers: list[str], **download_kwargs: Any) -> None:
+            if not batch_tickers:
+                return
+
+            try:
+                data = yf.download(batch_tickers, progress=False, threads=False, **download_kwargs)
+            except Exception:
+                logger.warning(
+                    "yfinance batch download failed for tickers: %s",
+                    ", ".join(batch_tickers),
+                    exc_info=True,
+                )
+                return
+
+            if data.empty:
+                logger.warning("No batch price data returned for tickers: %s", ", ".join(batch_tickers))
+                return
+
+            close = data.get("Close")
+            if close is None:
+                logger.warning("Missing Close data in batch response for tickers: %s", ", ".join(batch_tickers))
+                return
+
+            import pandas as pd
+
+            if len(batch_tickers) == 1:
+                # yf.download with single ticker may return DataFrame or Series
+                if isinstance(close, pd.DataFrame):
+                    series = close.iloc[:, 0].dropna()
+                else:
+                    series = close.dropna()
+                if not series.empty:
+                    val = float(series.iloc[-1])
+                    if _is_finite(val):
+                        prices[batch_tickers[0]] = val
+                return
+
+            for ticker in batch_tickers:
+                if ticker not in close.columns:
+                    continue
+                series = close[ticker].dropna()
+                if not series.empty:
+                    val = float(series.iloc[-1])
+                    if _is_finite(val):
+                        prices[ticker] = val
+
+        _extract_batch_prices(kr_tickers, period="5d", interval="5m")
+        _extract_batch_prices(us_tickers, period="1d", interval="1m")
+
+        missing_tickers = [ticker for ticker in tickers if ticker not in prices]
+        for ticker in missing_tickers:
+            try:
+                ticker_obj = yf.Ticker(ticker)
+
+                last_price = None
+                try:
+                    fast_info = ticker_obj.fast_info or {}
+                    last_price = fast_info.get("lastPrice")
+                except Exception:
+                    last_price = None
+
+                if last_price is None:
+                    info = ticker_obj.info or {}
+                    last_price = info.get("regularMarketPrice")
+
+                if last_price is None:
+                    logger.warning("Skipping ticker with no price data after fallback: %s", ticker)
+                    continue
+
+                price_val = float(last_price)
+                if not _is_finite(price_val):
+                    logger.warning("Non-finite fallback price for ticker %s: %s", ticker, last_price)
+                    continue
+
+                prices[ticker] = price_val
+            except Exception:
+                logger.warning("Fallback price fetch failed for ticker: %s", ticker, exc_info=True)
+
+        failed_tickers = [ticker for ticker in tickers if ticker not in prices]
+        if failed_tickers:
+            logger.warning("Failed to fetch prices for tickers: %s", ", ".join(failed_tickers))
 
         return prices
     except Exception:
