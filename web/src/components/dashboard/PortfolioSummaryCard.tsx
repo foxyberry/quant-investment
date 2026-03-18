@@ -5,7 +5,8 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui';
 import { getPortfolioSummary } from '@/lib/api';
 import type { PortfolioSummary } from '@/lib/types';
-import { TrendingUp, TrendingDown, Briefcase, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, Briefcase, DollarSign, ArrowRight } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { formatCurrency as formatCurrencyUtil, formatPercent as formatPercentUtil } from '@/lib/format';
 import { useUserSettings } from '@/contexts/UserSettingsContext';
 
@@ -73,9 +74,16 @@ export default function PortfolioSummaryCard() {
   if (!summary) {
     return (
       <Card title={t('portfolioOverview')}>
-        <div className="flex items-center gap-2 text-[var(--foreground-muted)]">
-          <Briefcase className="h-5 w-5" />
-          <span>{t('noPortfolioData')}</span>
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <Briefcase className="mb-3 h-10 w-10 text-[var(--foreground-muted)]" />
+          <p className="text-[var(--foreground-muted)]">{t('noPortfolioData')}</p>
+          <Link
+            href="/portfolio"
+            className="mt-3 inline-flex items-center gap-1 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+          >
+            {t('goToPortfolio')}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </Card>
     );

@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui';
 import { getSellSignals } from '@/lib/api';
 import type { SellSignal } from '@/lib/types';
-import { AlertTriangle, Clock, ShieldCheck, TrendingDown, Target, Activity } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Clock, ShieldCheck, TrendingDown, Target, Activity } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
 import { Link } from '@/i18n/navigation';
 
@@ -104,6 +104,13 @@ export default function SellSignalsCard() {
           <p className="mt-1 text-sm text-[var(--foreground-muted)]">
             {t('noSellSignals')}
           </p>
+          <Link
+            href="/portfolio"
+            className="mt-3 inline-flex items-center gap-1 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+          >
+            {t('goToPortfolio')}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </Card>
     );

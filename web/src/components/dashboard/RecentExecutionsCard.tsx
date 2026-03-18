@@ -88,6 +88,22 @@ export default function RecentExecutionsCard() {
           <p className="mt-1 text-sm text-[var(--foreground-muted)]">
             {t('runScreeningForExecutions')}
           </p>
+          <div className="mt-3 flex gap-2">
+            <Link
+              href="/screening"
+              className="inline-flex items-center gap-1 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+            >
+              {t('goToScreening')}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/strategy"
+              className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] px-4 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background-secondary)] transition-colors"
+            >
+              {t('goToStrategy')}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </Card>
     );
