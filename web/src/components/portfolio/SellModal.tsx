@@ -254,7 +254,7 @@ export default function SellModal({
                 type="number"
                 id="sell-quantity"
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onChange={(e) => { setQuantity(e.target.value); setErrors(prev => ({ ...prev, quantity: undefined })); }}
                 placeholder={t('quantityPlaceholder')}
                 step="any"
                 min="0"
@@ -284,7 +284,7 @@ export default function SellModal({
                 type="number"
                 id="sell-price"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e) => { setPrice(e.target.value); setErrors(prev => ({ ...prev, price: undefined })); }}
                 placeholder={t('pricePlaceholder')}
                 step="any"
                 min="0"
@@ -310,7 +310,7 @@ export default function SellModal({
                 type="number"
                 id="sell-fee"
                 value={fee}
-                onChange={(e) => setFee(e.target.value)}
+                onChange={(e) => { setFee(e.target.value); setErrors(prev => ({ ...prev, fee: undefined })); }}
                 step="any"
                 min="0"
                 className={`w-full rounded-lg border px-3 py-2 text-[var(--foreground)] placeholder-[var(--foreground-muted)] bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
@@ -335,7 +335,7 @@ export default function SellModal({
                 type="number"
                 id="sell-tax"
                 value={tax}
-                onChange={(e) => setTax(e.target.value)}
+                onChange={(e) => { setTax(e.target.value); setErrors(prev => ({ ...prev, tax: undefined })); }}
                 step="any"
                 min="0"
                 className={`w-full rounded-lg border px-3 py-2 text-[var(--foreground)] placeholder-[var(--foreground-muted)] bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] ${
