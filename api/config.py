@@ -30,7 +30,11 @@ class Settings(BaseSettings):
 
     # CORS settings (CORS 설정)
     # Override via env: CORS_ORIGINS='["http://localhost:3002"]'
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]
+    # Both localhost and 127.0.0.1 are listed because browsers treat them as different origins.
+    cors_origins: List[str] = [
+        "http://localhost:3000", "http://localhost:3001", "http://localhost:3002",
+        "http://127.0.0.1:3000", "http://127.0.0.1:3001", "http://127.0.0.1:3002",
+    ]
 
     # Database settings (데이터베이스 설정)
     database_url: str = "sqlite:///data/quant.db"

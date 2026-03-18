@@ -193,14 +193,36 @@ Full interactive docs: `http://localhost:8001/docs`
 
 ```bash
 source venv/bin/activate
-uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+./venv/bin/python -m uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
 ```
+
+> **Tip**: Use `python -m uvicorn` instead of `uvicorn` directly. If you move or recreate the venv, the `uvicorn` shebang may point to a stale Python path.
 
 ### Frontend
 
 ```bash
-cd web
-npm run dev -- -p 3001
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8001 npm --prefix web run dev -- --hostname 0.0.0.0 --port 3001
+```
+
+Or set `NEXT_PUBLIC_API_URL` in `web/.env.local` and run:
+
+```bash
+cd web && npm run dev -- -p 3001
+```
+
+### CORS: `localhost` vs `127.0.0.1`
+
+Browsers treat `localhost` and `127.0.0.1` as different origins. The default CORS config allows both:
+
+```
+http://localhost:3000-3002
+http://127.0.0.1:3000-3002
+```
+
+To add custom origins, set `CORS_ORIGINS` in `.env`:
+
+```env
+CORS_ORIGINS=["http://localhost:3001","http://192.168.1.100:3001"]
 ```
 
 ### Useful Checks
@@ -213,11 +235,26 @@ npm --prefix web run check:strategy-i18n
 
 ## Troubleshooting
 
-- **Web cannot call API**: Check API port and `NEXT_PUBLIC_API_URL` in `web/.env.local`
+### Quick health checks
+
+```bash
+# API health
+curl http://127.0.0.1:8001/health
+
+# DB readiness (Postgres only)
+pg_isready -h localhost -p 5432
+```
+
+### Common issues
+
+- **Web cannot call API**: Check `NEXT_PUBLIC_API_URL` in `web/.env.local` matches your API port
+- **Browser shows `Failed to fetch`**: Verify the frontend origin (check address bar — `localhost` vs `127.0.0.1`) is in the CORS allow list. See [CORS section](#cors-localhost-vs-127001) above
+- **API routes fail with DB errors**: Verify `DATABASE_URL` in `.env` matches your DB host/port. For Docker DB: `postgresql://quant:quant@localhost:5432/quant`
 - **i18n key errors** (`MISSING_MESSAGE`): Run `npm --prefix web run check:strategy-i18n` / `check:condition-i18n`
 - **Strategy run returns empty results**: Confirm universe/condition thresholds are not overly strict
 - **Korean stock names not showing**: Ensure pykrx is installed and KRX master CSVs are up to date
-- **Macro panel shows unknown/unavailable**: check exchange-rate upstream, futures ticker symbol, and `MACRO_INVESTOR_FLOW_PATH` file freshness
+- **Macro panel shows unknown/unavailable**: Check exchange-rate upstream, futures ticker symbol, and `MACRO_INVESTOR_FLOW_PATH` file freshness
+- **`uvicorn` command not found after repo move**: Use `./venv/bin/python -m uvicorn ...` instead of `uvicorn` directly
 
 ## Roadmap / Limitations
 
