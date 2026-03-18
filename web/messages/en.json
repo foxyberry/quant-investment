@@ -1086,6 +1086,8 @@
     "runScreeningForReports": "Run a screening to generate reports",
     "retry": "Retry",
     "popularLabel": "Popular",
+    "popularUS": "US Popular",
+    "popularKR": "KR Popular",
     "guideSearchTitle": "Search Ticker",
     "guideSearchDesc": "Enter a ticker symbol or company name to view interactive charts",
     "guideTechnicalTitle": "Technical Analysis",
