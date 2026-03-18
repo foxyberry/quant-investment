@@ -9,6 +9,18 @@ import { CandleChart, IndicatorPanel } from '@/components/charts';
 import { getTickerAnalysis, searchTickers } from '@/lib/api';
 import type { TickerAnalysis } from '@/lib/types';
 
+/** Format price with currency based on ticker suffix. */
+function formatTickerPrice(ticker: string, price: number): string {
+  const upper = ticker.toUpperCase();
+  if (upper.endsWith('.KS') || upper.endsWith('.KQ')) {
+    return `₩${Math.round(price).toLocaleString()}`;
+  }
+  if (upper.endsWith('.T')) {
+    return `¥${Math.round(price).toLocaleString()}`;
+  }
+  return `$${price.toFixed(2)}`;
+}
+
 /**
  * Extracts a market badge label from a ticker symbol suffix.
  * E.g. "005930.KS" -> "KRX", "7203.T" -> "TSE", "AAPL" -> "US"
@@ -242,7 +254,7 @@ export default function AnalysisPage() {
                 {tickerData && (
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-2xl font-mono font-bold text-[var(--foreground)]">
-                      ${tickerData.current_price.toFixed(2)}
+                      {formatTickerPrice(selectedTicker!, tickerData.current_price)}
                     </span>
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-sm font-medium ${
