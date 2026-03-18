@@ -45,7 +45,8 @@ function formatNumber(value: number | null, locale: string, maximumFractionDigit
 }
 
 function formatAge(sec: number | null, t: (key: string, values?: Record<string, string | number>) => string): string {
-  if (sec == null || Number.isNaN(sec)) return t('ageSec', { age: '-' });
+  if (sec == null || Number.isNaN(sec)) return t('ageNotAvailable');
+  if (sec < 0) return t('ageNotAvailable');
   if (sec < 60) return t('ageSec', { age: `${Math.round(sec)}` });
   if (sec < 3600) return t('ageMin', { age: `${Math.round(sec / 60)}` });
   if (sec < 86400) return t('ageHour', { age: `${(sec / 3600).toFixed(1)}` });
@@ -227,9 +228,9 @@ function FuturesInvestorGrid({
 }
 
 function formatDateTime(value: string | null, locale: string): string {
-  if (!value) return '-';
+  if (!value) return '';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
+  if (Number.isNaN(date.getTime())) return '';
   return new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : locale === 'zh' ? 'zh-CN' : 'en-US', {
     month: '2-digit',
     day: '2-digit',

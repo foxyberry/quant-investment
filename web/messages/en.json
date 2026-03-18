@@ -158,6 +158,7 @@
     "fxChangePct": "FX Change %",
     "investorFlow": "Investor Flow",
     "institution": "Institution",
+    "ageNotAvailable": "Data not yet collected",
     "ageSec": "Updated {age}s ago",
     "ageMin": "Updated {age}m ago",
     "ageHour": "Updated {age}h ago",

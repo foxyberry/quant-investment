@@ -158,6 +158,7 @@
     "fxChangePct": "환율 등락률",
     "investorFlow": "수급",
     "institution": "기관",
+    "ageNotAvailable": "데이터 미수집",
     "ageSec": "{age}초 전 갱신",
     "ageMin": "{age}분 전 갱신",
     "ageHour": "{age}시간 전 갱신",
