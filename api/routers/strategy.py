@@ -570,7 +570,8 @@ async def run_strategy(request: StrategyExecuteRequest) -> StrategyExecuteRespon
             ranking_config=request.ranking_config,
         )
         response_universes = result.get("universes") or request.universe_overrides or [result["universe"]]
-        return StrategyExecuteResponse(**result, universes=response_universes)
+        payload = {**result, "universes": response_universes}
+        return StrategyExecuteResponse(**payload)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
