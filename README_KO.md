@@ -188,14 +188,36 @@ docker compose up -d db
 
 ```bash
 source venv/bin/activate
-uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+./venv/bin/python -m uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
 ```
+
+> **팁**: `uvicorn` 직접 실행 대신 `python -m uvicorn`을 사용하세요. venv를 이동하거나 재생성하면 `uvicorn` shebang이 깨질 수 있습니다.
 
 ### 프론트엔드
 
 ```bash
-cd web
-npm run dev -- -p 3001
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8001 npm --prefix web run dev -- --hostname 0.0.0.0 --port 3001
+```
+
+또는 `web/.env.local`에 `NEXT_PUBLIC_API_URL`을 설정한 후:
+
+```bash
+cd web && npm run dev -- -p 3001
+```
+
+### CORS: `localhost` vs `127.0.0.1`
+
+브라우저는 `localhost`와 `127.0.0.1`을 서로 다른 origin으로 취급합니다. 기본 CORS 설정은 둘 다 허용합니다:
+
+```
+http://localhost:3000-3002
+http://127.0.0.1:3000-3002
+```
+
+커스텀 origin을 추가하려면 `.env`에서 `CORS_ORIGINS`를 설정하세요:
+
+```env
+CORS_ORIGINS=["http://localhost:3001","http://192.168.1.100:3001"]
 ```
 
 ### 유용한 점검 명령
@@ -208,10 +230,26 @@ npm --prefix web run check:strategy-i18n
 
 ## 문제 해결
 
-- **Web에서 API 호출 실패**: API 포트 확인 및 `web/.env.local`의 `NEXT_PUBLIC_API_URL` 확인
+### 빠른 상태 확인
+
+```bash
+# API 헬스 체크
+curl http://127.0.0.1:8001/health
+
+# DB 준비 상태 (Postgres만 해당)
+pg_isready -h localhost -p 5432
+```
+
+### 자주 발생하는 문제
+
+- **Web에서 API 호출 실패**: `web/.env.local`의 `NEXT_PUBLIC_API_URL`이 API 포트와 일치하는지 확인
+- **브라우저에서 `Failed to fetch` 발생**: 주소창의 origin(`localhost` vs `127.0.0.1`)이 CORS 허용 목록에 있는지 확인. 위의 [CORS 섹션](#cors-localhost-vs-127001) 참조
+- **API 라우트에서 DB 에러 발생**: `.env`의 `DATABASE_URL`이 DB 호스트/포트와 일치하는지 확인. Docker DB: `postgresql://quant:quant@localhost:5432/quant`
 - **i18n 키 에러** (`MISSING_MESSAGE`): `npm --prefix web run check:strategy-i18n` / `check:condition-i18n` 실행
 - **전략 실행 결과가 비어 있음**: 유니버스/조건 임계값이 너무 엄격한지 확인
 - **한국 종목명이 표시되지 않음**: pykrx 설치 여부 및 KRX 마스터 CSV 최신 상태 확인
+- **매크로 패널에 unknown/unavailable 표시**: 환율 API, 선물 티커 심볼, `MACRO_INVESTOR_FLOW_PATH` 파일 확인
+- **`uvicorn` 명령을 찾을 수 없음**: `uvicorn` 대신 `./venv/bin/python -m uvicorn ...` 사용
 
 ## 로드맵 / 제한사항
 
