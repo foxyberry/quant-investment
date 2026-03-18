@@ -168,25 +168,55 @@ export default function AnalysisPage() {
         </div>
 
         {/* Quick ticker buttons */}
-        <div className="mt-4">
-          <span className="block text-sm font-medium text-[var(--foreground-muted)] mb-2">
-            {t('popularLabel')}
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA'].map((ticker) => (
-              <button
-                key={ticker}
-                type="button"
-                onClick={() => handleSelectTicker(ticker)}
-                className={`rounded-full px-3 py-1 text-sm font-medium border transition-all ${
-                  selectedTicker === ticker
-                    ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-[0_0_0_3px_var(--color-primary)]/20'
-                    : 'bg-[var(--background)] text-[var(--foreground)] border-[var(--border)] hover:border-[var(--color-primary)]/40 hover:bg-[var(--background)]'
-                }`}
-              >
-                {ticker}
-              </button>
-            ))}
+        <div className="mt-4 space-y-3">
+          <div>
+            <span className="block text-sm font-medium text-[var(--foreground-muted)] mb-2">
+              {t('popularUS')}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA'].map((ticker) => (
+                <button
+                  key={ticker}
+                  type="button"
+                  onClick={() => handleSelectTicker(ticker)}
+                  className={`rounded-full px-3 py-1 text-sm font-medium border transition-all ${
+                    selectedTicker === ticker
+                      ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-[0_0_0_3px_var(--color-primary)]/20'
+                      : 'bg-[var(--background)] text-[var(--foreground)] border-[var(--border)] hover:border-[var(--color-primary)]/40 hover:bg-[var(--background)]'
+                  }`}
+                >
+                  {ticker}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span className="block text-sm font-medium text-[var(--foreground-muted)] mb-2">
+              {t('popularKR')}
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { ticker: '005930.KS', label: 'Samsung' },
+                { ticker: '000660.KS', label: 'SK Hynix' },
+                { ticker: '035420.KS', label: 'NAVER' },
+                { ticker: '051910.KS', label: 'LG Chem' },
+                { ticker: '006400.KS', label: 'Samsung SDI' },
+                { ticker: '035720.KS', label: 'Kakao' },
+              ].map(({ ticker, label }) => (
+                <button
+                  key={ticker}
+                  type="button"
+                  onClick={() => handleSelectTicker(ticker)}
+                  className={`rounded-full px-3 py-1 text-sm font-medium border transition-all ${
+                    selectedTicker === ticker
+                      ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-[0_0_0_3px_var(--color-primary)]/20'
+                      : 'bg-[var(--background)] text-[var(--foreground)] border-[var(--border)] hover:border-[var(--color-primary)]/40 hover:bg-[var(--background)]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </Card>

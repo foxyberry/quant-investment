@@ -1086,6 +1086,8 @@
     "runScreeningForReports": "运行筛选以生成报告",
     "retry": "重试",
     "popularLabel": "热门",
+    "popularUS": "美股热门",
+    "popularKR": "韩股热门",
     "guideSearchTitle": "搜索股票",
     "guideSearchDesc": "输入股票代码或公司名称查看互动图表",
     "guideTechnicalTitle": "技术分析",

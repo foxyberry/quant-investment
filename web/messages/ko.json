@@ -1086,6 +1086,8 @@
     "runScreeningForReports": "스크리닝을 실행하여 리포트를 생성하세요",
     "retry": "재시도",
     "popularLabel": "인기 종목",
+    "popularUS": "미국 인기 종목",
+    "popularKR": "한국 인기 종목",
     "guideSearchTitle": "종목 검색",
     "guideSearchDesc": "티커 심볼 또는 회사명을 입력하여 인터랙티브 차트를 확인하세요",
     "guideTechnicalTitle": "기술적 분석",
