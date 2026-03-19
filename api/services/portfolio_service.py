@@ -160,7 +160,11 @@ class PortfolioService:
             return amount
         rate = rates.get(from_currency)
         if rate is None or rate <= 0:
-            raise ValueError(f"Missing exchange rate for currency: {from_currency}")
+            logger.warning(
+                "Missing exchange rate for %s→%s (amount=%.2f); returning unconverted",
+                from_currency, base, amount,
+            )
+            return amount
         return amount / rate
 
     @staticmethod
