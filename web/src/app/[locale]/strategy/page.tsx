@@ -27,7 +27,7 @@ import {
   Loader2, Zap, RotateCcw, Save, TestTube, FolderOpen, X,
   ChevronRight, ChevronDown, Home, Calendar, Search,
   AlignHorizontalSpaceAround, AlignVerticalSpaceAround, Route,
-  ChevronLeft, ChevronUp, FileCode,
+  ChevronLeft, ChevronUp, FileCode, ShieldCheck,
 } from 'lucide-react';
 import UniverseNode from '@/components/strategy/nodes/UniverseNode';
 import ConditionNode from '@/components/strategy/nodes/ConditionNode';
@@ -48,7 +48,7 @@ import { serializeGraph, getDownstreamNodeIds } from '@/lib/strategy/graphSerial
 import { validateGraph } from '@/lib/strategy/graphValidator';
 import { SAMPLE_STRATEGY_PRESETS, PRESET_CATEGORY_ORDER, type SampleStrategyPreset, type PresetCategory } from '@/lib/strategy/sampleStrategies';
 import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
-import { useSavedStrategies, useSaveStrategy, useUpdateStrategy } from '@/hooks/useStrategy';
+import { useSavedStrategies, useSaveStrategy, useUpdateStrategy, useValidateStrategy } from '@/hooks/useStrategy';
 import type { StrategyResultItem, SavedStrategy, NodeIntermediateResult } from '@/lib/api';
 import { runStrategyStream, saveExecution, exportPineScript } from '@/lib/api';
 
@@ -455,6 +455,7 @@ function StrategyPageInner() {
   const saveStrategy = useSaveStrategy();
   const updateStrategy = useUpdateStrategy();
   const { toast, showToast, hideToast } = useToast();
+  const validateMutation = useValidateStrategy();
 
   // Abort stream on unmount
   useEffect(() => {
@@ -1618,6 +1619,32 @@ function StrategyPageInner() {
         )}
         <div className="h-5 w-px bg-[#e1e3e5] dark:bg-[#2e2e30] mx-0.5" />
         {/* Actions */}
+        <button
+          type="button"
+          disabled={!currentStrategyId || validateMutation.isPending}
+          onClick={async () => {
+            if (!currentStrategyId) {
+              showToast(t('saveBeforeValidate'), 'warning');
+              return;
+            }
+            try {
+              const result = await validateMutation.mutateAsync({ id: currentStrategyId });
+              const msg = result.message || t('validationComplete');
+              showToast(msg, result.all_pass ? 'success' : 'info');
+            } catch {
+              showToast(t('validationFailed'), 'error');
+            }
+          }}
+          className="flex items-center gap-1 px-2 py-1 text-xs font-medium border border-[#e1e3e5] dark:border-[#2e2e30] rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+          title={currentStrategyId ? t('validateStrategy') : t('saveBeforeValidate')}
+        >
+          {validateMutation.isPending ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <ShieldCheck className="h-3 w-3" />
+          )}
+          {t('validateStrategy')}
+        </button>
         <button
           type="button"
           onClick={() => setShowBacktest(true)}
