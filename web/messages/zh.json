@@ -1176,6 +1176,7 @@
     "popupKpiChange": "涨跌幅",
     "popupKpiVolume": "成交量",
     "addToWatchlist": "添加到自选股",
+    "watchlistAddFailed": "添加自选股失败",
     "openFullPage": "打开完整页面",
     "showAdvancedDetails": "显示高级信息",
     "hideAdvancedDetails": "隐藏高级信息",

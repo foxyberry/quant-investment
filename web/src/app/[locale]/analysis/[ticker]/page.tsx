@@ -149,6 +149,7 @@ export default function TickerAnalysisPage() {
   const [aiAvailable, setAiAvailable] = useState<boolean | null>(null);
   const [reasoningExpanded, setReasoningExpanded] = useState(false);
   const [watchlistAdded, setWatchlistAdded] = useState(false);
+  const [watchlistError, setWatchlistError] = useState<string | null>(null);
 
   const fetchData = useCallback(async (period: PeriodOption) => {
     setIsLoading(true);
@@ -394,15 +395,23 @@ export default function TickerAnalysisPage() {
               onClick={async () => {
                 try {
                   await createWatchlistItem({ ticker: ticker.toUpperCase(), name: tickerData?.name });
-                } catch {
-                  // 409 (already exists) or other — treat as success feedback
+                  setWatchlistAdded(true);
+                  setTimeout(() => setWatchlistAdded(false), 3000);
+                } catch (err: unknown) {
+                  const msg = err instanceof Error ? err.message : '';
+                  if (msg.includes('409') || msg.includes('already')) {
+                    // Already in watchlist — show success feedback
+                    setWatchlistAdded(true);
+                    setTimeout(() => setWatchlistAdded(false), 3000);
+                  } else {
+                    setWatchlistError(msg || t('watchlistAddFailed'));
+                    setTimeout(() => setWatchlistError(null), 3000);
+                  }
                 }
-                setWatchlistAdded(true);
-                setTimeout(() => setWatchlistAdded(false), 3000);
               }}
-              title={t('addToWatchlist')}
+              title={watchlistError || t('addToWatchlist')}
             >
-              <Star className={`h-3.5 w-3.5 ${watchlistAdded ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+              <Star className={`h-3.5 w-3.5 ${watchlistAdded ? 'fill-yellow-400 text-yellow-400' : watchlistError ? 'text-red-500' : ''}`} />
             </Button>
             <Button variant="outline" size="sm" onClick={() => fetchData(selectedPeriod)}>
               <RefreshCw className="h-3.5 w-3.5" />
