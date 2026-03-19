@@ -158,6 +158,7 @@
     "fxChangePct": "汇率涨跌幅",
     "investorFlow": "资金流向",
     "institution": "机构",
+    "ageNotAvailable": "数据未收集",
     "ageSec": "{age}秒前更新",
     "ageMin": "{age}分钟前更新",
     "ageHour": "{age}小时前更新",
