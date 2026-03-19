@@ -5,7 +5,8 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Card } from '@/components/ui';
 import { getBuySignals } from '@/lib/api';
 import type { BuySignal } from '@/lib/types';
-import { AlertTriangle, Target, BarChart3, Star } from 'lucide-react';
+import { AlertTriangle, Target, BarChart3, Star, ArrowRight } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { formatCurrency } from '@/lib/format';
 
 interface LoadingState {
@@ -88,6 +89,13 @@ export default function BuySignalsCard() {
           <p className="mt-1 text-sm text-[var(--foreground-muted)]">
             {t('noBuySignals')}
           </p>
+          <Link
+            href="/watchlist"
+            className="mt-3 inline-flex items-center gap-1 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+          >
+            {t('goToWatchlist')}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </Card>
     );
