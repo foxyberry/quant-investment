@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { RotateCcw } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface DateSelectorProps {
   /** null means "today" (latest available data) */
@@ -25,6 +25,7 @@ export default function DateSelector({
   disabled = false,
 }: DateSelectorProps) {
   const t = useTranslations('screening');
+  const locale = useLocale();
   const today = useMemo(() => getTodayString(), []);
   const isToday = value === null;
 
@@ -46,6 +47,7 @@ export default function DateSelector({
       <div className="flex items-center gap-2">
         <input
           type="date"
+          lang={locale}
           value={value ?? today}
           max={today}
           onChange={handleDateChange}
