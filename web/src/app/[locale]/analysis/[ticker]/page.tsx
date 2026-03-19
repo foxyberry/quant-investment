@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  Star,
 } from 'lucide-react';
 import { Card, Button } from '@/components/ui';
 import { CandleChart, IndicatorPanel } from '@/components/charts';
@@ -29,6 +30,7 @@ import {
   checkStockConditions,
   getAnalysisStatus,
   getPresets,
+  createWatchlistItem,
 } from '@/lib/api';
 import type {
   TickerAnalysis,
@@ -146,6 +148,8 @@ export default function TickerAnalysisPage() {
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiAvailable, setAiAvailable] = useState<boolean | null>(null);
   const [reasoningExpanded, setReasoningExpanded] = useState(false);
+  const [watchlistAdded, setWatchlistAdded] = useState(false);
+  const [watchlistError, setWatchlistError] = useState<string | null>(null);
 
   const fetchData = useCallback(async (period: PeriodOption) => {
     setIsLoading(true);
@@ -384,6 +388,31 @@ export default function TickerAnalysisPage() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={t('addToWatchlist')}
+              onClick={async () => {
+                try {
+                  await createWatchlistItem({ ticker: ticker.toUpperCase(), name: tickerData?.name });
+                  setWatchlistAdded(true);
+                  setTimeout(() => setWatchlistAdded(false), 3000);
+                } catch (err: unknown) {
+                  const msg = err instanceof Error ? err.message : '';
+                  if (msg.includes('409') || msg.includes('already')) {
+                    // Already in watchlist — show success feedback
+                    setWatchlistAdded(true);
+                    setTimeout(() => setWatchlistAdded(false), 3000);
+                  } else {
+                    setWatchlistError(msg || t('watchlistAddFailed'));
+                    setTimeout(() => setWatchlistError(null), 3000);
+                  }
+                }
+              }}
+              title={watchlistError || t('addToWatchlist')}
+            >
+              <Star className={`h-3.5 w-3.5 ${watchlistAdded ? 'fill-yellow-400 text-yellow-400' : watchlistError ? 'text-red-500' : ''}`} />
+            </Button>
             <Button variant="outline" size="sm" onClick={() => fetchData(selectedPeriod)}>
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>

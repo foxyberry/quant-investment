@@ -1184,6 +1184,8 @@
     "popupKpiPrice": "Price",
     "popupKpiChange": "Change",
     "popupKpiVolume": "Volume",
+    "addToWatchlist": "Add to Watchlist",
+    "watchlistAddFailed": "Failed to add to watchlist",
     "openFullPage": "Open Full Page",
     "showAdvancedDetails": "Show Advanced Details",
     "hideAdvancedDetails": "Hide Advanced Details",
