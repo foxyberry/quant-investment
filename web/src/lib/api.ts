@@ -1155,6 +1155,7 @@ export interface StrategyExecuteResponse {
   total_count: number;
   matched_count: number;
   universe: string;
+  universes?: string[];
   conditions_used: string[];
   node_results: Record<string, NodeIntermediateResult>;
 }

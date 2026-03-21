@@ -1193,7 +1193,7 @@ function StrategyPageInner() {
       saveExecution({
         execution_type: 'strategy',
         preset: strategyName || 'Untitled Strategy',
-        universes: [data.universe],
+        universes: data.universes || [data.universe],
         graph: graph as unknown as Record<string, unknown>,
         total_count: data.total_count,
         matched_count: data.matched_count,
@@ -1538,6 +1538,11 @@ function StrategyPageInner() {
             )}
           </span>
         </div>
+        {strategyDescription && (
+          <p className="ml-1 text-xs text-gray-500 dark:text-gray-400 truncate max-w-[32rem]" title={strategyDescription}>
+            {strategyDescription}
+          </p>
+        )}
 
         <div className="flex-1" />
 
