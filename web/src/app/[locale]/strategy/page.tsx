@@ -1792,7 +1792,13 @@ function StrategyPageInner() {
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            <span>{t('kospiData')}</span>
+            <span>
+              {(() => {
+                const uNode = nodes.find((n) => (n.data as StrategyNodeData)?.node_type === 'universe');
+                const uVal = uNode ? (uNode.data as StrategyNodeData).universe : undefined;
+                return uVal || 'KOSPI';
+              })()}
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
             <Calendar className="h-3 w-3" />
