@@ -51,8 +51,9 @@ def record_and_send(
     signal_type: str,
     message: str,
     price: Optional[float] = None,
+    channels: Optional[list[str]] = None,
 ) -> bool:
-    """Record alert and send via Telegram. Returns False if already sent today."""
+    """Record alert and send to configured channels. Returns False if already sent today."""
     today = date.today()
     now = datetime.utcnow()  # noqa: DTZ003
 
@@ -75,35 +76,10 @@ def record_and_send(
     finally:
         db.close()
 
-    # Dispatch to Telegram
-    _send_telegram(message)
+    # Dispatch to specified channels (or all enabled if not specified)
+    from api.services.notification_dispatcher import dispatch
+    dispatch(message, channels=channels)
     return True
-
-
-def _send_telegram(message: str) -> None:
-    """Send message via Telegram using saved bot settings."""
-    try:
-        from api.models.broker_credential import BrokerCredential
-        from api.services.broker_settings_service import get_broker_settings_service
-
-        svc = get_broker_settings_service()
-        view = svc.get_telegram_settings()
-        if not (view.enabled and view.has_bot_token and view.chat_id):
-            logger.debug("Telegram not configured or disabled, skipping")
-            return
-
-        db = SessionLocal()
-        try:
-            row = db.get(BrokerCredential, "telegram")
-            if row:
-                data = json.loads(row.config_json)
-                encrypted_token = data.get("bot_token_encrypted", "")
-                svc.send_telegram_message(view.chat_id, encrypted_token, message)
-                logger.info("Portfolio alert sent via Telegram")
-        finally:
-            db.close()
-    except Exception:
-        logger.warning("Failed to send portfolio alert via Telegram", exc_info=True)
 
 
 def get_history(limit: int = 50) -> PortfolioAlertHistoryResponse:

@@ -3383,7 +3383,13 @@
     "saveTelegram": "Save Telegram Settings",
     "testTelegram": "Send Test Message",
     "telegramSaved": "Telegram settings saved.",
-    "telegramTestSuccess": "Test message sent successfully."
+    "telegramTestSuccess": "Test message sent successfully.",
+    "slackWebhookUrl": "Slack Webhook URL",
+    "slackChannelName": "Channel Name (optional)",
+    "slackSaved": "Slack settings saved.",
+    "slackTestSuccess": "Test message sent to Slack.",
+    "testSlack": "Send Test Message",
+    "saveSlack": "Save Slack Settings"
   },
   "kiwoom": {
     "title": "Kiwoom",

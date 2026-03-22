@@ -336,13 +336,13 @@ class PortfolioAlertScanner:
             # Stop loss
             if change_pct <= -settings.stop_loss_pct:
                 msg = _format_sell_message(holding, "stop_loss", price, change_pct)
-                if record_and_send(holding.ticker, "stop_loss", msg, price):
+                if record_and_send(holding.ticker, "stop_loss", msg, price, channels=settings.channels):
                     alerts_fired += 1
 
             # Take profit
             if change_pct >= settings.take_profit_pct:
                 msg = _format_sell_message(holding, "take_profit", price, change_pct)
-                if record_and_send(holding.ticker, "take_profit", msg, price):
+                if record_and_send(holding.ticker, "take_profit", msg, price, channels=settings.channels):
                     alerts_fired += 1
 
         if alerts_fired:

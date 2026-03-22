@@ -3383,7 +3383,13 @@
     "saveTelegram": "保存 Telegram 设置",
     "testTelegram": "发送测试消息",
     "telegramSaved": "Telegram 设置已保存。",
-    "telegramTestSuccess": "测试消息发送成功。"
+    "telegramTestSuccess": "测试消息发送成功。",
+    "slackWebhookUrl": "Slack Webhook URL",
+    "slackChannelName": "频道名称 (可选)",
+    "slackSaved": "Slack 设置已保存。",
+    "slackTestSuccess": "Slack 测试消息发送成功。",
+    "testSlack": "发送测试消息",
+    "saveSlack": "保存 Slack 设置"
   },
   "kiwoom": {
     "title": "Kiwoom",

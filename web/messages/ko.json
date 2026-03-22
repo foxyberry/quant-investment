@@ -3383,7 +3383,13 @@
     "saveTelegram": "텔레그램 설정 저장",
     "testTelegram": "테스트 메시지 전송",
     "telegramSaved": "텔레그램 설정이 저장되었습니다.",
-    "telegramTestSuccess": "테스트 메시지가 전송되었습니다."
+    "telegramTestSuccess": "테스트 메시지가 전송되었습니다.",
+    "slackWebhookUrl": "Slack Webhook URL",
+    "slackChannelName": "채널명 (선택)",
+    "slackSaved": "Slack 설정이 저장되었습니다.",
+    "slackTestSuccess": "Slack으로 테스트 메시지가 전송되었습니다.",
+    "testSlack": "테스트 메시지 전송",
+    "saveSlack": "Slack 설정 저장"
   },
   "kiwoom": {
     "title": "키움",

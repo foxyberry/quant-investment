@@ -54,6 +54,14 @@ class TelegramSettingsView:
     updated_at: str | None
 
 
+@dataclass
+class SlackSettingsView:
+    has_webhook_url: bool
+    channel_name: str | None
+    enabled: bool
+    updated_at: str | None
+
+
 class BrokerSettingsService:
     """Manage broker config persistence and dynamic adapter refresh."""
 
@@ -443,6 +451,74 @@ class BrokerSettingsService:
         except Exception:
             logger.warning("Telegram sendMessage failed", exc_info=True)
             return False
+
+
+    # ------------------------------------------------------------------
+    # Slack settings
+    # ------------------------------------------------------------------
+
+    _SLACK_WEBHOOK_PATTERN = re.compile(r"^https://hooks\.slack\.com/services/.+")
+
+    def get_slack_settings(self) -> SlackSettingsView:
+        db = SessionLocal()
+        try:
+            row = db.get(BrokerCredential, "slack")
+            if not row:
+                return SlackSettingsView(has_webhook_url=False, channel_name=None, enabled=False, updated_at=None)
+            data = json.loads(row.config_json)
+            return SlackSettingsView(
+                has_webhook_url=bool(data.get("webhook_url_encrypted")),
+                channel_name=data.get("channel_name"),
+                enabled=data.get("enabled", False),
+                updated_at=row.updated_at.isoformat() if row.updated_at else None,
+            )
+        finally:
+            db.close()
+
+    def save_slack_settings(self, payload: dict[str, Any]) -> SlackSettingsView:
+        webhook_url = (payload.get("webhook_url") or "").strip()
+        channel_name = (payload.get("channel_name") or "").strip()
+        enabled = bool(payload.get("enabled", False))
+
+        if webhook_url and not self._SLACK_WEBHOOK_PATTERN.match(webhook_url):
+            raise ValueError("Invalid Slack webhook URL. Must start with https://hooks.slack.com/services/")
+
+        db = SessionLocal()
+        try:
+            row = db.get(BrokerCredential, "slack")
+            if row:
+                data = json.loads(row.config_json)
+            else:
+                data = {}
+
+            if webhook_url:
+                data["webhook_url_encrypted"] = self._encrypt(webhook_url)
+            data["channel_name"] = channel_name
+            data["enabled"] = enabled
+
+            if row:
+                row.config_json = json.dumps(data)
+            else:
+                row = BrokerCredential(
+                    broker="slack",
+                    config_json=json.dumps(data),
+                )
+                db.add(row)
+            db.commit()
+            db.refresh(row)
+            return SlackSettingsView(
+                has_webhook_url=bool(data.get("webhook_url_encrypted")),
+                channel_name=data.get("channel_name"),
+                enabled=data.get("enabled", False),
+                updated_at=row.updated_at.isoformat() if row.updated_at else None,
+            )
+        finally:
+            db.close()
+
+    def send_slack_test(self, message: str = "Quant Investment test notification") -> bool:
+        """Send a test message via Slack webhook."""
+        from api.services.notification_dispatcher import _send_slack
+        return _send_slack(self, message)
 
 
 _broker_settings_service = BrokerSettingsService()

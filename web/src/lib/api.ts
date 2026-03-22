@@ -959,6 +959,43 @@ export async function testTelegramNotification(): Promise<TelegramTestResult> {
   });
 }
 
+// Slack notification settings
+
+export interface SlackSettings {
+  has_webhook_url: boolean;
+  channel_name: string | null;
+  enabled: boolean;
+  updated_at: string | null;
+}
+
+export interface SlackSettingsUpsert {
+  webhook_url?: string;
+  channel_name?: string;
+  enabled: boolean;
+}
+
+export interface SlackTestResult {
+  success: boolean;
+  message: string;
+}
+
+export async function getSlackSettings(): Promise<SlackSettings> {
+  return fetchApi<SlackSettings>('/api/settings/slack');
+}
+
+export async function saveSlackSettings(payload: SlackSettingsUpsert): Promise<SlackSettings> {
+  return fetchApi<SlackSettings>('/api/settings/slack', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function testSlackNotification(): Promise<SlackTestResult> {
+  return fetchApi<SlackTestResult>('/api/settings/slack/test', {
+    method: 'POST',
+  });
+}
+
 export async function getBrokerConnectionStatus(
   broker: string
 ): Promise<BrokerConnectionStatus> {
