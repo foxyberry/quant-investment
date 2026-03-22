@@ -21,6 +21,10 @@ import {
   getTelegramSettings,
   saveTelegramSettings,
   testTelegramNotification,
+  getSlackSettings,
+  saveSlackSettings,
+  testSlackNotification,
+  type SlackSettingsUpsert,
 } from '@/lib/api';
 import type { BrokerConnectionStatus, BrokerConnectionState, TigerSettingsUpsert, IBKRSettingsUpsert, TelegramSettingsUpsert } from '@/lib/types';
 
@@ -71,6 +75,15 @@ export default function SettingsPage() {
   const [savingTelegram, setSavingTelegram] = useState(false);
   const [testingTelegram, setTestingTelegram] = useState(false);
   const [telegramMessage, setTelegramMessage] = useState<string | null>(null);
+  const [slackForm, setSlackForm] = useState<SlackSettingsUpsert>({
+    webhook_url: '',
+    channel_name: '',
+    enabled: true,
+  });
+  const [savingSlack, setSavingSlack] = useState(false);
+  const [testingSlack, setTestingSlack] = useState(false);
+  const [slackMessage, setSlackMessage] = useState<string | null>(null);
+  const [slackHasWebhookUrl, setSlackHasWebhookUrl] = useState(false);
 
   const statusTextKey: Record<BrokerConnectionState, string> = {
     connected: 'connected',
@@ -94,11 +107,12 @@ export default function SettingsPage() {
       setLoadingBrokers(true);
       setBrokerError(null);
       try {
-        const [brokerResult, tigerResult, ibkrResult, telegramResult] = await Promise.allSettled([
+        const [brokerResult, tigerResult, ibkrResult, telegramResult, slackResult] = await Promise.allSettled([
           getSettingsBrokerStatuses(),
           getTigerSettings(),
           getIbkrSettings(),
           getTelegramSettings(),
+          getSlackSettings(),
         ]);
         if (brokerResult.status === 'fulfilled') {
           setBrokers(brokerResult.value);
@@ -132,8 +146,18 @@ export default function SettingsPage() {
           }));
           setTelegramHasBotToken(tgSettings.has_bot_token);
         }
+        if (slackResult.status === 'fulfilled') {
+          const slackSettings = slackResult.value;
+          setSlackForm((prev) => ({
+            ...prev,
+            webhook_url: '',
+            channel_name: slackSettings.channel_name ?? '',
+            enabled: slackSettings.enabled,
+          }));
+          setSlackHasWebhookUrl(slackSettings.has_webhook_url);
+        }
         // Show error only if all requests failed
-        const allFailed = [brokerResult, tigerResult, ibkrResult, telegramResult].every(
+        const allFailed = [brokerResult, tigerResult, ibkrResult, telegramResult, slackResult].every(
           (r) => r.status === 'rejected'
         );
         if (allFailed) {
@@ -283,6 +307,44 @@ export default function SettingsPage() {
       setTelegramMessage(e instanceof Error ? e.message : t('testFailed'));
     } finally {
       setTestingTelegram(false);
+    }
+  };
+
+  const handleSaveSlack = async () => {
+    setSavingSlack(true);
+    setSlackMessage(null);
+    try {
+      const payload: SlackSettingsUpsert = {
+        webhook_url: slackForm.webhook_url?.trim() || undefined,
+        channel_name: slackForm.channel_name?.trim() || undefined,
+        enabled: slackForm.enabled,
+      };
+      const response = await saveSlackSettings(payload);
+      setSlackHasWebhookUrl(response.has_webhook_url);
+      setSlackForm((prev) => ({
+        ...prev,
+        webhook_url: '',
+        channel_name: response.channel_name ?? '',
+        enabled: response.enabled,
+      }));
+      setSlackMessage(t('slackSaved'));
+    } catch (e) {
+      setSlackMessage(e instanceof Error ? e.message : t('saveFailed'));
+    } finally {
+      setSavingSlack(false);
+    }
+  };
+
+  const handleTestSlack = async () => {
+    setTestingSlack(true);
+    setSlackMessage(null);
+    try {
+      const result = await testSlackNotification();
+      setSlackMessage(result.success ? t('slackTestSuccess') : result.message);
+    } catch (e) {
+      setSlackMessage(e instanceof Error ? e.message : t('testFailed'));
+    } finally {
+      setTestingSlack(false);
     }
   };
 
@@ -667,6 +729,75 @@ export default function SettingsPage() {
               className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background-secondary)] disabled:opacity-60"
             >
               {testingTelegram ? t('testing') : t('testTelegram')}
+            </button>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] p-4">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-purple-50 p-3 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400">
+              <Bell className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-[var(--foreground)]">Slack</h3>
+              <p className="mt-1 text-sm text-[var(--foreground-muted)]">Configure Slack notification delivery.</p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="text-sm text-[var(--foreground-muted)]">
+              {t('slackWebhookUrl')}
+              <input
+                type="password"
+                value={slackForm.webhook_url ?? ''}
+                onChange={(e) => setSlackForm((prev) => ({ ...prev, webhook_url: e.target.value }))}
+                placeholder={slackHasWebhookUrl ? '••••••••••••••••••••••••••••••••' : 'https://hooks.slack.com/services/...'}
+                className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+              />
+              <span className="mt-1 block text-xs text-[var(--foreground-muted)]">
+                {slackHasWebhookUrl ? t('telegramBotTokenStored') : t('telegramBotTokenMissing')}
+              </span>
+            </label>
+            <label className="text-sm text-[var(--foreground-muted)]">
+              {t('slackChannelName')}
+              <input
+                value={slackForm.channel_name ?? ''}
+                onChange={(e) => setSlackForm((prev) => ({ ...prev, channel_name: e.target.value }))}
+                placeholder="#alerts"
+                className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)]"
+              />
+            </label>
+          </div>
+
+          <label className="mt-3 flex items-center gap-2 text-sm text-[var(--foreground)]">
+            <input
+              type="checkbox"
+              checked={slackForm.enabled}
+              onChange={(e) => setSlackForm((prev) => ({ ...prev, enabled: e.target.checked }))}
+            />
+            Enabled
+          </label>
+
+          {slackMessage && (
+            <p className="mt-3 text-sm text-[var(--foreground-muted)]">{slackMessage}</p>
+          )}
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleSaveSlack}
+              disabled={savingSlack}
+              className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {savingSlack ? t('saving') : t('saveSlack')}
+            </button>
+            <button
+              type="button"
+              onClick={handleTestSlack}
+              disabled={testingSlack}
+              className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--background-secondary)] disabled:opacity-60"
+            >
+              {testingSlack ? t('testing') : t('testSlack')}
             </button>
           </div>
         </div>

@@ -20,6 +20,11 @@ from api.schemas.telegram import (
     TelegramSettingsResponse,
     TelegramTestResponse,
 )
+from api.schemas.slack import (
+    SlackSettingsRequest,
+    SlackSettingsResponse,
+    SlackTestResponse,
+)
 from api.services.broker_service import BrokerService
 from api.services.broker_settings_service import get_broker_settings_service
 
@@ -276,3 +281,52 @@ def test_telegram_notification() -> TelegramTestResponse:
         success=False,
         message="Failed to send test message. Check your bot token and chat ID.",
     )
+
+
+# ------------------------------------------------------------------
+# Slack notification settings
+# ------------------------------------------------------------------
+
+@router.get(
+    "/slack",
+    response_model=SlackSettingsResponse,
+    summary="Get Slack notification settings",
+)
+def get_slack_settings() -> SlackSettingsResponse:
+    view = _settings_service.get_slack_settings()
+    return SlackSettingsResponse(
+        has_webhook_url=view.has_webhook_url,
+        channel_name=view.channel_name,
+        enabled=view.enabled,
+        updated_at=view.updated_at,
+    )
+
+
+@router.put(
+    "/slack",
+    response_model=SlackSettingsResponse,
+    summary="Save Slack notification settings",
+)
+def save_slack_settings(request: SlackSettingsRequest) -> SlackSettingsResponse:
+    try:
+        view = _settings_service.save_slack_settings(request.model_dump())
+        return SlackSettingsResponse(
+            has_webhook_url=view.has_webhook_url,
+            channel_name=view.channel_name,
+            enabled=view.enabled,
+            updated_at=view.updated_at,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.post(
+    "/slack/test",
+    response_model=SlackTestResponse,
+    summary="Send test Slack notification",
+)
+def test_slack_notification() -> SlackTestResponse:
+    ok = _settings_service.send_slack_test()
+    if ok:
+        return SlackTestResponse(success=True, message="Test message sent to Slack")
+    return SlackTestResponse(success=False, message="Failed to send. Check webhook URL.")
