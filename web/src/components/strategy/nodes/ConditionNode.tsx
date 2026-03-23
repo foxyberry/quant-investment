@@ -3,7 +3,7 @@
 import { memo, useCallback, useState } from 'react';
 import { Handle, Position, useNodeId, useReactFlow } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import { Filter, CheckCircle2, CircleDashed, Info, Eye, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { Filter, CheckCircle2, CircleDashed, Info, Eye, ChevronDown, ChevronUp, AlertTriangle, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { getDownstreamNodeIds, type StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import type { ConditionParam } from '@/lib/strategy/conditionRegistry';
@@ -44,6 +44,7 @@ function ConditionNode({ data, selected }: NodeProps) {
   const { conditions, getConditionMeta } = useConditions();
   const { settings } = useUserSettings();
   const nodeData = data as unknown as StrategyNodeData;
+  const executionState = (nodeData as Record<string, unknown>).executionState as string | undefined;
   const meta = nodeData.condition_type
     ? getConditionMeta(nodeData.condition_type)
     : null;
@@ -130,10 +131,16 @@ function ConditionNode({ data, selected }: NodeProps) {
 
   return (
     <div
-      className={`rounded-lg bg-white dark:bg-[#1e1e1f] border min-w-[220px] transition-shadow ${
-        selected
+      className={`rounded-lg bg-white dark:bg-[#1e1e1f] border min-w-[280px] transition-all duration-300 ${
+        selected && !executionState
           ? 'border-2 border-[#1313ec] shadow-xl'
-          : 'border-[#e1e3e5] dark:border-[#2e2e30] shadow-sm hover:shadow-md'
+          : executionState === 'executing'
+            ? 'border-2 border-[#1313ec] animate-execution-pulse shadow-lg'
+            : executionState === 'completed'
+              ? 'border border-emerald-400/60 dark:border-emerald-500/40 shadow-sm'
+              : executionState === 'pending'
+                ? 'border border-dashed border-gray-300 dark:border-gray-600 opacity-50'
+                : 'border-[#e1e3e5] dark:border-[#2e2e30] shadow-sm hover:shadow-md'
       }`}
     >
       {!isInsideGroup && (
@@ -156,11 +163,15 @@ function ConditionNode({ data, selected }: NodeProps) {
       <div className="flex items-center justify-between px-3 py-2 rounded-t-[7px] bg-blue-50 dark:bg-blue-500/10 border-b border-[#e1e3e5] dark:border-[#2e2e30]">
         <div className="flex items-center gap-1.5">
           <Filter className="h-3.5 w-3.5 text-[#1313ec] dark:text-blue-400" />
-          <span className="text-[11px] font-bold text-[#1313ec] dark:text-blue-400 uppercase tracking-wider">
+          <span className="text-xs font-bold text-[#1313ec] dark:text-blue-400 uppercase tracking-wider">
             {t('screeningBadge')}
           </span>
         </div>
-        {hasParams ? (
+        {executionState === 'executing' ? (
+          <Loader2 className="h-3.5 w-3.5 text-[#1313ec] animate-spin" />
+        ) : executionState === 'completed' ? (
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+        ) : hasParams ? (
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
         ) : (
           <CircleDashed className="h-3.5 w-3.5 text-gray-300 dark:text-gray-600" />
@@ -169,17 +180,17 @@ function ConditionNode({ data, selected }: NodeProps) {
 
       {/* Content */}
       <div className="px-3 py-2.5">
-        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <div className="text-base font-semibold text-gray-900 dark:text-gray-100">
           {label}
         </div>
         {paramEntries.length > 0 && (
           <div className="mt-2 flex items-center gap-1.5 flex-wrap">
             {paramEntries.map(([k, v]) => (
               <span key={k} className="inline-flex items-center gap-1">
-                <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] text-slate-500">
+                <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[11px] text-slate-500">
                   {String(k).replace(/_/g, ' ')}
                 </span>
-                <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-[#1313ec] dark:text-blue-400 rounded text-[10px] font-bold">
+                <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-[#1313ec] dark:text-blue-400 rounded text-[11px] font-bold">
                   {String(v)}
                 </span>
               </span>
@@ -191,7 +202,7 @@ function ConditionNode({ data, selected }: NodeProps) {
       {/* Stock count funnel badge */}
       {nodeData.intermediateResult && nodeData.intermediateResult.stock_count != null && (
         <div className="px-3 pb-2 flex items-center gap-1.5 animate-in fade-in duration-300">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
             <Eye className="h-3 w-3" />
             {t('stocksRemaining', { count: nodeData.intermediateResult.stock_count.toLocaleString() })}
           </span>
