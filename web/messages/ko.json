@@ -3451,6 +3451,7 @@
     "ma20Label": "20일 중기",
     "ma60Label": "60일 장기",
     "ma120Label": "120일 초장기",
+    "ma240Label": "240일 보조지표",
     "rsiScaleOversold": "0 (과매도)",
     "rsiScaleMid": "50",
     "rsiScaleOverbought": "100 (과매수)",
