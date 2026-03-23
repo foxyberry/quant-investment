@@ -13,7 +13,7 @@ import { useTranslations } from 'next-intl';
 import type { OHLCVData } from '@/lib/types';
 
 /** MA legend label keys mapped to each config index */
-const MA_LABEL_KEYS = ['ma5Label', 'ma20Label', 'ma60Label', 'ma120Label'] as const;
+const MA_LABEL_KEYS = ['ma5Label', 'ma20Label', 'ma60Label', 'ma120Label', 'ma240Label'] as const;
 
 interface CandleChartProps {
   /** OHLCV data array */
@@ -213,14 +213,15 @@ export default function CandleChart({
   useEffect(() => {
     if (!candleSeriesRef.current || data.length === 0) return;
 
-    // Convert OHLCV data to chart format
-    const candleData: CandlestickData<Time>[] = data.map((item) => ({
-      time: item.time as Time,
-      open: item.open,
-      high: item.high,
-      low: item.low,
-      close: item.close,
-    }));
+    // Convert OHLCV data to chart format, fixing zero OHLC values
+    // Ensures candle invariant: low <= open,close <= high
+    const candleData: CandlestickData<Time>[] = data.map((item) => {
+      const close = item.close;
+      const open = item.open || close;
+      const high = item.high || Math.max(open, close);
+      const low = item.low || Math.min(open, close);
+      return { time: item.time as Time, open, high, low, close };
+    });
 
     candleSeriesRef.current.setData(candleData);
 
@@ -229,7 +230,7 @@ export default function CandleChart({
       const volumeData: HistogramData<Time>[] = data.map((item) => ({
         time: item.time as Time,
         value: item.volume || 0,
-        color: item.close >= item.open ? '#22c55e80' : '#ef444480',
+        color: item.close >= (item.open || item.close) ? '#22c55e80' : '#ef444480',
       }));
 
       volumeSeriesRef.current.setData(volumeData);

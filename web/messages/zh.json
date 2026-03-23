@@ -3451,6 +3451,7 @@
     "ma20Label": "20日 中期",
     "ma60Label": "60日 长期",
     "ma120Label": "120日 超长期",
+    "ma240Label": "240日 指标",
     "rsiScaleOversold": "0 (超卖)",
     "rsiScaleMid": "50",
     "rsiScaleOverbought": "100 (超买)",

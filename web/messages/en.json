@@ -3451,6 +3451,7 @@
     "ma20Label": "20D Mid-term",
     "ma60Label": "60D Long-term",
     "ma120Label": "120D Very long-term",
+    "ma240Label": "240D Indicators",
     "rsiScaleOversold": "0 (Oversold)",
     "rsiScaleMid": "50",
     "rsiScaleOverbought": "100 (Overbought)",
