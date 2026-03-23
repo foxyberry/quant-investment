@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Handle, Position, useNodeId, useReactFlow, useStore } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import { Building2, Eye } from 'lucide-react';
+import { Building2, CheckCircle2, Eye, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   parseUniverseSelection,
@@ -16,6 +16,7 @@ import NodeEditPopup, { FieldLabel, SelectInput } from './NodeEditPopup';
 function SectorNode({ data, selected }: NodeProps) {
   const t = useTranslations('strategy');
   const nodeData = data as unknown as StrategyNodeData;
+  const executionState = (nodeData as Record<string, unknown>).executionState as string | undefined;
   const nodeId = useNodeId()!;
   const { updateNodeData, deleteElements } = useReactFlow();
   const nodes = useStore((state) => state.nodes);
@@ -73,22 +74,34 @@ function SectorNode({ data, selected }: NodeProps) {
 
   return (
     <div
-      className={`rounded-lg bg-white dark:bg-[#1e1e1f] border min-w-[200px] transition-shadow ${
-        selected
+      className={`rounded-lg bg-white dark:bg-[#1e1e1f] border min-w-[260px] transition-all duration-300 ${
+        selected && !executionState
           ? 'border-2 border-[#1313ec] shadow-xl'
-          : 'border-[#e1e3e5] dark:border-[#2e2e30] shadow-sm hover:shadow-md'
+          : executionState === 'executing'
+            ? 'border-2 border-[#1313ec] animate-execution-pulse shadow-lg'
+            : executionState === 'completed'
+              ? 'border border-emerald-400/60 dark:border-emerald-500/40 shadow-sm'
+              : executionState === 'pending'
+                ? 'border border-dashed border-gray-300 dark:border-gray-600 opacity-50'
+                : 'border-[#e1e3e5] dark:border-[#2e2e30] shadow-sm hover:shadow-md'
       }`}
     >
       {/* Header bar */}
       <div className="px-3 py-2 border-b border-[#e1e3e5] dark:border-[#2e2e30] bg-amber-50 dark:bg-amber-900/10 rounded-t-[7px] flex items-center gap-2">
         <Building2 className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-        <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+        <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
           {t('sectorBadge')}
         </span>
+        {executionState === 'executing' && (
+          <Loader2 className="h-3.5 w-3.5 text-[#1313ec] animate-spin ml-auto" />
+        )}
+        {executionState === 'completed' && (
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 ml-auto" />
+        )}
       </div>
       {/* Content */}
       <div className="p-3">
-        <div className="text-[13px] font-bold text-gray-900 dark:text-gray-100">
+        <div className="text-base font-bold text-gray-900 dark:text-gray-100">
           {selectedSector || t('selectSector')}
         </div>
         {sectorInfo && (
@@ -108,7 +121,7 @@ function SectorNode({ data, selected }: NodeProps) {
       {/* Stock count funnel badge */}
       {nodeData.intermediateResult && nodeData.intermediateResult.stock_count != null && (
         <div className="px-3 pb-2 flex items-center gap-1.5 animate-in fade-in duration-300">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
             <Eye className="h-3 w-3" />
             {t('stocksRemaining', { count: nodeData.intermediateResult.stock_count.toLocaleString() })}
           </span>

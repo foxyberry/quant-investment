@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState, useCallback, useRef, useEffect, Fragment } from 'react';
+import { memo, useState, useMemo, useCallback, useRef, useEffect, Fragment } from 'react';
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -247,6 +247,7 @@ function StockListPopup({
 function LabeledEdge({
   id: _id,
   source,
+  target,
   sourceX,
   sourceY,
   targetX,
@@ -273,11 +274,20 @@ function LabeledEdge({
     offset: isOutputEdge ? 36 : 28,
   });
 
-  // Reactively subscribe to source node data so edge re-renders when results arrive
+  // Reactively subscribe to source and target node data
   const sourceNodeData = useNodesData(source);
+  const targetNodeData = useNodesData(target);
   const sourceData = sourceNodeData?.data as unknown as StrategyNodeData | undefined;
+  const targetData = targetNodeData?.data as unknown as StrategyNodeData | undefined;
   const intermediateResult = sourceData?.intermediateResult;
   const stockCount = intermediateResult?.stock_count;
+
+  // Derive edge execution state from source/target node states
+  const sourceExecState = (sourceData as Record<string, unknown> | undefined)?.executionState as string | undefined;
+  const targetExecState = (targetData as Record<string, unknown> | undefined)?.executionState as string | undefined;
+  const isFlowing = sourceExecState === 'completed' && targetExecState === 'executing';
+  const isCompleted = sourceExecState === 'completed' && targetExecState === 'completed';
+  const isPending = targetExecState === 'pending';
 
   const handleToggleStockList = useCallback(() => {
     setShowStockList((prev) => !prev);
@@ -287,9 +297,47 @@ function LabeledEdge({
     setShowStockList(false);
   }, []);
 
+  // Compute edge style based on execution state
+  const edgeStyle = useMemo(() => {
+    const base = { ...style };
+    if (isFlowing) {
+      return {
+        ...base,
+        stroke: '#1313ec',
+        strokeWidth: 2.5,
+        strokeDasharray: '6 4',
+        opacity: 1,
+      };
+    }
+    if (isCompleted) {
+      return {
+        ...base,
+        stroke: '#10b981',
+        strokeWidth: 2.5,
+        strokeDasharray: 'none',
+        opacity: 0.8,
+      };
+    }
+    if (isPending) {
+      return {
+        ...base,
+        stroke: '#6b7280',
+        strokeWidth: 1.5,
+        strokeDasharray: '4 4',
+        opacity: 0.3,
+      };
+    }
+    return base;
+  }, [style, isFlowing, isCompleted, isPending]);
+
   return (
     <>
-      <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+      <BaseEdge
+        path={edgePath}
+        markerEnd={markerEnd}
+        style={edgeStyle}
+        className={isFlowing ? 'animate-flow-dash' : ''}
+      />
       <EdgeLabelRenderer>
         <div
           className="nodrag nopan absolute"
@@ -301,7 +349,7 @@ function LabeledEdge({
           {stockCount !== undefined ? (
             <div className="relative flex items-center gap-1">
               <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm ${
+                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full shadow-sm ${
                   isOutputEdge
                     ? 'bg-[#1313ec] text-white border border-[#1313ec]'
                     : 'bg-white dark:bg-[#1e1e1f] text-[#1313ec] dark:text-blue-400 border border-[#e1e3e5] dark:border-[#2e2e30]'

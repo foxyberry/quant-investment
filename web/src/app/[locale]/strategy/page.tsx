@@ -45,6 +45,7 @@ import StrategyPipelineBadge from '@/components/strategy/StrategyPipelineBadge';
 import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph, getDownstreamNodeIds } from '@/lib/strategy/graphSerializer';
+import { computeExecutionOrder, deriveNodeStates } from '@/lib/strategy/executionState';
 import { validateGraph } from '@/lib/strategy/graphValidator';
 import { SAMPLE_STRATEGY_PRESETS, PRESET_CATEGORY_ORDER, type SampleStrategyPreset, type PresetCategory } from '@/lib/strategy/sampleStrategies';
 import { ConditionsProvider, useConditions } from '@/contexts/ConditionsContext';
@@ -89,16 +90,16 @@ type LayoutNodeData = {
 function estimateNodeSize(node: { data: LayoutNodeData }): { width: number; height: number } {
   const data = node.data;
   if (data.node_type === 'universe') {
-    return { width: 340, height: 92 };
+    return { width: 380, height: 110 };
   }
   if (data.node_type === 'sector') {
-    return { width: 300, height: 92 };
+    return { width: 340, height: 110 };
   }
   if (data.node_type === 'logic') {
     return { width: GROUP_MIN_WIDTH, height: GROUP_MIN_HEIGHT };
   }
   if (data.node_type === 'output') {
-    return { width: 220, height: 84 };
+    return { width: 280, height: 100 };
   }
 
   // condition node
@@ -405,6 +406,7 @@ function StrategyPageInner() {
   const [showMiniMap, setShowMiniMap] = useState(true);
   const [showPalette, setShowPalette] = useState(true);
   const streamAbortRef = useRef<{ abort: () => void } | null>(null);
+  const executionOrderRef = useRef<string[]>([]);
 
   // Restore from sessionStorage after mount (locale-switch persistence)
   // Uses setTimeout guard so the save effect doesn't overwrite sessionStorage
@@ -1134,22 +1136,74 @@ function StrategyPageInner() {
     [onNodesChange, setNodes, setEdges]
   );
 
+  // Clear execution state from all nodes
+  const clearExecutionState = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) => {
+        const nd = n.data as Record<string, unknown>;
+        if (nd.executionState === undefined) return n;
+        const { executionState: _, ...rest } = nd;
+        return { ...n, data: rest };
+      })
+    );
+    executionOrderRef.current = [];
+  }, [setNodes]);
+
+  // Apply execution states to nodes based on progress
+  const applyExecutionStates = useCallback(
+    (states: Map<string, string>) => {
+      setNodes((nds) =>
+        nds.map((n) => {
+          const newState = states.get(n.id);
+          // Group children inherit parent's state
+          const parentState = n.parentId ? states.get(n.parentId) : undefined;
+          const effectiveState = newState ?? parentState;
+          const nd = n.data as Record<string, unknown>;
+          if (nd.executionState === effectiveState) return n;
+          return { ...n, data: { ...nd, executionState: effectiveState } };
+        })
+      );
+    },
+    [setNodes]
+  );
+
   const handleRun = useCallback(() => {
     setErrors([]);
     setResults(null);
+    setNodeResults(null);
     setDeployProgress(0);
     setProgressDetail(null);
     setStreamStatus('running');
+
+    // Clear previous run's intermediate results from all nodes
+    setNodes((nds) =>
+      nds.map((n) => {
+        const nd = n.data as Record<string, unknown>;
+        if (nd.intermediateResult === undefined && nd.resultCount === undefined) return n;
+        const { intermediateResult: _ir, resultCount: _rc, ...rest } = nd;
+        return { ...n, data: rest };
+      })
+    );
 
     const typedNodes = nodes as unknown as Node<StrategyNodeData>[];
     const validation = validateGraph(typedNodes, edges);
     if (!validation.valid) {
       setErrors(validation.errors);
       setStreamStatus('idle');
+      clearExecutionState();
       return;
     }
 
     const graph = serializeGraph(typedNodes, edges);
+
+    // Compute execution order and set all nodes to 'pending'
+    const order = computeExecutionOrder(typedNodes, edges);
+    executionOrderRef.current = order;
+    const initialStates = new Map<string, string>();
+    for (const id of order) {
+      initialStates.set(id, 'pending');
+    }
+    applyExecutionStates(initialStates);
 
     // Abort any previous stream
     streamAbortRef.current?.abort();
@@ -1212,17 +1266,29 @@ function StrategyPageInner() {
           total: event.total_tickers,
           matched: event.matched_count,
         });
+        // Update per-node execution states based on progress
+        const states = deriveNodeStates(executionOrderRef.current, event.progress_pct);
+        applyExecutionStates(states);
       },
-      onResult: handleResult,
+      onResult: (data) => {
+        // Mark all nodes as completed before processing results
+        const completedStates = new Map<string, string>();
+        for (const id of executionOrderRef.current) {
+          completedStates.set(id, 'completed');
+        }
+        applyExecutionStates(completedStates);
+        handleResult(data);
+      },
       onError: (errorMsg) => {
         setStreamStatus('error');
         setErrors([errorMsg]);
+        clearExecutionState();
         showToast(t('deployError'), 'error');
       },
     });
 
     streamAbortRef.current = stream;
-  }, [nodes, edges, setNodes, currentStrategyId, strategyName, showToast, t]);
+  }, [nodes, edges, setNodes, currentStrategyId, strategyName, showToast, t, clearExecutionState, applyExecutionStates]);
 
   const handleClear = useCallback(() => {
     setNodes(initialNodes);
@@ -1231,12 +1297,13 @@ function StrategyPageInner() {
     setResults(null);
     setNodeResults(null);
     setErrors([]);
+    clearExecutionState();
     setStrategyName('');
     setStrategyDescription('');
     setCurrentStrategyId(null);
     setCurrentStrategyStatus(null);
     setIsSampleStrategy(false);
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, clearExecutionState]);
 
   const handleAutoLayout = useCallback((direction: 'horizontal' | 'vertical' | 'zigzag') => {
     const topLevelNodes = nodes.filter((n) => !n.parentId);

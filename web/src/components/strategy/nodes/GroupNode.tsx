@@ -3,7 +3,7 @@
 import { memo, useMemo, useCallback } from 'react';
 import { Handle, NodeResizer, Position, useReactFlow, useNodeId } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import { GitMerge } from 'lucide-react';
+import { GitMerge, Loader2, CheckCircle2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import NodeEditPopup, { FieldLabel, MatchedCountBadge, SelectInput } from './NodeEditPopup';
@@ -86,6 +86,7 @@ function GroupNode({ id, data, selected }: NodeProps) {
   const connectorStyle = CONNECTOR_STYLES[op] || CONNECTOR_STYLES.and;
   const resizerColor = OPERATOR_RESIZER_COLORS[op] || OPERATOR_RESIZER_COLORS.and;
   const intermediateResult = nodeData.intermediateResult;
+  const executionState = (nodeData as Record<string, unknown>).executionState as string | undefined;
 
   const nodeId = useNodeId()!;
   const { getNodes, updateNodeData, deleteElements } = useReactFlow();
@@ -116,10 +117,16 @@ function GroupNode({ id, data, selected }: NodeProps) {
 
   return (
     <div
-      className={`relative rounded-2xl border ${style.border} ${style.bg} transition-shadow ${
-        selected
-          ? 'shadow-xl ring-2 ring-[#1313ec]/20'
-          : 'shadow-sm hover:shadow-md'
+      className={`relative rounded-2xl border ${style.border} ${style.bg} transition-all duration-300 ${
+        executionState === 'executing'
+          ? 'animate-execution-pulse shadow-lg ring-2 ring-[#1313ec]/30'
+          : executionState === 'completed'
+            ? 'ring-1 ring-emerald-400/40 shadow-sm'
+            : executionState === 'pending'
+              ? 'opacity-50'
+              : selected
+                ? 'shadow-xl ring-2 ring-[#1313ec]/20'
+                : 'shadow-sm hover:shadow-md'
       }`}
       style={{ width: '100%', height: '100%', minWidth: 380, minHeight: dynamicMinHeight }}
       onDragOver={(e) => e.preventDefault()}
@@ -145,9 +152,15 @@ function GroupNode({ id, data, selected }: NodeProps) {
           <span className="text-[11px] font-bold text-white uppercase tracking-wider">
             {t(titleKey)}
           </span>
-          <span className={`ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${style.badge}`}>
-            {t(labelKey)}
-          </span>
+          {executionState === 'executing' ? (
+            <Loader2 className="ml-auto h-3.5 w-3.5 text-white animate-spin" />
+          ) : executionState === 'completed' ? (
+            <CheckCircle2 className="ml-auto h-3.5 w-3.5 text-emerald-300" />
+          ) : (
+            <span className={`ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${style.badge}`}>
+              {t(labelKey)}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           <p className="text-[11px] text-white/60">
