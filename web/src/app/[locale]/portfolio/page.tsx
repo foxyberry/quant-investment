@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download, Search, History, CheckSquare, X } from 'lucide-react';
+import { Plus, RefreshCw, TrendingUp, TrendingDown, DollarSign, PieChart, Upload, Download, Search, History, CheckSquare, X, Archive, Trash2, MessageCircle } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import {
   HoldingsTable,
@@ -17,6 +17,8 @@ import {
   SellRuleModal,
   TradeHistory,
   AllocationCharts,
+  ArchiveModal,
+  ChatPanel,
 } from '@/components/portfolio';
 import { normalizeSector, classifyMarket } from '@/components/portfolio/AllocationCharts';
 import {
@@ -30,6 +32,8 @@ import {
   exportHoldingsCsv,
   getSellRulePresets,
   bulkApplyPreset,
+  clearPortfolioCache,
+  deleteAllHoldings,
 } from '@/lib/api';
 import type { Holding, HoldingCreate, HoldingUpdate, AdditionalPurchaseRequest, PortfolioSummary, SellSignal, SellRulePreset } from '@/lib/types';
 import { formatCurrency as formatCurrencyUtil, formatPercent as formatPercentUtil } from '@/lib/format';
@@ -114,6 +118,9 @@ export default function PortfolioPage() {
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isCacheClearing, setIsCacheClearing] = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Modal state
@@ -133,6 +140,12 @@ export default function PortfolioPage() {
 
   // Trade history section state
   const [isTradeHistoryOpen, setIsTradeHistoryOpen] = useState(false);
+
+  // Archive modal state
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+
+  // AI Chat panel state
+  const [showChatPanel, setShowChatPanel] = useState(false);
 
   // Bulk mode state
   const [bulkMode, setBulkMode] = useState(false);
@@ -354,6 +367,27 @@ export default function PortfolioPage() {
       setIsRefreshing(false);
     }
   }, [settings.baseCurrency]);
+
+  const handleDeleteAll = useCallback(async () => {
+    setIsDeletingAll(true);
+    try {
+      await deleteAllHoldings();
+      await fetchData(false);
+      setShowDeleteAllConfirm(false);
+    } finally {
+      setIsDeletingAll(false);
+    }
+  }, [fetchData]);
+
+  const handleForceRefresh = useCallback(async () => {
+    setIsCacheClearing(true);
+    try {
+      await clearPortfolioCache();
+      await fetchData(false);
+    } finally {
+      setIsCacheClearing(false);
+    }
+  }, [fetchData]);
 
   // Initial data fetch
   useEffect(() => {
@@ -647,7 +681,9 @@ export default function PortfolioPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-0 items-start gap-4">
+    {/* Main portfolio content */}
+    <div className="flex-1 min-w-0 space-y-6">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -709,10 +745,29 @@ export default function PortfolioPage() {
           <Button
             variant="outline"
             onClick={() => fetchData(false)}
-            disabled={isRefreshing}
+            disabled={isRefreshing || isCacheClearing}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             {t('refresh')}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleForceRefresh}
+            disabled={isRefreshing || isCacheClearing}
+            title="캐시를 초기화하고 최신 시세를 새로 받아옵니다"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isCacheClearing ? 'animate-spin' : ''}`} />
+            강제 새로고침
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowDeleteAllConfirm(true)}
+            disabled={isDeletingAll}
+            className="text-red-600 hover:text-red-700 hover:border-red-400 dark:text-red-400"
+            title="전체 보유 종목 삭제"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            전체 삭제
           </Button>
           <Button
             variant="outline"
@@ -736,6 +791,10 @@ export default function PortfolioPage() {
             <Download className="h-4 w-4 mr-2" />
             {t('exportCsv')}
           </Button>
+          <Button variant="outline" onClick={() => setShowArchiveModal(true)}>
+            <Archive className="h-4 w-4 mr-2" />
+            아카이브
+          </Button>
           {!bulkMode ? (
             <Button variant="outline" onClick={handleEnterBulkMode} disabled={holdings.length === 0}>
               <CheckSquare className="h-4 w-4 mr-2" />
@@ -747,6 +806,15 @@ export default function PortfolioPage() {
               {t('bulkExitSelectMode')}
             </Button>
           )}
+          <Button
+            variant="outline"
+            onClick={() => setShowChatPanel((prev) => !prev)}
+            aria-pressed={showChatPanel}
+            title="AI 어시스턴트 열기"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            AI 어시스턴트
+          </Button>
           <Button variant="primary" onClick={() => setIsAddModalOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             {t('addHolding')}
@@ -1043,6 +1111,54 @@ export default function PortfolioPage() {
         />
       )}
 
+      {/* Archive Modal */}
+      <ArchiveModal
+        open={showArchiveModal}
+        onClose={() => setShowArchiveModal(false)}
+        onHoldingsCleared={() => fetchData(false)}
+      />
+
+      {/* Delete All Confirm Dialog */}
+      {showDeleteAllConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-6 shadow-xl w-full max-w-sm mx-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Trash2 className="h-5 w-5 text-red-500 shrink-0" />
+              <h2 className="text-base font-semibold text-[var(--foreground)]">전체 종목 삭제</h2>
+            </div>
+            <p className="text-sm text-[var(--foreground-muted)] mb-5">
+              보유 중인 종목 전체와 매도 규칙이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteAllConfirm(false)}
+                disabled={isDeletingAll}
+                className="flex-1"
+              >
+                취소
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleDeleteAll}
+                isLoading={isDeletingAll}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white border-red-600"
+              >
+                삭제
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>{/* end main content */}
+
+      {/* AI Chat Panel */}
+      {showChatPanel && (
+        <div className="sticky top-4 self-start">
+          <ChatPanel open={showChatPanel} onClose={() => setShowChatPanel(false)} />
+        </div>
+      )}
     </div>
   );
 }

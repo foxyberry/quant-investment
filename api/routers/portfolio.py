@@ -17,6 +17,9 @@ from fastapi.responses import StreamingResponse
 from api.schemas.portfolio import (
     AdditionalPurchaseRequest,
     ApplyPresetToHolding,
+    ArchiveCreate,
+    ArchiveDetailResponse,
+    ArchiveSummary,
     BulkApplyPresetRequest,
     BulkApplyPresetResponse,
     CsvImportResponse,
@@ -842,3 +845,115 @@ async def get_trade_history(
     except Exception as e:
         logger.error(f"Failed to get trade history: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get trade history: {str(e)}")
+
+
+# ── Bulk delete ───────────────────────────────────────────────────
+
+
+@router.delete(
+    "/holdings",
+    status_code=204,
+    summary="Delete All Holdings",
+    description="Remove all holdings and their sell rules.",
+)
+async def delete_all_holdings() -> None:
+    service = get_portfolio_service()
+    try:
+        service.delete_all_holdings()
+    except Exception as e:
+        logger.error(f"Failed to delete all holdings: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete all holdings: {str(e)}")
+
+
+# ── Cache ─────────────────────────────────────────────────────────
+
+
+@router.post(
+    "/cache/clear",
+    status_code=204,
+    summary="Clear Price Cache",
+    description="Evict all in-memory price cache entries so the next request fetches fresh data.",
+)
+async def clear_price_cache() -> None:
+    service = get_portfolio_service()
+    service._price_cache.clear()
+    service._change_cache.clear()
+
+
+# ── Portfolio Archives ─────────────────────────────────────────────
+
+
+@router.post(
+    "/archives",
+    response_model=ArchiveDetailResponse,
+    status_code=201,
+    summary="Create Portfolio Archive",
+    description="Snapshot current holdings into a named archive for later comparison.",
+)
+async def create_archive(data: ArchiveCreate) -> ArchiveDetailResponse:
+    service = get_portfolio_service()
+    try:
+        return service.create_archive(data)
+    except Exception as e:
+        logger.error(f"Failed to create archive: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create archive: {str(e)}")
+
+
+@router.get(
+    "/archives",
+    response_model=List[ArchiveSummary],
+    summary="List Portfolio Archives",
+    description="Return all portfolio archives ordered by most recent first.",
+)
+async def list_archives() -> List[ArchiveSummary]:
+    service = get_portfolio_service()
+    try:
+        return service.list_archives()
+    except Exception as e:
+        logger.error(f"Failed to list archives: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list archives: {str(e)}")
+
+
+@router.get(
+    "/archives/{archive_id}",
+    response_model=ArchiveDetailResponse,
+    summary="Get Portfolio Archive",
+    description="Return a single archive with all holdings. Pass with_prices=true to include current prices and P&L.",
+)
+async def get_archive(
+    archive_id: int,
+    with_prices: bool = Query(
+        default=False,
+        description="Fetch live prices and compute pnl_pct for each item",
+    ),
+) -> ArchiveDetailResponse:
+    service = get_portfolio_service()
+    try:
+        result = service.get_archive(archive_id, with_prices=with_prices)
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Archive not found: {archive_id}")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get archive {archive_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get archive: {str(e)}")
+
+
+@router.delete(
+    "/archives/{archive_id}",
+    status_code=204,
+    summary="Delete Portfolio Archive",
+    description="Delete an archive and all its items.",
+)
+async def delete_archive(archive_id: int) -> None:
+    service = get_portfolio_service()
+    try:
+        success = service.delete_archive(archive_id)
+        if not success:
+            raise HTTPException(status_code=404, detail=f"Archive not found: {archive_id}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete archive {archive_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete archive: {str(e)}")

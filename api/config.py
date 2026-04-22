@@ -5,7 +5,7 @@ Manages environment variables and application settings.
 """
 
 from functools import lru_cache
-from typing import List
+from typing import List, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     # Application metadata (애플리케이션 메타데이터)
     app_name: str = "Quant Investment API"
     app_version: str = "0.1.0"
+
+    # Anthropic API key for portfolio chatbot (포트폴리오 챗봇용 Anthropic API 키)
+    anthropic_api_key: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

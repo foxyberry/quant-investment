@@ -837,3 +837,28 @@ export interface BuySignal {
   currency: string | null;
   rule_id: number | null;
 }
+
+// Portfolio Archive types
+export interface ArchiveSummary {
+  id: number;
+  name: string;
+  description?: string | null;
+  archived_at: string;
+  total_holdings: number;
+}
+
+export interface ArchiveItemResponse {
+  ticker: string;
+  name?: string | null;
+  quantity: number;
+  avg_price: number;
+  currency: string;
+  bought_at?: string | null;
+  sector?: string | null;
+  current_price?: number | null;
+  pnl_pct?: number | null;
+}
+
+export interface ArchiveDetailResponse extends ArchiveSummary {
+  items: ArchiveItemResponse[];
+}

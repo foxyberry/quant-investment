@@ -219,7 +219,7 @@ class OHLCVCache:
             return None
         try:
             stock = yf.Ticker(ticker)
-            data = stock.history(period=f"{days}d")
+            data = stock.history(period=f"{days}d", auto_adjust=False)
 
             if data.empty:
                 return None

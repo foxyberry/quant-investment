@@ -55,6 +55,8 @@ import type {
   SellRuleEvaluateResult,
   SellRulePreset,
   OHLCVData,
+  ArchiveSummary,
+  ArchiveDetailResponse,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
@@ -1695,4 +1697,102 @@ export async function runOptimize(request: OptimizeRequest): Promise<OptimizeRes
     method: 'POST',
     body: JSON.stringify(request),
   });
+}
+
+// ── Portfolio Archives ──────────────────────────────────────────────────────
+
+/**
+ * Create a new portfolio archive (snapshot of current holdings)
+ */
+export async function createPortfolioArchive(data: { name: string; description?: string; clear_after?: boolean }): Promise<ArchiveDetailResponse> {
+  return fetchApi<ArchiveDetailResponse>('/api/portfolio/archives', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * List all portfolio archives
+ */
+export async function listPortfolioArchives(): Promise<ArchiveSummary[]> {
+  return fetchApi<ArchiveSummary[]>('/api/portfolio/archives');
+}
+
+/**
+ * Get a single portfolio archive by ID
+ */
+export async function getPortfolioArchive(id: number, withPrices = false): Promise<ArchiveDetailResponse> {
+  return fetchApi<ArchiveDetailResponse>(`/api/portfolio/archives/${id}?with_prices=${withPrices}`);
+}
+
+/**
+ * Delete a portfolio archive by ID
+ */
+export async function deletePortfolioArchive(id: number): Promise<void> {
+  return fetchApi<void>(`/api/portfolio/archives/${id}`, { method: 'DELETE' });
+}
+
+export async function clearPortfolioCache(): Promise<void> {
+  return fetchApi<void>('/api/portfolio/cache/clear', { method: 'POST' });
+}
+
+export async function deleteAllHoldings(): Promise<void> {
+  return fetchApi<void>('/api/portfolio/holdings', { method: 'DELETE' });
+}
+
+// ── Portfolio AI Chat ────────────────────────────────────────────────────────
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ChatStreamEvent {
+  type: string;
+  content?: string;
+  name?: string;
+  input?: unknown;
+  message?: string;
+}
+
+/**
+ * Stream portfolio AI chat responses via SSE.
+ * Yields parsed event objects until the stream ends.
+ * Pass an AbortSignal to cancel mid-stream (e.g. when the panel closes).
+ */
+export async function* streamPortfolioChat(
+  messages: ChatMessage[],
+  includePortfolio = true,
+  signal?: AbortSignal,
+): AsyncGenerator<ChatStreamEvent> {
+  const res = await fetch(`${API_BASE_URL}/api/chat/portfolio`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, include_portfolio: includePortfolio }),
+    signal,
+  });
+  if (!res.ok) {
+    // Surface server-side detail (e.g. 503 "ANTHROPIC_API_KEY가 설정되지 않았습니다")
+    let detail = '';
+    try { detail = (await res.json()).detail ?? ''; } catch { /* ignore */ }
+    throw new Error(detail || `Chat error: ${res.status}`);
+  }
+  if (!res.body) throw new Error('No response body from chat endpoint');
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split(/\r?\n/);
+    buffer = lines.pop() ?? '';
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          yield JSON.parse(line.slice(6)) as ChatStreamEvent;
+        } catch { /* skip malformed events */ }
+      }
+    }
+  }
 }

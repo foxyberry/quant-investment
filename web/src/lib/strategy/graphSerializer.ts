@@ -67,6 +67,7 @@ export interface StrategyEdge {
 }
 
 export interface StrategyGraph {
+  markets?: string[];
   nodes: StrategyNode[];
   edges: StrategyEdge[];
 }
@@ -107,7 +108,13 @@ export function serializeGraph(
     }
   }
 
+  const universeNode = nodes.find((n) => n.data.node_type === 'universe');
+  const markets = universeNode?.data.universe
+    ? parseUniverseSelection(universeNode.data.universe)
+    : ['KOSPI'];
+
   return {
+    markets,
     nodes: nodes.map((n) => ({
       id: n.id,
       data: {
