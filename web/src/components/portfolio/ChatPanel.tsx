@@ -186,10 +186,10 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   }, []);
 
-  /** Build history for API from display messages (skip initial greeting) */
+  /** Build history for API from display messages (skip greeting + empty bubbles) */
   const buildHistory = useCallback((displayMsgs: DisplayMessage[]): ChatMessage[] => {
     return displayMsgs
-      .filter((m) => m.id !== 0)
+      .filter((m) => m.id !== 0 && m.content.trim() !== '')
       .map((m) => ({ role: m.role, content: m.content }));
   }, []);
 
@@ -241,6 +241,10 @@ export default function ChatPanel({ open, onClose }: ChatPanelProps) {
         } else if (event.type === 'error' && event.message) {
           setError(event.message);
           setActiveTool(null);
+          // Remove empty assistant bubble so it doesn't pollute history on retry
+          setMessages((prev) =>
+            prev.filter((m) => !(m.id === assistantMsg.id && m.content === ''))
+          );
         } else if (event.type === 'done') {
           setActiveTool(null);
         }

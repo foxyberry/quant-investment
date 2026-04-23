@@ -1772,9 +1772,15 @@ export async function* streamPortfolioChat(
     signal,
   });
   if (!res.ok) {
-    // Surface server-side detail (e.g. 503 "ANTHROPIC_API_KEY가 설정되지 않았습니다")
+    // Surface server-side detail — detail may be a string (HTTPException) or
+    // an array of objects (Pydantic 422), so always stringify it.
     let detail = '';
-    try { detail = (await res.json()).detail ?? ''; } catch { /* ignore */ }
+    try {
+      const body = await res.json();
+      detail = typeof body.detail === 'string'
+        ? body.detail
+        : JSON.stringify(body.detail ?? '');
+    } catch { /* ignore */ }
     throw new Error(detail || `Chat error: ${res.status}`);
   }
   if (!res.body) throw new Error('No response body from chat endpoint');
