@@ -600,13 +600,13 @@ class PortfolioService:
         if with_prices and holdings_dicts:
             tickers = [h["ticker"] for h in holdings_dicts]
 
-            # Run price and change enrichment in parallel (sector is now in DB).
-            f_prices = self._executor.submit(self._get_current_prices, tickers)
-            f_changes = self._executor.submit(self._get_daily_changes, tickers)
-
-            prices = f_prices.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
+            # Prices first (warms the OHLCV parquet cache), then changes.
+            # Running them in parallel caused a race: _get_daily_changes would
+            # read the cache before _get_current_prices had finished writing it,
+            # resulting in null change_pct for most holdings.
+            prices = self._get_current_prices(tickers)
             try:
-                changes = f_changes.result(timeout=ENRICHMENT_TIMEOUT_SECONDS)
+                changes = self._get_daily_changes(tickers)
             except Exception as e:
                 logger.warning(f"Daily change enrichment failed: {e}")
 
