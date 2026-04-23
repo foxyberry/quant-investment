@@ -871,13 +871,17 @@ async def delete_all_holdings() -> None:
 @router.post(
     "/cache/clear",
     status_code=204,
-    summary="Clear Price Cache",
-    description="Evict all in-memory price cache entries so the next request fetches fresh data.",
+    summary="Force Refresh Prices",
+    description=(
+        "Force-fetch fresh prices from yfinance/pykrx for all held tickers, "
+        "bypassing both the in-memory TTL cache and the on-disk parquet cache."
+    ),
 )
 async def clear_price_cache() -> None:
     service = get_portfolio_service()
-    service._price_cache.clear()
-    service._change_cache.clear()
+    holdings = service.get_all_holdings(with_prices=False)
+    tickers = [h.ticker for h in holdings]
+    await asyncio.to_thread(service.force_refresh_prices, tickers)
 
 
 # ── Portfolio Archives ─────────────────────────────────────────────

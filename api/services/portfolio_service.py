@@ -2103,6 +2103,37 @@ class PortfolioService:
             db.close()
 
 
+    def force_refresh_prices(self, tickers: List[str]) -> None:
+        """
+        Force-fetch fresh prices from source (yfinance/pykrx), bypassing all caches.
+
+        Clears the in-memory TTL caches and also invalidates the OHLCVCache
+        in-memory metadata so that the next get() call re-fetches parquet from
+        the network even if the parquet file was written today.
+        """
+        if not tickers:
+            return
+
+        self._price_cache.clear()
+        self._change_cache.clear()
+
+        # Invalidate OHLCVCache in-memory metadata so _is_cache_fresh() re-reads
+        # from disk and force_refresh=True actually hits the network.
+        with self._cache._meta_lock:
+            self._cache._latest_date_cache.clear()
+
+        # Parallel force-refresh: writes fresh data to parquet for each ticker
+        futures = {
+            self._executor.submit(self._cache.get, ticker, 5, True): ticker
+            for ticker in tickers
+        }
+        for future in as_completed(futures):
+            ticker = futures[future]
+            try:
+                future.result()
+            except Exception as e:
+                logger.warning(f"Force refresh failed for {ticker}: {e}")
+
     def delete_all_holdings(self) -> None:
         """Remove all holdings and their associated sell rules."""
         db = SessionLocal()
