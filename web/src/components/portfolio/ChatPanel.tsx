@@ -39,12 +39,14 @@ function renderMarkdown(text: string): React.ReactNode[] {
   const lines = text.split('\n');
   const result: React.ReactNode[] = [];
   let listItems: React.ReactNode[] = [];
+  let tableRows: string[][] = [];
+  let tableHeader: string[] | null = null;
   let nodeKey = 0;
 
   const flushList = () => {
     if (listItems.length > 0) {
       result.push(
-        <ul key={`ul-${nodeKey++}`} className="my-1 ml-4 list-disc space-y-0.5">
+        <ul key={`ul-${nodeKey++}`} className="my-1.5 ml-4 list-disc space-y-0.5 text-sm">
           {listItems}
         </ul>
       );
@@ -52,9 +54,40 @@ function renderMarkdown(text: string): React.ReactNode[] {
     }
   };
 
+  const flushTable = () => {
+    if (tableHeader && tableRows.length > 0) {
+      result.push(
+        <div key={`tbl-${nodeKey++}`} className="my-2 overflow-x-auto rounded-lg border border-[var(--border)]">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-[var(--border)] bg-[var(--background)]">
+                {tableHeader.map((cell, i) => (
+                  <th key={i} className="px-3 py-1.5 text-left font-semibold text-[var(--foreground-muted)]">
+                    {parseInline(cell.trim(), nodeKey * 100 + i)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.map((row, ri) => (
+                <tr key={ri} className={ri % 2 === 0 ? '' : 'bg-[var(--background)]'}>
+                  {row.map((cell, ci) => (
+                    <td key={ci} className="px-3 py-1.5 text-[var(--foreground)]">
+                      {parseInline(cell.trim(), nodeKey * 100 + ri * 10 + ci)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    tableHeader = null;
+    tableRows = [];
+  };
+
   const parseInline = (raw: string, key: number): React.ReactNode => {
-    // Bold: **text** or __text__
-    // Italic: *text* or _text_
     const parts: React.ReactNode[] = [];
     const regex = /(\*\*|__)(.+?)\1|(\*|_)(.+?)\3/g;
     let last = 0;
@@ -65,7 +98,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
         parts.push(<span key={`${key}-t${idx++}`}>{raw.slice(last, m.index)}</span>);
       }
       if (m[1]) {
-        parts.push(<strong key={`${key}-b${idx++}`}>{m[2]}</strong>);
+        parts.push(<strong key={`${key}-b${idx++}`} className="font-semibold">{m[2]}</strong>);
       } else {
         parts.push(<em key={`${key}-i${idx++}`}>{m[4]}</em>);
       }
@@ -77,25 +110,94 @@ function renderMarkdown(text: string): React.ReactNode[] {
     return parts.length === 1 ? parts[0] : <>{parts}</>;
   };
 
-  for (const line of lines) {
-    const listMatch = line.match(/^[-*]\s+(.*)/);
+  const parseTableCells = (line: string) =>
+    line.replace(/^\||\|$/g, '').split('|');
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Heading: ## or ###
+    const headingMatch = trimmed.match(/^(#{1,3})\s+(.*)/);
+    if (headingMatch) {
+      flushList(); flushTable();
+      const level = headingMatch[1].length;
+      const content = headingMatch[2];
+      const cls = level === 1
+        ? 'mt-3 mb-1 text-base font-bold text-[var(--foreground)] border-b border-[var(--border)] pb-1'
+        : level === 2
+        ? 'mt-2.5 mb-1 text-sm font-bold text-[var(--foreground)]'
+        : 'mt-2 mb-0.5 text-xs font-semibold text-[var(--foreground-muted)] uppercase tracking-wide';
+      result.push(
+        <p key={`h${level}-${nodeKey}`} className={cls}>
+          {parseInline(content, nodeKey)}
+        </p>
+      );
+      nodeKey++;
+      continue;
+    }
+
+    // Horizontal rule: --- or ***
+    if (/^[-*]{3,}$/.test(trimmed)) {
+      flushList(); flushTable();
+      result.push(<hr key={`hr-${nodeKey++}`} className="my-2 border-[var(--border)]" />);
+      continue;
+    }
+
+    // Blockquote: > text
+    const bqMatch = trimmed.match(/^>\s*(.*)/);
+    if (bqMatch) {
+      flushList(); flushTable();
+      result.push(
+        <blockquote key={`bq-${nodeKey}`} className="my-1 border-l-2 border-[var(--color-primary)] pl-3 text-sm text-[var(--foreground-muted)] italic">
+          {parseInline(bqMatch[1], nodeKey)}
+        </blockquote>
+      );
+      nodeKey++;
+      continue;
+    }
+
+    // Table row: | ... |
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      flushList();
+      // Separator row: |---|---|
+      if (/^\|[-| :]+\|$/.test(trimmed)) continue;
+      const cells = parseTableCells(trimmed);
+      if (tableHeader === null) {
+        tableHeader = cells;
+      } else {
+        tableRows.push(cells);
+      }
+      continue;
+    } else {
+      flushTable();
+    }
+
+    // List item: - or *
+    const listMatch = trimmed.match(/^[-*]\s+(.*)/);
     if (listMatch) {
       listItems.push(
         <li key={`li-${nodeKey}`}>{parseInline(listMatch[1], nodeKey)}</li>
       );
       nodeKey++;
+      continue;
+    }
+
+    flushList();
+    if (trimmed === '') {
+      result.push(<div key={`sp-${nodeKey++}`} className="h-1" />);
     } else {
-      flushList();
-      if (line.trim() === '') {
-        result.push(<br key={`br-${nodeKey++}`} />);
-      } else {
-        result.push(<p key={`p-${nodeKey}`}>{parseInline(line, nodeKey)}</p>);
-        nodeKey++;
-      }
+      result.push(
+        <p key={`p-${nodeKey}`} className="leading-relaxed">
+          {parseInline(trimmed, nodeKey)}
+        </p>
+      );
+      nodeKey++;
     }
   }
-  flushList();
 
+  flushList();
+  flushTable();
   return result;
 }
 
