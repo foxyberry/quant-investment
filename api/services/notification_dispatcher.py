@@ -93,21 +93,18 @@ def md_to_slack_blocks(content: str) -> List[dict]:
 
         cols = len(table_header)
         if cols == 2:
-            # 2-col indicator table → section fields (2-column grid)
-            # Keep values ≤ 45 chars so Slack doesn't truncate/wrap them
-            fields: list[dict] = []
+            # 2-col indicator table → mrkdwn "*key*: value" per line
+            # (section fields forces 50/50 column split; text block respects content width)
+            lines_out: list[str] = []
             for row in table_rows:
                 if len(row) < 2:
                     continue
                 key = _to_slack_mrkdwn(row[0].strip())
                 val = _to_slack_mrkdwn(row[1].strip())
-                if len(val) > 45:
-                    val = val[:43] + "…"
-                fields.append({"type": "mrkdwn", "text": f"*{key}*"})
-                fields.append({"type": "mrkdwn", "text": val or "—"})
-            # Max 10 fields per section block
-            for i in range(0, len(fields), 10):
-                blocks.append({"type": "section", "fields": fields[i : i + 10]})
+                lines_out.append(f"*{key}*: {val or '—'}")
+            text = "\n".join(lines_out)
+            for chunk in _split_text(text):
+                blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": chunk}})
         else:
             # Multi-col: header bold + rows as text
             lines_out = [" | ".join(f"*{h.strip()}*" for h in table_header)]
