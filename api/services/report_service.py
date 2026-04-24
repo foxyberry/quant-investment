@@ -339,8 +339,8 @@ def get_report(report_id: int) -> Optional[Dict[str, Any]]:
 
 
 def send_report_to_slack(report_id: int) -> bool:
-    """Dispatch a report's content to Slack. Returns True on success."""
-    from api.services.notification_dispatcher import dispatch
+    """Dispatch a report to Slack using Block Kit for rich formatting."""
+    from api.services.notification_dispatcher import dispatch_blocks, md_to_slack_blocks
 
     report = get_report(report_id)
     if not report:
@@ -351,7 +351,9 @@ def send_report_to_slack(report_id: int) -> bool:
     if not content:
         return False
 
-    results = dispatch(content, channels=["slack"])
+    blocks = md_to_slack_blocks(content)
+    fallback = content[:300]  # plain-text fallback for notifications
+    results = dispatch_blocks(blocks, fallback_text=fallback, channels=["slack"])
     return results.get("slack", False)
 
 
