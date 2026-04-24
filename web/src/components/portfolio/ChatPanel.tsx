@@ -149,7 +149,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
     if (bqMatch) {
       flushList(); flushTable();
       result.push(
-        <blockquote key={`bq-${nodeKey}`} className="my-1 border-l-2 border-[var(--color-primary)] pl-3 text-sm text-[var(--foreground-muted)] italic">
+        <blockquote key={`bq-${nodeKey}`} className="my-1 border-l-2 border-[var(--color-primary)] pl-3 text-xs text-[var(--foreground-muted)] italic">
           {parseInline(bqMatch[1], nodeKey)}
         </blockquote>
       );
@@ -188,7 +188,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
       result.push(<div key={`sp-${nodeKey++}`} className="h-1" />);
     } else {
       result.push(
-        <p key={`p-${nodeKey}`} className="leading-relaxed">
+        <p key={`p-${nodeKey}`} className="text-xs leading-relaxed text-[var(--foreground)]">
           {parseInline(trimmed, nodeKey)}
         </p>
       );
