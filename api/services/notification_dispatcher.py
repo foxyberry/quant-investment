@@ -90,16 +90,31 @@ def md_to_slack_blocks(content: str) -> List[dict]:
         nonlocal table_header, table_rows
         if not table_header:
             return
-        # Build fields list: header row (bolded) + data rows, 2 cols each
-        fields: list[dict] = []
-        for h in table_header:
-            fields.append({"type": "mrkdwn", "text": f"*{h.strip()}*"})
-        for row in table_rows:
-            for cell in row:
-                fields.append({"type": "mrkdwn", "text": _to_slack_mrkdwn(cell.strip()) or "-"})
-        # Slack allows max 10 fields per section block
-        for i in range(0, len(fields), 10):
-            blocks.append({"type": "section", "fields": fields[i : i + 10]})
+
+        # Render as "*key*: value" lines — avoids Slack 2-col grid truncation
+        # For 2-column tables (indicator | value), use "key: value" per line.
+        # For wider tables, join cells with " | " separator.
+        cols = len(table_header)
+        lines_out: list[str] = []
+        if cols == 2:
+            for row in table_rows:
+                if len(row) >= 2:
+                    key = _to_slack_mrkdwn(row[0].strip())
+                    val = _to_slack_mrkdwn(row[1].strip())
+                    if key:
+                        lines_out.append(f"*{key}*: {val}")
+        else:
+            # Multi-col: header as bold, then rows separated by " | "
+            header_str = " | ".join(f"*{h.strip()}*" for h in table_header)
+            lines_out.append(header_str)
+            for row in table_rows:
+                lines_out.append(" | ".join(_to_slack_mrkdwn(c.strip()) for c in row))
+
+        if lines_out:
+            text = "\n".join(lines_out)
+            for chunk in _split_text(text):
+                blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": chunk}})
+
         table_header = None
         table_rows.clear()
 
@@ -167,6 +182,99 @@ def md_to_slack_blocks(content: str) -> List[dict]:
     flush_text()
     flush_table()
     return blocks
+
+
+_SIGNAL_COLORS = {
+    "🔴": "#E74C3C",  # loss / danger
+    "🟡": "#F39C12",  # neutral / caution
+    "🟢": "#2ECC71",  # profit / good
+    "🎯": "#3498DB",  # action items
+}
+
+# Pattern: "#### N. 🔴 종목명 ..." or "### 🎯 핵심 액션 아이템"
+_STOCK_SECTION_RE = re.compile(r"^####\s+\d+\.\s+(🔴|🟡|🟢)")
+_ACTION_SECTION_RE = re.compile(r"^###\s+🎯")
+
+
+def md_to_report_payload(content: str) -> dict:
+    """
+    Convert report markdown to a full Slack payload with colored attachments.
+
+    Structure:
+      "blocks"      → header + macro section (no color)
+      "attachments" → one per stock (🔴/🟡/🟢 left-border color) + action items (blue)
+    """
+    lines = content.split("\n")
+
+    # Split into segments: (color | None, [lines])
+    segments: list[tuple[str | None, list[str]]] = []
+    current_color: str | None = None
+    current_lines: list[str] = []
+
+    for line in lines:
+        stock_m = _STOCK_SECTION_RE.match(line)
+        action_m = _ACTION_SECTION_RE.match(line)
+
+        if stock_m or action_m:
+            if current_lines:
+                segments.append((current_color, current_lines))
+            current_lines = [line]
+            if stock_m:
+                emoji = stock_m.group(1)
+                current_color = _SIGNAL_COLORS.get(emoji)
+            else:
+                current_color = _SIGNAL_COLORS["🎯"]
+        else:
+            current_lines.append(line)
+
+    if current_lines:
+        segments.append((current_color, current_lines))
+
+    # First segment (color=None) → main blocks; rest → attachments
+    main_blocks: list[dict] = []
+    attachments: list[dict] = []
+
+    for color, seg_lines in segments:
+        seg_blocks = md_to_slack_blocks("\n".join(seg_lines))
+        if color is None:
+            main_blocks.extend(seg_blocks)
+        else:
+            # Slack attachments support up to 50 blocks each
+            for i in range(0, max(1, len(seg_blocks)), 50):
+                attachments.append({
+                    "color": color,
+                    "blocks": seg_blocks[i : i + 50],
+                })
+
+    return {"blocks": main_blocks, "attachments": attachments}
+
+
+def dispatch_report(
+    content: str,
+    fallback_text: str,
+    channels: Optional[list[str]] = None,
+) -> Dict[str, bool]:
+    """
+    Dispatch a report with colored Block Kit attachments per stock section.
+    Use this instead of dispatch_blocks for portfolio daily reports.
+    """
+    results: Dict[str, bool] = {}
+
+    try:
+        from api.services.broker_settings_service import get_broker_settings_service
+        svc = get_broker_settings_service()
+    except Exception:
+        logger.warning("Could not load broker settings service", exc_info=True)
+        return results
+
+    if channels is None or "telegram" in channels:
+        results["telegram"] = _send_telegram(svc, fallback_text)
+
+    if channels is None or "slack" in channels:
+        payload = md_to_report_payload(content)
+        results["slack"] = _send_slack_payload(svc, payload, fallback_text)
+
+    return results
 
 
 def dispatch_blocks(
@@ -336,16 +444,52 @@ def _send_slack_blocks(svc: object, blocks: List[dict], fallback_text: str) -> b
     _CHUNK = 50
     chunks = [blocks[i : i + _CHUNK] for i in range(0, max(1, len(blocks)), _CHUNK)]
     for idx, chunk in enumerate(chunks):
-        payload: dict = {
-            "text": fallback_text if idx == 0 else "...",
-            "blocks": chunk,
-        }
+        payload: dict = {"text": fallback_text if idx == 0 else "...", "blocks": chunk}
         ok = _post_slack(webhook_url, payload)
         if not ok:
             logger.warning("Slack block chunk %d/%d failed", idx + 1, len(chunks))
             return False
         if idx < len(chunks) - 1:
-            time.sleep(1.0)  # avoid burst rate-limit between chunks
+            time.sleep(1.0)
 
-    logger.info("Report sent via Slack Block Kit (%d blocks, %d chunk(s))", len(blocks), len(chunks))
+    logger.info("Slack Block Kit sent (%d blocks, %d chunk(s))", len(blocks), len(chunks))
+    return True
+
+
+def _send_slack_payload(svc: object, payload: dict, fallback_text: str) -> bool:
+    """
+    Send a full Slack payload (blocks + attachments) via webhook.
+    Sends main blocks first, then attachments in batches (Slack limits: 50 blocks,
+    100 attachments per message — we send attachments one per stock for clarity).
+    """
+    webhook_url = _get_slack_webhook(svc)
+    if not webhook_url:
+        return False
+
+    main_blocks = payload.get("blocks", [])
+    attachments = payload.get("attachments", [])
+
+    # First message: main blocks (header + macro)
+    first: dict = {"text": fallback_text}
+    if main_blocks:
+        first["blocks"] = main_blocks[:50]
+    ok = _post_slack(webhook_url, first)
+    if not ok:
+        return False
+
+    # Subsequent messages: attachments (one batch per Slack call, max 20 attachments each)
+    _ATT_CHUNK = 20
+    for i in range(0, len(attachments), _ATT_CHUNK):
+        chunk = attachments[i : i + _ATT_CHUNK]
+        time.sleep(1.0)
+        ok = _post_slack(webhook_url, {"text": "...", "attachments": chunk})
+        if not ok:
+            logger.warning("Slack attachment chunk %d failed", i // _ATT_CHUNK + 1)
+            return False
+
+    total_att = len(attachments)
+    logger.info(
+        "Report sent via Slack Block Kit (%d main blocks, %d colored attachment(s))",
+        len(main_blocks), total_att,
+    )
     return True
