@@ -91,26 +91,28 @@ def md_to_slack_blocks(content: str) -> List[dict]:
         if not table_header:
             return
 
-        # Render as "*key*: value" lines — avoids Slack 2-col grid truncation
-        # For 2-column tables (indicator | value), use "key: value" per line.
-        # For wider tables, join cells with " | " separator.
         cols = len(table_header)
-        lines_out: list[str] = []
         if cols == 2:
+            # 2-col indicator table → section fields (2-column grid)
+            # Keep values ≤ 45 chars so Slack doesn't truncate/wrap them
+            fields: list[dict] = []
             for row in table_rows:
-                if len(row) >= 2:
-                    key = _to_slack_mrkdwn(row[0].strip())
-                    val = _to_slack_mrkdwn(row[1].strip())
-                    if key:
-                        lines_out.append(f"*{key}*: {val}")
+                if len(row) < 2:
+                    continue
+                key = _to_slack_mrkdwn(row[0].strip())
+                val = _to_slack_mrkdwn(row[1].strip())
+                if len(val) > 45:
+                    val = val[:43] + "…"
+                fields.append({"type": "mrkdwn", "text": f"*{key}*"})
+                fields.append({"type": "mrkdwn", "text": val or "—"})
+            # Max 10 fields per section block
+            for i in range(0, len(fields), 10):
+                blocks.append({"type": "section", "fields": fields[i : i + 10]})
         else:
-            # Multi-col: header as bold, then rows separated by " | "
-            header_str = " | ".join(f"*{h.strip()}*" for h in table_header)
-            lines_out.append(header_str)
+            # Multi-col: header bold + rows as text
+            lines_out = [" | ".join(f"*{h.strip()}*" for h in table_header)]
             for row in table_rows:
                 lines_out.append(" | ".join(_to_slack_mrkdwn(c.strip()) for c in row))
-
-        if lines_out:
             text = "\n".join(lines_out)
             for chunk in _split_text(text):
                 blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": chunk}})
@@ -202,7 +204,8 @@ def md_to_report_payload(content: str) -> dict:
 
     Structure:
       "blocks"      → header + macro section (no color)
-      "attachments" → one per stock (🔴/🟡/🟢 left-border color) + action items (blue)
+      "attachments" → one attachment per signal color (🔴/🟡/🟢) + one for action items (blue)
+                      Grouping avoids Slack's "Show less" collapse (triggered at >5 attachments).
     """
     lines = content.split("\n")
 
@@ -230,21 +233,29 @@ def md_to_report_payload(content: str) -> dict:
     if current_lines:
         segments.append((current_color, current_lines))
 
-    # First segment (color=None) → main blocks; rest → attachments
+    # First segment (color=None) → main blocks
+    # Rest: group blocks by color to stay under Slack's ~5-attachment collapse threshold
     main_blocks: list[dict] = []
-    attachments: list[dict] = []
+    # color → accumulated blocks (insertion-order preserved)
+    color_blocks: dict[str, list[dict]] = {}
 
     for color, seg_lines in segments:
         seg_blocks = md_to_slack_blocks("\n".join(seg_lines))
         if color is None:
             main_blocks.extend(seg_blocks)
         else:
-            # Slack attachments support up to 50 blocks each
-            for i in range(0, max(1, len(seg_blocks)), 50):
-                attachments.append({
-                    "color": color,
-                    "blocks": seg_blocks[i : i + 50],
-                })
+            if color not in color_blocks:
+                color_blocks[color] = []
+            color_blocks[color].extend(seg_blocks)
+
+    # Build attachments: one attachment per color group, chunked at 50 blocks each
+    attachments: list[dict] = []
+    for color, blocks in color_blocks.items():
+        for i in range(0, max(1, len(blocks)), 50):
+            attachments.append({
+                "color": color,
+                "blocks": blocks[i : i + 50],
+            })
 
     return {"blocks": main_blocks, "attachments": attachments}
 
