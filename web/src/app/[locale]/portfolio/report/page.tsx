@@ -231,21 +231,23 @@ export default function DailyReportPage() {
     stopPolling();
     pollRef.current = setInterval(async () => {
       try {
-        const status = await getReportStatus();
-        if (!status.is_generating) {
-          // Generation done — refresh and stop
+        // Check for a newer report first
+        const latest = await getLatestReport();
+        if (latest && latest.id !== sinceId) {
           stopPolling();
           setIsGenerating(false);
           await refreshData();
-        } else {
-          // Still generating — check if a newer report appeared (partial save edge case)
-          const latest = await getLatestReport();
-          if (latest && latest.id !== sinceId) {
+          return;
+        }
+        // Also check status endpoint (may not exist on older backend)
+        try {
+          const status = await getReportStatus();
+          if (!status.is_generating) {
             stopPolling();
             setIsGenerating(false);
             await refreshData();
           }
-        }
+        } catch { /* endpoint unavailable — keep polling by report id */ }
       } catch {
         // network hiccup — keep polling
       }
@@ -260,17 +262,23 @@ export default function DailyReportPage() {
       setIsLoading(true);
       setLoadError(null);
       try {
-        const [latest, summaries, status] = await Promise.all([
+        const [latest, summaries] = await Promise.all([
           getLatestReport(),
           listReports(20),
-          getReportStatus(),
         ]);
         if (cancelled) return;
         setCurrentReport(latest);
         setHistory(summaries);
         latestIdRef.current = latest?.id ?? null;
 
-        if (status.is_generating) {
+        // Check background status separately — endpoint may not exist on older backends
+        let isGen = false;
+        try {
+          const status = await getReportStatus();
+          isGen = status.is_generating;
+        } catch { /* endpoint unavailable — ignore */ }
+
+        if (isGen) {
           setIsGenerating(true);
           startPolling(latestIdRef.current);
         } else if (!latest) {
@@ -278,7 +286,10 @@ export default function DailyReportPage() {
           void triggerGenerate(null);
         }
       } catch (e: unknown) {
-        if (!cancelled) setLoadError(e instanceof Error ? e.message : String(e));
+        if (!cancelled) {
+          const msg = e instanceof Error ? e.message : String(e);
+          setLoadError(msg.startsWith('[object') ? '서버에 연결할 수 없습니다.' : msg);
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -343,7 +354,7 @@ export default function DailyReportPage() {
             </div>
           )}
           {history.length === 0 && !isLoading && !isGenerating && (
-            <p className="px-4 py-3 text-xs text-slate-500">{t('noReport')}</p>
+            <p className="px-4 py-3 text-xs text-slate-500">생성된 리포트가 없습니다</p>
           )}
           {history.map((r) => (
             <button
@@ -454,8 +465,8 @@ export default function DailyReportPage() {
           {!isLoading && !isGenerating && !currentReport && !loadError && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <BookOpen className="h-12 w-12 text-slate-600 mb-4" />
-              <p className="text-sm font-medium text-slate-400">{t('noReport')}</p>
-              <p className="text-xs text-slate-600 mt-1">{t('noReportDesc')}</p>
+              <p className="text-sm font-medium text-slate-400">오늘 리포트가 없어요</p>
+              <p className="text-xs text-slate-600 mt-1 mb-6">위의 "새 리포트 생성" 버튼을 눌러 AI 분석을 시작해보세요.</p>
             </div>
           )}
 

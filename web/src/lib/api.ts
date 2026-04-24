@@ -76,7 +76,8 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
     let detail = '';
     try {
       const body = await response.json();
-      detail = body.detail || body.message || '';
+      const raw = body.detail ?? body.message ?? '';
+      detail = typeof raw === 'string' ? raw : JSON.stringify(raw);
     } catch { /* ignore parse errors */ }
     throw new Error(detail || `API Error: ${response.status}`);
   }
