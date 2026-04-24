@@ -531,21 +531,27 @@ def get_generation_status() -> bool:
 
 
 def run_daily_report_scheduler() -> None:
-    """Block in a loop, sleeping until 09:05 KST each day, then generate + send report."""
+    """Block in a loop, sleeping until 09:05 KST on weekdays, then generate + send report."""
     KST = timezone(timedelta(hours=9))
 
-    logger.info("Daily report scheduler started (target: 09:05 KST)")
+    logger.info("Daily report scheduler started (target: 09:05 KST, weekdays only)")
 
     while True:
         now = datetime.now(KST)
         target = now.replace(hour=9, minute=5, second=0, microsecond=0)
+
+        # Advance to next 09:05 if already past today's
         if now >= target:
-            target = target + timedelta(days=1)
+            target += timedelta(days=1)
+
+        # Skip weekends: Monday=0 … Friday=4, Saturday=5, Sunday=6
+        while target.weekday() >= 5:
+            target += timedelta(days=1)
 
         sleep_sec = (target - now).total_seconds()
         logger.info(
             "Daily report scheduler: next run at %s KST (%.0f s from now)",
-            target.strftime("%Y-%m-%d %H:%M:%S"),
+            target.strftime("%Y-%m-%d %H:%M:%S (%A)"),
             sleep_sec,
         )
         time.sleep(sleep_sec)
