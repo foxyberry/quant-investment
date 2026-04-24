@@ -24,6 +24,7 @@ from api.routers.kiwoom import router as kiwoom_router
 from api.routers.strategy import router as strategy_router
 from api.routers.portfolio_alerts import router as portfolio_alerts_router
 from api.routers.watchlist import router as watchlist_router
+from api.routers.chat import router as chat_router
 
 
 def _backfill_metadata():
@@ -264,6 +265,7 @@ def create_app() -> FastAPI:
     app.include_router(execution_history_router)
     app.include_router(watchlist_router)
     app.include_router(portfolio_alerts_router)
+    app.include_router(chat_router)
 
     # Future routers (추후 추가될 라우터)
     # app.include_router(news_router, prefix="/api/v1")

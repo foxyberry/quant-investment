@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { BaseCurrency } from '@/lib/format';
 
 interface UserSettings {
@@ -41,7 +41,13 @@ function saveSettings(settings: UserSettings) {
 }
 
 export function UserSettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<UserSettings>(() => loadSettings());
+  // Always initialize with DEFAULT_SETTINGS so SSR and client initial render match.
+  // Sync from localStorage after mount to avoid hydration mismatch.
+  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    setSettings(loadSettings());
+  }, []);
 
   const updateBaseCurrency = useCallback((currency: BaseCurrency) => {
     setSettings((prev) => {

@@ -8,7 +8,7 @@ import math
 from datetime import datetime, date
 from typing import Any, Dict, List, Optional, Self
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 SELL_RULE_TYPES = {"stop_loss", "take_profit", "trailing_stop", "holding_period"}
 
@@ -495,3 +495,40 @@ class SellSignalsResponse(BaseModel):
         default_factory=datetime.now,
         description="Check timestamp"
     )
+
+
+# ── Portfolio Archive schemas ──────────────────────────────────────
+
+
+class ArchiveCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    clear_after: bool = Field(default=False, description="Delete all current holdings after archiving")
+
+
+class ArchiveItemResponse(BaseModel):
+    ticker: str
+    name: Optional[str] = None
+    quantity: int
+    avg_price: float
+    currency: str
+    bought_at: Optional[date] = None
+    sector: Optional[str] = None
+    current_price: Optional[float] = None
+    pnl_pct: Optional[float] = None  # ((current_price - avg_price) / avg_price) * 100, with_prices=True only
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ArchiveSummary(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    archived_at: datetime
+    total_holdings: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ArchiveDetailResponse(ArchiveSummary):
+    items: List[ArchiveItemResponse] = Field(default_factory=list)

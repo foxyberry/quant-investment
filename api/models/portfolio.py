@@ -116,3 +116,43 @@ class SellRule(Base):
 
     holding = relationship("Holding", back_populates="sell_rules")
     preset = relationship("SellRulePreset", back_populates="linked_sell_rules")
+
+
+class PortfolioArchive(Base):
+    __tablename__ = "portfolio_archives"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    archived_at = Column(DateTime, default=datetime.utcnow)
+    total_holdings = Column(Integer, nullable=False, default=0)
+
+    items = relationship(
+        "PortfolioArchiveItem",
+        back_populates="archive",
+        cascade="all, delete-orphan",
+    )
+
+
+class PortfolioArchiveItem(Base):
+    __tablename__ = "portfolio_archive_items"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    archive_id = Column(
+        Integer,
+        ForeignKey("portfolio_archives.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    ticker = Column(String(32), nullable=False)
+    name = Column(String(255), nullable=True)
+    quantity = Column(Integer, nullable=False)
+    avg_price = Column(Float, nullable=False)
+    currency = Column(String(8), nullable=False, default="KRW")
+    bought_at = Column(Date, nullable=True)
+    sector = Column(String(128), nullable=True)
+    industry = Column(String(128), nullable=True)
+    country = Column(String(64), nullable=True)
+    exchange = Column(String(32), nullable=True)
+
+    archive = relationship("PortfolioArchive", back_populates="items")

@@ -10,3 +10,5 @@ export { default as SellModal } from './SellModal';
 export { default as TradeHistory } from './TradeHistory';
 export { default as AllocationCharts } from './AllocationCharts';
 export { default as SellRuleModal } from './SellRuleModal';
+export { default as ArchiveModal } from './ArchiveModal';
+export { default as ChatPanel } from './ChatPanel';
