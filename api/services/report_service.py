@@ -32,9 +32,13 @@ from api.services.chat_service import (
     _PUT_TIMEOUT,
     _QUEUE_TIMEOUT,
     _TOOL_TIMEOUT,
-    _MAX_TOOL_ROUNDS,
     _safe_float,
 )
+
+# Report generation needs far more rounds than chat:
+# get_macro_context + get_holdings + N*(get_indicators + get_news) per stock
+# 20 stocks × 2 tools + 2 = 42 tool calls minimum → allow 60 rounds
+_REPORT_MAX_TOOL_ROUNDS = 60
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +113,7 @@ async def stream_report(trigger: str = "manual") -> AsyncIterator[str]:
         full_content_parts: list[str] = []
         started_at = time.monotonic()
 
-        for _round in range(_MAX_TOOL_ROUNDS):
+        for _round in range(_REPORT_MAX_TOOL_ROUNDS):
             queue: asyncio.Queue = asyncio.Queue()
 
             future = loop.run_in_executor(
@@ -352,7 +356,7 @@ async def generate_and_send_slack_async(trigger: str = "scheduled") -> None:
         anthropic_messages = [{"role": "user", "content": _REPORT_USER_MESSAGE}]
         loop = asyncio.get_running_loop()
 
-        for _round in range(_MAX_TOOL_ROUNDS):
+        for _round in range(_REPORT_MAX_TOOL_ROUNDS):
             queue: asyncio.Queue = asyncio.Queue()
 
             future = loop.run_in_executor(
