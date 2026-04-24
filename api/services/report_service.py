@@ -15,6 +15,7 @@ Streaming protocol: SSE with JSON payloads (same as chat_service).
 from __future__ import annotations
 
 import asyncio
+import functools
 import json
 import logging
 import time
@@ -42,40 +43,62 @@ _REPORT_MAX_TOOL_ROUNDS = 60
 
 logger = logging.getLogger(__name__)
 
-_REPORT_PROMPT_VERSION = "v1"
+_REPORT_PROMPT_VERSION = "v2"
+
+# Max output tokens per round for report (higher than chat to allow detailed per-batch writing)
+_REPORT_MAX_TOKENS = 8192
 
 # ── Report system prompt ───────────────────────────────────────────────────────
 
 _REPORT_SYSTEM_PROMPT = """\
-당신은 퀀트 투자 전문 AI입니다. 사용자의 포트폴리오 전 종목에 대해 오늘 기준 종합 매매 대응 전략 리포트를 작성합니다.
+당신은 퀀트 투자 전문 AI입니다. 포트폴리오 전 종목의 종합 매매 대응 전략 리포트를 작성합니다.
 
-리포트 형식:
-## 📊 포트폴리오 데일리 리포트 — {오늘 날짜 KST}
+## 필수 작업 순서 (반드시 이 순서대로 진행)
 
-### 🌐 거시경제 환경 (먼저 get_macro_context 호출)
-- 시장 레짐, 진입 신호, VIX, 환율 요약
+**Step 1** — `get_macro_context` + `get_holdings` 동시 호출 → 결과 수신 즉시 아래를 작성:
+  - 리포트 헤더(날짜 포함)
+  - 거시경제 환경 섹션
 
-### 📋 종목별 분석 및 대응 전략 (각 종목마다 get_indicators + get_news 호출)
-각 종목: 🔴/🟡/🟢 손익 수준으로 구분
+**Step 2** — holdings 목록을 **4개씩** 끊어 배치 처리 (전체 종목 완료까지 반복):
+  1. 해당 배치 4개 종목의 `get_indicators` + `get_news` 동시 호출
+  2. tool 결과 수신 즉시 해당 4개 종목 분석 내용을 작성
+  3. 바로 다음 4개 종목 배치로 이동
+
+**Step 3** — 전체 종목 분석 완료 후 핵심 액션 아이템 섹션 작성
+
+## 핵심 규칙
+- **절대 모든 데이터를 다 수집한 뒤 한번에 쓰지 말 것** — 배치마다 즉시 작성하고 진행
+- 각 배치 tool 결과가 오면 그 자리에서 바로 해당 종목들 분석을 출력
+- 수치 근거 필수 · 구체적 매매 가격/손절선 제시 · 한국어
+
+## 리포트 형식
+
+### 🌐 거시경제 환경
+| 항목 | 수치/상태 |
+|---|---|
+> 종합 판단 한 줄
+
+### 📋 종목별 분석 및 대응 전략
+🟢 수익 +5% 이상 / 🟡 -5%~+5% / 🔴 손실 -5% 초과
+
+#### {번호}. {🔴/🟡/🟢} {종목명} ({티커}) | 수익률 {±X.XX%}
 | 지표 | 수치 |
 |---|---|
-...
-📌 판단: [한 줄 핵심]
-→ 구체적 행동 지침 (가격, 손절선 등)
+📌 **판단:** 한 줄 핵심
+→ 구체적 행동 지침 (가격, 손절선 포함)
 
 ### 🎯 오늘의 핵심 액션 아이템
-우선순위별 3~5개 종목 행동 요약
-
-원칙: 수치 근거 필수, 구체적 매매 가격 제시, 한국어 답변\
+우선순위별 3~5개 종목 행동 요약\
 """
 
 # ── Report trigger message ─────────────────────────────────────────────────────
 
 _REPORT_USER_MESSAGE = (
-    "오늘 날짜 기준으로 포트폴리오 전 종목에 대해 데일리 리포트를 작성해주세요. "
-    "먼저 get_macro_context로 거시경제 환경을 확인하고, "
-    "get_holdings로 보유 종목을 파악한 다음 "
-    "각 종목별로 get_indicators와 get_news를 호출하여 분석하세요."
+    "오늘 날짜 기준으로 포트폴리오 전 종목 데일리 리포트를 작성해주세요. "
+    "Step 1: get_macro_context + get_holdings 동시 호출 후 거시경제 섹션 작성. "
+    "Step 2: 보유 종목을 4개씩 배치로 나눠서, 각 배치의 get_indicators + get_news 호출 후 즉시 해당 종목들 분석 작성. "
+    "Step 3: 전체 완료 후 핵심 액션 아이템 작성. "
+    "모든 종목을 빠짐없이 처리하세요."
 )
 
 
@@ -118,12 +141,15 @@ async def stream_report(trigger: str = "manual") -> AsyncIterator[str]:
 
             future = loop.run_in_executor(
                 None,
-                _run_stream_round,
-                client,
-                _REPORT_SYSTEM_PROMPT,
-                anthropic_messages,
-                queue,
-                loop,
+                functools.partial(
+                    _run_stream_round,
+                    client,
+                    _REPORT_SYSTEM_PROMPT,
+                    anthropic_messages,
+                    queue,
+                    loop,
+                    _REPORT_MAX_TOKENS,
+                ),
             )
 
             tool_uses: list[dict] = []
@@ -361,12 +387,15 @@ async def generate_and_send_slack_async(trigger: str = "scheduled") -> None:
 
             future = loop.run_in_executor(
                 None,
-                _run_stream_round,
-                client,
-                _REPORT_SYSTEM_PROMPT,
-                anthropic_messages,
-                queue,
-                loop,
+                functools.partial(
+                    _run_stream_round,
+                    client,
+                    _REPORT_SYSTEM_PROMPT,
+                    anthropic_messages,
+                    queue,
+                    loop,
+                    _REPORT_MAX_TOKENS,
+                ),
             )
 
             tool_uses: list[dict] = []
