@@ -459,6 +459,41 @@ async def generate_and_send_slack_async(trigger: str = "scheduled") -> None:
         logger.error("generate_and_send_slack_async error: %s", exc, exc_info=True)
 
 
+# ── Background generation (fire-and-forget, nav-safe) ────────────────────────
+
+_generation_lock = __import__("threading").Lock()
+_is_generating: bool = False
+
+
+def start_background_report(trigger: str = "manual") -> bool:
+    """Start a background report generation. Returns False if already generating."""
+    global _is_generating
+    with _generation_lock:
+        if _is_generating:
+            return False
+        _is_generating = True
+
+    import threading as _t
+
+    def _run() -> None:
+        global _is_generating
+        try:
+            asyncio.run(generate_and_send_slack_async(trigger))
+        except Exception as exc:
+            logger.error("Background report generation error: %s", exc, exc_info=True)
+        finally:
+            with _generation_lock:
+                _is_generating = False
+
+    _t.Thread(target=_run, daemon=True, name="bg-report").start()
+    return True
+
+
+def get_generation_status() -> bool:
+    """Return True if a report is currently being generated."""
+    return _is_generating
+
+
 # ── Daily scheduler (runs in background daemon thread) ────────────────────────
 
 

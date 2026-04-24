@@ -1822,6 +1822,14 @@ export async function sendReportToSlack(id: number): Promise<boolean> {
   return result.success;
 }
 
+export async function generateReportBackground(): Promise<{ started: boolean; already_running: boolean }> {
+  return fetchApi('/api/portfolio/report/generate-background', { method: 'POST' });
+}
+
+export async function getReportStatus(): Promise<{ is_generating: boolean }> {
+  return fetchApi('/api/portfolio/report/status');
+}
+
 /**
  * Stream portfolio AI chat responses via SSE.
  * Yields parsed event objects until the stream ends.

@@ -118,6 +118,27 @@ def get_report(report_id: int) -> ReportDetail:
     return ReportDetail(**report)
 
 
+@router.post("/generate-background", summary="Start background report generation (fire-and-forget)")
+def generate_background() -> dict:
+    """
+    Start report generation in a background thread and return immediately (202).
+    Use GET /status to poll whether generation is in progress.
+    """
+    _require_api_key()
+    from api.services.report_service import start_background_report
+
+    started = start_background_report("manual")
+    return {"started": started, "already_running": not started}
+
+
+@router.get("/status", summary="Get generation status")
+def get_status() -> dict:
+    """Return whether a report is currently being generated."""
+    from api.services.report_service import get_generation_status
+
+    return {"is_generating": get_generation_status()}
+
+
 @router.post("/{report_id}/slack", summary="Send a report to Slack")
 def send_to_slack(report_id: int) -> dict:
     """Dispatch the specified report's content to the configured Slack webhook."""
