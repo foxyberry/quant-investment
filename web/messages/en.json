@@ -31,6 +31,7 @@
     "screening": "Screening",
     "strategy": "Strategy",
     "portfolio": "Portfolio",
+    "dailyReport": "Daily Report",
     "analysis": "Analysis",
     "reports": "Reports",
     "macro": "Macro",
@@ -609,6 +610,25 @@
     "duplicateCreatedAt": "Created: {date}",
     "viewExistingResult": "View Existing Result",
     "runAnyway": "Run Anyway"
+  },
+  "dailyReport": {
+    "title": "Daily Report",
+    "subtitle": "AI-generated portfolio analysis and trading strategy",
+    "generate": "Generate New Report",
+    "generating": "Generating report...",
+    "sendToSlack": "Send to Slack",
+    "sent": "Sent to Slack",
+    "sendFailed": "Slack send failed",
+    "noReport": "No report yet",
+    "noReportDesc": "Generate your first portfolio daily report.",
+    "history": "Report History",
+    "reportAt": "Report at",
+    "trigger_manual": "Manual",
+    "trigger_scheduled": "Scheduled",
+    "duration": "{sec}s",
+    "loadFailed": "Failed to load report",
+    "retry": "Retry",
+    "errorGenerating": "Error generating report"
   },
   "portfolio": {
     "title": "Portfolio",

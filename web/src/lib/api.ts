@@ -57,6 +57,8 @@ import type {
   OHLCVData,
   ArchiveSummary,
   ArchiveDetailResponse,
+  ReportSummary,
+  ReportDetail,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
@@ -1753,6 +1755,71 @@ export interface ChatStreamEvent {
   name?: string;
   input?: unknown;
   message?: string;
+}
+
+// ── Daily Portfolio Report API ────────────────────────────────────────────────
+
+export async function listReports(limit = 30): Promise<ReportSummary[]> {
+  return fetchApi<ReportSummary[]>(`/api/portfolio/report/?limit=${limit}`);
+}
+
+export async function getLatestReport(): Promise<ReportDetail | null> {
+  try {
+    return await fetchApi<ReportDetail>('/api/portfolio/report/latest');
+  } catch (e: unknown) {
+    if (e instanceof Error && e.message.includes('404')) return null;
+    throw e;
+  }
+}
+
+export async function getReport(id: number): Promise<ReportDetail | null> {
+  try {
+    return await fetchApi<ReportDetail>(`/api/portfolio/report/${id}`);
+  } catch (e: unknown) {
+    if (e instanceof Error && e.message.includes('404')) return null;
+    throw e;
+  }
+}
+
+export async function* streamGenerateReport(signal?: AbortSignal): AsyncGenerator<ChatStreamEvent> {
+  const res = await fetch(`${API_BASE_URL}/api/portfolio/report/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+  });
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const body = await res.json();
+      detail = typeof body.detail === 'string'
+        ? body.detail
+        : JSON.stringify(body.detail ?? '');
+    } catch { /* ignore */ }
+    throw new Error(detail || `Report error: ${res.status}`);
+  }
+  if (!res.body) throw new Error('No response body from report endpoint');
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split(/\r?\n/);
+    buffer = lines.pop() ?? '';
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          yield JSON.parse(line.slice(6)) as ChatStreamEvent;
+        } catch { /* skip malformed events */ }
+      }
+    }
+  }
+}
+
+export async function sendReportToSlack(id: number): Promise<boolean> {
+  const result = await fetchApi<{ success: boolean }>(`/api/portfolio/report/${id}/slack`, { method: 'POST' });
+  return result.success;
 }
 
 /**

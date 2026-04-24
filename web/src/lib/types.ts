@@ -862,3 +862,16 @@ export interface ArchiveItemResponse {
 export interface ArchiveDetailResponse extends ArchiveSummary {
   items: ArchiveItemResponse[];
 }
+
+// Daily Portfolio Report
+export interface ReportSummary {
+  id: number;
+  generated_at: string;
+  trigger: 'manual' | 'scheduled';
+  duration_sec: number | null;
+  content_preview: string;
+}
+
+export interface ReportDetail extends ReportSummary {
+  content: string;
+}

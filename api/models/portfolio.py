@@ -156,3 +156,14 @@ class PortfolioArchiveItem(Base):
     exchange = Column(String(32), nullable=True)
 
     archive = relationship("PortfolioArchive", back_populates="items")
+
+
+class PortfolioReport(Base):
+    __tablename__ = "portfolio_reports"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    generated_at = Column(DateTime, nullable=False)  # UTC
+    trigger = Column(String(20), nullable=False, default="manual")  # "manual" | "scheduled"
+    prompt_version = Column(String(20), nullable=False, default="v1")
+    content = Column(Text, nullable=False)
+    duration_sec = Column(Float, nullable=True)
