@@ -466,7 +466,7 @@ export default function DailyReportPage() {
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <BookOpen className="h-12 w-12 text-slate-600 mb-4" />
               <p className="text-sm font-medium text-slate-400">오늘 리포트가 없어요</p>
-              <p className="text-xs text-slate-600 mt-1 mb-6">위의 "새 리포트 생성" 버튼을 눌러 AI 분석을 시작해보세요.</p>
+              <p className="text-xs text-slate-600 mt-1 mb-6">위의 &ldquo;새 리포트 생성&rdquo; 버튼을 눌러 AI 분석을 시작해보세요.</p>
             </div>
           )}
 

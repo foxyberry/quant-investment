@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useSyncExternalStore, useCallback, type ReactNode } from 'react';
 import type { BaseCurrency } from '@/lib/format';
 
 interface UserSettings {
@@ -40,22 +40,25 @@ function saveSettings(settings: UserSettings) {
   }
 }
 
-export function UserSettingsProvider({ children }: { children: ReactNode }) {
-  // Always initialize with DEFAULT_SETTINGS so SSR and client initial render match.
-  // Sync from localStorage after mount to avoid hydration mismatch.
-  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
+// useSyncExternalStore: SSR renders DEFAULT_SETTINGS, client reads localStorage.
+// No hydration mismatch, no setState-in-effect.
+function subscribe(cb: () => void) {
+  window.addEventListener('storage', cb);
+  return () => window.removeEventListener('storage', cb);
+}
 
-  useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
+export function UserSettingsProvider({ children }: { children: ReactNode }) {
+  const storedSettings = useSyncExternalStore(subscribe, loadSettings, () => DEFAULT_SETTINGS);
+  const [overrideSettings, setOverrideSettings] = useState<UserSettings | null>(null);
+
+  // overrideSettings takes precedence (for immediate updates within the same tab)
+  const settings = overrideSettings ?? storedSettings;
 
   const updateBaseCurrency = useCallback((currency: BaseCurrency) => {
-    setSettings((prev) => {
-      const next = { ...prev, baseCurrency: currency };
-      saveSettings(next);
-      return next;
-    });
-  }, []);
+    const next = { ...settings, baseCurrency: currency };
+    saveSettings(next);
+    setOverrideSettings(next);
+  }, [settings]);
 
   return (
     <UserSettingsContext.Provider value={{ settings, updateBaseCurrency }}>
