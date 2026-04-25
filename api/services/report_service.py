@@ -18,6 +18,7 @@ import asyncio
 import functools
 import json
 import logging
+import threading
 import time
 from datetime import datetime, timezone, timedelta
 from typing import Any, AsyncIterator, Dict, Optional
@@ -102,6 +103,123 @@ _REPORT_USER_MESSAGE = (
 )
 
 
+# ── Shared agentic loop ────────────────────────────────────────────────────────
+
+
+async def _run_agentic_loop(
+    client: Any,
+    anthropic_messages: list,
+) -> AsyncIterator[dict]:
+    """
+    Core agentic loop shared by stream_report and generate_and_send_slack_async.
+
+    Yields raw event dicts (same shape as _sse payloads, without SSE wrapping):
+      {"type": "text",       "content": "..."}
+      {"type": "tool_start", "name": "...", "input": {...}}
+      {"type": "tool_end",   "name": "..."}
+      {"type": "error",      "message": "..."}
+      {"type": "done"}
+
+    Callers decide what to do with each event (stream to SSE, accumulate, log, etc.).
+    """
+    loop = asyncio.get_running_loop()
+
+    for _round in range(_REPORT_MAX_TOOL_ROUNDS):
+        queue: asyncio.Queue = asyncio.Queue()
+
+        future = loop.run_in_executor(
+            None,
+            functools.partial(
+                _run_stream_round,
+                client,
+                _REPORT_SYSTEM_PROMPT,
+                anthropic_messages,
+                queue,
+                loop,
+                _REPORT_MAX_TOKENS,
+            ),
+        )
+
+        tool_uses: list[dict] = []
+        final_message = None
+
+        while True:
+            try:
+                item = await asyncio.wait_for(queue.get(), timeout=_QUEUE_TIMEOUT)
+            except asyncio.TimeoutError:
+                if future.done() and future.exception():
+                    raise future.exception()  # type: ignore[misc]
+                yield {"type": "error", "message": "응답 시간이 초과되었습니다."}
+                return
+
+            if item is _QUEUE_DONE:
+                break
+            if isinstance(item, tuple):
+                tool_uses, final_message = item
+            elif isinstance(item, dict):
+                yield item
+                if item.get("type") == "error":
+                    return
+
+        if final_message is None:
+            return
+
+        if not tool_uses:
+            break
+
+        stop_reason = getattr(final_message, "stop_reason", None)
+        if stop_reason != "tool_use":
+            break
+
+        # Build assistant turn
+        assistant_content = []
+        for block in final_message.content:
+            if block.type == "text":
+                assistant_content.append({"type": "text", "text": block.text})
+            elif block.type == "tool_use":
+                matching = next((t for t in tool_uses if t.get("id") == block.id), None)
+                assistant_content.append(
+                    {
+                        "type": "tool_use",
+                        "id": block.id,
+                        "name": block.name,
+                        "input": matching.get("input", {}) if matching else {},
+                    }
+                )
+
+        anthropic_messages.append({"role": "assistant", "content": assistant_content})
+
+        # Execute tools with per-tool timeout
+        tool_results = []
+        for tool_use_block in final_message.content:
+            if tool_use_block.type != "tool_use":
+                continue
+            matching = next((t for t in tool_uses if t.get("id") == tool_use_block.id), None)
+            tool_input = matching.get("input", {}) if matching else {}
+            try:
+                result_json = await asyncio.wait_for(
+                    asyncio.to_thread(_execute_tool, tool_use_block.name, tool_input),
+                    timeout=_TOOL_TIMEOUT,
+                )
+            except asyncio.TimeoutError:
+                result_json = json.dumps({"error": f"{tool_use_block.name} 조회 시간 초과"})
+            tool_results.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tool_use_block.id,
+                    "content": result_json,
+                }
+            )
+
+        anthropic_messages.append({"role": "user", "content": tool_results})
+
+    else:
+        yield {"type": "error", "message": "도구 호출이 최대 횟수에 도달했습니다."}
+        return
+
+    yield {"type": "done"}
+
+
 # ── Core streaming generator ───────────────────────────────────────────────────
 
 
@@ -128,117 +246,23 @@ async def stream_report(trigger: str = "manual") -> AsyncIterator[str]:
             return
 
         client = anthropic.Anthropic(api_key=api_key)
-
         anthropic_messages = [{"role": "user", "content": _REPORT_USER_MESSAGE}]
-        loop = asyncio.get_running_loop()
 
-        # Track accumulated text content for DB persistence
         full_content_parts: list[str] = []
         started_at = time.monotonic()
 
-        for _round in range(_REPORT_MAX_TOOL_ROUNDS):
-            queue: asyncio.Queue = asyncio.Queue()
-
-            future = loop.run_in_executor(
-                None,
-                functools.partial(
-                    _run_stream_round,
-                    client,
-                    _REPORT_SYSTEM_PROMPT,
-                    anthropic_messages,
-                    queue,
-                    loop,
-                    _REPORT_MAX_TOKENS,
-                ),
-            )
-
-            tool_uses: list[dict] = []
-            final_message = None
-
-            while True:
-                try:
-                    item = await asyncio.wait_for(queue.get(), timeout=_QUEUE_TIMEOUT)
-                except asyncio.TimeoutError:
-                    if future.done() and future.exception():
-                        raise future.exception()  # type: ignore[misc]
-                    yield _sse({"type": "error", "message": "응답 시간이 초과되었습니다."})
-                    return
-
-                if item is _QUEUE_DONE:
-                    break
-                if isinstance(item, tuple):
-                    tool_uses, final_message = item
-                elif isinstance(item, dict):
-                    # Accumulate text content for DB persistence
-                    if item.get("type") == "text":
-                        full_content_parts.append(item["content"])
-                    yield _sse(item)
-                    if item.get("type") == "error":
-                        return
-
-            if final_message is None:
-                return
-
-            if not tool_uses:
+        async for event in _run_agentic_loop(client, anthropic_messages):
+            if event.get("type") == "text":
+                full_content_parts.append(event["content"])
+            yield _sse(event)
+            if event.get("type") in ("error", "done"):
                 break
 
-            stop_reason = getattr(final_message, "stop_reason", None)
-            if stop_reason != "tool_use":
-                break
-
-            # Build assistant turn
-            assistant_content = []
-            for block in final_message.content:
-                if block.type == "text":
-                    assistant_content.append({"type": "text", "text": block.text})
-                elif block.type == "tool_use":
-                    matching = next((t for t in tool_uses if t.get("id") == block.id), None)
-                    assistant_content.append(
-                        {
-                            "type": "tool_use",
-                            "id": block.id,
-                            "name": block.name,
-                            "input": matching.get("input", {}) if matching else {},
-                        }
-                    )
-
-            anthropic_messages.append({"role": "assistant", "content": assistant_content})
-
-            # Execute tools with per-tool timeout
-            tool_results = []
-            for tool_use_block in final_message.content:
-                if tool_use_block.type != "tool_use":
-                    continue
-                matching = next((t for t in tool_uses if t.get("id") == tool_use_block.id), None)
-                tool_input = matching.get("input", {}) if matching else {}
-                try:
-                    result_json = await asyncio.wait_for(
-                        asyncio.to_thread(_execute_tool, tool_use_block.name, tool_input),
-                        timeout=_TOOL_TIMEOUT,
-                    )
-                except asyncio.TimeoutError:
-                    result_json = json.dumps({"error": f"{tool_use_block.name} 조회 시간 초과"})
-                tool_results.append(
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": tool_use_block.id,
-                        "content": result_json,
-                    }
-                )
-
-            anthropic_messages.append({"role": "user", "content": tool_results})
-
-        else:
-            yield _sse({"type": "error", "message": "도구 호출이 최대 횟수에 도달했습니다."})
-            return
-
-        # Persist completed report to DB
-        duration_sec = time.monotonic() - started_at
-        full_content = "".join(full_content_parts)
-        if full_content:
+        # Persist on successful completion
+        if full_content_parts:
+            full_content = "".join(full_content_parts)
+            duration_sec = time.monotonic() - started_at
             await asyncio.to_thread(_save_report_to_db, full_content, trigger, duration_sec)
-
-        yield _sse({"type": "done"})
 
     except Exception as exc:
         logger.error("stream_report unexpected error: %s", exc, exc_info=True)
@@ -255,7 +279,7 @@ def _save_report_to_db(content: str, trigger: str, duration_sec: float) -> int:
     db = SessionLocal()
     try:
         report = PortfolioReport(
-            generated_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            generated_at=datetime.utcnow(),
             trigger=trigger,
             prompt_version=_REPORT_PROMPT_VERSION,
             content=content,
@@ -263,9 +287,9 @@ def _save_report_to_db(content: str, trigger: str, duration_sec: float) -> int:
         )
         db.add(report)
         db.commit()
-        db.refresh(report)
-        logger.info("Report saved to DB: id=%d, trigger=%s, duration=%.1fs", report.id, trigger, duration_sec)
-        return report.id
+        report_id = report.id
+        logger.info("Report saved to DB: id=%d, trigger=%s, duration=%.1fs", report_id, trigger, duration_sec)
+        return report_id
     except Exception as exc:
         db.rollback()
         logger.error("Failed to save report to DB: %s", exc, exc_info=True)
@@ -361,13 +385,10 @@ def send_report_to_slack(report_id: int) -> bool:
 
 async def generate_and_send_slack_async(trigger: str = "scheduled") -> None:
     """
-    Async: generate a report (full SSE stream consumed internally) then send to Slack.
+    Async: generate a report (full event stream consumed internally) then send to Slack.
     Designed to be called with asyncio.run() from a background thread.
     """
-    logger.info("Starting scheduled report generation (trigger=%s)", trigger)
-
-    full_content_parts: list[str] = []
-    started_at = time.monotonic()
+    logger.info("Starting report generation (trigger=%s)", trigger)
 
     try:
         import anthropic
@@ -376,118 +397,37 @@ async def generate_and_send_slack_async(trigger: str = "scheduled") -> None:
         settings = get_settings()
         api_key = settings.anthropic_api_key
         if not api_key:
-            logger.error("ANTHROPIC_API_KEY not set; skipping scheduled report")
+            logger.error("ANTHROPIC_API_KEY not set; skipping report generation")
             return
 
         client = anthropic.Anthropic(api_key=api_key)
         anthropic_messages = [{"role": "user", "content": _REPORT_USER_MESSAGE}]
-        loop = asyncio.get_running_loop()
 
-        for _round in range(_REPORT_MAX_TOOL_ROUNDS):
-            queue: asyncio.Queue = asyncio.Queue()
+        full_content_parts: list[str] = []
+        started_at = time.monotonic()
 
-            future = loop.run_in_executor(
-                None,
-                functools.partial(
-                    _run_stream_round,
-                    client,
-                    _REPORT_SYSTEM_PROMPT,
-                    anthropic_messages,
-                    queue,
-                    loop,
-                    _REPORT_MAX_TOKENS,
-                ),
-            )
-
-            tool_uses: list[dict] = []
-            final_message = None
-
-            while True:
-                try:
-                    item = await asyncio.wait_for(queue.get(), timeout=_QUEUE_TIMEOUT)
-                except asyncio.TimeoutError:
-                    logger.error("Scheduler report queue timeout")
-                    return
-
-                if item is _QUEUE_DONE:
-                    break
-                if isinstance(item, tuple):
-                    tool_uses, final_message = item
-                elif isinstance(item, dict):
-                    if item.get("type") == "text":
-                        full_content_parts.append(item["content"])
-                    elif item.get("type") == "error":
-                        logger.error("Scheduler report SSE error: %s", item.get("message"))
-                        return
-
-            if final_message is None:
+        async for event in _run_agentic_loop(client, anthropic_messages):
+            if event.get("type") == "text":
+                full_content_parts.append(event["content"])
+            elif event.get("type") == "error":
+                logger.error("Report generation error event: %s", event.get("message"))
                 return
-
-            if not tool_uses:
+            elif event.get("type") == "done":
                 break
-
-            stop_reason = getattr(final_message, "stop_reason", None)
-            if stop_reason != "tool_use":
-                break
-
-            assistant_content = []
-            for block in final_message.content:
-                if block.type == "text":
-                    assistant_content.append({"type": "text", "text": block.text})
-                elif block.type == "tool_use":
-                    matching = next((t for t in tool_uses if t.get("id") == block.id), None)
-                    assistant_content.append(
-                        {
-                            "type": "tool_use",
-                            "id": block.id,
-                            "name": block.name,
-                            "input": matching.get("input", {}) if matching else {},
-                        }
-                    )
-
-            anthropic_messages.append({"role": "assistant", "content": assistant_content})
-
-            tool_results = []
-            for tool_use_block in final_message.content:
-                if tool_use_block.type != "tool_use":
-                    continue
-                matching = next((t for t in tool_uses if t.get("id") == tool_use_block.id), None)
-                tool_input = matching.get("input", {}) if matching else {}
-                try:
-                    result_json = await asyncio.wait_for(
-                        asyncio.to_thread(_execute_tool, tool_use_block.name, tool_input),
-                        timeout=_TOOL_TIMEOUT,
-                    )
-                except asyncio.TimeoutError:
-                    result_json = json.dumps({"error": f"{tool_use_block.name} 조회 시간 초과"})
-                tool_results.append(
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": tool_use_block.id,
-                        "content": result_json,
-                    }
-                )
-
-            anthropic_messages.append({"role": "user", "content": tool_results})
-
-        else:
-            logger.error("Scheduler report: max tool rounds exhausted")
-            return
 
         full_content = "".join(full_content_parts)
         if not full_content:
-            logger.warning("Scheduler report: empty content generated")
+            logger.warning("Report generation: empty content generated")
             return
 
         duration_sec = time.monotonic() - started_at
         report_id = await asyncio.to_thread(_save_report_to_db, full_content, trigger, duration_sec)
 
-        # Send to Slack
         success = await asyncio.to_thread(send_report_to_slack, report_id)
         if success:
-            logger.info("Scheduled report dispatched to Slack (id=%d)", report_id)
+            logger.info("Report dispatched to Slack (id=%d)", report_id)
         else:
-            logger.warning("Scheduled report Slack dispatch failed (id=%d)", report_id)
+            logger.warning("Report Slack dispatch failed (id=%d)", report_id)
 
     except Exception as exc:
         logger.error("generate_and_send_slack_async error: %s", exc, exc_info=True)
@@ -495,7 +435,7 @@ async def generate_and_send_slack_async(trigger: str = "scheduled") -> None:
 
 # ── Background generation (fire-and-forget, nav-safe) ────────────────────────
 
-_generation_lock = __import__("threading").Lock()
+_generation_lock = threading.Lock()
 _is_generating: bool = False
 
 
@@ -507,8 +447,6 @@ def start_background_report(trigger: str = "manual") -> bool:
             return False
         _is_generating = True
 
-    import threading as _t
-
     def _run() -> None:
         global _is_generating
         try:
@@ -519,7 +457,7 @@ def start_background_report(trigger: str = "manual") -> bool:
             with _generation_lock:
                 _is_generating = False
 
-    _t.Thread(target=_run, daemon=True, name="bg-report").start()
+    threading.Thread(target=_run, daemon=True, name=f"bg-report-{int(time.time())}").start()
     return True
 
 
@@ -530,6 +468,14 @@ def get_generation_status() -> bool:
 
 # ── Daily scheduler (runs in background daemon thread) ────────────────────────
 
+# Set by FastAPI lifespan teardown to interrupt the scheduler's sleep
+_scheduler_stop_event = threading.Event()
+
+
+def stop_daily_report_scheduler() -> None:
+    """Signal the scheduler to exit at its next sleep boundary."""
+    _scheduler_stop_event.set()
+
 
 def run_daily_report_scheduler() -> None:
     """Block in a loop, sleeping until 09:05 KST on weekdays, then generate + send report."""
@@ -537,7 +483,7 @@ def run_daily_report_scheduler() -> None:
 
     logger.info("Daily report scheduler started (target: 09:05 KST, weekdays only)")
 
-    while True:
+    while not _scheduler_stop_event.is_set():
         now = datetime.now(KST)
         target = now.replace(hour=9, minute=5, second=0, microsecond=0)
 
@@ -555,7 +501,11 @@ def run_daily_report_scheduler() -> None:
             target.strftime("%Y-%m-%d %H:%M:%S (%A)"),
             sleep_sec,
         )
-        time.sleep(sleep_sec)
+
+        # Use Event.wait() so SIGTERM/lifespan teardown can interrupt the sleep immediately
+        if _scheduler_stop_event.wait(timeout=sleep_sec):
+            logger.info("Daily report scheduler: stop signal received, exiting")
+            return
 
         try:
             asyncio.run(generate_and_send_slack_async("scheduled"))

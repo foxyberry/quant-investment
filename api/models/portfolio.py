@@ -12,6 +12,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     JSON,
     String,
@@ -162,8 +163,12 @@ class PortfolioReport(Base):
     __tablename__ = "portfolio_reports"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    generated_at = Column(DateTime, nullable=False)  # UTC
+    generated_at = Column(DateTime, nullable=False)  # naive UTC
     trigger = Column(String(20), nullable=False, default="manual")  # "manual" | "scheduled"
     prompt_version = Column(String(20), nullable=False, default="v1")
     content = Column(Text, nullable=False)
     duration_sec = Column(Float, nullable=True)
+
+    __table_args__ = (
+        Index("ix_portfolio_reports_generated_at", "generated_at"),
+    )

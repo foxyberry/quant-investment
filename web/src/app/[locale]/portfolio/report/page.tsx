@@ -281,9 +281,6 @@ export default function DailyReportPage() {
         if (isGen) {
           setIsGenerating(true);
           startPolling(latestIdRef.current);
-        } else if (!latest) {
-          // No report at all — auto-generate
-          void triggerGenerate(null);
         }
       } catch (e: unknown) {
         if (!cancelled) {
@@ -354,7 +351,7 @@ export default function DailyReportPage() {
             </div>
           )}
           {history.length === 0 && !isLoading && !isGenerating && (
-            <p className="px-4 py-3 text-xs text-slate-500">생성된 리포트가 없습니다</p>
+            <p className="px-4 py-3 text-xs text-slate-500">{t('noHistory')}</p>
           )}
           {history.map((r) => (
             <button
@@ -457,7 +454,7 @@ export default function DailyReportPage() {
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="h-10 w-10 animate-spin text-blue-400" />
               <p className="text-sm text-slate-400">{t('generating')}</p>
-              <p className="text-xs text-slate-600">다른 페이지를 이용하셔도 백그라운드에서 생성됩니다.</p>
+              <p className="text-xs text-slate-600">{t('backgroundHint')}</p>
             </div>
           )}
 
@@ -465,8 +462,8 @@ export default function DailyReportPage() {
           {!isLoading && !isGenerating && !currentReport && !loadError && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <BookOpen className="h-12 w-12 text-slate-600 mb-4" />
-              <p className="text-sm font-medium text-slate-400">오늘 리포트가 없어요</p>
-              <p className="text-xs text-slate-600 mt-1 mb-6">위의 &ldquo;새 리포트 생성&rdquo; 버튼을 눌러 AI 분석을 시작해보세요.</p>
+              <p className="text-sm font-medium text-slate-400">{t('noReport')}</p>
+              <p className="text-xs text-slate-600 mt-1 mb-6">{t('noReportDesc')}</p>
             </div>
           )}
 
@@ -489,7 +486,7 @@ export default function DailyReportPage() {
                     <span>·</span>
                     <span className="flex items-center gap-1 text-blue-400">
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      새 리포트 생성 중
+                      {t('generatingNew')}
                     </span>
                   </>
                 )}
