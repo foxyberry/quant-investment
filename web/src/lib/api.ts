@@ -1782,6 +1782,11 @@ export async function getReport(id: number): Promise<ReportDetail | null> {
   }
 }
 
+/**
+ * SSE streaming alternative to generateReportBackground.
+ * Not used by the current UI (which uses background + polling), but kept for
+ * future use if we want to switch to an inline streaming experience.
+ */
 export async function* streamGenerateReport(signal?: AbortSignal): AsyncGenerator<ChatStreamEvent> {
   const res = await fetch(`${API_BASE_URL}/api/portfolio/report/generate`, {
     method: 'POST',

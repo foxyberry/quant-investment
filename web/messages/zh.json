@@ -631,7 +631,8 @@
     "duration": "{sec}秒",
     "loadFailed": "报告加载失败",
     "retry": "重试",
-    "errorGenerating": "报告生成出错"
+    "errorGenerating": "报告生成出错",
+    "connectionError": "无法连接到服务器"
   },
   "portfolio": {
     "title": "投资组合",

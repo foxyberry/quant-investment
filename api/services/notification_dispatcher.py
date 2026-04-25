@@ -13,6 +13,7 @@ Block Kit support:
 import json
 import logging
 import re
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -28,6 +29,8 @@ _SLACK_WEBHOOK_PATTERN = re.compile(r"^https://hooks\.slack\.com/services/.+")
 # Rate limit: minimum seconds between Slack messages
 _SLACK_RATE_LIMIT_SEC = 1.0
 _last_slack_send_time: float = 0.0
+# Lock guards _last_slack_send_time to prevent concurrent calls racing past the rate limiter
+_slack_lock = threading.Lock()
 
 
 # ── Block Kit helpers ──────────────────────────────────────────────────────────
@@ -248,7 +251,9 @@ def md_to_report_payload(content: str) -> dict:
     # Build attachments: one attachment per color group, chunked at 50 blocks each
     attachments: list[dict] = []
     for color, blocks in color_blocks.items():
-        for i in range(0, max(1, len(blocks)), 50):
+        if not blocks:
+            continue
+        for i in range(0, len(blocks), 50):
             attachments.append({
                 "color": color,
                 "blocks": blocks[i : i + 50],
@@ -404,32 +409,37 @@ def _get_slack_webhook(svc: object) -> str | None:
 
 
 def _post_slack(webhook_url: str, payload: dict) -> bool:
-    """POST a single JSON payload to the Slack webhook. Returns True on 200."""
+    """POST a single JSON payload to the Slack webhook. Returns True on 200.
+
+    Thread-safe: _slack_lock serialises concurrent callers and protects the
+    global _last_slack_send_time rate-limiter against race conditions.
+    """
     global _last_slack_send_time
-    now = time.monotonic()
-    elapsed = now - _last_slack_send_time
-    if elapsed < _SLACK_RATE_LIMIT_SEC:
-        time.sleep(_SLACK_RATE_LIMIT_SEC - elapsed)
-    try:
-        data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            webhook_url,
-            data=data,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            _last_slack_send_time = time.monotonic()
-            return resp.status == 200
-    except urllib.error.HTTPError as exc:
-        if exc.code in (403, 410):
-            logger.warning("Slack webhook expired or revoked (HTTP %d)", exc.code)
-        else:
-            logger.warning("Slack API error: HTTP %d", exc.code)
-        return False
-    except Exception:
-        logger.warning("Failed to send to Slack", exc_info=True)
-        return False
+    with _slack_lock:
+        now = time.monotonic()
+        elapsed = now - _last_slack_send_time
+        if elapsed < _SLACK_RATE_LIMIT_SEC:
+            time.sleep(_SLACK_RATE_LIMIT_SEC - elapsed)
+        try:
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                webhook_url,
+                data=data,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                _last_slack_send_time = time.monotonic()
+                return resp.status == 200
+        except urllib.error.HTTPError as exc:
+            if exc.code in (403, 410):
+                logger.warning("Slack webhook expired or revoked (HTTP %d)", exc.code)
+            else:
+                logger.warning("Slack API error: HTTP %d", exc.code)
+            return False
+        except Exception:
+            logger.warning("Failed to send to Slack", exc_info=True)
+            return False
 
 
 def _send_slack(svc: object, message: str) -> bool:
@@ -449,8 +459,12 @@ def _send_slack_blocks(svc: object, blocks: List[dict], fallback_text: str) -> b
     if not webhook_url:
         return False
 
+    if not blocks:
+        logger.debug("_send_slack_blocks: empty blocks list, skipping")
+        return True
+
     _CHUNK = 50
-    chunks = [blocks[i : i + _CHUNK] for i in range(0, max(1, len(blocks)), _CHUNK)]
+    chunks = [blocks[i : i + _CHUNK] for i in range(0, len(blocks), _CHUNK)]
     for idx, chunk in enumerate(chunks):
         payload: dict = {"text": fallback_text if idx == 0 else "...", "blocks": chunk}
         ok = _post_slack(webhook_url, payload)

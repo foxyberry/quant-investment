@@ -285,7 +285,7 @@ export default function DailyReportPage() {
       } catch (e: unknown) {
         if (!cancelled) {
           const msg = e instanceof Error ? e.message : String(e);
-          setLoadError(msg.startsWith('[object') ? '서버에 연결할 수 없습니다.' : msg);
+          setLoadError(msg.startsWith('[object') ? t('connectionError') : msg);
         }
       } finally {
         if (!cancelled) setIsLoading(false);

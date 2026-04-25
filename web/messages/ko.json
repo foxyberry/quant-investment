@@ -631,7 +631,8 @@
     "duration": "{sec}초",
     "loadFailed": "리포트 로드 실패",
     "retry": "재시도",
-    "errorGenerating": "리포트 생성 오류"
+    "errorGenerating": "리포트 생성 오류",
+    "connectionError": "서버에 연결할 수 없습니다"
   },
   "portfolio": {
     "title": "포트폴리오",

@@ -21,7 +21,7 @@ import logging
 import threading
 import time
 from datetime import datetime, timezone, timedelta
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any, AsyncGenerator, AsyncIterator, Dict, Optional
 
 from api.database import SessionLocal
 from api.services.chat_service import (
@@ -109,7 +109,7 @@ _REPORT_USER_MESSAGE = (
 async def _run_agentic_loop(
     client: Any,
     anthropic_messages: list,
-) -> AsyncIterator[dict]:
+) -> AsyncGenerator[dict, None]:
     """
     Core agentic loop shared by stream_report and generate_and_send_slack_async.
 
@@ -258,11 +258,15 @@ async def stream_report(trigger: str = "manual") -> AsyncIterator[str]:
             if event.get("type") in ("error", "done"):
                 break
 
-        # Persist on successful completion
+        # Persist on successful completion — in its own try/except so a DB failure
+        # does not emit a second SSE event after "done" was already sent.
         if full_content_parts:
             full_content = "".join(full_content_parts)
             duration_sec = time.monotonic() - started_at
-            await asyncio.to_thread(_save_report_to_db, full_content, trigger, duration_sec)
+            try:
+                await asyncio.to_thread(_save_report_to_db, full_content, trigger, duration_sec)
+            except Exception as db_exc:
+                logger.error("stream_report: failed to persist report to DB: %s", db_exc, exc_info=True)
 
     except Exception as exc:
         logger.error("stream_report unexpected error: %s", exc, exc_info=True)
@@ -279,7 +283,7 @@ def _save_report_to_db(content: str, trigger: str, duration_sec: float) -> int:
     db = SessionLocal()
     try:
         report = PortfolioReport(
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc).replace(tzinfo=None),  # naive UTC stored by convention
             trigger=trigger,
             prompt_version=_REPORT_PROMPT_VERSION,
             content=content,

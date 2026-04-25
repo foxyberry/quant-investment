@@ -631,7 +631,8 @@
     "duration": "{sec}s",
     "loadFailed": "Failed to load report",
     "retry": "Retry",
-    "errorGenerating": "Error generating report"
+    "errorGenerating": "Error generating report",
+    "connectionError": "Cannot connect to server"
   },
   "portfolio": {
     "title": "Portfolio",
