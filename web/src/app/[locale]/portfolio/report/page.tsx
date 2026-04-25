@@ -285,7 +285,7 @@ export default function DailyReportPage() {
       } catch (e: unknown) {
         if (!cancelled) {
           const msg = e instanceof Error ? e.message : String(e);
-          setLoadError(msg.startsWith('[object') ? t('connectionError') : msg);
+          setLoadError(!msg || msg === '[object Object]' ? t('connectionError') : msg);
         }
       } finally {
         if (!cancelled) setIsLoading(false);

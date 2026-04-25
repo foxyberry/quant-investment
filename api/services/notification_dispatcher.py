@@ -24,7 +24,8 @@ from api.database import SessionLocal
 logger = logging.getLogger(__name__)
 
 # Slack webhook URL must match this pattern (SSRF prevention)
-_SLACK_WEBHOOK_PATTERN = re.compile(r"^https://hooks\.slack\.com/services/.+")
+# Requires alphanumeric path segments after /services/ — blocks path traversal (../) and other tricks
+_SLACK_WEBHOOK_PATTERN = re.compile(r"^https://hooks\.slack\.com/services/[A-Za-z0-9/_-]+$")
 
 # Rate limit: minimum seconds between Slack messages
 _SLACK_RATE_LIMIT_SEC = 1.0
@@ -500,10 +501,11 @@ def _send_slack_payload(svc: object, payload: dict, fallback_text: str) -> bool:
         return False
 
     # Subsequent messages: attachments (one batch per Slack call, max 20 attachments each)
+    # Note: no explicit time.sleep here — _post_slack's lock-protected rate limiter
+    # already enforces _SLACK_RATE_LIMIT_SEC (1 s) between consecutive calls.
     _ATT_CHUNK = 20
     for i in range(0, len(attachments), _ATT_CHUNK):
         chunk = attachments[i : i + _ATT_CHUNK]
-        time.sleep(1.0)
         ok = _post_slack(webhook_url, {"text": "...", "attachments": chunk})
         if not ok:
             logger.warning("Slack attachment chunk %d failed", i // _ATT_CHUNK + 1)
