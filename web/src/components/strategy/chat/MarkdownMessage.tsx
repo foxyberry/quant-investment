@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface MarkdownMessageProps {
   content: string;
@@ -10,6 +11,7 @@ interface MarkdownMessageProps {
 function MarkdownMessage({ content }: MarkdownMessageProps) {
   return (
     <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
       components={{
         h1: ({ children }) => (
           <h1 className="text-base font-bold mt-3 mb-1">{children}</h1>
