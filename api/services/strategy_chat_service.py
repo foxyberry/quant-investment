@@ -354,7 +354,7 @@ class StrategyChatService:
 
         try:
             with self.client.messages.stream(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-6",
                 max_tokens=1024,
                 system=system,
                 messages=messages,
@@ -523,19 +523,32 @@ def get_strategy_chat_service() -> StrategyChatService:
     """Return singleton StrategyChatService instance.
 
     Provider priority: ANTHROPIC_API_KEY > OPENAI_API_KEY.
+    Uses get_settings() so .env file values are correctly picked up.
+    Only caches the instance once a valid API key is found.
     """
     global _instance
-    if _instance is None:
-        anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
-        openai_key = os.environ.get("OPENAI_API_KEY", "")
+    if _instance is not None:
+        return _instance
 
-        if anthropic_key:
-            _instance = StrategyChatService(provider="anthropic", api_key=anthropic_key)
-            logger.info("Strategy chat: using Anthropic provider")
-        elif openai_key:
-            _instance = StrategyChatService(provider="openai", api_key=openai_key)
-            logger.info("Strategy chat: using OpenAI provider")
-        else:
-            _instance = StrategyChatService(provider="none", api_key="")
-            logger.warning("Strategy chat: no API key configured")
+    # Use get_settings() to pick up .env values (os.environ misses .env-only keys)
+    try:
+        from api.config import get_settings
+        settings = get_settings()
+        anthropic_key = settings.anthropic_api_key or ""
+    except Exception:
+        anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+
+    openai_key = os.environ.get("OPENAI_API_KEY", "")
+
+    if anthropic_key:
+        _instance = StrategyChatService(provider="anthropic", api_key=anthropic_key)
+        logger.info("Strategy chat: using Anthropic provider")
+    elif openai_key:
+        _instance = StrategyChatService(provider="openai", api_key=openai_key)
+        logger.info("Strategy chat: using OpenAI provider")
+    else:
+        # Don't cache — API key may become available after next request
+        logger.warning("Strategy chat: no API key configured")
+        return StrategyChatService(provider="none", api_key="")
+
     return _instance

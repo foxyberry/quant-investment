@@ -145,6 +145,15 @@ export default function ChatPanel({ graph, onAddNodes, existingConditionNodes, o
                 }
                 return updated;
               });
+            } else if (data.type === 'error') {
+              setMessages(prev => {
+                const updated = [...prev];
+                const last = updated[updated.length - 1];
+                if (last?.role === 'assistant') {
+                  updated[updated.length - 1] = { ...last, content: chatError };
+                }
+                return updated;
+              });
             }
           } catch {
             // ignore parse errors (heartbeats, etc.)
