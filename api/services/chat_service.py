@@ -349,6 +349,7 @@ def _run_stream_round(
     anthropic_messages: list,
     queue: "asyncio.Queue[Any]",
     loop: asyncio.AbstractEventLoop,
+    max_tokens: int = 4096,
 ) -> None:
     """
     Execute one synchronous Claude streaming round in a background thread.
@@ -372,7 +373,7 @@ def _run_stream_round(
     try:
         with client.messages.stream(
             model=_MODEL,
-            max_tokens=4096,
+            max_tokens=max_tokens,
             system=system,
             tools=_TOOLS,
             messages=anthropic_messages,

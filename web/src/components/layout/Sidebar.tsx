@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   TrendingUp,
+  BookOpen,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import LocaleSwitcher from './LocaleSwitcher';
@@ -27,16 +28,18 @@ import type { KiwoomConnectionState, KiwoomConnectionStatus } from '@/lib/types'
 import { Toast, useToast } from '@/components/ui/Toast';
 
 interface NavItem {
-  href: '/' | '/screening' | '/strategy' | '/portfolio' | '/watchlist' | '/analysis' | '/reports' | '/macro';
+  href: '/' | '/screening' | '/strategy' | '/portfolio' | '/portfolio/report' | '/watchlist' | '/analysis' | '/reports' | '/macro';
   labelKey: string;
   icon: LucideIcon;
+  exact?: boolean;
 }
 
 const navItems: NavItem[] = [
   { href: '/', labelKey: 'dashboard', icon: LayoutDashboard },
   { href: '/screening', labelKey: 'screening', icon: Search },
   { href: '/strategy', labelKey: 'strategy', icon: Workflow },
-  { href: '/portfolio', labelKey: 'portfolio', icon: PieChart },
+  { href: '/portfolio', labelKey: 'portfolio', icon: PieChart, exact: true },
+  { href: '/portfolio/report', labelKey: 'dailyReport', icon: BookOpen },
   { href: '/watchlist', labelKey: 'watchlist', icon: Star },
   { href: '/analysis', labelKey: 'analysis', icon: BarChart3 },
   { href: '/macro', labelKey: 'macro', icon: Radar },
@@ -86,11 +89,10 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     });
   }, [queryClient]);
 
-  const isActive = (href: string) => {
-    if (href === '/') {
-      return pathname === '/';
-    }
-    return pathname.startsWith(href);
+  const isActive = (item: NavItem) => {
+    if (item.href === '/') return pathname === '/';
+    if (item.exact) return pathname === item.href;
+    return pathname.startsWith(item.href);
   };
 
   useEffect(() => {
@@ -186,7 +188,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <ul className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const active = isActive(item.href);
+                const active = isActive(item);
 
                 return (
                   <li key={item.href}>
@@ -263,12 +265,12 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               className={`
                 flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition-colors
                 ${
-                  isActive('/settings')
+                  pathname.startsWith('/settings')
                     ? 'bg-blue-600 text-white'
                     : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }
               `}
-              aria-current={isActive('/settings') ? 'page' : undefined}
+              aria-current={pathname.startsWith('/settings') ? 'page' : undefined}
             >
               <Settings className="h-5 w-5 flex-shrink-0" />
               {!isCollapsed && <span>{tNav('settings')}</span>}

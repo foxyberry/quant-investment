@@ -25,6 +25,7 @@ from api.routers.strategy import router as strategy_router
 from api.routers.portfolio_alerts import router as portfolio_alerts_router
 from api.routers.watchlist import router as watchlist_router
 from api.routers.chat import router as chat_router
+from api.routers.report import router as report_router
 
 
 def _backfill_metadata():
@@ -200,6 +201,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             get_portfolio_alert_scanner().start()
         except Exception as e:
             print(f"WARNING: Portfolio alert scanner failed to start: {e}")
+
+        # Daily report scheduler (9:05 AM KST)
+        try:
+            from api.services.report_service import run_daily_report_scheduler
+            threading.Thread(target=run_daily_report_scheduler, daemon=True, name="daily-report-scheduler").start()
+        except Exception as e:
+            print(f"WARNING: Daily report scheduler failed to start: {e}")
     except Exception as e:
         print(f"WARNING: Database initialization failed: {e}")
         print("Strategy persistence will be unavailable until DB is reachable.")
@@ -208,6 +216,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Shutdown (종료 시 실행)
     print("Shutting down application...")
+    try:
+        from api.services.report_service import stop_daily_report_scheduler
+        stop_daily_report_scheduler()
+    except Exception:
+        pass
     try:
         from api.services.macro_market_service import get_macro_market_service
         get_macro_market_service()._flush_to_db()
@@ -266,6 +279,7 @@ def create_app() -> FastAPI:
     app.include_router(watchlist_router)
     app.include_router(portfolio_alerts_router)
     app.include_router(chat_router)
+    app.include_router(report_router)
 
     # Future routers (추후 추가될 라우터)
     # app.include_router(news_router, prefix="/api/v1")
