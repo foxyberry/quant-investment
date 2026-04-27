@@ -5,10 +5,10 @@ import { getMessages, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import '../globals.css';
-import MainLayout from '@/components/layout/MainLayout';
+import MainLayout from '@/features/layout/MainLayout';
 import QueryProvider from '@/providers/QueryProvider';
 import { UserSettingsProvider } from '@/contexts/UserSettingsContext';
-import AgentationProvider from '@/components/dev/AgentationProvider';
+import AgentationProvider from '@/features/dev/AgentationProvider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

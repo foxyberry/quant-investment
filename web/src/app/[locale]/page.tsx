@@ -10,7 +10,7 @@ import {
   MacroFlowCard,
   RecentExecutionsCard,
   QuickActionsCard,
-} from '@/components/dashboard';
+} from '@/features/dashboard';
 import { Wifi, WifiOff, Loader2 } from 'lucide-react';
 
 interface ConnectionStatus {

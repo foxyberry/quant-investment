@@ -19,8 +19,8 @@ import {
   AllocationCharts,
   ArchiveModal,
   ChatPanel,
-} from '@/components/portfolio';
-import { normalizeSector, classifyMarket } from '@/components/portfolio/AllocationCharts';
+} from '@/features/portfolio';
+import { normalizeSector, classifyMarket } from '@/features/portfolio/AllocationCharts';
 import {
   getHoldings,
   addHolding,

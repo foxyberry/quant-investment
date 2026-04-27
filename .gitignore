@@ -199,3 +199,6 @@ web/node_modules/
 web/.next/
 web/.env.local
 web/.env*.local
+
+# MCP config (contains API keys)
+.mcp.json

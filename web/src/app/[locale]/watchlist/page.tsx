@@ -14,7 +14,7 @@ import {
 } from '@/lib/api';
 import type { WatchlistItem, WatchlistItemCreate, WatchlistItemUpdate } from '@/lib/types';
 import { formatCurrency } from '@/lib/format';
-import BuyRuleModal from '@/components/watchlist/BuyRuleModal';
+import BuyRuleModal from '@/features/watchlist/BuyRuleModal';
 
 export default function WatchlistPage() {
   const t = useTranslations('watchlist');

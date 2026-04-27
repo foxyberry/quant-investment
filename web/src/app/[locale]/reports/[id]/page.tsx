@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
-import { ResultTable } from '@/components/screening';
+import { ResultTable } from '@/features/screening';
 import { getExecution, updateExecution } from '@/lib/api';
 import type { ExecutionHistoryDetail, ScreeningResult } from '@/lib/types';
 import {
