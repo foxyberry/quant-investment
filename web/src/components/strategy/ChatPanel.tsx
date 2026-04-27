@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, User, Bot } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import MarkdownMessage from './chat/MarkdownMessage';
 import MessageActions from './chat/MessageActions';
 import SectionedMessage from './chat/SectionedMessage';
 import { normalizeChunk, finalizeStreamText } from './chat/streamTextFormatter';
+import { cn } from '@/lib/utils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
@@ -30,6 +31,7 @@ export interface NodeMapping {
 }
 
 interface ChatMessage {
+  id: string;
   role: 'user' | 'assistant';
   content: string;
   structuredPayload?: StructuredPayload;
@@ -88,9 +90,9 @@ export default function ChatPanel({ graph, onAddNodes, existingConditionNodes, o
     const trimmed = input.trim();
     if (!trimmed || isStreaming) return;
 
-    const userMsg: ChatMessage = { role: 'user', content: trimmed };
+    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: trimmed };
     const newMessages = [...messages, userMsg];
-    setMessages([...newMessages, { role: 'assistant', content: '' }]);
+    setMessages([...newMessages, { id: crypto.randomUUID(), role: 'assistant', content: '' }]);
     setInput('');
     setIsStreaming(true);
 
@@ -248,53 +250,68 @@ export default function ChatPanel({ graph, onAddNodes, existingConditionNodes, o
                 </p>
               </div>
             )}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               {messages.map((msg, i) => (
                 <div
-                  key={i}
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  key={msg.id}
+                  aria-label={msg.role === 'user' ? 'You' : 'AI Assistant'}
+                  className={`flex items-end gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                 >
+                  {/* Avatar */}
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 text-sm leading-relaxed ${
+                    aria-hidden="true"
+                    className={cn(
+                      'flex-shrink-0 flex h-7 w-7 items-center justify-center rounded-full text-white shadow-sm',
                       msg.role === 'user'
-                        ? 'bg-blue-600 text-white whitespace-pre-wrap'
-                        : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
-                    }`}
-                  >
-                    {msg.role === 'user' ? (
-                      msg.content
-                    ) : msg.structuredPayload ? (
-                      <SectionedMessage
-                        content={msg.content}
-                        payload={msg.structuredPayload}
-                        nodeMappings={msg.nodeMappings}
-                        onAddNodes={onAddNodes}
-                        existingConditionNodes={existingConditionNodes}
-                        onUpdateNode={onUpdateNode}
-                      />
-                    ) : (
-                      <MarkdownMessage content={msg.content} />
+                        ? 'bg-blue-600'
+                        : 'bg-gradient-to-br from-violet-500 to-indigo-600',
                     )}
-                    {msg.role === 'assistant' &&
-                      i === messages.length - 1 &&
-                      isStreaming && (
-                        <span className="ml-0.5 inline-block h-4 w-1 animate-pulse bg-current align-text-bottom" />
+                  >
+                    {msg.role === 'user'
+                      ? <User className="h-3.5 w-3.5" />
+                      : <Bot className="h-3.5 w-3.5" />
+                    }
+                  </div>
+
+                  {/* Bubble wrapper */}
+                  <div className={`flex max-w-[75%] flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div
+                      className={cn(
+                        'rounded-2xl px-3 py-2.5 text-sm leading-relaxed',
+                        msg.role === 'user'
+                          ? 'rounded-br-sm bg-blue-600 text-white whitespace-pre-wrap'
+                          : 'rounded-bl-sm bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100',
                       )}
+                    >
+                      {msg.role === 'user' ? (
+                        msg.content
+                      ) : msg.structuredPayload ? (
+                        <SectionedMessage
+                          content={msg.content}
+                          payload={msg.structuredPayload}
+                          nodeMappings={msg.nodeMappings}
+                          onAddNodes={onAddNodes}
+                          existingConditionNodes={existingConditionNodes}
+                          onUpdateNode={onUpdateNode}
+                        />
+                      ) : (
+                        <MarkdownMessage content={msg.content} />
+                      )}
+                      {msg.role === 'assistant' && i === messages.length - 1 && isStreaming && (
+                        msg.content
+                          ? <span className="ml-0.5 inline-block h-4 w-1 animate-pulse bg-current align-text-bottom" />
+                          : <Loader2 className="inline h-3 w-3 animate-spin text-gray-400" />
+                      )}
+                    </div>
                     {msg.role === 'assistant' &&
-                      i === messages.length - 1 &&
-                      isStreaming &&
-                      !msg.content && (
-                        <Loader2 className="inline h-3 w-3 animate-spin text-gray-400" />
+                      msg.content &&
+                      !(i === messages.length - 1 && isStreaming) && (
+                        <MessageActions
+                          content={msg.content}
+                          payload={msg.structuredPayload}
+                        />
                       )}
                   </div>
-                  {msg.role === 'assistant' &&
-                    msg.content &&
-                    !(i === messages.length - 1 && isStreaming) && (
-                      <MessageActions
-                        content={msg.content}
-                        payload={msg.structuredPayload}
-                      />
-                    )}
                 </div>
               ))}
               <div ref={messagesEndRef} />
