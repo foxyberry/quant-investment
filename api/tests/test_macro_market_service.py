@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from api.services.macro_market_service import MacroMarketService
+from api.services.macro_service import MacroMarketService
 
 
 class StubExchangeService:
