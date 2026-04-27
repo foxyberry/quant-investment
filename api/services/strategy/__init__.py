@@ -16,6 +16,7 @@ from api.services.strategy.strategy_core_service import (
     CONDITION_METADATA,
     WARN_TICKERS_THRESHOLD,
     MAX_TICKERS_PER_RUN,
+    _LEGACY_ALIAS_MAP,
     _to_optional_float,
     _is_korean_ticker,
     _extract_krx_code,
@@ -27,8 +28,13 @@ from api.services.strategy.strategy_core_service import (
     build_flat_conditions_from_graph,
 )
 
-# Fundamentals — PER/PBR/dividend_yield enrichment
-from api.services.strategy.strategy_fundamentals import enrich_fundamentals
+# Fundamentals — PER/PBR/dividend_yield enrichment + cache/fetch (for monkeypatching)
+from api.services.strategy.strategy_fundamentals import (
+    enrich_fundamentals,
+    _fundamental_cache,
+    _fetch_us_fundamentals,
+    _fetch_kr_fundamentals,
+)
 
 # Portfolio helpers — weight math, ranking, node survivors (internal)
 from api.services.strategy.strategy_portfolio_helpers import (
@@ -38,6 +44,7 @@ from api.services.strategy.strategy_portfolio_helpers import (
     passes_node as _passes_node,
     _compute_inverse_vol_weights,
     _compute_risk_parity_weights,
+    _estimate_return_matrix,
 )
 
 # Execution — universe resolution + main run
@@ -62,6 +69,7 @@ __all__ = [
     "CONDITION_METADATA",
     "WARN_TICKERS_THRESHOLD",
     "MAX_TICKERS_PER_RUN",
+    "_LEGACY_ALIAS_MAP",
     "_to_optional_float",
     "_is_korean_ticker",
     "_extract_krx_code",
@@ -73,6 +81,9 @@ __all__ = [
     "build_flat_conditions_from_graph",
     # Fundamentals
     "enrich_fundamentals",
+    "_fundamental_cache",
+    "_fetch_us_fundamentals",
+    "_fetch_kr_fundamentals",
     # Portfolio helpers (exposed under legacy private names for shim compat)
     "_build_weighted_portfolio",
     "_build_ranking_outputs",
@@ -80,6 +91,7 @@ __all__ = [
     "_passes_node",
     "_compute_inverse_vol_weights",
     "_compute_risk_parity_weights",
+    "_estimate_return_matrix",
     # Execution
     "execute_strategy",
     "execute_strategy_with_progress",
