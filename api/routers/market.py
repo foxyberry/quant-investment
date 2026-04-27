@@ -26,7 +26,7 @@ from api.services.bond_rate_service import get_bond_rate_service
 from api.schemas.analysis import SearchResult
 from api.services.global_macro_service import get_global_macro_service
 from api.services.market_service import MarketService
-from api.services.macro_market_service import get_macro_market_service
+from api.services.macro_service import get_macro_market_service
 from api.services.us_market_service import get_us_market_service
 from api.services.us_scoring_service import get_us_scoring_service
 from api.services.volatility_service import get_volatility_service

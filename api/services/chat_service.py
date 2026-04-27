@@ -255,7 +255,7 @@ def _run_get_news(ticker: str, limit: int = 5) -> Dict[str, Any]:
 
 def _run_get_macro_context() -> Dict[str, Any]:
     try:
-        from api.services.macro_market_service import get_macro_market_service
+        from api.services.macro_service import get_macro_market_service
 
         bundle = get_macro_market_service().get_bundle()
         signal = bundle.get("signal", {})

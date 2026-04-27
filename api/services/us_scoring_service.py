@@ -269,7 +269,7 @@ class UsScoringService:
         )
 
         # --- Confidence (reuse KR service's static method) ---
-        from api.services.macro_market_service import MacroMarketService
+        from api.services.macro_service import MacroMarketService
 
         total_keys = ["vix", "curve", "sp500"]
         weights = {"vix": self.VIX_WEIGHT, "curve": self.CURVE_WEIGHT, "sp500": self.SP500_WEIGHT}
@@ -335,7 +335,7 @@ class UsScoringService:
         entry = self.derive_entry_signal(vix_interp, curve_interp, sp500_interp)
 
         # Execution posture (reuse KR service's static method)
-        from api.services.macro_market_service import MacroMarketService
+        from api.services.macro_service import MacroMarketService
         posture, posture_rationale = MacroMarketService._derive_posture(
             signal.get("regime", "unknown"),
             signal.get("confidence_band"),

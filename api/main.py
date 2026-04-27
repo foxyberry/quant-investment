@@ -177,7 +177,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             print(f"WARNING: Market breadth collector failed to start: {e}")
 
         try:
-            from api.services.macro_market_service import get_macro_market_service
+            from api.services.macro_service import get_macro_market_service
             _macro_svc = get_macro_market_service()  # singleton; router uses same instance
             threading.Thread(
                 target=_macro_svc.run_history_collector,
@@ -222,7 +222,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception:
         pass
     try:
-        from api.services.macro_market_service import get_macro_market_service
+        from api.services.macro_service import get_macro_market_service
         get_macro_market_service()._flush_to_db()
     except Exception:
         pass
