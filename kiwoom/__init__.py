@@ -1,17 +1,29 @@
-"""Kiwoom OpenAPI+ integration module.
+"""Kiwoom OpenAPI+ integration module — backward-compatibility shim.
 
-Provides OCX connection management, constants, and trading primitives
-for the Korean stock market via Kiwoom Securities API.
+All Kiwoom driver code has been consolidated into brokers/kiwoom/.
+This package re-exports everything so existing import paths continue to work.
+
+New code should import directly from brokers.kiwoom:
+    from brokers.kiwoom.connection import KiwoomConnection
+    from brokers.kiwoom.constants import HogaType, OrderType
 """
 
-from kiwoom.connection import KiwoomConnection
-from kiwoom.chejan_handler import ChejanHandler, OrderStatus
-from kiwoom.order import KiwoomOrderManager, Order
-from kiwoom.safety import AuditLogger, DuplicateOrderGuard, KillSwitch, KiwoomSafetyManager, SafetyViolation
-from kiwoom.condition_search import ConditionDefinition, ConditionSearchManager
-from kiwoom.realtime import RealtimeSubscriptionManager, ScreenManager
-from kiwoom.tr import KiwoomTrClient, TrRequest
-from kiwoom.constants import (
+import warnings as _warnings
+_warnings.warn(
+    "The top-level 'kiwoom' package is deprecated. "
+    "Use 'brokers.kiwoom' instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+from brokers.kiwoom.connection import KiwoomConnection  # noqa: F401, E402
+from brokers.kiwoom.chejan_handler import ChejanHandler, OrderStatus  # noqa: F401, E402
+from brokers.kiwoom.order import KiwoomOrderManager, Order  # noqa: F401, E402
+from brokers.kiwoom.safety import AuditLogger, DuplicateOrderGuard, KillSwitch, KiwoomSafetyManager, SafetyViolation  # noqa: F401, E402
+from brokers.kiwoom.condition_search import ConditionDefinition, ConditionSearchManager  # noqa: F401, E402
+from brokers.kiwoom.realtime import RealtimeSubscriptionManager, ScreenManager  # noqa: F401, E402
+from brokers.kiwoom.tr import KiwoomTrClient, TrRequest  # noqa: F401, E402
+from brokers.kiwoom.constants import (  # noqa: F401, E402
     ChejanGubun,
     ErrorCode,
     FID,

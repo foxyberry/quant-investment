@@ -33,7 +33,7 @@ from brokers.exceptions import (
     BrokerValidationError,
     OrderNotFoundError,
 )
-from kiwoom.safety import SafetyViolation
+from brokers.kiwoom.safety import SafetyViolation
 
 logger = logging.getLogger(__name__)
 
