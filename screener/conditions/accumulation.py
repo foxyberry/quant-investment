@@ -28,7 +28,7 @@ import numpy as np
 
 from .base import BaseCondition, ConditionResult
 from .registry import register_condition
-from discovery.indicators import (
+from screener.indicators import (
     calculate_obv,
     calculate_stochastic,
     calculate_vpci,

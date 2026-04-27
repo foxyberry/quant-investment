@@ -1,17 +1,20 @@
 """
-Notification System
-알림 시스템 (Telegram/Slack)
+Notification System — DEPRECATED.
 
-이 모듈은 하위 호환성을 위해 유지됩니다.
-새 코드는 portfolio.notifiers 모듈을 직접 사용하세요.
+portfolio.notifier and portfolio.notifiers are deprecated.
+New code should use api.services.notification_dispatcher instead:
 
-Usage:
-    # 기존 방식 (호환성 유지)
-    from portfolio.notifier import TelegramNotifier, ConsoleNotifier
+    from api.services.notification_dispatcher import dispatch, dispatch_blocks
 
-    # 권장 방식
-    from portfolio.notifiers import TelegramNotifier, ConsoleNotifier
+This module is kept for backward compatibility only.
 """
+
+import warnings as _warnings
+_warnings.warn(
+    "portfolio.notifier is deprecated. Use api.services.notification_dispatcher instead.",
+    DeprecationWarning,
+    stacklevel=1,
+)
 
 # Re-export from new module structure for backward compatibility
 from .notifiers import (
