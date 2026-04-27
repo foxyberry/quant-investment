@@ -13,7 +13,7 @@ _warnings.warn(
     "The top-level 'kiwoom' package is deprecated. "
     "Use 'brokers.kiwoom' instead.",
     DeprecationWarning,
-    stacklevel=2,
+    stacklevel=1,
 )
 
 from brokers.kiwoom.connection import KiwoomConnection  # noqa: F401, E402

@@ -12,7 +12,7 @@ import warnings as _warnings
 _warnings.warn(
     "utils.fetch is deprecated. Use data_sources.market.ohlcv instead.",
     DeprecationWarning,
-    stacklevel=2,
+    stacklevel=1,
 )
 
 from data_sources.market.ohlcv import *  # noqa: F401, F403

@@ -2,7 +2,7 @@
 import warnings as _warnings
 _warnings.warn(
     "discovery.indicators is deprecated. Use screener.indicators instead.",
-    DeprecationWarning, stacklevel=2,
+    DeprecationWarning, stacklevel=1,
 )
 from screener.indicators import *  # noqa: F401, F403
 from screener.indicators import (  # noqa: F401

@@ -19,7 +19,7 @@ from datetime import datetime
 import pandas as pd
 
 from models.condition import Condition, ConditionType, ConditionResult
-from utils.fetch import get_ohlcv
+from data_sources.market.ohlcv import get_ohlcv
 
 # Import evaluators from new module structure
 from .evaluators import get_evaluator, EVALUATOR_MAP

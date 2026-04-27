@@ -16,7 +16,7 @@ _warnings.warn(
     "The 'discovery' package is deprecated. "
     "Use 'screener.indicators', 'screener.decision', or 'screener.evaluators' instead.",
     DeprecationWarning,
-    stacklevel=2,
+    stacklevel=1,
 )
 
 from screener.evaluator import evaluate_condition, evaluate_conditions  # noqa: F401, E402

@@ -13,7 +13,7 @@ import warnings as _warnings
 _warnings.warn(
     "portfolio.notifier is deprecated. Use api.services.notification_dispatcher instead.",
     DeprecationWarning,
-    stacklevel=2,
+    stacklevel=1,
 )
 
 # Re-export from new module structure for backward compatibility

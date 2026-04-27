@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 
-from utils.fetch import get_ohlcv
+from data_sources.market.ohlcv import get_ohlcv
 
 
 @dataclass

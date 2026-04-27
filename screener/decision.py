@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from screener.indicators import calculate_indicators, get_ma_distances
-from utils.fetch import get_ohlcv
+from data_sources.market.ohlcv import get_ohlcv
 
 
 class Recommendation(Enum):
