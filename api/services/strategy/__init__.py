@@ -36,6 +36,8 @@ from api.services.strategy.strategy_portfolio_helpers import (
     build_ranking_outputs as _build_ranking_outputs,
     compute_node_survivors as _compute_node_survivors,
     passes_node as _passes_node,
+    _compute_inverse_vol_weights,
+    _compute_risk_parity_weights,
 )
 
 # Execution — universe resolution + main run
@@ -76,6 +78,8 @@ __all__ = [
     "_build_ranking_outputs",
     "_compute_node_survivors",
     "_passes_node",
+    "_compute_inverse_vol_weights",
+    "_compute_risk_parity_weights",
     # Execution
     "execute_strategy",
     "execute_strategy_with_progress",

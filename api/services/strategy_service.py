@@ -10,6 +10,7 @@ to work without modification:
     ...
 """
 
+from api.services.screening_service import ScreeningService  # noqa: F401  # tests monkeypatch via this namespace
 from api.services.strategy import (  # noqa: F401
     CONDITION_CLASS_MAP,
     CONDITION_METADATA,
@@ -31,6 +32,8 @@ from api.services.strategy import (  # noqa: F401
     _build_ranking_outputs,
     _compute_node_survivors,
     _passes_node,
+    _compute_inverse_vol_weights,
+    _compute_risk_parity_weights,
     _resolve_execution_universes,
     save_backtest_result,
     get_results,
