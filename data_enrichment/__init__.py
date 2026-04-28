@@ -20,13 +20,13 @@ Usage:
     result = news_enricher.enrich("AAPL", name="Apple Inc.")
 """
 
-from .fundamental import (
+from data_sources.fundamental.fundamental import (
     FundamentalEnricher,
     FundamentalData,
     enrich_fundamental,
 )
-from .news import NewsEnricher
-from .technical import (
+from data_sources.news.aggregator import NewsEnricher
+from data_sources.technical.technical import (
     TechnicalEnricher,
     TechnicalEnricherConfig,
     enrich_technical,

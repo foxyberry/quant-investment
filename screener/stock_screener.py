@@ -39,7 +39,7 @@ except ImportError:
     PYKRX_AVAILABLE = False
 
 from .conditions.base import BaseCondition, ConditionResult, PairsCondition
-from .kospi_fetcher import KospiListFetcher
+from data_sources.market.kr_market import KospiListFetcher
 
 try:
     from utils.data_cache import OHLCVCache, get_cache
