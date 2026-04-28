@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { History } from 'lucide-react';
-import { ExecutionHistoryList } from '@/components/reports';
+import { ExecutionHistoryList } from '@/features/reports';
 
 export default function ReportsPage() {
   const t = useTranslations('reports');

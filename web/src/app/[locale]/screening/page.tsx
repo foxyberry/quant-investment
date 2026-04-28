@@ -7,7 +7,7 @@ import {
   ConditionMonitorPanel,
   FilterPanel,
   ResultTable,
-} from '@/components/screening';
+} from '@/features/screening';
 import { runScreeningStream, saveExecution, checkDuplicateExecution } from '@/lib/api';
 import type { ScreeningProgressEvent, ScreeningResult, DuplicateCheckResponse } from '@/lib/types';
 import { Link } from '@/i18n/navigation';

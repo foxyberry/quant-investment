@@ -22,8 +22,8 @@ import {
   Star,
 } from 'lucide-react';
 import { Card, Button } from '@/components/ui';
-import { CandleChart, IndicatorPanel } from '@/components/charts';
-import { FactorScoreBar, FundamentalCard, NewsCard } from '@/components/analysis';
+import { CandleChart, IndicatorPanel } from '@/features/charts';
+import { FactorScoreBar, FundamentalCard, NewsCard } from '@/features/analysis';
 import {
   getTickerAnalysis,
   analyzeStock,

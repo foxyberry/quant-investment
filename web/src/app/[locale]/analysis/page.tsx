@@ -5,7 +5,7 @@ import { Search, BarChart3, X, ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Card, Button } from '@/components/ui';
-import { CandleChart, IndicatorPanel } from '@/components/charts';
+import { CandleChart, IndicatorPanel } from '@/features/charts';
 import { getTickerAnalysis, searchTickers } from '@/lib/api';
 import type { TickerAnalysis } from '@/lib/types';
 

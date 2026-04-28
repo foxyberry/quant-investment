@@ -29,19 +29,19 @@ import {
   AlignHorizontalSpaceAround, AlignVerticalSpaceAround, Route,
   ChevronLeft, ChevronUp, FileCode, ShieldCheck,
 } from 'lucide-react';
-import UniverseNode from '@/components/strategy/nodes/UniverseNode';
-import ConditionNode from '@/components/strategy/nodes/ConditionNode';
-import GroupNode from '@/components/strategy/nodes/GroupNode';
-import OutputNode from '@/components/strategy/nodes/OutputNode';
-import SectorNode from '@/components/strategy/nodes/SectorNode';
-import LabeledEdge from '@/components/strategy/edges/LabeledEdge';
-import NodePalette from '@/components/strategy/NodePalette';
-import IntermediateResultsPanel from '@/components/strategy/IntermediateResultsPanel';
-import SideInspectionPanel from '@/components/strategy/SideInspectionPanel';
-import ChatPanel, { type NodeMapping } from '@/components/strategy/ChatPanel';
+import UniverseNode from '@/features/strategy/nodes/UniverseNode';
+import ConditionNode from '@/features/strategy/nodes/ConditionNode';
+import GroupNode from '@/features/strategy/nodes/GroupNode';
+import OutputNode from '@/features/strategy/nodes/OutputNode';
+import SectorNode from '@/features/strategy/nodes/SectorNode';
+import LabeledEdge from '@/features/strategy/edges/LabeledEdge';
+import NodePalette from '@/features/strategy/NodePalette';
+import IntermediateResultsPanel from '@/features/strategy/IntermediateResultsPanel';
+import SideInspectionPanel from '@/features/strategy/SideInspectionPanel';
+import ChatPanel, { type NodeMapping } from '@/features/strategy/ChatPanel';
 
-import BacktestPanel from '@/components/backtest/BacktestPanel';
-import StrategyPipelineBadge from '@/components/strategy/StrategyPipelineBadge';
+import BacktestPanel from '@/features/backtest/BacktestPanel';
+import StrategyPipelineBadge from '@/features/strategy/StrategyPipelineBadge';
 import { Toast, useToast, type ToastType } from '@/components/ui/Toast';
 import type { StrategyNodeData } from '@/lib/strategy/graphSerializer';
 import { serializeGraph, getDownstreamNodeIds } from '@/lib/strategy/graphSerializer';

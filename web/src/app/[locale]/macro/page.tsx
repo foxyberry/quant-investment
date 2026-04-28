@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Card } from '@/components/ui';
 import { useMacroBundle, useMacroHistory, usePrefetchMacroHistory, useOhlcv } from '@/hooks/useMarket';
-import CandleChart from '@/components/charts/CandleChart';
+import CandleChart from '@/features/charts/CandleChart';
 import { formatPercent } from '@/lib/format';
 import {
   Activity,
