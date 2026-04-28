@@ -1,7 +1,7 @@
 # screener/__init__.py
 
-from .kospi_fetcher import KospiListFetcher
-from .us_fetcher import UsStockFetcher
+from data_sources.market.kr_market import KospiListFetcher
+from data_sources.market.us_market import UsStockFetcher
 
 # New extensible screening system
 from .stock_screener import StockScreener, ScreeningResult
