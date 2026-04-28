@@ -1,7 +1,7 @@
 /**
  * OpenAPI-generated type utilities.
  *
- * Run `npm run gen:api` (backend running) or `npm run gen:api:file` (from openapi.json)
+ * Run `npm run gen:api` (backend running) or `npm run gen:api:snapshot` (from openapi.json)
  * to regenerate `schema.d.ts` from the FastAPI OpenAPI spec.
  *
  * Usage:
