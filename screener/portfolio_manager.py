@@ -143,29 +143,34 @@ class PortfolioManager:
         return self.config.get('technical_sell_signals', {})
 
     def get_holdings(self) -> List[ConfigHolding]:
-        """모든 보유 종목 반환"""
-        holdings = []
-        holdings_data = self.config.get('holdings', {})
-
-        if holdings_data is None:
-            return holdings
-
-        for symbol, data in holdings_data.items():
-            if data is None:
-                continue
+        """모든 보유 종목 반환 (DB에서 조회)"""
+        try:
+            from api.database import SessionLocal
+            from api.models.portfolio import Holding as DBHolding
+            db = SessionLocal()
             try:
-                holding = ConfigHolding.from_dict(symbol, data)
-                holdings.append(holding)
-            except Exception as e:
-                self.logger.warning(f"Failed to parse holding {symbol}: {e}")
-
-        return holdings
+                rows = db.query(DBHolding).filter(DBHolding.quantity > 0).all()
+                return [
+                    ConfigHolding(
+                        symbol=row.ticker,
+                        name=row.name or row.ticker,
+                        buy_price=float(row.avg_price or 0),
+                        quantity=int(row.quantity),
+                        buy_date=row.bought_at or date.today(),
+                    )
+                    for row in rows
+                ]
+            finally:
+                db.close()
+        except Exception as e:
+            self.logger.warning(f"Failed to load holdings from DB: {e}")
+            return []
 
     def get_holding(self, symbol: str) -> Optional[ConfigHolding]:
-        """특정 종목 정보 반환"""
-        holdings_data = self.config.get('holdings', {})
-        if symbol in holdings_data and holdings_data[symbol]:
-            return ConfigHolding.from_dict(symbol, holdings_data[symbol])
+        """특정 종목 정보 반환 (DB에서 조회)"""
+        for h in self.get_holdings():
+            if h.symbol == symbol or h.symbol.upper() == symbol.upper():
+                return h
         return None
 
     def get_sell_conditions_for(self, symbol: str) -> SellConditions:
@@ -184,49 +189,19 @@ class PortfolioManager:
 
     def add_holding(self, symbol: str, buy_price: float, quantity: int,
                     buy_date: date = None, custom_conditions: Dict = None) -> bool:
-        """종목 추가"""
-        if buy_date is None:
-            buy_date = date.today()
-
-        if 'holdings' not in self.config or self.config['holdings'] is None:
-            self.config['holdings'] = {}
-
-        holding_data = {
-            'buy_price': buy_price,
-            'quantity': quantity,
-            'buy_date': buy_date.strftime('%Y-%m-%d')
-        }
-        if custom_conditions:
-            holding_data['custom_conditions'] = custom_conditions
-
-        self.config['holdings'][symbol.upper()] = holding_data
-        self.logger.info(f"Added holding: {symbol.upper()}")
-        return self.save_config()
+        """종목 추가 — DB를 통해 관리. 이 메서드는 하위 호환용."""
+        self.logger.warning("PortfolioManager.add_holding is deprecated. Use the API.")
+        return False
 
     def remove_holding(self, symbol: str) -> bool:
-        """종목 제거"""
-        holdings = self.config.get('holdings', {})
-        if symbol.upper() in holdings:
-            del holdings[symbol.upper()]
-            self.logger.info(f"Removed holding: {symbol.upper()}")
-            return self.save_config()
+        """종목 제거 — DB를 통해 관리. 이 메서드는 하위 호환용."""
+        self.logger.warning("PortfolioManager.remove_holding is deprecated. Use the API.")
         return False
 
     def update_holding(self, symbol: str, **kwargs) -> bool:
-        """종목 정보 업데이트"""
-        holdings = self.config.get('holdings', {})
-        symbol = symbol.upper()
-
-        if symbol not in holdings:
-            self.logger.warning(f"Holding not found: {symbol}")
-            return False
-
-        for key, value in kwargs.items():
-            if key == 'buy_date' and isinstance(value, date):
-                value = value.strftime('%Y-%m-%d')
-            holdings[symbol][key] = value
-
-        return self.save_config()
+        """종목 정보 업데이트 — DB를 통해 관리. 이 메서드는 하위 호환용."""
+        self.logger.warning("PortfolioManager.update_holding is deprecated. Use the API.")
+        return False
 
     def get_symbols(self) -> List[str]:
         """보유 종목 심볼 목록 반환"""

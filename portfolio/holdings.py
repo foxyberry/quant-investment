@@ -12,9 +12,7 @@ Usage:
     print(f"Quantity: {holding.quantity}, Avg Price: {holding.avg_price}")
 """
 
-import yaml
 import logging
-from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 from datetime import datetime, date
@@ -85,41 +83,15 @@ class Holding:
 
 
 class Portfolio:
-    """포트폴리오 관리 클래스"""
+    """포트폴리오 관리 클래스 (in-memory, Kiwoom sync용)
 
-    DEFAULT_PATH = Path(__file__).parent.parent / "config" / "portfolio.yaml"
+    Note: DB가 보유 종목의 단일 소스(Single Source of Truth).
+    이 클래스는 Kiwoom 실시간 동기화용 in-memory 버퍼로만 사용.
+    """
 
-    def __init__(self, filepath: Optional[str] = None):
+    def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.filepath = Path(filepath) if filepath else self.DEFAULT_PATH
         self._holdings: Dict[str, Holding] = {}
-        self._load()
-
-    def _load(self):
-        """파일에서 로드"""
-        if self.filepath.exists():
-            try:
-                with open(self.filepath, 'r', encoding='utf-8') as f:
-                    data = yaml.safe_load(f) or {}
-
-                holdings = data.get("holdings", [])
-                for holding_data in holdings:
-                    holding = Holding.from_dict(holding_data)
-                    self._holdings[holding.ticker] = holding
-                self.logger.info(f"Loaded {len(self._holdings)} holdings")
-            except Exception as e:
-                self.logger.warning(f"Failed to load portfolio: {e}")
-
-    def _save(self):
-        """파일에 저장"""
-        self.filepath.parent.mkdir(parents=True, exist_ok=True)
-
-        data = {
-            "holdings": [h.to_dict() for h in self._holdings.values()]
-        }
-
-        with open(self.filepath, 'w', encoding='utf-8') as f:
-            yaml.dump(data, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
     def add(
         self,
@@ -179,7 +151,7 @@ class Portfolio:
             )
             self._holdings[ticker] = holding
 
-        self._save()
+        # DB persistence handled by API layer
         self.logger.info(f"Added/Updated holding: {ticker} ({quantity} @ {avg_price})")
         return holding
 
@@ -191,7 +163,7 @@ class Portfolio:
         """종목 전체 매도/삭제"""
         if ticker in self._holdings:
             del self._holdings[ticker]
-            self._save()
+            # DB persistence handled by API layer
             self.logger.info(f"Removed holding: {ticker}")
             return True
         return False
@@ -232,7 +204,7 @@ class Portfolio:
             "date": date.today().isoformat(),
         })
 
-        self._save()
+        # DB persistence handled by API layer
         self.logger.info(f"Sold {quantity} shares of {ticker}")
         return holding
 
@@ -259,7 +231,7 @@ class Portfolio:
         if note is not None:
             holding.note = note
 
-        self._save()
+        # DB persistence handled by API layer
         return holding
 
     def get_all(self) -> List[Holding]:
@@ -413,7 +385,7 @@ class Portfolio:
                 transactions=[],
             )
         self._holdings = next_holdings
-        self._save()
+        # DB persistence handled by API layer
         return len(self._holdings)
 
     def request_tr_sync(

@@ -211,7 +211,7 @@ class PortfolioSellChecker:
         print()
 
         if not results:
-            print("No holdings to check. Add holdings to config/portfolio.yaml")
+            print("No holdings to check. Add holdings via the web UI or API.")
             return
 
         # 헤더
@@ -265,13 +265,7 @@ def main():
     # 포트폴리오 확인
     holdings = checker.pm.get_holdings()
     if not holdings:
-        print("\nNo holdings found in config/portfolio.yaml")
-        print("Add your holdings first:")
-        print("  holdings:")
-        print("    AAPL:")
-        print("      buy_price: 150.00")
-        print("      quantity: 10")
-        print("      buy_date: '2025-06-15'")
+        print("\nNo holdings found. Add holdings via the web UI or API.")
         return
 
     results = checker.check_all()

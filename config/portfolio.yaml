@@ -1,0 +1,26 @@
+# Portfolio Configuration
+# 포트폴리오 설정
+#
+# Note: 보유 종목(holdings)은 DB(PostgreSQL)에서 관리됩니다.
+# 이 파일은 alert/매도 조건 설정만 담당합니다.
+
+alert_settings:
+  enabled: true
+  scan_interval_seconds: 60       # 1분 폴링 (yfinance)
+  stop_loss_pct: 0.20             # 20% loss
+  take_profit_pct: 0.30           # 30% gain
+  trailing_stop_pct: 0.10         # 10% from high
+  technical_signals: true          # RSI/MACD check (future)
+  market_hours_only: true          # 장 시간에만 스캔
+  channels:
+    - telegram
+    - slack
+
+default_sell_conditions:
+  stop_loss_pct: 0.05      # 5% 손절
+  take_profit_pct: 0.15    # 15% 익절
+  trailing_stop_pct: 0.08  # 8% 트레일링 스탑
+
+technical_sell_signals:
+  ma_breakdown: true       # 20일선 이탈
+  death_cross: true        # 데드크로스
