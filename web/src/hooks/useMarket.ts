@@ -3,7 +3,15 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { getMacroBundle, getMacroHistory, getOhlcv, searchTickers } from '@/lib/api';
+import {
+  getMacroBundle,
+  getMacroHistory,
+  getOhlcv,
+  searchTickers,
+  getMarketRadar,
+  getCountryRisk,
+  getGlobalBrief,
+} from '@/lib/api';
 
 const MACRO_POLL_MS = 30 * 1000; // shared polling cadence for macro queries
 
@@ -87,5 +95,37 @@ export function useOhlcv(ticker: string, days = 30, enabled = true) {
     queryFn: () => getOhlcv(ticker, days),
     staleTime: 60 * 60 * 1000, // 1 hour — daily OHLCV doesn't change often
     enabled: enabled && !!ticker,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Worldmonitor hooks
+// ---------------------------------------------------------------------------
+
+export function useMarketRadar(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.market.marketRadar(),
+    queryFn: getMarketRadar,
+    staleTime: 5 * 60 * 1000, // 5 min
+    refetchInterval: enabled ? 5 * 60 * 1000 : false,
+    enabled,
+  });
+}
+
+export function useCountryRisk(countryCode: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.market.countryRisk(countryCode),
+    queryFn: () => getCountryRisk(countryCode),
+    staleTime: 10 * 60 * 1000, // 10 min
+    enabled: enabled && !!countryCode,
+  });
+}
+
+export function useGlobalBrief(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.market.globalBrief(),
+    queryFn: getGlobalBrief,
+    staleTime: 5 * 60 * 1000, // 5 min
+    enabled,
   });
 }

@@ -366,7 +366,13 @@
     "explainGold": "안전자산 프록시 — 주식 하락 시 금 상승은 리스크오프 신호",
     "explainCopper": "산업 수요 프록시 — 구리/금 비율은 성장 vs 안전 선호도를 나타냄",
     "explainMsciEm": "신흥국 주식 벤치마크 — 글로벌 신흥국 자금 흐름 모멘텀 추적",
-    "explainMsciDm": "선진국 주식 벤치마크 — EM/DM 비율은 상대적 위험 선호도를 표시"
+    "explainMsciDm": "선진국 주식 벤치마크 — EM/DM 비율은 상대적 위험 선호도를 표시",
+    "worldmonitorTitle": "글로벌 인텔리전스",
+    "worldmonitorUnavailable": "Worldmonitor 서비스를 사용할 수 없습니다",
+    "globalBrief": "글로벌 브리프",
+    "noBriefItems": "인텔리전스 브리프가 없습니다",
+    "marketRadar": "마켓 레이더",
+    "countryRisk": "국가 리스크 지수"
   },
   "screening": {
     "title": "종목 스크리닝",
@@ -1034,7 +1040,6 @@
     "statusFilter": "상태",
     "noLeaderboardEntries": "백테스트 결과가 있는 전략이 없습니다",
     "strategiesRanked": "개 전략 순위",
-    "strategyName": "전략 이름",
     "exportPineScript": "Pine Script",
     "noConditionsToExport": "내보낼 조건이 없습니다",
     "pineExportSuccess": "Pine Script 내보내기 완료",

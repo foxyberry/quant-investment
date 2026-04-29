@@ -23,6 +23,9 @@ export const queryKeys = {
     macroBundle: (mode: string = 'kr') => [...queryKeys.market.all, 'macro-bundle', mode] as const,
     macroHistory: (window: string) => [...queryKeys.market.all, 'macro-history', window] as const,
     ohlcv: (ticker: string, days: number) => [...queryKeys.market.all, 'ohlcv', ticker, days] as const,
+    marketRadar: () => [...queryKeys.market.all, 'market-radar'] as const,
+    countryRisk: (code: string) => [...queryKeys.market.all, 'country-risk', code] as const,
+    globalBrief: () => [...queryKeys.market.all, 'global-brief'] as const,
   },
   strategy: {
     all: ['strategy'] as const,
