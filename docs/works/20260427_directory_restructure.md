@@ -1,7 +1,7 @@
 # Directory Restructure Plan
 
 **Date**: 2026-04-27  
-**Status**: Completed (2026-04-29)  
+**Status**: Phase 1-3 completed. Post-restructure hardening pending (9 service files >500 lines).  
 **Epic Issue**: TBD
 
 ---
@@ -196,7 +196,7 @@ Replace manual type sync between `api/schemas/` and `web/src/lib/types.ts`:
 
 ## Completion Criteria
 
-- [x] All service files under 500 lines (#1376)
+- [ ] All service files under 500 lines (9 files remain >500L: macro_service 975, portfolio_risk 703, portfolio_core 699, watchlist 672, screening 655, chat 580, strategy_chat 554, broker_settings 528, notification_dispatcher 519)
 - [x] No duplicate business logic across modules (#1377)
 - [x] `data_sources/` package has >80% of all data fetch logic (#1380)
 - [x] `web/src/lib/api.ts` deleted (split into domain files) (#1376)
