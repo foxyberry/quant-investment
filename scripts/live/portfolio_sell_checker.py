@@ -131,18 +131,14 @@ class PortfolioSellChecker:
         prev_ma_60 = price_data.get('prev_ma_60')
 
         # 20일 이평선 하향 돌파
-        below_ma_config = tech_config.get('below_ma', {})
-        if below_ma_config.get('enabled', False) and ma_20:
+        if tech_config.get('ma_breakdown', False) and ma_20:
             if current < ma_20:
-                reasons.append(f"Below {below_ma_config.get('period', 20)}-day MA (${current:.2f} < ${ma_20:.2f})")
+                reasons.append(f"Below 20-day MA ({current:,.0f} < {ma_20:,.0f})")
 
-        # 데스크로스 체크 (단기 < 장기)
-        ma_cross_config = tech_config.get('ma_cross', {})
-        if ma_cross_config.get('enabled', False) and ma_20 and ma_60 and prev_ma_20 and prev_ma_60:
-            if ma_cross_config.get('signal') == 'death_cross':
-                # 어제는 단기 >= 장기였는데, 오늘 단기 < 장기 (데스크로스)
-                if prev_ma_20 >= prev_ma_60 and ma_20 < ma_60:
-                    reasons.append(f"Death cross detected (MA20 crossed below MA60)")
+        # 데스크로스 체크 (단기 MA20 < 장기 MA60)
+        if tech_config.get('death_cross', False) and ma_20 and ma_60 and prev_ma_20 and prev_ma_60:
+            if prev_ma_20 >= prev_ma_60 and ma_20 < ma_60:
+                reasons.append("Death cross detected (MA20 crossed below MA60)")
 
         return reasons
 

@@ -6,7 +6,7 @@ Portfolio Manager Module
 import yaml
 import logging
 from pathlib import Path
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
 from datetime import datetime, date
 
@@ -23,37 +23,15 @@ class ConfigHolding:
     buy_price: float
     quantity: int
     buy_date: date
-    custom_conditions: Dict[str, Any] = field(default_factory=dict)
-
-    @classmethod
-    def from_dict(cls, symbol: str, data: Dict) -> 'ConfigHolding':
-        """딕셔너리에서 Holding 객체 생성"""
-        buy_date = data.get('buy_date')
-        if isinstance(buy_date, str):
-            buy_date = datetime.strptime(buy_date, '%Y-%m-%d').date()
-        elif isinstance(buy_date, datetime):
-            buy_date = buy_date.date()
-
-        return cls(
-            symbol=symbol,
-            name=data.get('name', symbol),
-            buy_price=float(data.get('buy_price', 0)),
-            quantity=int(data.get('quantity', 0)),
-            buy_date=buy_date,
-            custom_conditions=data.get('custom_conditions', {})
-        )
 
     def to_dict(self) -> Dict:
         """Holding 객체를 딕셔너리로 변환"""
-        result = {
+        return {
             'name': self.name,
             'buy_price': self.buy_price,
             'quantity': self.quantity,
-            'buy_date': self.buy_date.strftime('%Y-%m-%d')
+            'buy_date': self.buy_date.strftime('%Y-%m-%d'),
         }
-        if self.custom_conditions:
-            result['custom_conditions'] = self.custom_conditions
-        return result
 
 
 @dataclass
@@ -174,18 +152,8 @@ class PortfolioManager:
         return None
 
     def get_sell_conditions_for(self, symbol: str) -> SellConditions:
-        """특정 종목의 매도 조건 반환 (커스텀 조건 우선)"""
-        default = self.get_default_sell_conditions()
-        holding = self.get_holding(symbol)
-
-        if holding and holding.custom_conditions:
-            # 커스텀 조건으로 기본값 오버라이드
-            return SellConditions(
-                stop_loss_pct=holding.custom_conditions.get('stop_loss_pct', default.stop_loss_pct),
-                take_profit_pct=holding.custom_conditions.get('take_profit_pct', default.take_profit_pct),
-                trailing_stop_pct=holding.custom_conditions.get('trailing_stop_pct', default.trailing_stop_pct)
-            )
-        return default
+        """종목의 매도 조건 반환 (현재 기본 조건만 지원)."""
+        return self.get_default_sell_conditions()
 
     def add_holding(self, symbol: str, buy_price: float, quantity: int,
                     buy_date: date = None, custom_conditions: Dict = None) -> bool:
