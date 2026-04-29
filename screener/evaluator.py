@@ -7,7 +7,7 @@ Condition Evaluator
 
 Usage:
     # 기존 방식 (호환성 유지)
-    from discovery import evaluate_condition
+    from screener.evaluators import get_evaluator, eval_ma_touch
 
     # 권장 방식
     from screener.evaluators import get_evaluator, eval_ma_touch

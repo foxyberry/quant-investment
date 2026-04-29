@@ -23,7 +23,7 @@ import pandas as pd
 # Ensure project root is on path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-from discovery.indicators import calculate_indicators
+from screener.indicators import calculate_indicators
 from tests.cross_validation.reference import calculate_reference, ReferenceIndicators
 
 

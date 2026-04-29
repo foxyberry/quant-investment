@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from enum import Enum
 
-from kiwoom.constants import FID
+from brokers.kiwoom.constants import FID
 
 
 class TriggerType(Enum):

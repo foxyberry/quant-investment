@@ -4,7 +4,7 @@ import threading
 
 import pytest
 
-from kiwoom import (
+from brokers.kiwoom import (
     ChejanGubun,
     ErrorCode,
     FID,
@@ -15,7 +15,7 @@ from kiwoom import (
     RealType,
     ServerType,
 )
-from kiwoom.connection import _error_description
+from brokers.kiwoom.connection import _error_description
 
 
 def test_public_exports_available() -> None:

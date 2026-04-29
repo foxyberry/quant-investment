@@ -2,7 +2,7 @@
 
 import pytest
 
-from kiwoom.tr import KiwoomTrClient, TrRequest
+from brokers.kiwoom.tr import KiwoomTrClient, TrRequest
 
 
 class _FakeOcx:

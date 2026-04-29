@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from kiwoom.constants import HogaType, OrderType
-from kiwoom.order import KiwoomOrderManager
+from brokers.kiwoom.constants import HogaType, OrderType
+from brokers.kiwoom.order import KiwoomOrderManager
 
 
 class _FakeOcx:

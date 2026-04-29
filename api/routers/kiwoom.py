@@ -11,7 +11,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 
-from kiwoom.safety import SafetyViolation
+from brokers.kiwoom.safety import SafetyViolation
 
 from api.schemas.kiwoom import (
     KiwoomAmendRequest,

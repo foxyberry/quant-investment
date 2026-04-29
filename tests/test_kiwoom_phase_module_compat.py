@@ -1,7 +1,7 @@
 """Compatibility tests for phase-documented Kiwoom module paths."""
 
-from kiwoom.screen_manager import ScreenManager
-from kiwoom.tr_request import KiwoomTrClient, TrRequest
+from brokers.kiwoom.screen_manager import ScreenManager
+from brokers.kiwoom.tr_request import KiwoomTrClient, TrRequest
 
 
 class _FakeOcx:
