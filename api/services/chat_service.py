@@ -158,7 +158,7 @@ def _run_get_price_history(ticker: str, days: int = 60) -> Dict[str, Any]:
 
 def _run_get_indicators(ticker: str, days: int = 120) -> Dict[str, Any]:
     from utils.data_cache import OHLCVCache
-    from discovery.indicators import calculate_indicators, calculate_stochastic, get_ma_distances
+    from screener.indicators import calculate_indicators, calculate_stochastic, get_ma_distances
 
     cache = OHLCVCache()
     data = cache.get(ticker, days=days)

@@ -430,5 +430,5 @@ class Portfolio:
         tr_client.set_input_value("비밀번호", password)
         tr_client.set_input_value("비밀번호입력매체구분", "00")
         tr_client.set_input_value("조회구분", "2")
-        from kiwoom.tr import TrRequest
+        from brokers.kiwoom.tr import TrRequest
         return tr_client.comm_rq_data(TrRequest(rq_name=rq_name, tr_code="opw00018", prev_next=0, screen_no=screen_no))

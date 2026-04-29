@@ -1,7 +1,7 @@
 # Directory Restructure Plan
 
 **Date**: 2026-04-27  
-**Status**: In Progress  
+**Status**: Completed (2026-04-29)  
 **Epic Issue**: TBD
 
 ---
@@ -196,14 +196,14 @@ Replace manual type sync between `api/schemas/` and `web/src/lib/types.ts`:
 
 ## Completion Criteria
 
-- [ ] All service files under 500 lines
-- [ ] No duplicate business logic across modules
-- [ ] `data_sources/` package has >80% of all data fetch logic
-- [ ] `web/src/lib/api.ts` deleted (split into domain files)
-- [ ] `kiwoom/` root directory deleted
-- [ ] `discovery/` deleted (merged into screener)
-- [ ] worldmonitor integration working in macro page
-- [ ] TypeScript types auto-generated from OpenAPI spec
+- [x] All service files under 500 lines (#1376)
+- [x] No duplicate business logic across modules (#1377)
+- [x] `data_sources/` package has >80% of all data fetch logic (#1380)
+- [x] `web/src/lib/api.ts` deleted (split into domain files) (#1376)
+- [x] `kiwoom/` root directory deleted (#1383)
+- [x] `discovery/` deleted (merged into screener) (#1383)
+- [x] worldmonitor integration working in macro page (#1382)
+- [x] TypeScript types auto-generated from OpenAPI spec (#1378)
 
 ---
 

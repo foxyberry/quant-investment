@@ -36,7 +36,7 @@ from brokers.exceptions import (
     BrokerValidationError,
     OrderNotFoundError,
 )
-from kiwoom.safety import SafetyViolation
+from brokers.kiwoom.safety import SafetyViolation
 
 # =========================================================================
 # 1. Exception hierarchy tests

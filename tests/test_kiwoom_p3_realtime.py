@@ -2,7 +2,7 @@
 
 import pytest
 
-from kiwoom.realtime import RealtimeSubscriptionManager, ScreenManager
+from brokers.kiwoom.realtime import RealtimeSubscriptionManager, ScreenManager
 
 
 class _FakeOcx:

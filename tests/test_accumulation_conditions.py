@@ -19,7 +19,7 @@ from screener.conditions.accumulation import (
     StochasticDivergenceCondition,
     VPCIDivergenceCondition,
 )
-from discovery.indicators import (
+from screener.indicators import (
     calculate_obv,
     calculate_stochastic,
     calculate_vpci,

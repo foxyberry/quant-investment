@@ -3,7 +3,7 @@ Buy Decision Logic
 매수 결정 로직
 
 Usage:
-    from discovery.decision import analyze_buy_signal
+    from screener.decision import analyze_buy_signal
 
     decision = analyze_buy_signal("005930.KS")
     print(f"Recommendation: {decision.recommendation}")

@@ -4,8 +4,8 @@ import threading
 
 import pytest
 
-from kiwoom.condition_search import ConditionDefinition, ConditionSearchManager
-from kiwoom.realtime import ScreenManager
+from brokers.kiwoom.condition_search import ConditionDefinition, ConditionSearchManager
+from brokers.kiwoom.realtime import ScreenManager
 
 
 class _FakeOcx:

@@ -3,7 +3,7 @@ Technical Indicators Calculator
 기술적 지표 계산 모듈
 
 Usage:
-    from discovery.indicators import calculate_indicators
+    from screener.indicators import calculate_indicators
 
     indicators = calculate_indicators("005930.KS", period=365)
     print(f"RSI: {indicators['rsi']}")
