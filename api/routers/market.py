@@ -362,6 +362,15 @@ def _get_wm_client():
     return get_worldmonitor_client()
 
 
+def _first(d: dict, *keys):
+    """Return the first non-None value for the given keys (0 is valid)."""
+    for k in keys:
+        v = d.get(k)
+        if v is not None:
+            return v
+    return None
+
+
 @router.get(
     "/macro/market-radar",
     response_model=MarketRadarResponse,
@@ -377,11 +386,11 @@ def get_market_radar() -> MarketRadarResponse:
     exchanges = []
     for item in raw.get("exchanges", raw.get("quotes", [])):
         exchanges.append(MarketRadarExchange(
-            name=item.get("name") or item.get("exchange"),
+            name=_first(item, "name", "exchange"),
             country=item.get("country"),
-            index=item.get("index") or item.get("symbol"),
-            value=item.get("value") or item.get("price") or item.get("last"),
-            change_pct=item.get("change_pct") or item.get("changePercent"),
+            index=_first(item, "index", "symbol"),
+            value=_first(item, "value", "price", "last"),
+            change_pct=_first(item, "change_pct", "changePercent"),
             status=item.get("status"),
         ))
 
@@ -389,7 +398,7 @@ def get_market_radar() -> MarketRadarResponse:
         exchanges=exchanges,
         commodities=raw.get("commodities"),
         crypto=raw.get("crypto"),
-        updated_at=raw.get("updated_at") or raw.get("timestamp"),
+        updated_at=_first(raw, "updated_at", "timestamp"),
     )
 
 
@@ -415,11 +424,11 @@ def get_country_risk(country_code: str) -> CountryRiskResponse:
 
     return CountryRiskResponse(
         country_code=raw.get("country_code", country_code.upper()),
-        country_name=raw.get("country_name") or raw.get("name"),
-        overall_score=raw.get("overall_score") or raw.get("score"),
-        risk_level=raw.get("risk_level") or raw.get("level"),
+        country_name=_first(raw, "country_name", "name"),
+        overall_score=_first(raw, "overall_score", "score"),
+        risk_level=_first(raw, "risk_level", "level"),
         signals=signals,
-        updated_at=raw.get("updated_at") or raw.get("timestamp"),
+        updated_at=_first(raw, "updated_at", "timestamp"),
     )
 
 
@@ -438,10 +447,10 @@ def get_global_brief() -> GlobalBriefResponse:
     items = []
     for entry in raw.get("items", raw.get("briefs", raw.get("entries", []))):
         items.append(GlobalBriefItem(
-            domain=entry.get("domain") or entry.get("category"),
-            headline=entry.get("headline") or entry.get("title"),
-            summary=entry.get("summary") or entry.get("body") or entry.get("text"),
-            severity=entry.get("severity") or entry.get("priority"),
+            domain=_first(entry, "domain", "category"),
+            headline=_first(entry, "headline", "title"),
+            summary=_first(entry, "summary", "body", "text"),
+            severity=_first(entry, "severity", "priority"),
             region=entry.get("region"),
         ))
 

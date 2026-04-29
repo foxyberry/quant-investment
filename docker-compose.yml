@@ -37,6 +37,7 @@ services:
       - API_PORT=8000
       - DEBUG=false
       - DATABASE_URL=postgresql://${DB_USER:-quant}:${DB_PASSWORD:-quant}@db:5432/${DB_NAME:-quant}
+      - WORLDMONITOR_API_URL=http://worldmonitor:8080
     env_file:
       - path: .env
         required: false

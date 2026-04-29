@@ -23,8 +23,8 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-# Default: self-hosted worldmonitor in docker-compose
-_DEFAULT_BASE_URL = "http://localhost:3000"
+# Default: self-hosted worldmonitor in docker-compose (WM_PORT=3002)
+_DEFAULT_BASE_URL = "http://localhost:3002"
 _DEFAULT_TIMEOUT = 15
 
 
