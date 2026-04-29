@@ -11,6 +11,10 @@ from typing import Annotated, List, Literal
 from fastapi import APIRouter, HTTPException, Query
 
 from api.schemas.market import (
+    CountryRiskResponse,
+    CountryRiskSignal,
+    GlobalBriefItem,
+    GlobalBriefResponse,
     MacroBondSnapshot,
     MacroBundleResponse,
     MacroDataQuality,
@@ -18,6 +22,8 @@ from api.schemas.market import (
     MacroHistoryResponse,
     MacroUsMarketSnapshot,
     MacroVolatilitySnapshot,
+    MarketRadarExchange,
+    MarketRadarResponse,
     OHLCVResponse,
     QuoteResponse,
     TechnicalIndicators,
@@ -343,3 +349,103 @@ def get_macro_history(
         result["data_coverage_pct"] = 0.0
 
     return MacroHistoryResponse(**result)
+
+
+# ---------------------------------------------------------------------------
+# Worldmonitor endpoints (additive — existing macro page unaffected)
+# ---------------------------------------------------------------------------
+
+
+def _get_wm_client():
+    """Lazy import to avoid startup failure when worldmonitor is not installed."""
+    from data_sources.external.worldmonitor import get_worldmonitor_client
+    return get_worldmonitor_client()
+
+
+@router.get(
+    "/macro/market-radar",
+    response_model=MarketRadarResponse,
+    summary="Global Market Radar",
+    description="92-exchange global market radar via self-hosted worldmonitor.",
+)
+def get_market_radar() -> MarketRadarResponse:
+    client = _get_wm_client()
+    raw = client.get_market_radar()
+    if raw is None:
+        return MarketRadarResponse(available=False)
+
+    exchanges = []
+    for item in raw.get("exchanges", raw.get("quotes", [])):
+        exchanges.append(MarketRadarExchange(
+            name=item.get("name") or item.get("exchange"),
+            country=item.get("country"),
+            index=item.get("index") or item.get("symbol"),
+            value=item.get("value") or item.get("price") or item.get("last"),
+            change_pct=item.get("change_pct") or item.get("changePercent"),
+            status=item.get("status"),
+        ))
+
+    return MarketRadarResponse(
+        exchanges=exchanges,
+        commodities=raw.get("commodities"),
+        crypto=raw.get("crypto"),
+        updated_at=raw.get("updated_at") or raw.get("timestamp"),
+    )
+
+
+@router.get(
+    "/macro/country-risk/{country_code}",
+    response_model=CountryRiskResponse,
+    summary="Country Intelligence Index",
+    description="Country risk score across 12 signal categories via worldmonitor CII.",
+)
+def get_country_risk(country_code: str) -> CountryRiskResponse:
+    client = _get_wm_client()
+    raw = client.get_country_risk(country_code)
+    if raw is None:
+        return CountryRiskResponse(country_code=country_code.upper(), available=False)
+
+    signals = []
+    for sig in raw.get("signals", []):
+        signals.append(CountryRiskSignal(
+            category=sig.get("category", "unknown"),
+            score=sig.get("score"),
+            trend=sig.get("trend"),
+        ))
+
+    return CountryRiskResponse(
+        country_code=raw.get("country_code", country_code.upper()),
+        country_name=raw.get("country_name") or raw.get("name"),
+        overall_score=raw.get("overall_score") or raw.get("score"),
+        risk_level=raw.get("risk_level") or raw.get("level"),
+        signals=signals,
+        updated_at=raw.get("updated_at") or raw.get("timestamp"),
+    )
+
+
+@router.get(
+    "/macro/global-brief",
+    response_model=GlobalBriefResponse,
+    summary="Global Intelligence Brief",
+    description="AI-synthesized world situation brief from worldmonitor.",
+)
+def get_global_brief() -> GlobalBriefResponse:
+    client = _get_wm_client()
+    raw = client.get_global_brief()
+    if raw is None:
+        return GlobalBriefResponse(available=False)
+
+    items = []
+    for entry in raw.get("items", raw.get("briefs", raw.get("entries", []))):
+        items.append(GlobalBriefItem(
+            domain=entry.get("domain") or entry.get("category"),
+            headline=entry.get("headline") or entry.get("title"),
+            summary=entry.get("summary") or entry.get("body") or entry.get("text"),
+            severity=entry.get("severity") or entry.get("priority"),
+            region=entry.get("region"),
+        ))
+
+    return GlobalBriefResponse(
+        items=items,
+        generated_at=raw.get("generated_at") or raw.get("timestamp"),
+    )

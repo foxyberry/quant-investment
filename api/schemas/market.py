@@ -309,3 +309,61 @@ class MacroHistoryResponse(BaseModel):
     window: str = Field(..., description="Requested window string")
     points: List[MacroHistoryPoint] = Field(default_factory=list, description="History points")
     data_coverage_pct: Optional[float] = Field(None, description="Percentage of non-null macro_score points (0-100)")
+
+
+# ---------------------------------------------------------------------------
+# Worldmonitor schemas
+# ---------------------------------------------------------------------------
+
+
+class MarketRadarExchange(BaseModel):
+    """Single exchange entry in the market radar."""
+    name: Optional[str] = Field(None, description="Exchange name")
+    country: Optional[str] = Field(None, description="Country code")
+    index: Optional[str] = Field(None, description="Primary index symbol")
+    value: Optional[float] = Field(None, description="Current index value")
+    change_pct: Optional[float] = Field(None, description="Daily change %")
+    status: Optional[str] = Field(None, description="open / closed / pre-market")
+
+
+class MarketRadarResponse(BaseModel):
+    """92-exchange global market radar from worldmonitor."""
+    exchanges: List[MarketRadarExchange] = Field(default_factory=list)
+    commodities: Optional[Dict[str, Any]] = Field(None, description="Commodity prices")
+    crypto: Optional[Dict[str, Any]] = Field(None, description="Crypto prices")
+    updated_at: Optional[str] = Field(None, description="Data timestamp")
+    available: bool = Field(True, description="Whether worldmonitor is reachable")
+
+
+class CountryRiskSignal(BaseModel):
+    """Single risk signal category score."""
+    category: str = Field(..., description="Signal category name")
+    score: Optional[float] = Field(None, description="Risk score (0-100)")
+    trend: Optional[str] = Field(None, description="improving / stable / deteriorating")
+
+
+class CountryRiskResponse(BaseModel):
+    """Country Intelligence Index (CII) from worldmonitor."""
+    country_code: str = Field(..., description="ISO 3166-1 alpha-2")
+    country_name: Optional[str] = Field(None)
+    overall_score: Optional[float] = Field(None, description="Composite CII score (0-100)")
+    risk_level: Optional[str] = Field(None, description="low / moderate / high / critical")
+    signals: List[CountryRiskSignal] = Field(default_factory=list)
+    updated_at: Optional[str] = Field(None)
+    available: bool = Field(True, description="Whether worldmonitor is reachable")
+
+
+class GlobalBriefItem(BaseModel):
+    """Single item in the global brief."""
+    domain: Optional[str] = Field(None, description="geopolitics / finance / energy / climate / security")
+    headline: Optional[str] = None
+    summary: Optional[str] = None
+    severity: Optional[str] = Field(None, description="low / medium / high / critical")
+    region: Optional[str] = None
+
+
+class GlobalBriefResponse(BaseModel):
+    """AI-synthesized world situation brief from worldmonitor."""
+    items: List[GlobalBriefItem] = Field(default_factory=list)
+    generated_at: Optional[str] = Field(None, description="Brief generation timestamp")
+    available: bool = Field(True, description="Whether worldmonitor is reachable")

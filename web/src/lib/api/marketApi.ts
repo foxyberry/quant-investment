@@ -37,3 +37,66 @@ export interface SectorListResponse {
 export async function getSectors(market: string = 'KOSPI'): Promise<SectorListResponse> {
   return fetchApi<SectorListResponse>(`/api/strategy/sectors?market=${encodeURIComponent(market)}`);
 }
+
+// ---------------------------------------------------------------------------
+// Worldmonitor endpoints
+// ---------------------------------------------------------------------------
+
+export interface MarketRadarExchange {
+  name: string | null;
+  country: string | null;
+  index: string | null;
+  value: number | null;
+  change_pct: number | null;
+  status: string | null;
+}
+
+export interface MarketRadarResponse {
+  exchanges: MarketRadarExchange[];
+  commodities: Record<string, unknown> | null;
+  crypto: Record<string, unknown> | null;
+  updated_at: string | null;
+  available: boolean;
+}
+
+export interface CountryRiskSignal {
+  category: string;
+  score: number | null;
+  trend: string | null;
+}
+
+export interface CountryRiskResponse {
+  country_code: string;
+  country_name: string | null;
+  overall_score: number | null;
+  risk_level: string | null;
+  signals: CountryRiskSignal[];
+  updated_at: string | null;
+  available: boolean;
+}
+
+export interface GlobalBriefItem {
+  domain: string | null;
+  headline: string | null;
+  summary: string | null;
+  severity: string | null;
+  region: string | null;
+}
+
+export interface GlobalBriefResponse {
+  items: GlobalBriefItem[];
+  generated_at: string | null;
+  available: boolean;
+}
+
+export async function getMarketRadar(): Promise<MarketRadarResponse> {
+  return fetchApi<MarketRadarResponse>('/api/market/macro/market-radar');
+}
+
+export async function getCountryRisk(countryCode: string): Promise<CountryRiskResponse> {
+  return fetchApi<CountryRiskResponse>(`/api/market/macro/country-risk/${encodeURIComponent(countryCode)}`);
+}
+
+export async function getGlobalBrief(): Promise<GlobalBriefResponse> {
+  return fetchApi<GlobalBriefResponse>('/api/market/macro/global-brief');
+}

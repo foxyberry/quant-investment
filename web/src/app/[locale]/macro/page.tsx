@@ -5,6 +5,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Card } from '@/components/ui';
 import { useMacroBundle, useMacroHistory, usePrefetchMacroHistory, useOhlcv } from '@/hooks/useMarket';
 import CandleChart from '@/features/charts/CandleChart';
+import { GlobalBriefCard, MarketRadarCard, CountryRiskCard } from '@/features/macro';
 import { formatPercent } from '@/lib/format';
 import {
   Activity,
@@ -1362,6 +1363,16 @@ export default function MacroPage() {
           {t('bundleUnavailable')}
         </p>
       )}
+
+      {/* Worldmonitor — Global Intelligence */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-[var(--foreground)]">{t('worldmonitorTitle')}</h2>
+        <GlobalBriefCard />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <MarketRadarCard />
+          <CountryRiskCard />
+        </div>
+      </div>
     </div>
   );
 }

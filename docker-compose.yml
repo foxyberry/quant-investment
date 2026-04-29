@@ -66,9 +66,56 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # ---------------------------------------------------------------------------
+  # Worldmonitor — global macro intelligence (optional)
+  # Start with: docker compose --profile worldmonitor up -d
+  # ---------------------------------------------------------------------------
+  worldmonitor-redis:
+    image: redis:7-alpine
+    container_name: quant-wm-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - wm-redis-data:/data
+    profiles: [worldmonitor]
+    restart: unless-stopped
+
+  worldmonitor-redis-rest:
+    build:
+      context: https://github.com/koala73/worldmonitor.git
+      dockerfile: Dockerfile.redis-rest
+    container_name: quant-wm-redis-rest
+    ports:
+      - "127.0.0.1:8079:80"
+    environment:
+      REDIS_URL: redis://worldmonitor-redis:6379
+    depends_on:
+      - worldmonitor-redis
+    profiles: [worldmonitor]
+    restart: unless-stopped
+
+  worldmonitor:
+    build:
+      context: https://github.com/koala73/worldmonitor.git
+    container_name: quant-wm
+    ports:
+      - "${WM_PORT:-3002}:8080"
+    environment:
+      UPSTASH_REDIS_REST_URL: http://worldmonitor-redis-rest:80
+      UPSTASH_REDIS_REST_TOKEN: wm-local-token
+      LOCAL_API_PORT: "8080"
+      FINNHUB_API_KEY: ${FINNHUB_API_KEY:-}
+      FRED_API_KEY: ${FRED_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    depends_on:
+      - worldmonitor-redis-rest
+    profiles: [worldmonitor]
+    restart: unless-stopped
+
 volumes:
   pgdata:
     name: quant-investment-pgdata
+  wm-redis-data:
+    name: quant-wm-redis-data
 
 networks:
   default:

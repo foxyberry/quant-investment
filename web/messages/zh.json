@@ -366,7 +366,13 @@
     "explainGold": "避险资产代理 — 股市下跌时金价上涨信号避险情绪",
     "explainCopper": "工业需求代理 — 铜金比显示增长vs安全偏好",
     "explainMsciEm": "新兴市场股票基准 — 追踪全球新兴市场资金流动动能",
-    "explainMsciDm": "发达市场股票基准 — EM/DM比率显示相对风险偏好"
+    "explainMsciDm": "发达市场股票基准 — EM/DM比率显示相对风险偏好",
+    "worldmonitorTitle": "全球情报",
+    "worldmonitorUnavailable": "Worldmonitor 服务不可用",
+    "globalBrief": "全球简报",
+    "noBriefItems": "暂无情报简报",
+    "marketRadar": "市场雷达",
+    "countryRisk": "国家风险指数"
   },
   "screening": {
     "title": "股票筛选",
@@ -1034,7 +1040,6 @@
     "statusFilter": "状态",
     "noLeaderboardEntries": "暂无回测结果的策略",
     "strategiesRanked": "个策略已排名",
-    "strategyName": "策略名称",
     "exportPineScript": "Pine Script",
     "noConditionsToExport": "没有可导出的条件",
     "pineExportSuccess": "Pine Script 导出成功",

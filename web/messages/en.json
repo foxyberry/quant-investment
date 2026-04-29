@@ -366,7 +366,13 @@
     "explainGold": "Safe-haven proxy — rising gold with falling equities signals risk-off sentiment",
     "explainCopper": "Industrial demand proxy — copper/gold ratio indicates growth vs safety preference",
     "explainMsciEm": "Emerging market equity benchmark — tracks global EM capital flow momentum",
-    "explainMsciDm": "Developed market equity benchmark — EM/DM ratio shows relative risk appetite"
+    "explainMsciDm": "Developed market equity benchmark — EM/DM ratio shows relative risk appetite",
+    "worldmonitorTitle": "Global Intelligence",
+    "worldmonitorUnavailable": "Worldmonitor service unavailable",
+    "globalBrief": "Global Brief",
+    "noBriefItems": "No intelligence briefs available",
+    "marketRadar": "Market Radar",
+    "countryRisk": "Country Risk Index"
   },
   "screening": {
     "title": "Stock Screening",
@@ -1034,7 +1040,6 @@
     "statusFilter": "Status",
     "noLeaderboardEntries": "No strategies with backtest results yet",
     "strategiesRanked": "strategies ranked",
-    "strategyName": "Strategy Name",
     "exportPineScript": "Pine Script",
     "noConditionsToExport": "No conditions to export",
     "pineExportSuccess": "Pine Script exported successfully",
