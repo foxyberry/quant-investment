@@ -145,8 +145,8 @@ class ConfigManager:
             return {}
 
     def get_portfolio_holdings(self) -> Dict[str, Any]:
-        """Get portfolio holdings"""
-        return self.get_portfolio_config().get("holdings", {})
+        """Deprecated: holdings are now in DB. Returns empty dict."""
+        return {}
 
     def get_portfolio_sell_conditions(self) -> Dict[str, Any]:
         """Get default sell conditions from portfolio config"""
