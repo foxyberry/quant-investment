@@ -22,8 +22,10 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from api.database import SessionLocal
+from api.services import macro_interpretation_service
 from api.models.macro_history import MacroHistory
 from api.services.exchange_rate_service import ExchangeRateService, get_exchange_rate_service
+from api.services import macro_history_service
 from api.services.market_data_service import MarketDataMixin
 from api.services.market_service import MarketService
 
@@ -182,102 +184,16 @@ class MacroMarketService(MarketDataMixin):
     }
 
     def get_history(self, window: str = "60m") -> Dict[str, Any]:
-        now_mono = time.monotonic()
-        normalized = (window or "60m").strip().lower()
-
-        # Check history cache
-        with self._lock:
-            cached = getattr(self, "_history_cache", {}).get(normalized)
-            if cached:
-                cached_at, cached_result = cached
-                ttl = self._HISTORY_CACHE_TTL.get(normalized, 60)
-                if (now_mono - cached_at) < ttl:
-                    return {"window": cached_result["window"], "points": list(cached_result["points"])}
-
-        now = datetime.now(timezone.utc)
-        delta = self._parse_window(window)
-        min_ts = now - delta
-
-        # Check if deque covers the requested range
-        with self._lock:
-            deque_min_ts = None
-            if self._history:
-                deque_min_ts = self._safe_datetime(self._history[0].get("timestamp"))
-
-        # If deque doesn't cover the range, query DB
-        if deque_min_ts is None or deque_min_ts > min_ts:
-            # Flush pending buffer first so DB is up-to-date
-            self._flush_to_db()
-            db_points = self._query_db_history(min_ts, now)
-            if db_points:
-                result = {"window": window, "points": self._downsample_points(db_points, window)}
-                self._cache_history(normalized, now_mono, result)
-                return result
-
-        # Reverse scan: deque is chronological, so iterate from newest.
-        # Stop early once we pass the time boundary.
-        points = []
-        with self._lock:
-            for p in reversed(self._history):
-                dt = self._safe_datetime(p.get("timestamp"))
-                if not dt:
-                    continue
-                if dt < min_ts:
-                    break
-                points.append({
-                    "timestamp": p["timestamp"],
-                    "fx_value": p.get("fx_value"),
-                    "futures_value": p.get("futures_value"),
-                    "foreign_net": p.get("foreign_net"),
-                    "macro_score": p.get("macro_score"),
-                    "regime": p.get("regime", "unknown"),
-                    "vix": p.get("vix"),
-                })
-        points.reverse()  # restore chronological order
-
-        result = {"window": window, "points": self._downsample_points(points, window)}
-        self._cache_history(normalized, now_mono, result)
-        return result
+        return macro_history_service.get_history(self, window)
 
     def _cache_history(self, window: str, mono_time: float, result: Dict[str, Any]) -> None:
-        """Store history result in per-window TTL cache."""
-        with self._lock:
-            if not hasattr(self, "_history_cache"):
-                self._history_cache: Dict[str, tuple] = {}
-            self._history_cache[window] = (mono_time, result)
+        macro_history_service.cache_history(self, window, mono_time, result)
 
     @classmethod
     def _downsample_points(
         cls, points: List[Dict[str, Any]], window: str
     ) -> List[Dict[str, Any]]:
-        """Downsample history points by bucketing into fixed time intervals.
-
-        For each bucket, take the *last* value of every field (snapshot semantics).
-        This keeps the data accurate while reducing SVG DOM nodes for Recharts.
-        """
-        normalized = (window or "60m").strip().lower()
-        bucket_sec = cls._DOWNSAMPLE_BUCKETS.get(normalized, 0)
-        target = cls._DOWNSAMPLE_TARGETS.get(normalized, 0)
-        # Skip if no bucket size or point count is within target
-        if bucket_sec <= 0 or (target > 0 and len(points) <= target) or (target <= 0 and len(points) <= 500):
-            return points
-
-        buckets: Dict[int, Dict[str, Any]] = {}
-        for p in points:
-            ts_str = p.get("timestamp")
-            if not ts_str:
-                continue
-            dt = cls._safe_datetime(ts_str)
-            if not dt:
-                continue
-            epoch = int(dt.timestamp())
-            bucket_key = (epoch // bucket_sec) * bucket_sec
-            # Last-write wins: later points in the same bucket overwrite earlier ones
-            buckets[bucket_key] = p
-
-        # Fallback to original if bucketing produced nothing (e.g. all timestamps invalid)
-        downsampled = [buckets[k] for k in sorted(buckets)]
-        return downsampled if downsampled else points
+        return macro_history_service.downsample_points(cls, points, window)
 
     # ------------------------------------------------------------------
     # Signal computation
@@ -443,20 +359,7 @@ class MacroMarketService(MarketDataMixin):
     # ------------------------------------------------------------------
 
     def run_history_collector(self, interval_sec: int = 60) -> None:
-        """Blocking loop that appends history every *interval_sec* seconds.
-
-        Designed to run inside a daemon thread so the timeline fills
-        independently of API calls.  Flushes to DB after each tick.
-        """
-        logger.info("Macro history collector started (interval=%ds)", interval_sec)
-        while True:
-            try:
-                self.get_bundle(force_refresh=True)
-                # Flush any buffered points to DB each tick
-                self._flush_to_db()
-            except Exception as exc:
-                logger.warning("History collector tick failed: %s", exc)
-            time.sleep(interval_sec)
+        macro_history_service.run_history_collector(self, interval_sec)
 
     # ------------------------------------------------------------------
     # Interpretation helpers
@@ -468,85 +371,19 @@ class MacroMarketService(MarketDataMixin):
         futures: Dict[str, Any],
         flow: Dict[str, Any],
     ) -> Dict[str, Any]:
-        """Produce human-readable interpretation of each data source."""
-        fx_interp = self._interpret_fx(fx)
-        futures_interp = self._interpret_futures(futures)
-        flow_interp = self._interpret_flow(flow)
-        entry_signal = self._derive_entry_signal(fx_interp, futures_interp, flow_interp)
-
-        return {
-            "entry_signal": entry_signal,
-            "fx_interpretation": fx_interp,
-            "futures_interpretation": futures_interp,
-            "flow_interpretation": flow_interp,
-        }
+        return macro_interpretation_service.build_interpretation(self, fx, futures, flow)
 
     def _interpret_fx(self, fx: Dict[str, Any]) -> str:
-        change = self._to_float(fx.get("change_pct"))
-        if change is None:
-            return "unavailable"
-        if change > 0.5:
-            return "rising_strong"
-        if change > 0.1:
-            return "rising"
-        if change < -0.5:
-            return "falling_strong"
-        if change < -0.1:
-            return "falling"
-        return "stable"
+        return macro_interpretation_service.interpret_fx(self, fx)
 
     def _interpret_futures(self, futures: Dict[str, Any]) -> str:
-        basis = self._to_float(futures.get("basis"))  # premium/discount in %
-        if basis is None:
-            return "unavailable"
-        if basis > 0.1:
-            return "contango"
-        if basis < -0.1:
-            return "backwardation"
-        return "flat"
+        return macro_interpretation_service.interpret_futures(self, futures)
 
     def _interpret_flow(self, flow: Dict[str, Any]) -> str:
-        foreign = self._to_float(flow.get("foreign_net"))
-        if foreign is None:
-            return "unavailable"
-        if foreign > 50_000_000_000:
-            return "foreign_strong_buy"
-        if foreign > 0:
-            return "foreign_buy"
-        if foreign < -50_000_000_000:
-            return "foreign_strong_sell"
-        if foreign < 0:
-            return "foreign_sell"
-        return "neutral"
+        return macro_interpretation_service.interpret_flow(self, flow)
 
     def _derive_entry_signal(self, fx_interp: str, futures_interp: str, flow_interp: str) -> str:
-        """Combine interpretations into an actionable entry signal."""
-        positive = 0
-        negative = 0
-
-        # FX: falling KRW/USD is good for KR equities (capital inflow)
-        if fx_interp in ("falling", "falling_strong"):
-            positive += 1
-        elif fx_interp in ("rising", "rising_strong"):
-            negative += 1
-
-        # Futures: contango means optimistic
-        if futures_interp == "contango":
-            positive += 1
-        elif futures_interp == "backwardation":
-            negative += 1
-
-        # Flow: foreign buying is positive
-        if flow_interp in ("foreign_buy", "foreign_strong_buy"):
-            positive += 1
-        elif flow_interp in ("foreign_sell", "foreign_strong_sell"):
-            negative += 1
-
-        if positive >= 2 and negative == 0:
-            return "buy_favorable"
-        if negative >= 2:
-            return "caution"
-        return "wait"
+        return macro_interpretation_service.derive_entry_signal(fx_interp, futures_interp, flow_interp)
 
     @staticmethod
     def _derive_posture(
@@ -554,111 +391,17 @@ class MacroMarketService(MarketDataMixin):
         confidence_band: Optional[str],
         entry_signal: str,
     ) -> tuple:
-        """Derive execution posture from regime + confidence + entry_signal.
-
-        Returns (posture, posture_rationale_key) where rationale_key is an
-        i18n key the frontend maps to a translated explanation.
-
-        Posture matrix:
-          risk_on + caution entry              → wait (override)
-          risk_on + high conf + buy_favorable  → risk_on_full
-          risk_on + medium conf                → risk_on_small
-          neutral / low conf                   → wait
-          risk_off + any                       → risk_off_defensive
-          risk_off + high conf + caution       → hedge_bias
-        """
-        if regime == "risk_off":
-            if confidence_band == "high" and entry_signal == "caution":
-                return "hedge_bias", "posture_hedge_bias"
-            return "risk_off_defensive", "posture_risk_off_defensive"
-
-        if regime == "risk_on":
-            # Caution entry overrides risk-on → demote to wait
-            if entry_signal == "caution":
-                return "wait", "posture_wait_neutral"
-            if confidence_band == "high" and entry_signal == "buy_favorable":
-                return "risk_on_full", "posture_risk_on_full"
-            if confidence_band in ("high", "medium"):
-                return "risk_on_small", "posture_risk_on_small"
-            return "wait", "posture_wait_low_confidence"
-
-        # neutral or unknown
-        return "wait", "posture_wait_neutral"
+        return macro_interpretation_service.derive_posture(regime, confidence_band, entry_signal)
 
     def _append_history(self, bundle: Dict[str, Any], now: datetime) -> None:
-        signal = bundle.get("signal", {})
-        fx = bundle.get("fx", {})
-        futures = bundle.get("futures", {})
-        flow = bundle.get("flow", {})
-
-        # Fetch VIX from volatility service (lazy import to avoid circular deps)
-        vix_value: float | None = None
-        try:
-            from api.services.volatility_service import get_volatility_service
-            vol = get_volatility_service().get_snapshot()
-            if vol:
-                vix_value = self._to_float(vol.get("vix"))
-        except Exception as exc:
-            logger.debug("VIX fetch for history point failed: %s", exc)
-
-        point = {
-            "timestamp": self._to_iso(now),
-            "fx_value": self._to_float(fx.get("value")),
-            "futures_value": self._to_float(futures.get("value")),
-            "foreign_net": self._to_float(flow.get("foreign_net")),
-            "macro_score": self._to_float(signal.get("macro_score")),
-            "regime": signal.get("regime", "unknown"),
-            "vix": vix_value,
-        }
-        should_flush = False
-        with self._lock:
-            self._history.append(point)
-            self._db_buffer.append(point)
-            self._db_tick_count += 1
-            # Invalidate history cache — new data available
-            if hasattr(self, "_history_cache"):
-                self._history_cache.clear()
-            if self._db_tick_count >= self._DB_FLUSH_INTERVAL:
-                should_flush = True
-
-        if should_flush:
-            self._flush_to_db()
+        macro_history_service.append_history(self, bundle, now)
 
     # ------------------------------------------------------------------
     # DB persistence
     # ------------------------------------------------------------------
 
     def _load_history_from_db(self) -> None:
-        """Load recent macro history rows from DB into the in-memory deque."""
-        try:
-            db: Session = SessionLocal()
-            try:
-                rows = (
-                    db.query(MacroHistory)
-                    .order_by(desc(MacroHistory.timestamp))
-                    .limit(self._history.maxlen or 50_000)
-                    .all()
-                )
-                rows.reverse()  # oldest first
-                for row in rows:
-                    ts = row.timestamp
-                    if ts and ts.tzinfo is None:
-                        ts = ts.replace(tzinfo=timezone.utc)
-                    self._history.append({
-                        "timestamp": ts.isoformat() if ts else None,
-                        "fx_value": row.fx_value,
-                        "futures_value": row.futures_value,
-                        "foreign_net": row.foreign_net,
-                        "macro_score": row.macro_score,
-                        "regime": row.regime or "unknown",
-                        "vix": getattr(row, "vix", None),
-                    })
-                if rows:
-                    logger.info("Loaded %d macro history rows from DB", len(rows))
-            finally:
-                db.close()
-        except Exception as exc:
-            logger.warning("Failed to load macro history from DB: %s", exc)
+        macro_history_service.load_history_from_db(self)
 
     # ------------------------------------------------------------------
     # Historical backfill
@@ -667,119 +410,13 @@ class MacroMarketService(MarketDataMixin):
     _BACKFILL_MAX_DAYS = 35
 
     def _backfill_history(self) -> None:
-        """Backfill missing daily history from external APIs.
-
-        Detects the last recorded timestamp in DB and fills gaps with daily
-        FX + futures data so the 30d timeline is complete even after server
-        restarts.
-        """
-        try:
-            db: Session = SessionLocal()
-            try:
-                latest = db.query(MacroHistory).order_by(desc(MacroHistory.timestamp)).first()
-            finally:
-                db.close()
-
-            now = datetime.now(timezone.utc)
-            if latest and latest.timestamp:
-                last_ts = latest.timestamp
-                if last_ts.tzinfo is None:
-                    last_ts = last_ts.replace(tzinfo=timezone.utc)
-                gap = now - last_ts
-            else:
-                gap = timedelta(days=self._BACKFILL_MAX_DAYS)
-                last_ts = now - gap
-
-            if gap < timedelta(hours=12):
-                logger.info("Macro history gap < 12h, skipping backfill")
-                return
-
-            days_to_fill = min(int(gap.total_seconds() / 86400) + 1, self._BACKFILL_MAX_DAYS)
-            start_date = (now - timedelta(days=days_to_fill)).date()
-            end_date = (now - timedelta(days=1)).date()
-
-            if start_date >= end_date:
-                return
-
-            logger.info(
-                "Backfilling macro history from %s to %s (%d days gap)",
-                start_date, end_date, days_to_fill,
-            )
-
-            fx_daily = self._fetch_fx_historical(start_date, end_date)
-            futures_daily = self._fetch_futures_historical(days_to_fill + 5)
-            backfill_points = self._merge_daily_backfill(fx_daily, futures_daily, last_ts)
-
-            if not backfill_points:
-                logger.info("No backfill points to insert")
-                return
-
-            db = SessionLocal()
-            try:
-                for point in backfill_points:
-                    ts = self._safe_datetime(point.get("timestamp"))
-                    if ts is None:
-                        continue
-                    db.add(MacroHistory(
-                        timestamp=ts,
-                        fx_value=point.get("fx_value"),
-                        futures_value=point.get("futures_value"),
-                        foreign_net=None,
-                        macro_score=point.get("macro_score"),
-                        regime=point.get("regime"),
-                    ))
-                db.commit()
-                logger.info("Backfilled %d macro history points", len(backfill_points))
-            finally:
-                db.close()
-
-            # Reload deque to include backfilled data
-            with self._lock:
-                self._history.clear()
-            self._load_history_from_db()
-
-        except Exception as exc:
-            logger.warning("Macro history backfill failed: %s", exc)
+        macro_history_service.backfill_history(self)
 
     def _fetch_fx_historical(self, start_date: date, end_date: date) -> Dict[date, float]:
-        """Fetch daily USD/KRW rates from Frankfurter API."""
-        try:
-            import requests
-
-            url = (
-                f"https://api.frankfurter.app/{start_date}..{end_date}"
-                f"?from=USD&to=KRW"
-            )
-            r = requests.get(url, timeout=15)
-            r.raise_for_status()
-            data = r.json()
-            result: Dict[date, float] = {}
-            for date_str, rate_dict in data.get("rates", {}).items():
-                d = date.fromisoformat(date_str)
-                krw = rate_dict.get("KRW")
-                if krw is not None:
-                    result[d] = float(krw)
-            logger.info("Fetched %d daily FX rates for backfill", len(result))
-            return result
-        except Exception as exc:
-            logger.warning("Failed to fetch historical FX rates: %s", exc)
-            return {}
+        return macro_history_service.fetch_fx_historical(self, start_date, end_date)
 
     def _fetch_futures_historical(self, days: int) -> Dict[date, float]:
-        """Fetch daily KODEX 200 close prices via market service."""
-        try:
-            ohlcv = self.market_service.get_ohlcv(self.futures_ticker, days=days)
-            if not ohlcv or not ohlcv.get("data"):
-                return {}
-            result: Dict[date, float] = {}
-            for item in ohlcv["data"]:
-                d = date.fromisoformat(item["time"])
-                result[d] = float(item["close"])
-            logger.info("Fetched %d daily futures prices for backfill", len(result))
-            return result
-        except Exception as exc:
-            logger.warning("Failed to fetch historical futures data: %s", exc)
-            return {}
+        return macro_history_service.fetch_futures_historical(self, days)
 
     # KST market hours for hourly interpolation (00:00-09:00 UTC = 09:00-18:00 KST)
     _BACKFILL_HOURS_UTC = list(range(0, 10))  # 0..9 UTC = 9..18 KST
@@ -790,176 +427,21 @@ class MacroMarketService(MarketDataMixin):
         futures_daily: Dict[date, float],
         last_ts: datetime,
     ) -> List[Dict[str, Any]]:
-        """Merge daily FX + futures into hourly-interpolated backfill points.
-
-        For each trading day, generates hourly points during KST market hours
-        (09:00-18:00 KST = 00:00-09:00 UTC) with linearly interpolated values.
-        This ensures ~270 points for 30 days instead of ~30 daily points.
-        """
-        all_dates = sorted(set(fx_daily.keys()) | set(futures_daily.keys()))
-        if not all_dates:
-            return []
-
-        points: List[Dict[str, Any]] = []
-        prev_fx: Optional[float] = None
-        prev_fut: Optional[float] = None
-
-        for idx, d in enumerate(all_dates):
-            if d.weekday() > 4:  # skip weekends
-                continue
-
-            # Get current day's close values
-            fx_val = fx_daily.get(d)
-            fut_val = futures_daily.get(d)
-
-            # Compute daily change for macro_score
-            fx_change = None
-            if fx_val is not None and prev_fx is not None and prev_fx > 0:
-                fx_change = ((fx_val - prev_fx) / prev_fx) * 100
-            fut_change = None
-            if fut_val is not None and prev_fut is not None and prev_fut > 0:
-                fut_change = ((fut_val - prev_fut) / prev_fut) * 100
-
-            fx_raw = self._clip((fx_change or 0) / 1.5, -1.0, 1.0)
-            fut_raw = self._clip(-(fut_change or 0) / 3.0, -1.0, 1.0)
-
-            numerator = 0.0
-            denominator = 0.0
-            if fx_val is not None:
-                numerator += 0.55 * fx_raw
-                denominator += 0.55
-            if fut_val is not None:
-                numerator += 0.45 * fut_raw
-                denominator += 0.45
-
-            macro_score = round(numerator / denominator, 4) if denominator > 0 else None
-            regime = "unknown"
-            if macro_score is not None:
-                if macro_score >= 0.6:
-                    regime = "risk_off"
-                elif macro_score <= -0.6:
-                    regime = "risk_on"
-                else:
-                    regime = "neutral"
-
-            # Generate hourly points within market hours
-            # Interpolate from previous day's close to current day's close (no look-ahead)
-            n_hours = len(self._BACKFILL_HOURS_UTC)
-            for hi, h in enumerate(self._BACKFILL_HOURS_UTC):
-                dt = datetime(d.year, d.month, d.day, h, 0, tzinfo=timezone.utc)
-                if dt <= last_ts:
-                    continue
-
-                frac = hi / max(n_hours - 1, 1)
-                h_fx = None
-                if fx_val is not None:
-                    start_fx = prev_fx if prev_fx is not None else fx_val
-                    h_fx = round(start_fx + frac * (fx_val - start_fx), 2)
-                h_fut = None
-                if fut_val is not None:
-                    start_fut = prev_fut if prev_fut is not None else fut_val
-                    h_fut = round(start_fut + frac * (fut_val - start_fut), 2)
-
-                points.append({
-                    "timestamp": dt.isoformat(),
-                    "fx_value": h_fx,
-                    "futures_value": h_fut,
-                    "foreign_net": None,
-                    "macro_score": macro_score,
-                    "regime": regime,
-                })
-
-            prev_fx = fx_val if fx_val is not None else prev_fx
-            prev_fut = fut_val if fut_val is not None else prev_fut
-
-        return points
+        return macro_history_service.merge_daily_backfill(self, fx_daily, futures_daily, last_ts)
 
     def _flush_to_db(self) -> None:
-        """Write buffered history points to the database."""
-        with self._lock:
-            if not self._db_buffer:
-                return
-            batch = self._db_buffer[:]
-            self._db_buffer.clear()
-            self._db_tick_count = 0
-            # Invalidate history cache on new data
-            if hasattr(self, "_history_cache"):
-                self._history_cache.clear()
-        try:
-            db: Session = SessionLocal()
-            try:
-                for point in batch:
-                    ts = self._safe_datetime(point.get("timestamp"))
-                    if ts is None:
-                        continue
-                    db.add(MacroHistory(
-                        timestamp=ts,
-                        fx_value=point.get("fx_value"),
-                        futures_value=point.get("futures_value"),
-                        foreign_net=point.get("foreign_net"),
-                        macro_score=point.get("macro_score"),
-                        regime=point.get("regime"),
-                        vix=point.get("vix"),
-                    ))
-                db.commit()
-            finally:
-                db.close()
-        except Exception as exc:
-            logger.warning("Failed to flush macro history to DB: %s", exc)
-            # Restore failed batch to buffer for retry
-            with self._lock:
-                self._db_buffer = batch + self._db_buffer
+        macro_history_service.flush_to_db(self)
 
     # Cap DB query results to prevent excessive memory usage
     _DB_QUERY_LIMIT = 50_000
 
     def _query_db_history(self, min_ts: datetime, max_ts: datetime) -> List[Dict[str, Any]]:
-        """Query macro history from DB for a time range."""
-        try:
-            db: Session = SessionLocal()
-            try:
-                rows = (
-                    db.query(MacroHistory)
-                    .filter(MacroHistory.timestamp >= min_ts, MacroHistory.timestamp <= max_ts)
-                    .order_by(MacroHistory.timestamp)
-                    .limit(self._DB_QUERY_LIMIT)
-                    .all()
-                )
-                return [
-                    {
-                        "timestamp": (r.timestamp.replace(tzinfo=timezone.utc) if r.timestamp and r.timestamp.tzinfo is None else r.timestamp).isoformat() if r.timestamp else None,
-                        "fx_value": r.fx_value,
-                        "futures_value": r.futures_value,
-                        "foreign_net": r.foreign_net,
-                        "macro_score": r.macro_score,
-                        "regime": r.regime or "unknown",
-                        "vix": getattr(r, "vix", None),
-                    }
-                    for r in rows
-                ]
-            finally:
-                db.close()
-        except Exception as exc:
-            logger.warning("Failed to query macro history from DB: %s", exc)
-            return []
+        return macro_history_service.query_db_history(self, min_ts, max_ts)
 
     _MAX_WINDOW = timedelta(days=90)
 
     def _parse_window(self, window: str) -> timedelta:
-        value = (window or "60m").strip().lower()
-        try:
-            if value.endswith("m"):
-                delta = timedelta(minutes=max(int(value[:-1] or "60"), 1))
-            elif value.endswith("h"):
-                delta = timedelta(hours=max(int(value[:-1] or "1"), 1))
-            elif value.endswith("d"):
-                delta = timedelta(days=max(int(value[:-1] or "1"), 1))
-            else:
-                delta = timedelta(minutes=60)
-            return min(delta, self._MAX_WINDOW)
-        except ValueError:
-            logger.warning("Invalid macro history window: %s. Falling back to 60m.", value)
-        return timedelta(minutes=60)
+        return macro_history_service.parse_window(self, window)
 
 
 _singleton_instance: Optional[MacroMarketService] = None
