@@ -15,11 +15,11 @@ from api.schemas.screening import (
     ConditionResultItem,
     PresetInfo,
     UniverseInfo,
-    normalize_universe_values,
 )
+from api.services import screening_catalog
 
 # Import screener module
-from screener import StockScreener, get_preset, list_presets, PRESET_REGISTRY
+from screener import StockScreener
 from screener.kospi_fetcher import KospiListFetcher
 from screener.us_fetcher import UsStockFetcher
 
@@ -70,374 +70,46 @@ class ScreeningService:
         self._us_fetcher = UsStockFetcher()
 
     def get_available_presets(self) -> List[PresetInfo]:
-        """
-        Get list of available screening presets.
-
-        Returns static presets and saved QuantCanvas strategies.
-
-        Returns:
-            List of PresetInfo with preset details
-        """
-        presets = []
-
-        # Static presets
-        for name in list_presets():
-            preset_func = PRESET_REGISTRY.get(name)
-            description = ""
-            conditions = []
-
-            if preset_func:
-                description = (preset_func.__doc__ or "").strip()
-                try:
-                    condition_instances = preset_func()
-                    conditions = [c.name for c in condition_instances]
-                except Exception as e:
-                    logger.warning(f"Failed to get conditions for preset {name}: {e}")
-
-            presets.append(PresetInfo(
-                name=name,
-                description=description,
-                conditions=conditions,
-                source="static",
-            ))
-
-        # Saved QuantCanvas strategies
-        try:
-            from api.services.strategy_save_service import get_strategy_save_service
-            from api.services.strategy_service import build_conditions_from_graph
-            from api.schemas.strategy import StrategyGraph
-
-            saved = get_strategy_save_service().list_strategies()
-            for strategy in saved:
-                try:
-                    graph = strategy.graph
-                    if isinstance(graph, dict):
-                        graph = StrategyGraph(**graph)
-                    cond_list, _ = build_conditions_from_graph(graph)
-                    if not cond_list:
-                        continue
-                    conditions = [type(c).__name__ for c in cond_list]
-                except Exception as e:
-                    logger.warning(
-                        "Skipping unparseable saved strategy %s: %s",
-                        strategy.id, e,
-                    )
-                    continue
-
-                presets.append(PresetInfo(
-                    name=f"custom:{strategy.id}",
-                    description=strategy.name,
-                    conditions=conditions,
-                    source="custom",
-                ))
-        except Exception as e:
-            logger.warning("Failed to load saved strategies for presets: %s", e)
-
-        return presets
+        return screening_catalog.get_available_presets(self)
 
     def get_available_universes(self) -> List[UniverseInfo]:
-        """
-        Get list of available stock universes.
-
-        Returns:
-            List of UniverseInfo with universe details
-        """
-        universes = []
-
-        for key, info in self.UNIVERSES.items():
-            stock_count = self._get_universe_stock_count(key)
-            universes.append(UniverseInfo(
-                name=info["name"],
-                description=info["description"],
-                stock_count=stock_count
-            ))
-
-        return universes
+        return screening_catalog.get_available_universes(self)
 
     def _get_universe_stock_count(self, universe: str) -> int:
-        """
-        Get approximate stock count for a universe.
-
-        Uses a TTL cache to avoid re-fetching symbol lists on every call.
-
-        Args:
-            universe: Universe name
-
-        Returns:
-            Approximate number of stocks
-        """
-        universe_upper = universe.upper()
-
-        # Check cache
-        cached = self._universe_count_cache.get(universe_upper)
-        if cached:
-            ts, count = cached
-            if time.time() - ts < self._UNIVERSE_COUNT_TTL:
-                return count
-
-        defaults = {
-            "KOSPI": 900,
-            "KOSDAQ": 1600,
-            "SP500": 500,
-            "NASDAQ100": 100,
-        }
-
-        try:
-            if universe_upper == "KOSPI":
-                symbols = self._kospi_fetcher.get_kospi_symbols()
-                count = len(symbols)
-            elif universe_upper == "KOSDAQ":
-                symbols = self._kospi_fetcher.get_kosdaq_symbols()
-                count = len(symbols)
-            elif universe_upper == "SP500":
-                symbols = self._us_fetcher.get_sp500_symbols()
-                count = len(symbols)
-            elif universe_upper == "NASDAQ100":
-                symbols = self._us_fetcher.get_nasdaq100_symbols()
-                count = len(symbols) if symbols else defaults.get(universe_upper, 100)
-            else:
-                return 0
-
-            # Sanity check: if count is suspiciously low, keep last-known-good
-            min_expected = defaults.get(universe_upper, 0) // 2
-            if count < min_expected:
-                prev = self._universe_count_cache.get(universe_upper)
-                if prev:
-                    _, prev_count = prev
-                    logger.warning(
-                        f"{universe} count ({count}) below minimum ({min_expected}), "
-                        f"keeping previous count ({prev_count})"
-                    )
-                    self._universe_count_cache[universe_upper] = (time.time(), prev_count)
-                    return prev_count
-                fallback = defaults.get(universe_upper, 0)
-                logger.warning(
-                    f"{universe} count ({count}) below minimum ({min_expected}), "
-                    f"using default ({fallback})"
-                )
-                self._universe_count_cache[universe_upper] = (time.time(), fallback)
-                return fallback
-
-            self._universe_count_cache[universe_upper] = (time.time(), count)
-            return count
-        except Exception as e:
-            logger.warning(f"Failed to get stock count for {universe}: {e}")
-            prev = self._universe_count_cache.get(universe_upper)
-            if prev:
-                _, prev_count = prev
-                self._universe_count_cache[universe_upper] = (time.time(), prev_count)
-                return prev_count
-            return defaults.get(universe_upper, 0)
+        return screening_catalog.get_universe_stock_count(self, universe)
 
     def _get_universe_tickers(self, universe: str) -> List[str]:
-        """
-        Get list of tickers for a universe.
-
-        Args:
-            universe: Universe name
-
-        Returns:
-            List of ticker symbols
-        """
-        universe_upper = universe.upper()
-
-        if universe_upper == "KOSPI":
-            symbols = self._kospi_fetcher.get_kospi_symbols()
-            return [s["symbol"] for s in symbols]
-        elif universe_upper == "KOSDAQ":
-            symbols = self._kospi_fetcher.get_kosdaq_symbols()
-            return [s["symbol"] for s in symbols]
-        elif universe_upper == "SP500":
-            symbols = self._us_fetcher.get_sp500_symbols()
-            return [s["symbol"] for s in symbols]
-        elif universe_upper == "NASDAQ100":
-            symbols = self._us_fetcher.get_nasdaq100_symbols()
-            return [s["symbol"] for s in symbols]
-        else:
-            raise ValueError(f"Unknown universe: {universe}")
+        return screening_catalog.get_universe_tickers(self, universe)
 
     def resolve_universes(self, universe_input: Any) -> List[str]:
-        """
-        Resolve universe input to a validated, normalized list.
-
-        Rules:
-            - "KOSPI" -> ["KOSPI"]
-            - "KOSPI,KOSDAQ" -> ["KOSPI", "KOSDAQ"]
-            - []/None -> ["KOSPI"]
-            - stable order + dedupe
-        """
-        normalized = normalize_universe_values(universe_input)
-        if not normalized:
-            normalized = ["KOSPI"]
-
-        invalid = [u for u in normalized if u not in self.UNIVERSES]
-        if invalid:
-            raise ValueError(f"Unknown universe: {', '.join(invalid)}")
-        return normalized
+        return screening_catalog.resolve_universes(self, universe_input)
 
     @staticmethod
     def _safe_name(entry: Dict, fallback_key: str = "symbol") -> str:
-        """Return a sanitised stock name from a fetcher entry.
-
-        Handles empty strings, NaN floats, and missing keys by falling
-        back to the ticker symbol itself.
-        """
-        import math
-
-        name = entry.get("name")
-        if name is None:
-            return str(entry.get(fallback_key, ""))
-        if isinstance(name, float):
-            return str(entry.get(fallback_key, "")) if math.isnan(name) else str(name)
-        name_str = str(name).strip()
-        return name_str if name_str else str(entry.get(fallback_key, ""))
+        return screening_catalog.safe_name(entry, fallback_key)
 
     def _get_universe_symbols(self, universe: str) -> Dict[str, str]:
-        """
-        Get {ticker: name} mapping for a universe.
-
-        Returns the full symbol-to-name dict so callers can inject
-        pre-fetched names into StockScreener, avoiding N+1 yfinance calls.
-        Names are normalised: empty/NaN values fall back to the ticker symbol.
-
-        Args:
-            universe: Universe name
-
-        Returns:
-            Dict mapping ticker symbols to stock names
-        """
-        universe_upper = universe.upper()
-
-        if universe_upper == "KOSPI":
-            symbols = self._kospi_fetcher.get_kospi_symbols()
-            return {s["symbol"]: self._safe_name(s) for s in symbols}
-        elif universe_upper == "KOSDAQ":
-            symbols = self._kospi_fetcher.get_kosdaq_symbols()
-            return {s["symbol"]: self._safe_name(s) for s in symbols}
-        elif universe_upper == "SP500":
-            symbols = self._us_fetcher.get_sp500_symbols()
-            return {s["symbol"]: self._safe_name(s) for s in symbols}
-        elif universe_upper == "NASDAQ100":
-            symbols = self._us_fetcher.get_nasdaq100_symbols()
-            return {s["symbol"]: self._safe_name(s) for s in symbols} if symbols else {}
-        else:
-            raise ValueError(f"Unknown universe: {universe}")
+        return screening_catalog.get_universe_symbols(self, universe)
 
     def _get_symbols_for_universes(
         self,
         universe_input: Any,
         fail_fast: bool = False,
     ) -> tuple[Dict[str, str], List[str], Dict[str, str], Dict[str, str]]:
-        """
-        Merge symbols across universes with stable-order dedupe.
-
-        Returns:
-            (merged_symbols, resolved_universes, failed_universe_errors, ticker_to_market)
-            ticker_to_market maps each ticker to the first universe it appeared in.
-        """
-        resolved_universes = self.resolve_universes(universe_input)
-        merged_symbols: Dict[str, str] = {}
-        failed_errors: Dict[str, str] = {}
-        ticker_to_market: Dict[str, str] = {}
-
-        for universe in resolved_universes:
-            try:
-                symbols = self._get_universe_symbols(universe)
-            except Exception as e:
-                message = str(e)
-                failed_errors[universe] = message
-                logger.warning("Universe fetch failed for %s: %s", universe, message)
-                if fail_fast:
-                    raise ValueError(f"Failed to fetch universe {universe}: {message}")
-                continue
-
-            # Stable merge: first seen ticker wins.
-            for ticker, name in symbols.items():
-                if ticker not in merged_symbols:
-                    merged_symbols[ticker] = name
-                    ticker_to_market[ticker] = universe
-
-        return merged_symbols, resolved_universes, failed_errors, ticker_to_market
+        return screening_catalog.get_symbols_for_universes(self, universe_input, fail_fast)
 
     def get_tickers_for_universes(
         self,
         universe_input: Any,
         fail_fast: bool = False,
     ) -> List[str]:
-        """Return deduplicated tickers across one or more universes."""
-        symbols, resolved_universes, failed_errors, _ticker_to_market = self._get_symbols_for_universes(
-            universe_input=universe_input,
-            fail_fast=fail_fast,
-        )
-        if not symbols:
-            if failed_errors:
-                details = ", ".join(f"{k}: {v}" for k, v in failed_errors.items())
-                raise ValueError(f"Failed to fetch all universes ({details})")
-            raise ValueError(f"No tickers available for universes: {resolved_universes}")
-        return list(symbols.keys())
+        return screening_catalog.get_tickers_for_universes(self, universe_input, fail_fast)
 
     def _get_universe_stock_count_multi(self, universe_input: Any) -> int:
-        """
-        Get approximate stock count for one or more universes.
-
-        Single universe uses existing per-universe cache.
-        Multi-universe uses combo cache keyed by normalized list.
-        """
-        resolved_universes = self.resolve_universes(universe_input)
-        if len(resolved_universes) == 1:
-            return self._get_universe_stock_count(resolved_universes[0])
-
-        cache_key = "|".join(resolved_universes)
-        cached = self._universe_combo_count_cache.get(cache_key)
-        if cached:
-            ts, count = cached
-            if time.time() - ts < self._UNIVERSE_COUNT_TTL:
-                return count
-
-        symbols, _, _, _ = self._get_symbols_for_universes(resolved_universes, fail_fast=False)
-        count = len(symbols)
-        self._universe_combo_count_cache[cache_key] = (time.time(), count)
-        return count
+        return screening_catalog.get_universe_stock_count_multi(self, universe_input)
 
     def _resolve_conditions(self, preset: str, params: Optional[Dict[str, Any]] = None, graph=None) -> list:
-        """Resolve conditions from a static preset, custom strategy, or sample graph."""
-        if preset.startswith("sample:"):
-            from api.services.strategy_service import build_conditions_from_graph
-            from api.schemas.strategy import StrategyGraph as StrategyGraphModel
-
-            if graph is None:
-                raise ValueError("graph payload is required for sample: presets")
-            if isinstance(graph, dict):
-                if len(graph.get("nodes", [])) > 50 or len(graph.get("edges", [])) > 100:
-                    raise ValueError("Sample graph too large (max 50 nodes, 100 edges)")
-                graph = StrategyGraphModel(**graph)
-            cond_list, _ = build_conditions_from_graph(graph)
-            if not cond_list:
-                raise ValueError("No conditions in sample strategy graph")
-            return cond_list
-
-        if preset.startswith("custom:"):
-            strategy_id = preset[len("custom:"):]
-            from api.services.strategy_save_service import get_strategy_save_service
-            from api.services.strategy_service import build_conditions_from_graph
-            from api.schemas.strategy import StrategyGraph
-
-            strategy = get_strategy_save_service().get_strategy(strategy_id)
-            if strategy is None:
-                raise ValueError(f"Saved strategy not found: {strategy_id}")
-            graph = strategy.graph
-            if isinstance(graph, dict):
-                graph = StrategyGraph(**graph)
-            cond_list, _ = build_conditions_from_graph(graph)
-            if not cond_list:
-                raise ValueError(f"No conditions in saved strategy: {strategy_id}")
-            return cond_list
-
-        preset_params = params or {}
-        try:
-            return get_preset(preset, **preset_params)
-        except ValueError as e:
-            raise ValueError(f"Invalid preset: {e}")
+        return screening_catalog.resolve_conditions(self, preset, params, graph)
 
     def run_screening(
         self,
