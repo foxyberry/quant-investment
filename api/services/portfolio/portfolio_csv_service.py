@@ -10,6 +10,7 @@ from datetime import date
 from typing import Any, Dict
 
 from api.database import SessionLocal
+from api.models.portfolio_alert import PortfolioAlertHistory
 from api.models.portfolio import Holding
 
 logger = logging.getLogger(__name__)
@@ -75,6 +76,10 @@ def import_from_csv(service, csv_content: str, mode: str = "merge") -> Dict[str,
     db = SessionLocal()
     try:
         if mode == "replace":
+            # A replace import establishes a new portfolio snapshot.
+            # Old alert history would refer to the previous holdings set and
+            # becomes misleading for both UI history and daily dedup.
+            db.query(PortfolioAlertHistory).delete(synchronize_session=False)
             db.query(Holding).delete()
 
         existing_tickers = {row[0] for row in db.query(Holding.ticker).all()}

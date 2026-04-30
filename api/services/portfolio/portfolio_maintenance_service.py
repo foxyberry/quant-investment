@@ -6,6 +6,7 @@ import logging
 from typing import List
 
 from api.database import SessionLocal
+from api.models.portfolio_alert import PortfolioAlertHistory
 from api.models.portfolio import Holding, SellRule
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,8 @@ def force_refresh_prices(service, tickers: List[str]) -> None:
 def delete_all_holdings(_service) -> None:
     db = SessionLocal()
     try:
+        # Clearing holdings invalidates portfolio-scoped alert history.
+        db.query(PortfolioAlertHistory).delete(synchronize_session=False)
         db.query(SellRule).delete(synchronize_session=False)
         db.query(Holding).delete(synchronize_session=False)
         db.commit()

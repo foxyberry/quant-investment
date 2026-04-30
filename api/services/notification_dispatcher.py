@@ -12,6 +12,7 @@ Block Kit support:
 
 import json
 import logging
+import re
 import threading
 import time
 import urllib.error
