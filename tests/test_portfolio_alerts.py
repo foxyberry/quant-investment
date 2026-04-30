@@ -165,7 +165,7 @@ class TestPortfolioResetBehavior:
         csv_content = "ticker,quantity,avg_price,name\nAAPL,3,150,Apple\n"
         service = PortfolioCoreService()
 
-        with patch("api.services.portfolio.portfolio_core_service.threading.Thread", _NoopThread):
+        with patch("api.services.portfolio.portfolio_csv_service.threading.Thread", _NoopThread):
             result = service.import_from_csv(csv_content, mode="replace")
 
         assert result["imported"] == 1

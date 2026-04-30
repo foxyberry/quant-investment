@@ -7,16 +7,12 @@ portfolio summary, CSV import/export, and cache invalidation.
 Inherits price enrichment from PortfolioPriceService.
 """
 
-import csv
-import io
 import logging
-import threading
 from datetime import datetime, date
 from typing import List, Dict, Any, Optional
 
 from api.database import SessionLocal
 from api.models.portfolio import Holding, SellRule, Trade
-from api.models.portfolio_alert import PortfolioAlertHistory
 from api.schemas.portfolio import (
     AdditionalPurchaseRequest,
     HoldingCreate,
@@ -24,6 +20,8 @@ from api.schemas.portfolio import (
     HoldingResponse,
     PortfolioSummary,
 )
+from api.services.portfolio import portfolio_csv_service
+from api.services.portfolio import portfolio_maintenance_service
 from api.services.portfolio.portfolio_price_service import PortfolioPriceService
 
 logger = logging.getLogger(__name__)
@@ -466,241 +464,15 @@ class PortfolioCoreService(PortfolioPriceService):
         )
 
     def import_from_csv(self, csv_content: str, mode: str = "merge") -> Dict[str, Any]:
-        """
-        Import holdings from CSV content.
-
-        Args:
-            csv_content: CSV string with headers
-            mode: "merge" (upsert) or "replace" (clear first)
-
-        Returns:
-            Dict with imported, updated, skipped counts and errors list
-        """
-        errors = []
-        imported = 0
-        updated = 0
-
-        reader = csv.DictReader(io.StringIO(csv_content))
-        fieldnames = reader.fieldnames or []
-        lower_fields = [f.strip().lower() for f in fieldnames]
-
-        required = {"ticker", "quantity", "avg_price"}
-        if not required.issubset(set(lower_fields)):
-            missing = required - set(lower_fields)
-            raise ValueError(f"Missing required columns: {', '.join(sorted(missing))}")
-
-        # Build field mapping (handle case-insensitive headers)
-        field_map = {}
-        for original, lower in zip(fieldnames, lower_fields):
-            field_map[lower] = original
-
-        valid_rows = []
-        for row_num, row in enumerate(reader, start=2):  # row 1 is header
-            ticker_val = row.get(field_map["ticker"], "").strip()
-            qty_val = row.get(field_map["quantity"], "").strip()
-            price_val = row.get(field_map["avg_price"], "").strip()
-
-            if not ticker_val:
-                errors.append({"row": row_num, "ticker": None, "reason": "Empty ticker"})
-                continue
-
-            ticker_val = ticker_val.upper()
-            ticker_error = self._validate_ticker(ticker_val)
-            if ticker_error:
-                errors.append({"row": row_num, "ticker": ticker_val, "reason": ticker_error})
-                continue
-
-            try:
-                quantity = int(qty_val)
-                if quantity <= 0:
-                    raise ValueError("must be > 0")
-            except (ValueError, TypeError):
-                errors.append({"row": row_num, "ticker": ticker_val, "reason": f"Invalid quantity: {qty_val}"})
-                continue
-
-            try:
-                avg_price = float(price_val)
-                if avg_price <= 0:
-                    raise ValueError("must be > 0")
-            except (ValueError, TypeError):
-                errors.append({"row": row_num, "ticker": ticker_val, "reason": f"Invalid avg_price: {price_val}"})
-                continue
-
-            parsed = {
-                "ticker": ticker_val,
-                "quantity": quantity,
-                "avg_price": avg_price,
-                "name": row.get(field_map.get("name", ""), "").strip() or ticker_val,
-                "currency": row.get(field_map.get("currency", ""), "").strip() or "KRW",
-                "note": row.get(field_map.get("note", ""), "").strip() or None,
-                "bought_at": row.get(field_map.get("bought_at", ""), "").strip() or None,
-            }
-            valid_rows.append(parsed)
-
-        db = SessionLocal()
-        try:
-            if mode == "replace":
-                # A replace import establishes a new portfolio snapshot.
-                # Old alert history would refer to the previous holdings set and
-                # becomes misleading for both UI history and daily dedup.
-                db.query(PortfolioAlertHistory).delete(synchronize_session=False)
-                db.query(Holding).delete()
-
-            existing_tickers = {
-                row[0] for row in db.query(Holding.ticker).all()
-            }
-
-            for parsed in valid_rows:
-                ticker = parsed["ticker"]
-                bought_at_val = parsed["bought_at"]
-                bought_at_date = None
-                if bought_at_val:
-                    try:
-                        bought_at_date = date.fromisoformat(bought_at_val)
-                    except (ValueError, TypeError):
-                        bought_at_date = None
-
-                if ticker in existing_tickers and mode == "merge":
-                    row = db.get(Holding, ticker)
-                    existing_bought_at = row.bought_at
-                    row.name = parsed["name"]
-                    row.quantity = parsed["quantity"]
-                    row.avg_price = parsed["avg_price"]
-                    row.currency = parsed["currency"]
-                    row.note = parsed["note"]
-                    # Preserve existing bought_at if CSV didn't provide one
-                    if bought_at_date:
-                        row.bought_at = bought_at_date
-                    elif existing_bought_at:
-                        pass  # keep existing
-                    updated += 1
-                else:
-                    new_row = Holding(
-                        ticker=ticker,
-                        name=parsed["name"],
-                        quantity=parsed["quantity"],
-                        avg_price=parsed["avg_price"],
-                        currency=parsed["currency"],
-                        note=parsed["note"],
-                        bought_at=bought_at_date or date.today(),
-                    )
-                    db.merge(new_row)
-                    existing_tickers.add(ticker)
-                    imported += 1
-
-            db.commit()
-        except Exception:
-            db.rollback()
-            raise
-        finally:
-            db.close()
-
-        logger.info(f"CSV import: imported={imported}, updated={updated}, skipped={len(errors)}")
-
-        # Backfill metadata for newly imported holdings in background
-        if imported > 0:
-            def _backfill_csv_imports():
-                db2 = SessionLocal()
-                try:
-                    null_rows = db2.query(Holding).filter(Holding.sector.is_(None)).all()
-                    for row in null_rows:
-                        meta = self._fetch_static_metadata(row.ticker)
-                        row.sector = meta.get("sector")
-                        row.industry = meta.get("industry")
-                        row.country = meta.get("country")
-                        row.exchange = meta.get("exchange")
-                    if null_rows:
-                        db2.commit()
-                        logger.info(f"Backfilled metadata for {len(null_rows)} CSV-imported holdings")
-                except Exception as e:
-                    db2.rollback()
-                    logger.warning(f"CSV import metadata backfill failed: {e}")
-                finally:
-                    db2.close()
-
-            threading.Thread(target=_backfill_csv_imports, daemon=True).start()
-
-        return {
-            "imported": imported,
-            "updated": updated,
-            "skipped": len(errors),
-            "errors": errors,
-        }
+        return portfolio_csv_service.import_from_csv(self, csv_content, mode)
 
     def export_to_csv(self) -> str:
-        """
-        Export all holdings as CSV string.
-
-        Returns:
-            CSV string with header and data rows
-        """
-        db = SessionLocal()
-        try:
-            rows = db.query(Holding).all()
-            holdings_dicts = [self._row_to_dict(r) for r in rows]
-        finally:
-            db.close()
-
-        output = io.StringIO()
-        columns = ["ticker", "quantity", "avg_price", "name", "currency", "note", "bought_at"]
-        writer = csv.DictWriter(output, fieldnames=columns, extrasaction="ignore")
-        writer.writeheader()
-
-        for holding in holdings_dicts:
-            row = {col: holding.get(col, "") for col in columns}
-            if row["note"] is None:
-                row["note"] = ""
-            if isinstance(row["bought_at"], date):
-                row["bought_at"] = row["bought_at"].isoformat()
-            writer.writerow(row)
-
-        return output.getvalue()
+        return portfolio_csv_service.export_to_csv(self)
 
     def force_refresh_prices(self, tickers: List[str]) -> None:
-        """
-        Force-fetch fresh prices from source (yfinance/pykrx), bypassing all caches.
-
-        Clears the in-memory TTL caches and also invalidates the OHLCVCache
-        in-memory metadata so that the next get() call re-fetches parquet from
-        the network even if the parquet file was written today.
-        """
-        from concurrent.futures import as_completed
-        if not tickers:
-            return
-
-        self._price_cache.clear()
-        self._change_cache.clear()
-
-        # Invalidate OHLCVCache in-memory metadata so _is_cache_fresh() re-reads
-        # from disk and force_refresh=True actually hits the network.
-        with self._cache._meta_lock:
-            self._cache._latest_date_cache.clear()
-
-        # Parallel force-refresh: writes fresh data to parquet for each ticker
-        futures = {
-            self._executor.submit(self._cache.get, ticker, 5, True): ticker
-            for ticker in tickers
-        }
-        for future in as_completed(futures):
-            ticker = futures[future]
-            try:
-                future.result()
-            except Exception as e:
-                logger.warning(f"Force refresh failed for {ticker}: {e}")
+        portfolio_maintenance_service.force_refresh_prices(self, tickers)
 
     def delete_all_holdings(self) -> None:
-        """Remove all holdings and their associated sell rules."""
-        db = SessionLocal()
-        try:
-            # Clearing holdings invalidates portfolio-scoped alert history.
-            db.query(PortfolioAlertHistory).delete(synchronize_session=False)
-            db.query(SellRule).delete(synchronize_session=False)
-            db.query(Holding).delete(synchronize_session=False)
-            db.commit()
-        except Exception:
-            db.rollback()
-            raise
-        finally:
-            db.close()
+        portfolio_maintenance_service.delete_all_holdings(self)
 
     # Archive methods live in portfolio_archive_service.PortfolioArchiveService.
