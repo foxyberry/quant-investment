@@ -21,9 +21,9 @@ from api.schemas.portfolio import (
     SellRulePresetCreate,
     SellRulePresetUpdate,
     SellRulePresetResponse,
-    SellRulePresetItem,
     _validate_sell_rule_params,
 )
+from api.services.portfolio import portfolio_preset_service
 from portfolio.conditions import (
     TradingContext,
     StopLossCondition,
@@ -270,276 +270,30 @@ class PortfolioRiskService(PortfolioExecutionService):
 
     # ── Sell-rule presets ────────────────────────────────────────────
 
-    def _preset_to_response(self, preset: SellRulePreset, db) -> SellRulePresetResponse:
-        """Convert a SellRulePreset ORM instance to SellRulePresetResponse."""
-        linked_count = db.query(SellRule).filter(SellRule.preset_id == preset.id).count()
-        return SellRulePresetResponse(
-            id=preset.id,
-            name=preset.name,
-            description=preset.description,
-            rules=[SellRulePresetItem(rule_type=r["rule_type"], params=r["params"]) for r in preset.rules],
-            is_active=preset.is_active,
-            linked_rules_count=linked_count,
-            created_at=preset.created_at,
-            updated_at=preset.updated_at,
-        )
+    @staticmethod
+    def _validate_rule_params(rule_type: str, params: dict) -> None:
+        _validate_sell_rule_params(rule_type, params)
 
     def list_sell_rule_presets(self) -> List[SellRulePresetResponse]:
-        """List all sell rule presets."""
-        db = SessionLocal()
-        try:
-            presets = db.query(SellRulePreset).order_by(SellRulePreset.created_at).all()
-            return [self._preset_to_response(p, db) for p in presets]
-        finally:
-            db.close()
+        return portfolio_preset_service.list_sell_rule_presets(self)
 
     def create_sell_rule_preset(self, data: SellRulePresetCreate) -> SellRulePresetResponse:
-        """Create a sell rule preset. Raises ValueError on duplicate name."""
-        db = SessionLocal()
-        try:
-            existing = db.query(SellRulePreset).filter(SellRulePreset.name == data.name).first()
-            if existing:
-                raise ValueError(f"Preset name already exists: {data.name}")
-
-            preset = SellRulePreset(
-                name=data.name,
-                description=data.description,
-                rules=[{"rule_type": r.rule_type, "params": r.params} for r in data.rules],
-            )
-            db.add(preset)
-            db.commit()
-            db.refresh(preset)
-            return self._preset_to_response(preset, db)
-        except ValueError:
-            db.rollback()
-            raise
-        except Exception:
-            db.rollback()
-            raise
-        finally:
-            db.close()
+        return portfolio_preset_service.create_sell_rule_preset(self, data)
 
     def update_sell_rule_preset(self, preset_id: int, data: SellRulePresetUpdate) -> SellRulePresetResponse:
-        """Update a sell rule preset. Raises ValueError if not found or name conflict."""
-        db = SessionLocal()
-        try:
-            preset = db.query(SellRulePreset).filter(SellRulePreset.id == preset_id).first()
-            if preset is None:
-                raise ValueError(f"Preset not found: {preset_id}")
-
-            if data.name is not None and data.name != preset.name:
-                conflict = db.query(SellRulePreset).filter(
-                    SellRulePreset.name == data.name,
-                    SellRulePreset.id != preset_id,
-                ).first()
-                if conflict:
-                    raise ValueError(f"Preset name already exists: {data.name}")
-                preset.name = data.name
-
-            if data.description is not None:
-                preset.description = data.description
-            if data.rules is not None:
-                preset.rules = [{"rule_type": r.rule_type, "params": r.params} for r in data.rules]
-            if data.is_active is not None:
-                preset.is_active = data.is_active
-
-            db.commit()
-            db.refresh(preset)
-            return self._preset_to_response(preset, db)
-        except ValueError:
-            db.rollback()
-            raise
-        except Exception:
-            db.rollback()
-            raise
-        finally:
-            db.close()
+        return portfolio_preset_service.update_sell_rule_preset(self, preset_id, data)
 
     def delete_sell_rule_preset(self, preset_id: int) -> bool:
-        """Delete a sell rule preset. Returns True if deleted, False if not found.
-
-        Defensively nullifies preset_id on linked rules before deletion
-        to ensure correct behavior regardless of SQLite FK pragma state.
-        """
-        db = SessionLocal()
-        try:
-            preset = db.query(SellRulePreset).filter(SellRulePreset.id == preset_id).first()
-            if preset is None:
-                return False
-            # Defensive: nullify preset_id on linked rules (SQLite may not enforce ON DELETE SET NULL)
-            db.query(SellRule).filter(SellRule.preset_id == preset_id).update(
-                {SellRule.preset_id: None}, synchronize_session="fetch"
-            )
-            db.delete(preset)
-            db.commit()
-            return True
-        except Exception:
-            db.rollback()
-            raise
-        finally:
-            db.close()
+        return portfolio_preset_service.delete_sell_rule_preset(self, preset_id)
 
     def apply_preset_to_holding(self, ticker: str, preset_id: int) -> List[SellRuleResponse]:
-        """Apply a preset to a holding, creating sell rules from the preset.
-
-        Raises ValueError if holding/preset not found, preset inactive, or already applied.
-        """
-        db = SessionLocal()
-        try:
-            resolved_ticker = self._resolve_holding_ticker(db, ticker)
-            if resolved_ticker is None:
-                raise ValueError(f"Holding not found: {ticker}")
-            ticker = resolved_ticker
-
-            preset = db.query(SellRulePreset).filter(SellRulePreset.id == preset_id).first()
-            if preset is None:
-                raise ValueError(f"Preset not found: {preset_id}")
-            if not preset.is_active:
-                raise ValueError(f"Preset is inactive: {preset.name}")
-
-            # Check if already applied
-            existing = db.query(SellRule).filter(
-                SellRule.ticker == ticker,
-                SellRule.preset_id == preset_id,
-            ).first()
-            if existing:
-                raise ValueError(f"Preset '{preset.name}' is already applied to {ticker}")
-
-            # Validate all rules before creating any
-            for rule_def in preset.rules:
-                _validate_sell_rule_params(rule_def["rule_type"], rule_def["params"])
-
-            # Create rules in a single transaction
-            created_rules = []
-            for rule_def in preset.rules:
-                rule = SellRule(
-                    ticker=ticker,
-                    rule_type=rule_def["rule_type"],
-                    params=rule_def["params"],
-                    is_active=True,
-                    preset_id=preset_id,
-                )
-                db.add(rule)
-                created_rules.append(rule)
-
-            db.commit()
-            for r in created_rules:
-                db.refresh(r)
-            return [self._sell_rule_to_response(r) for r in created_rules]
-        except ValueError:
-            db.rollback()
-            raise
-        except Exception:
-            db.rollback()
-            raise
-        finally:
-            db.close()
+        return portfolio_preset_service.apply_preset_to_holding(self, ticker, preset_id)
 
     def bulk_apply_preset(self, preset_id: int, tickers: List[str]):
-        """Apply a preset to multiple holdings at once.
-
-        Returns a BulkApplyPresetResponse with per-ticker results.
-        Individual failures do not abort the entire operation.
-
-        Raises:
-            PresetNotFoundError: if preset does not exist.
-            PresetInactiveError: if preset is deactivated.
-        """
-        from api.schemas.portfolio import BulkApplyPresetResponse, BulkApplyPresetResultItem
-        from api.services.portfolio.portfolio_core_service import PresetNotFoundError, PresetInactiveError
-
-        db = SessionLocal()
-        try:
-            preset = db.query(SellRulePreset).filter(SellRulePreset.id == preset_id).first()
-            if preset is None:
-                raise PresetNotFoundError(f"Preset not found: {preset_id}")
-            if not preset.is_active:
-                raise PresetInactiveError(f"Preset is inactive: {preset.name}")
-        finally:
-            db.close()
-
-        results: List[BulkApplyPresetResultItem] = []
-        for ticker in tickers:
-            try:
-                created_rules = self.apply_preset_to_holding(ticker, preset_id)
-                results.append(BulkApplyPresetResultItem(
-                    ticker=ticker,
-                    success=True,
-                    rules_created=len(created_rules),
-                ))
-            except ValueError as e:
-                results.append(BulkApplyPresetResultItem(
-                    ticker=ticker,
-                    success=False,
-                    error=str(e),
-                ))
-            except Exception:
-                logger.exception("Unexpected error applying preset %d to %s", preset_id, ticker)
-                results.append(BulkApplyPresetResultItem(
-                    ticker=ticker,
-                    success=False,
-                    error="Internal error",
-                ))
-
-        succeeded = sum(1 for r in results if r.success)
-        return BulkApplyPresetResponse(
-            preset_id=preset_id,
-            total=len(results),
-            succeeded=succeeded,
-            failed=len(results) - succeeded,
-            results=results,
-        )
+        return portfolio_preset_service.bulk_apply_preset(self, preset_id, tickers)
 
     def save_preset_from_holding(self, ticker: str, name: str, description: Optional[str] = None) -> SellRulePresetResponse:
-        """Save current sell rules of a holding as a new preset.
-
-        Creates a snapshot of rule_type + params; does NOT link existing rules to the preset.
-        Raises ValueError if holding not found, no rules exist, duplicate rule_types, or name conflict.
-        """
-        db = SessionLocal()
-        try:
-            resolved_ticker = self._resolve_holding_ticker(db, ticker)
-            if resolved_ticker is None:
-                raise ValueError(f"Holding not found: {ticker}")
-
-            rules = (
-                db.query(SellRule)
-                .filter(SellRule.ticker == resolved_ticker)
-                .order_by(SellRule.created_at)
-                .all()
-            )
-            if not rules:
-                raise ValueError(f"No sell rules found for {ticker}")
-
-            # Deduplicate: keep only the first rule per rule_type
-            seen_types: set = set()
-            deduped_rules = []
-            for r in rules:
-                if r.rule_type not in seen_types:
-                    seen_types.add(r.rule_type)
-                    deduped_rules.append(r)
-
-            existing = db.query(SellRulePreset).filter(SellRulePreset.name == name).first()
-            if existing:
-                raise ValueError(f"Preset name already exists: {name}")
-
-            preset = SellRulePreset(
-                name=name,
-                description=description,
-                rules=[{"rule_type": r.rule_type, "params": r.params} for r in deduped_rules],
-            )
-            db.add(preset)
-            db.commit()
-            db.refresh(preset)
-            return self._preset_to_response(preset, db)
-        except ValueError:
-            db.rollback()
-            raise
-        except Exception:
-            db.rollback()
-            raise
-        finally:
-            db.close()
+        return portfolio_preset_service.save_preset_from_holding(self, ticker, name, description)
 
     # ── Sell-rule evaluation engine ────────────────────────────────
 
