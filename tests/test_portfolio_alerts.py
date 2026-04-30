@@ -147,6 +147,61 @@ class TestDBHoldings:
         assert holdings[0].ticker == "MSFT"
 
 
+class TestPortfolioResetBehavior:
+    def test_replace_import_clears_alert_history(self):
+        from api.services.portfolio.portfolio_core_service import PortfolioCoreService
+        from api.services.portfolio_alert_service import record_and_send
+
+        class _NoopThread:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def start(self):
+                return None
+
+        with patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}):
+            record_and_send("005930.KS", "stop_loss", "old alert", 50000.0)
+
+        csv_content = "ticker,quantity,avg_price,name\nAAPL,3,150,Apple\n"
+        service = PortfolioCoreService()
+
+        with patch("api.services.portfolio.portfolio_core_service.threading.Thread", _NoopThread):
+            result = service.import_from_csv(csv_content, mode="replace")
+
+        assert result["imported"] == 1
+
+        db = SessionLocal()
+        try:
+            assert db.query(PortfolioAlertHistory).count() == 0
+            assert db.query(Holding).count() == 1
+        finally:
+            db.close()
+
+    def test_delete_all_holdings_clears_alert_history(self):
+        from api.services.portfolio.portfolio_core_service import PortfolioCoreService
+        from api.services.portfolio_alert_service import record_and_send
+
+        db = SessionLocal()
+        try:
+            db.add(Holding(ticker="AAPL", name="Apple", quantity=10, avg_price=150, currency="USD"))
+            db.commit()
+        finally:
+            db.close()
+
+        with patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}):
+            record_and_send("AAPL", "take_profit", "old alert", 200.0)
+
+        service = PortfolioCoreService()
+        service.delete_all_holdings()
+
+        db = SessionLocal()
+        try:
+            assert db.query(PortfolioAlertHistory).count() == 0
+            assert db.query(Holding).count() == 0
+        finally:
+            db.close()
+
+
 # ---------------------------------------------------------------------------
 # Tests — scanner
 # ---------------------------------------------------------------------------

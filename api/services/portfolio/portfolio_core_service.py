@@ -16,6 +16,7 @@ from typing import List, Dict, Any, Optional
 
 from api.database import SessionLocal
 from api.models.portfolio import Holding, SellRule, Trade
+from api.models.portfolio_alert import PortfolioAlertHistory
 from api.schemas.portfolio import (
     AdditionalPurchaseRequest,
     HoldingCreate,
@@ -539,6 +540,10 @@ class PortfolioCoreService(PortfolioPriceService):
         db = SessionLocal()
         try:
             if mode == "replace":
+                # A replace import establishes a new portfolio snapshot.
+                # Old alert history would refer to the previous holdings set and
+                # becomes misleading for both UI history and daily dedup.
+                db.query(PortfolioAlertHistory).delete(synchronize_session=False)
                 db.query(Holding).delete()
 
             existing_tickers = {
@@ -687,6 +692,8 @@ class PortfolioCoreService(PortfolioPriceService):
         """Remove all holdings and their associated sell rules."""
         db = SessionLocal()
         try:
+            # Clearing holdings invalidates portfolio-scoped alert history.
+            db.query(PortfolioAlertHistory).delete(synchronize_session=False)
             db.query(SellRule).delete(synchronize_session=False)
             db.query(Holding).delete(synchronize_session=False)
             db.commit()
