@@ -8,7 +8,6 @@ import logging
 import os
 import re
 import urllib.request
-from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
 
@@ -18,6 +17,12 @@ from brokers import refresh_broker
 
 from api.database import SessionLocal
 from api.models.broker_credential import BrokerCredential
+from api.services.broker_settings_views import (
+    IBKRSettingsView,
+    SlackSettingsView,
+    TelegramSettingsView,
+    TigerSettingsView,
+)
 
 try:
     from cryptography.fernet import Fernet, InvalidToken
@@ -27,39 +32,6 @@ except Exception:  # pragma: no cover - handled by runtime guard
     Fernet = None  # type: ignore[assignment]
     InvalidToken = Exception  # type: ignore[assignment]
     _CRYPTO_AVAILABLE = False
-
-
-@dataclass
-class TigerSettingsView:
-    tiger_id: str | None
-    account: str | None
-    license: str | None
-    sandbox: bool
-    has_private_key: bool
-    updated_at: str | None
-
-
-@dataclass
-class IBKRSettingsView:
-    gateway_url: str | None
-    account_id: str | None
-    updated_at: str | None
-
-
-@dataclass
-class TelegramSettingsView:
-    has_bot_token: bool
-    chat_id: str | None
-    enabled: bool
-    updated_at: str | None
-
-
-@dataclass
-class SlackSettingsView:
-    has_webhook_url: bool
-    channel_name: str | None
-    enabled: bool
-    updated_at: str | None
 
 
 class BrokerSettingsService:
@@ -519,7 +491,6 @@ class BrokerSettingsService:
         """Send a test message via Slack webhook."""
         from api.services.notification_dispatcher import _send_slack
         return _send_slack(self, message)
-
 
 _broker_settings_service = BrokerSettingsService()
 
