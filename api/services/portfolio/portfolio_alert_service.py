@@ -23,6 +23,7 @@ from api.database import SessionLocal
 from api.models.portfolio_alert import PortfolioAlertHistory
 from api.schemas.portfolio_alert import PortfolioAlertHistoryEntry, PortfolioAlertHistoryResponse
 from api.services.portfolio_alert_config_service import (
+    # Re-exported here for the backward-compat scanner shim.
     _CONFIG_PATH,
     get_portfolio_alert_config_service,
 )

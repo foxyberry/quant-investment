@@ -1,4 +1,15 @@
-"""Persistent portfolio alert settings."""
+"""Persistent portfolio alert and sell settings.
+
+Runtime readers use this table as the primary source of truth for:
+- portfolio alert settings
+- global sell-condition defaults
+- technical sell-signal config
+
+At present, only alert settings are mutated through the public API path.
+Global sell defaults and technical signal config are bootstrap-compatible and
+DB-backed for runtime reads, but still need a dedicated write path if we want
+them to become fully user-editable outside legacy YAML migration flows.
+"""
 
 from __future__ import annotations
 

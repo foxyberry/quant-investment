@@ -11,6 +11,7 @@ import yaml
 from api.database import SessionLocal
 from api.models.portfolio_alert_config import PortfolioAlertConfig
 from api.schemas.portfolio_alert import PortfolioAlertConfigResponse
+from sqlalchemy.exc import IntegrityError
 
 _CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "portfolio.yaml"
 
@@ -58,34 +59,53 @@ class PortfolioAlertConfigService:
             channels=self._deserialize_channels(row.channels_json),
         )
 
+    def _build_bootstrap_row(self) -> PortfolioAlertConfig:
+        root = self._load_yaml_root()
+        fallback = root.get("alert_settings", {}) or {}
+        default_sell = root.get("default_sell_conditions", {}) or {}
+        technical_sell = root.get("technical_sell_signals", {}) or {}
+        return PortfolioAlertConfig(
+            id=self.ROW_ID,
+            # No YAML at all -> disabled by default. YAML present but missing the key
+            # keeps the historical default-on behavior for alert scanning.
+            enabled=bool(fallback.get("enabled", False if not fallback else True)),
+            scan_interval_seconds=int(fallback.get("scan_interval_seconds", 60)),
+            stop_loss_pct=float(fallback.get("stop_loss_pct", 0.20)),
+            take_profit_pct=float(fallback.get("take_profit_pct", 0.30)),
+            trailing_stop_pct=float(fallback.get("trailing_stop_pct", 0.10)),
+            technical_signals=bool(fallback.get("technical_signals", True)),
+            market_hours_only=bool(fallback.get("market_hours_only", True)),
+            channels_json=json.dumps(fallback.get("channels", ["telegram"])),
+            default_stop_loss_pct=float(default_sell.get("stop_loss_pct", 0.05)),
+            default_take_profit_pct=float(default_sell.get("take_profit_pct", 0.15)),
+            default_trailing_stop_pct=float(default_sell.get("trailing_stop_pct", 0.08)),
+            technical_signals_json=json.dumps(technical_sell),
+            migrated_from_yaml=bool(fallback or default_sell or technical_sell),
+        )
+
+    def _get_or_bootstrap_row(self, db) -> PortfolioAlertConfig:
+        row = db.get(PortfolioAlertConfig, self.ROW_ID)
+        if row is not None:
+            return row
+
+        row = self._build_bootstrap_row()
+        db.add(row)
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            row = db.get(PortfolioAlertConfig, self.ROW_ID)
+            if row is None:
+                raise
+            return row
+
+        db.refresh(row)
+        return row
+
     def get_config(self) -> PortfolioAlertConfigResponse:
         db = SessionLocal()
         try:
-            row = db.get(PortfolioAlertConfig, self.ROW_ID)
-            if row is None:
-                root = self._load_yaml_root()
-                fallback = root.get("alert_settings", {}) or {}
-                default_sell = root.get("default_sell_conditions", {}) or {}
-                technical_sell = root.get("technical_sell_signals", {}) or {}
-                row = PortfolioAlertConfig(
-                    id=self.ROW_ID,
-                    enabled=bool(fallback.get("enabled", False if not fallback else True)),
-                    scan_interval_seconds=int(fallback.get("scan_interval_seconds", 60)),
-                    stop_loss_pct=float(fallback.get("stop_loss_pct", 0.20)),
-                    take_profit_pct=float(fallback.get("take_profit_pct", 0.30)),
-                    trailing_stop_pct=float(fallback.get("trailing_stop_pct", 0.10)),
-                    technical_signals=bool(fallback.get("technical_signals", True)),
-                    market_hours_only=bool(fallback.get("market_hours_only", True)),
-                    channels_json=json.dumps(fallback.get("channels", ["telegram"])),
-                    default_stop_loss_pct=float(default_sell.get("stop_loss_pct", 0.05)),
-                    default_take_profit_pct=float(default_sell.get("take_profit_pct", 0.15)),
-                    default_trailing_stop_pct=float(default_sell.get("trailing_stop_pct", 0.08)),
-                    technical_signals_json=json.dumps(technical_sell),
-                    migrated_from_yaml=bool(fallback or default_sell or technical_sell),
-                )
-                db.add(row)
-                db.commit()
-                db.refresh(row)
+            row = self._get_or_bootstrap_row(db)
             return self._response_from_row(row)
         finally:
             db.close()
@@ -99,10 +119,7 @@ class PortfolioAlertConfigService:
 
         db = SessionLocal()
         try:
-            row = db.get(PortfolioAlertConfig, self.ROW_ID)
-            if row is None:
-                row = PortfolioAlertConfig(id=self.ROW_ID)
-                db.add(row)
+            row = self._get_or_bootstrap_row(db)
 
             row.enabled = bool(merged["enabled"])
             row.scan_interval_seconds = int(merged["scan_interval_seconds"])
@@ -112,7 +129,6 @@ class PortfolioAlertConfigService:
             row.technical_signals = bool(merged["technical_signals"])
             row.market_hours_only = bool(merged["market_hours_only"])
             row.channels_json = json.dumps(merged.get("channels") or ["telegram"])
-            row.migrated_from_yaml = False
             db.commit()
             db.refresh(row)
             return self._response_from_row(row)
@@ -122,16 +138,7 @@ class PortfolioAlertConfigService:
     def get_default_sell_conditions(self) -> dict[str, float]:
         db = SessionLocal()
         try:
-            row = db.get(PortfolioAlertConfig, self.ROW_ID)
-            if row is None:
-                self.get_config()
-                row = db.get(PortfolioAlertConfig, self.ROW_ID)
-            if row is None:
-                return {
-                    "stop_loss_pct": 0.05,
-                    "take_profit_pct": 0.15,
-                    "trailing_stop_pct": 0.08,
-                }
+            row = self._get_or_bootstrap_row(db)
             return {
                 "stop_loss_pct": row.default_stop_loss_pct,
                 "take_profit_pct": row.default_take_profit_pct,
@@ -143,12 +150,7 @@ class PortfolioAlertConfigService:
     def get_technical_signals_config(self) -> dict[str, Any]:
         db = SessionLocal()
         try:
-            row = db.get(PortfolioAlertConfig, self.ROW_ID)
-            if row is None:
-                self.get_config()
-                row = db.get(PortfolioAlertConfig, self.ROW_ID)
-            if row is None:
-                return {}
+            row = self._get_or_bootstrap_row(db)
             return self._deserialize_json_dict(row.technical_signals_json)
         finally:
             db.close()
