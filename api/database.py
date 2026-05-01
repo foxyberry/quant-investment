@@ -57,6 +57,7 @@ def init_db() -> None:
     import api.models.strategy  # noqa: F401 — register model with Base
     import api.models.strategy_backtest_result  # noqa: F401 — register model with Base
     import api.models.portfolio_alert  # noqa: F401 — register model with Base
+    import api.models.portfolio_alert_config  # noqa: F401 — register model with Base
     import api.models.strategy_alert  # noqa: F401 — register model with Base
     import api.models.strategy_webhook  # noqa: F401 — register model with Base
     import api.models.watchlist  # noqa: F401 — register model with Base
@@ -69,6 +70,7 @@ def init_db() -> None:
     _migrate_sell_rule_preset_id()
 
     _migrate_strategy_status()
+    _migrate_portfolio_alert_config_columns()
 
     _migrate_json_data()
     _migrate_portfolio_json()
@@ -188,6 +190,27 @@ def _migrate_strategy_status() -> None:
                 logger.info("Added strategies.status column")
     except Exception as e:
         logger.warning("strategies status migration skipped: %s", e)
+
+
+def _migrate_portfolio_alert_config_columns() -> None:
+    """Add new portfolio_alert_config columns for stage-2 DB-backed settings."""
+    try:
+        with engine.begin() as conn:
+            existing_columns = _get_column_names(conn, "portfolio_alert_config")
+            if existing_columns is None:
+                return
+            additions = [
+                ("default_stop_loss_pct", "FLOAT DEFAULT 0.05"),
+                ("default_take_profit_pct", "FLOAT DEFAULT 0.15"),
+                ("default_trailing_stop_pct", "FLOAT DEFAULT 0.08"),
+                ("technical_signals_json", "TEXT DEFAULT '{}'"),
+            ]
+            for col, col_type in additions:
+                if col not in existing_columns:
+                    conn.execute(text(f"ALTER TABLE portfolio_alert_config ADD COLUMN {col} {col_type}"))
+                    logger.info("Added portfolio_alert_config.%s column", col)
+    except Exception as e:
+        logger.warning("portfolio_alert_config schema migration skipped: %s", e)
 
 
 def _migrate_json_data() -> None:

@@ -24,54 +24,18 @@ async def get_alert_history(limit: int = Query(50, ge=1, le=200)):
 
 @router.get("/config", response_model=PortfolioAlertConfigResponse)
 async def get_alert_config():
-    """Get current alert settings from portfolio.yaml."""
-    from api.services.portfolio_alert_scanner import load_config
+    """Get current alert settings from DB-backed config."""
+    from api.services.portfolio_alert_config_service import get_portfolio_alert_config_service
 
-    _, settings = load_config()
-    return PortfolioAlertConfigResponse(
-        enabled=settings.enabled,
-        scan_interval_seconds=settings.scan_interval_seconds,
-        stop_loss_pct=settings.stop_loss_pct,
-        take_profit_pct=settings.take_profit_pct,
-        trailing_stop_pct=settings.trailing_stop_pct,
-        technical_signals=settings.technical_signals,
-        market_hours_only=settings.market_hours_only,
-        channels=settings.channels or ["telegram"],
-    )
+    return get_portfolio_alert_config_service().get_config()
 
 
 @router.put("/config", response_model=PortfolioAlertConfigResponse)
 async def update_alert_config(body: PortfolioAlertConfigUpdate):
-    """Update alert settings in portfolio.yaml."""
-    import yaml
-    from api.services.portfolio_alert_scanner import _CONFIG_PATH
+    """Update alert settings in DB-backed config."""
+    from api.services.portfolio_alert_config_service import get_portfolio_alert_config_service
 
-    if not _CONFIG_PATH.exists():
-        return PortfolioAlertConfigResponse()
-
-    with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
-
-    alert_raw = data.setdefault("alert_settings", {})
-
-    for field in (
-        "enabled",
-        "scan_interval_seconds",
-        "stop_loss_pct",
-        "take_profit_pct",
-        "trailing_stop_pct",
-        "technical_signals",
-        "market_hours_only",
-        "channels",
-    ):
-        val = getattr(body, field, None)
-        if val is not None:
-            alert_raw[field] = val
-
-    with open(_CONFIG_PATH, "w", encoding="utf-8") as f:
-        yaml.dump(data, f, allow_unicode=True, default_flow_style=False)
-
-    return PortfolioAlertConfigResponse(**alert_raw)
+    return get_portfolio_alert_config_service().save_config(body.model_dump())
 
 
 @router.post("/scan", response_model=PortfolioAlertScanResult)
