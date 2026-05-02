@@ -2,7 +2,6 @@
 
 import os
 import sys
-from datetime import date, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest

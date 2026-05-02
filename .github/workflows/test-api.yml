@@ -1,6 +1,8 @@
-name: Test API
+name: Python CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -9,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pytest:
-    name: Python Tests
+  ruff:
+    name: Ruff
     runs-on: ubuntu-latest
 
     steps:
@@ -20,22 +22,59 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
           cache: pip
+          cache-dependency-path: requirements-dev.txt
 
-      - name: Install dependencies
+      - name: Install development dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
-          pip install pytest
+          pip install -r requirements-dev.txt
+
+      - name: Run Ruff
+        run: |
+          ruff check \
+            api/models/portfolio_alert_config.py \
+            api/models/portfolio_trailing_state.py \
+            api/services/portfolio_alert_config_service.py \
+            api/services/portfolio/portfolio_alert_service.py \
+            api/services/portfolio/portfolio_core_service.py \
+            api/services/portfolio/portfolio_csv_service.py \
+            api/services/portfolio/portfolio_maintenance_service.py \
+            api/services/portfolio/portfolio_trailing_service.py \
+            screener/portfolio_manager.py \
+            tests/test_portfolio_alert_config_service.py \
+            tests/test_portfolio_manager_settings.py \
+            tests/test_portfolio_manager.py \
+            tests/test_portfolio_alerts.py \
+            tests/test_portfolio_trailing.py
+
+  pytest:
+    name: Pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install development dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
 
       - name: Run tests
         run: |
-          if [ -d tests/ ]; then
-            python -m pytest tests/ -v --tb=short
-          else
-            echo "No tests/ directory found. Skipping."
-          fi
-        continue-on-error: true
+          python -m pytest \
+            tests/test_portfolio_alert_config_service.py \
+            tests/test_portfolio_manager_settings.py \
+            tests/test_portfolio_manager.py \
+            tests/test_portfolio_alerts.py \
+            tests/test_portfolio_trailing.py \
+            -v --tb=short

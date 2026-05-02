@@ -12,7 +12,7 @@ from datetime import datetime, date
 from typing import List, Dict, Any, Optional
 
 from api.database import SessionLocal
-from api.models.portfolio import Holding, SellRule, Trade
+from api.models.portfolio import Holding, Trade
 from api.models.portfolio_alert import PortfolioAlertHistory
 from api.schemas.portfolio import (
     AdditionalPurchaseRequest,
@@ -23,17 +23,15 @@ from api.schemas.portfolio import (
 )
 from api.services.portfolio import portfolio_csv_service
 from api.services.portfolio import portfolio_maintenance_service
+from api.services.portfolio.portfolio_base_service import (  # noqa: F401
+    ENRICHMENT_TIMEOUT_SECONDS,
+    PresetInactiveError,
+    PresetNotFoundError,
+)
 from api.services.portfolio.portfolio_price_service import PortfolioPriceService
 from api.services.portfolio.portfolio_trailing_service import clear_trailing_state
 
 logger = logging.getLogger(__name__)
-
-# Re-export exceptions and constants so callers can import from here.
-from api.services.portfolio.portfolio_base_service import (
-    PresetNotFoundError,
-    PresetInactiveError,
-    ENRICHMENT_TIMEOUT_SECONDS,
-)
 
 
 class PortfolioCoreService(PortfolioPriceService):

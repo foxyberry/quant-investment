@@ -9,20 +9,19 @@ Absorbs content previously in:
   - api/services/portfolio_alert_service.py
 """
 
-import json
 import logging
 import threading
 import time
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from sqlalchemy.exc import IntegrityError
 
 from api.database import SessionLocal
 from api.models.portfolio_alert import PortfolioAlertHistory
 from api.schemas.portfolio_alert import PortfolioAlertHistoryEntry, PortfolioAlertHistoryResponse
-from api.services.portfolio_alert_config_service import (
+from api.services.portfolio_alert_config_service import (  # noqa: F401
     # Re-exported here for the backward-compat scanner shim.
     _CONFIG_PATH,
     get_portfolio_alert_config_service,
