@@ -12,6 +12,7 @@ from typing import Any, Dict
 from api.database import SessionLocal
 from api.models.portfolio_alert import PortfolioAlertHistory
 from api.models.portfolio import Holding
+from api.services.portfolio.portfolio_trailing_service import clear_trailing_state
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,7 @@ def import_from_csv(service, csv_content: str, mode: str = "merge") -> Dict[str,
             # becomes misleading for both UI history and daily dedup.
             db.query(PortfolioAlertHistory).delete(synchronize_session=False)
             db.query(Holding).delete()
+            clear_trailing_state(db)
 
         existing_tickers = {row[0] for row in db.query(Holding.ticker).all()}
         for parsed in valid_rows:

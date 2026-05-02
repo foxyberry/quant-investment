@@ -8,6 +8,7 @@ from typing import List
 from api.database import SessionLocal
 from api.models.portfolio_alert import PortfolioAlertHistory
 from api.models.portfolio import Holding, SellRule
+from api.services.portfolio.portfolio_trailing_service import clear_trailing_state
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ def delete_all_holdings(_service) -> None:
         db.query(PortfolioAlertHistory).delete(synchronize_session=False)
         db.query(SellRule).delete(synchronize_session=False)
         db.query(Holding).delete(synchronize_session=False)
+        clear_trailing_state(db)
         db.commit()
     except Exception:
         db.rollback()

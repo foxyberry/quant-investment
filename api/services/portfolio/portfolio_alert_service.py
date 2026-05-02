@@ -27,6 +27,7 @@ from api.services.portfolio_alert_config_service import (
     _CONFIG_PATH,
     get_portfolio_alert_config_service,
 )
+from api.services.portfolio.portfolio_trailing_service import update_and_check_trailing
 
 logger = logging.getLogger(__name__)
 
@@ -233,6 +234,7 @@ def _format_sell_message(
     signal_type: str,
     price: float,
     change_pct: float,
+    reason: Optional[str] = None,
 ) -> str:
     """Format a sell signal alert message."""
     labels = {
@@ -253,13 +255,16 @@ def _format_sell_message(
         price_str = f"${price:,.2f}"
         buy_str = f"${holding.buy_price:,.2f}"
 
-    return (
+    message = (
         f"{emoji} 매도 시그널 — {label}\n"
         f"종목: {holding.name} ({ticker.split('.')[0]})\n"
         f"사유: {label} {sign}{change_pct:.1%} 도달\n"
         f"현재가: {price_str}\n"
         f"매수가: {buy_str}"
     )
+    if reason:
+        message += f"\n상세: {reason}"
+    return message
 
 
 # ---------------------------------------------------------------------------
@@ -414,25 +419,59 @@ class PortfolioAlertScanner:
             return 0
 
         alerts_fired = 0
-        for holding in holdings:
-            price = prices.get(holding.ticker)
-            if price is None or holding.buy_price <= 0:
-                continue
+        db = SessionLocal()
+        trailing_state_changed = False
+        try:
+            for holding in holdings:
+                price = prices.get(holding.ticker)
+                if price is None or holding.buy_price <= 0:
+                    continue
 
-            change_pct = (price - holding.buy_price) / holding.buy_price
+                change_pct = (price - holding.buy_price) / holding.buy_price
 
-            # Stop loss
-            if change_pct <= -settings.stop_loss_pct:
-                msg = _format_sell_message(holding, "stop_loss", price, change_pct)
-                if record_and_send(holding.ticker, "stop_loss", msg, price, channels=settings.channels):
-                    alerts_fired += 1
+                # Stop loss
+                if change_pct <= -settings.stop_loss_pct:
+                    msg = _format_sell_message(holding, "stop_loss", price, change_pct)
+                    if record_and_send(holding.ticker, "stop_loss", msg, price, channels=settings.channels):
+                        alerts_fired += 1
 
-            # Take profit
-            if change_pct >= settings.take_profit_pct:
-                msg = _format_sell_message(holding, "take_profit", price, change_pct)
-                if record_and_send(holding.ticker, "take_profit", msg, price, channels=settings.channels):
-                    alerts_fired += 1
+                # Take profit
+                if change_pct >= settings.take_profit_pct:
+                    msg = _format_sell_message(holding, "take_profit", price, change_pct)
+                    if record_and_send(holding.ticker, "take_profit", msg, price, channels=settings.channels):
+                        alerts_fired += 1
 
+                _, trailing_reason = update_and_check_trailing(
+                    db,
+                    holding.ticker,
+                    price,
+                    settings.trailing_stop_pct,
+                )
+                if trailing_reason:
+                    msg = _format_sell_message(
+                        holding,
+                        "trailing_stop",
+                        price,
+                        change_pct,
+                        reason=trailing_reason,
+                    )
+                    if record_and_send(
+                        holding.ticker,
+                        "trailing_stop",
+                        msg,
+                        price,
+                        channels=settings.channels,
+                    ):
+                        alerts_fired += 1
+                if settings.trailing_stop_pct > 0 and price > 0:
+                    trailing_state_changed = True
+            if trailing_state_changed:
+                db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
         if alerts_fired:
             logger.info("Portfolio scan fired %d alerts", alerts_fired)
 

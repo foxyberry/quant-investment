@@ -22,6 +22,8 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from screener.portfolio_manager import PortfolioManager, ConfigHolding, SellConditions
+from api.database import SessionLocal
+from api.services.portfolio.portfolio_trailing_service import update_and_check_trailing
 from utils.fetch import get_historical_data
 from utils.timezone_utils import get_current_market_time
 
@@ -113,6 +115,24 @@ class PortfolioSellChecker:
         # 익절 체크
         if pnl_pct >= conditions.take_profit_pct:
             reasons.append(f"Take profit reached ({pnl_pct:.1%} >= {conditions.take_profit_pct:.1%})")
+
+        db = SessionLocal()
+        try:
+            _, trailing_reason = update_and_check_trailing(
+                db,
+                holding.symbol,
+                current_price,
+                conditions.trailing_stop_pct,
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+        if trailing_reason:
+            reasons.append(trailing_reason)
 
         return reasons
 

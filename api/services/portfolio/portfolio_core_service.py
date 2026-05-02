@@ -23,6 +23,7 @@ from api.schemas.portfolio import (
 from api.services.portfolio import portfolio_csv_service
 from api.services.portfolio import portfolio_maintenance_service
 from api.services.portfolio.portfolio_price_service import PortfolioPriceService
+from api.services.portfolio.portfolio_trailing_service import clear_trailing_state
 
 logger = logging.getLogger(__name__)
 
@@ -383,6 +384,7 @@ class PortfolioCoreService(PortfolioPriceService):
             if not row:
                 return False
             db.delete(row)
+            clear_trailing_state(db, ticker)
             db.commit()
             logger.info(f"Removed holding: {ticker}")
             return True
