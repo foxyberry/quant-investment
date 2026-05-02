@@ -242,6 +242,34 @@ class TestPortfolioResetBehavior:
         finally:
             db.close()
 
+    def test_remove_holding_clears_removed_ticker_alert_history_only(self):
+        from api.services.portfolio.portfolio_core_service import PortfolioCoreService
+        from api.services.portfolio_alert_service import record_and_send
+
+        db = SessionLocal()
+        try:
+            db.add(Holding(ticker="AAPL", name="Apple", quantity=10, avg_price=150, currency="USD"))
+            db.add(Holding(ticker="MSFT", name="Microsoft", quantity=5, avg_price=400, currency="USD"))
+            db.commit()
+        finally:
+            db.close()
+
+        with patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}):
+            record_and_send("AAPL", "take_profit", "apple alert", 200.0)
+            record_and_send("MSFT", "stop_loss", "msft alert", 350.0)
+
+        service = PortfolioCoreService()
+        assert service.remove_holding("AAPL") is True
+
+        db = SessionLocal()
+        try:
+            rows = db.query(PortfolioAlertHistory).order_by(PortfolioAlertHistory.ticker.asc()).all()
+            assert [row.ticker for row in rows] == ["MSFT"]
+            assert db.query(Holding).count() == 1
+            assert db.get(Holding, "AAPL") is None
+        finally:
+            db.close()
+
 
 # ---------------------------------------------------------------------------
 # Tests — scanner
