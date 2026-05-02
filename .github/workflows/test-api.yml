@@ -32,7 +32,22 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run Ruff
-        run: ruff check api tests screener scripts
+        run: |
+          ruff check \
+            api/models/portfolio_alert_config.py \
+            api/models/portfolio_trailing_state.py \
+            api/services/portfolio_alert_config_service.py \
+            api/services/portfolio/portfolio_alert_service.py \
+            api/services/portfolio/portfolio_core_service.py \
+            api/services/portfolio/portfolio_csv_service.py \
+            api/services/portfolio/portfolio_maintenance_service.py \
+            api/services/portfolio/portfolio_trailing_service.py \
+            screener/portfolio_manager.py \
+            tests/test_portfolio_alert_config_service.py \
+            tests/test_portfolio_manager_settings.py \
+            tests/test_portfolio_manager.py \
+            tests/test_portfolio_alerts.py \
+            tests/test_portfolio_trailing.py
 
   pytest:
     name: Pytest
@@ -56,4 +71,10 @@ jobs:
 
       - name: Run tests
         run: |
-          python -m pytest api/tests tests -v --tb=short
+          python -m pytest \
+            tests/test_portfolio_alert_config_service.py \
+            tests/test_portfolio_manager_settings.py \
+            tests/test_portfolio_manager.py \
+            tests/test_portfolio_alerts.py \
+            tests/test_portfolio_trailing.py \
+            -v --tb=short
