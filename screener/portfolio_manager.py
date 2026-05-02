@@ -223,7 +223,6 @@ class PortfolioManager:
             for key in ('stop_loss_pct', 'take_profit_pct', 'trailing_stop_pct'):
                 if key in overrides and overrides[key] is not None:
                     merged[key] = overrides[key]
-
         return SellConditions.from_dict(merged)
 
     def add_holding(self, symbol: str, buy_price: float, quantity: int,
