@@ -15,24 +15,20 @@ import threading
 import time
 from dataclasses import dataclass
 from datetime import date, datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import yaml
 from sqlalchemy.exc import IntegrityError
 
 from api.database import SessionLocal
 from api.models.portfolio_alert import PortfolioAlertHistory
 from api.schemas.portfolio_alert import PortfolioAlertHistoryEntry, PortfolioAlertHistoryResponse
+from api.services.portfolio_alert_config_service import (
+    # Re-exported here for the backward-compat scanner shim.
+    _CONFIG_PATH,
+    get_portfolio_alert_config_service,
+)
 
 logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Config loader
-# ---------------------------------------------------------------------------
-
-_CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "portfolio.yaml"
-
 
 @dataclass
 class HoldingInfo:
@@ -83,14 +79,8 @@ def _load_holdings_from_db() -> list[HoldingInfo]:
 
 
 def _load_alert_settings() -> AlertSettings:
-    """Load alert settings from portfolio.yaml."""
-    if not _CONFIG_PATH.exists():
-        return AlertSettings(enabled=False)
-
-    with open(_CONFIG_PATH, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
-
-    alert_raw = data.get("alert_settings", {})
+    """Load alert settings from DB-backed config service."""
+    alert_raw = get_portfolio_alert_config_service().get_config().model_dump()
     return AlertSettings(
         enabled=alert_raw.get("enabled", True),
         scan_interval_seconds=alert_raw.get("scan_interval_seconds", 60),
@@ -104,7 +94,7 @@ def _load_alert_settings() -> AlertSettings:
 
 
 def load_config() -> tuple[list[HoldingInfo], AlertSettings]:
-    """Load holdings from DB and alert settings from YAML."""
+    """Load holdings from DB and alert settings from DB-backed config."""
     holdings = _load_holdings_from_db()
     settings = _load_alert_settings()
     return holdings, settings
