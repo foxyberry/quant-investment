@@ -13,6 +13,7 @@ from typing import List, Dict, Any, Optional
 
 from api.database import SessionLocal
 from api.models.portfolio import Holding, SellRule, Trade
+from api.models.portfolio_alert import PortfolioAlertHistory
 from api.schemas.portfolio import (
     AdditionalPurchaseRequest,
     HoldingCreate,
@@ -383,6 +384,9 @@ class PortfolioCoreService(PortfolioPriceService):
             row = db.get(Holding, ticker)
             if not row:
                 return False
+            db.query(PortfolioAlertHistory).filter(
+                PortfolioAlertHistory.ticker == ticker
+            ).delete(synchronize_session=False)
             db.delete(row)
             clear_trailing_state(db, ticker)
             db.commit()
