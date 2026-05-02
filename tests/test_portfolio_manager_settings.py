@@ -90,6 +90,10 @@ def test_portfolio_manager_reads_db_backed_technical_signals(manager):
     }
 
 
+def test_portfolio_manager_reads_technical_signals_enabled_flag(manager):
+    assert manager.is_technical_signals_enabled() is True
+
+
 def test_portfolio_manager_uses_db_sell_rules_as_per_holding_overrides(db_session):
     import api.services.portfolio_alert_config_service as config_mod
     import api.database as database_mod

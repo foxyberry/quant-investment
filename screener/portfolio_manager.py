@@ -131,6 +131,12 @@ class PortfolioManager:
 
         return get_portfolio_alert_config_service().get_technical_signals_config()
 
+    def is_technical_signals_enabled(self) -> bool:
+        """기술적 매도 신호 평가 활성화 여부 반환"""
+        from api.services.portfolio_alert_config_service import get_portfolio_alert_config_service
+
+        return bool(get_portfolio_alert_config_service().get_config().technical_signals)
+
     def get_holdings(self) -> List[ConfigHolding]:
         """모든 보유 종목 반환 (DB에서 조회)"""
         try:
