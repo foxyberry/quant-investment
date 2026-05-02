@@ -172,6 +172,7 @@ class PortfolioManager:
         """
         defaults = self.get_default_sell_conditions().to_dict()
         merged = defaults.copy()
+        db_override_keys: set[str] = set()
 
         try:
             from api.database import SessionLocal
@@ -200,10 +201,13 @@ class PortfolioManager:
                 params = rule.params or {}
                 if rule.rule_type == 'stop_loss' and params.get('pct') is not None:
                     merged['stop_loss_pct'] = abs(float(params['pct'])) / 100
+                    db_override_keys.add('stop_loss_pct')
                 elif rule.rule_type == 'take_profit' and params.get('pct') is not None:
                     merged['take_profit_pct'] = abs(float(params['pct'])) / 100
+                    db_override_keys.add('take_profit_pct')
                 elif rule.rule_type == 'trailing_stop' and params.get('pct') is not None:
                     merged['trailing_stop_pct'] = abs(float(params['pct'])) / 100
+                    db_override_keys.add('trailing_stop_pct')
         except Exception as e:
             self.logger.warning(f"Failed to load sell rule overrides from DB: {e}")
 
@@ -221,7 +225,7 @@ class PortfolioManager:
                 or {}
             )
             for key in ('stop_loss_pct', 'take_profit_pct', 'trailing_stop_pct'):
-                if key in overrides and overrides[key] is not None:
+                if key in overrides and overrides[key] is not None and key not in db_override_keys:
                     merged[key] = overrides[key]
         return SellConditions.from_dict(merged)
 

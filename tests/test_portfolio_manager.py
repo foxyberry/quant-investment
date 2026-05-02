@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from api.database import Base
+from api.models.portfolio import SellRule
 from api.models.portfolio_alert_config import PortfolioAlertConfig
 from screener.portfolio_manager import PortfolioManager
 
@@ -126,3 +127,28 @@ holdings:
     assert conditions.stop_loss_pct == 0.03
     assert conditions.take_profit_pct == 0.15
     assert conditions.trailing_stop_pct == 0.08
+
+
+def test_get_sell_conditions_for_prefers_db_sell_rules_over_yaml_override(tmp_path, patch_db_sessions):
+    _seed_default_config(patch_db_sessions)
+    db = patch_db_sessions()
+    try:
+        db.add(SellRule(ticker="AAPL", rule_type="trailing_stop", params={"pct": 12}, is_active=True))
+        db.commit()
+    finally:
+        db.close()
+
+    config_path = _write_config(
+        tmp_path,
+        """
+holdings:
+  AAPL:
+    sell_conditions:
+      trailing_stop_pct: 0.20
+""".strip(),
+    )
+
+    manager = PortfolioManager(config_path=str(config_path))
+    conditions = manager.get_sell_conditions_for("AAPL")
+
+    assert conditions.trailing_stop_pct == 0.12
