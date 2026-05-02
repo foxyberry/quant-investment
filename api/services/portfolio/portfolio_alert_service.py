@@ -94,6 +94,21 @@ def _load_alert_settings() -> AlertSettings:
     )
 
 
+def _load_sell_conditions_for_tickers(tickers: list[str]) -> dict[str, Any]:
+    """Load per-holding sell conditions so scanner matches live sell checks."""
+    if not tickers:
+        return {}
+
+    try:
+        from screener.portfolio_manager import PortfolioManager
+
+        manager = PortfolioManager()
+        return {ticker: manager.get_sell_conditions_for(ticker) for ticker in tickers}
+    except Exception:
+        logger.warning("Failed to load per-holding sell conditions", exc_info=True)
+        return {}
+
+
 def load_config() -> tuple[list[HoldingInfo], AlertSettings]:
     """Load holdings from DB and alert settings from DB-backed config."""
     holdings = _load_holdings_from_db()
@@ -419,6 +434,7 @@ class PortfolioAlertScanner:
             return 0
 
         alerts_fired = 0
+        sell_conditions_map = _load_sell_conditions_for_tickers(tickers)
         db = SessionLocal()
         trailing_state_changed = False
         try:
@@ -427,16 +443,20 @@ class PortfolioAlertScanner:
                 if price is None or holding.buy_price <= 0:
                     continue
 
+                conditions = sell_conditions_map.get(holding.ticker)
+                stop_loss_pct = settings.stop_loss_pct
+                take_profit_pct = settings.take_profit_pct
+                trailing_stop_pct = conditions.trailing_stop_pct if conditions else settings.trailing_stop_pct
                 change_pct = (price - holding.buy_price) / holding.buy_price
 
                 # Stop loss
-                if change_pct <= -settings.stop_loss_pct:
+                if change_pct <= -stop_loss_pct:
                     msg = _format_sell_message(holding, "stop_loss", price, change_pct)
                     if record_and_send(holding.ticker, "stop_loss", msg, price, channels=settings.channels):
                         alerts_fired += 1
 
                 # Take profit
-                if change_pct >= settings.take_profit_pct:
+                if change_pct >= take_profit_pct:
                     msg = _format_sell_message(holding, "take_profit", price, change_pct)
                     if record_and_send(holding.ticker, "take_profit", msg, price, channels=settings.channels):
                         alerts_fired += 1
@@ -445,7 +465,7 @@ class PortfolioAlertScanner:
                     db,
                     holding.ticker,
                     price,
-                    settings.trailing_stop_pct,
+                    trailing_stop_pct,
                 )
                 if trailing_reason:
                     msg = _format_sell_message(
@@ -463,7 +483,7 @@ class PortfolioAlertScanner:
                         channels=settings.channels,
                     ):
                         alerts_fired += 1
-                if settings.trailing_stop_pct > 0 and price > 0:
+                if trailing_stop_pct > 0 and price > 0:
                     trailing_state_changed = True
             if trailing_state_changed:
                 db.commit()

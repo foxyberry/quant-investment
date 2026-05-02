@@ -330,6 +330,41 @@ class TestScanner:
             alerts = scanner._scan(holdings, settings)
             assert alerts == 0
 
+    def test_scan_uses_per_holding_sell_conditions_for_trailing_threshold(self):
+        from api.services.portfolio_alert_scanner import (
+            AlertSettings,
+            HoldingInfo,
+            PortfolioAlertScanner,
+        )
+
+        scanner = PortfolioAlertScanner()
+        holdings = [
+            HoldingInfo(ticker="AAPL", name="Apple", buy_price=100, quantity=10),
+        ]
+        settings = AlertSettings(
+            enabled=True,
+            stop_loss_pct=0.20,
+            take_profit_pct=0.30,
+            trailing_stop_pct=0.10,
+            market_hours_only=False,
+        )
+
+        class _Conditions:
+            stop_loss_pct = 0.20
+            take_profit_pct = 0.30
+            trailing_stop_pct = 0.20
+
+        manager = MagicMock()
+        manager.get_sell_conditions_for.return_value = _Conditions()
+
+        with (
+            patch("api.services.portfolio.portfolio_alert_service._fetch_prices", side_effect=[{"AAPL": 120.0}, {"AAPL": 100.0}]),
+            patch("api.services.portfolio.portfolio_alert_service._load_sell_conditions_for_tickers", return_value={"AAPL": _Conditions()}),
+            patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}),
+        ):
+            assert scanner._scan(holdings, settings) == 0
+            assert scanner._scan(holdings, settings) == 0
+
 
 # ---------------------------------------------------------------------------
 # Tests — message formatting
