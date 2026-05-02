@@ -1,6 +1,8 @@
-name: Test API
+name: Python CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -9,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pytest:
-    name: Python Tests
+  ruff:
+    name: Ruff
     runs-on: ubuntu-latest
 
     steps:
@@ -20,22 +22,38 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
           cache: pip
+          cache-dependency-path: requirements-dev.txt
 
-      - name: Install dependencies
+      - name: Install development dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
-          pip install pytest
+          pip install -r requirements-dev.txt
+
+      - name: Run Ruff
+        run: ruff check api tests screener scripts
+
+  pytest:
+    name: Pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install development dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
 
       - name: Run tests
         run: |
-          if [ -d tests/ ]; then
-            python -m pytest tests/ -v --tb=short
-          else
-            echo "No tests/ directory found. Skipping."
-          fi
-        continue-on-error: true
+          python -m pytest api/tests tests -v --tb=short
