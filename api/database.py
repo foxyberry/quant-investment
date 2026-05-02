@@ -58,6 +58,7 @@ def init_db() -> None:
     import api.models.strategy_backtest_result  # noqa: F401 — register model with Base
     import api.models.portfolio_alert  # noqa: F401 — register model with Base
     import api.models.portfolio_alert_config  # noqa: F401 — register model with Base
+    import api.models.portfolio_trailing_state  # noqa: F401 — register model with Base
     import api.models.strategy_alert  # noqa: F401 — register model with Base
     import api.models.strategy_webhook  # noqa: F401 — register model with Base
     import api.models.watchlist  # noqa: F401 — register model with Base

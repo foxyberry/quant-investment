@@ -19,8 +19,12 @@ os.environ["DATABASE_URL"] = "sqlite:///test_portfolio_alerts.db"
 from api.database import Base, SessionLocal, engine
 import api.models.portfolio  # noqa: F401
 import api.models.portfolio_alert  # noqa: F401
+import api.models.portfolio_alert_config  # noqa: F401
+import api.models.portfolio_trailing_state  # noqa: F401
 from api.models.portfolio import Holding
 from api.models.portfolio_alert import PortfolioAlertHistory
+from api.models.portfolio_alert_config import PortfolioAlertConfig
+from api.models.portfolio_trailing_state import PortfolioTrailingState
 
 
 @pytest.fixture(autouse=True)
@@ -32,6 +36,8 @@ def _fresh_tables():
     db = SessionLocal()
     try:
         db.query(PortfolioAlertHistory).delete()
+        db.query(PortfolioAlertConfig).delete()
+        db.query(PortfolioTrailingState).delete()
         db.query(Holding).delete()
         db.commit()
     finally:
@@ -47,15 +53,15 @@ class TestDedupLogic:
     def test_first_alert_succeeds(self):
         from api.services.portfolio_alert_service import record_and_send
 
-        with patch("api.services.portfolio_alert_service._send_telegram") as mock_tg:
+        with patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}) as mock_dispatch:
             result = record_and_send("005930.KS", "stop_loss", "Test message", 50000.0)
             assert result is True
-            mock_tg.assert_called_once()
+            mock_dispatch.assert_called_once()
 
     def test_duplicate_alert_blocked(self):
         from api.services.portfolio_alert_service import record_and_send
 
-        with patch("api.services.portfolio_alert_service._send_telegram"):
+        with patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}):
             record_and_send("005930.KS", "stop_loss", "First", 50000.0)
             result = record_and_send("005930.KS", "stop_loss", "Duplicate", 49000.0)
             assert result is False
@@ -63,7 +69,7 @@ class TestDedupLogic:
     def test_different_signal_type_allowed(self):
         from api.services.portfolio_alert_service import record_and_send
 
-        with patch("api.services.portfolio_alert_service._send_telegram"):
+        with patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}):
             r1 = record_and_send("005930.KS", "stop_loss", "SL", 50000.0)
             r2 = record_and_send("005930.KS", "take_profit", "TP", 80000.0)
             assert r1 is True
@@ -72,7 +78,7 @@ class TestDedupLogic:
     def test_different_ticker_allowed(self):
         from api.services.portfolio_alert_service import record_and_send
 
-        with patch("api.services.portfolio_alert_service._send_telegram"):
+        with patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}):
             r1 = record_and_send("005930.KS", "stop_loss", "A", 50000.0)
             r2 = record_and_send("035420.KS", "stop_loss", "B", 180000.0)
             assert r1 is True
@@ -81,7 +87,7 @@ class TestDedupLogic:
     def test_is_already_sent_today(self):
         from api.services.portfolio_alert_service import is_already_sent_today, record_and_send
 
-        with patch("api.services.portfolio_alert_service._send_telegram"):
+        with patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}):
             assert is_already_sent_today("AAPL", "stop_loss") is False
             record_and_send("AAPL", "stop_loss", "msg", 150.0)
             assert is_already_sent_today("AAPL", "stop_loss") is True
@@ -90,7 +96,7 @@ class TestDedupLogic:
     def test_get_history(self):
         from api.services.portfolio_alert_service import get_history, record_and_send
 
-        with patch("api.services.portfolio_alert_service._send_telegram"):
+        with patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}):
             record_and_send("AAPL", "stop_loss", "msg1", 150.0)
             record_and_send("MSFT", "take_profit", "msg2", 400.0)
 
@@ -148,9 +154,10 @@ class TestDBHoldings:
 
 
 class TestPortfolioResetBehavior:
-    def test_replace_import_clears_alert_history(self):
+    def test_replace_import_clears_alert_history_and_trailing_state(self):
         from api.services.portfolio.portfolio_core_service import PortfolioCoreService
         from api.services.portfolio_alert_service import record_and_send
+        from api.services.portfolio.portfolio_trailing_service import update_and_check_trailing
 
         class _NoopThread:
             def __init__(self, *args, **kwargs):
@@ -162,9 +169,15 @@ class TestPortfolioResetBehavior:
         with patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}):
             record_and_send("005930.KS", "stop_loss", "old alert", 50000.0)
 
-        csv_content = "ticker,quantity,avg_price,name\nAAPL,3,150,Apple\n"
-        service = PortfolioCoreService()
+        db = SessionLocal()
+        try:
+            update_and_check_trailing(db, "005930.KS", 100.0, 0.10)
+            db.commit()
+        finally:
+            db.close()
 
+        service = PortfolioCoreService()
+        csv_content = "ticker,quantity,avg_price,name\nAAPL,3,150,Apple\n"
         with patch("api.services.portfolio.portfolio_csv_service.threading.Thread", _NoopThread):
             result = service.import_from_csv(csv_content, mode="replace")
 
@@ -173,17 +186,20 @@ class TestPortfolioResetBehavior:
         db = SessionLocal()
         try:
             assert db.query(PortfolioAlertHistory).count() == 0
+            assert db.query(PortfolioTrailingState).count() == 0
             assert db.query(Holding).count() == 1
         finally:
             db.close()
 
-    def test_delete_all_holdings_clears_alert_history(self):
+    def test_delete_all_holdings_clears_alert_history_and_trailing_state(self):
         from api.services.portfolio.portfolio_core_service import PortfolioCoreService
         from api.services.portfolio_alert_service import record_and_send
+        from api.services.portfolio.portfolio_trailing_service import update_and_check_trailing
 
         db = SessionLocal()
         try:
             db.add(Holding(ticker="AAPL", name="Apple", quantity=10, avg_price=150, currency="USD"))
+            update_and_check_trailing(db, "AAPL", 200.0, 0.10)
             db.commit()
         finally:
             db.close()
@@ -197,7 +213,32 @@ class TestPortfolioResetBehavior:
         db = SessionLocal()
         try:
             assert db.query(PortfolioAlertHistory).count() == 0
+            assert db.query(PortfolioTrailingState).count() == 0
             assert db.query(Holding).count() == 0
+        finally:
+            db.close()
+
+    def test_remove_holding_clears_single_ticker_trailing_state(self):
+        from api.services.portfolio.portfolio_core_service import PortfolioCoreService
+        from api.services.portfolio.portfolio_trailing_service import update_and_check_trailing
+
+        db = SessionLocal()
+        try:
+            db.add(Holding(ticker="AAPL", name="Apple", quantity=10, avg_price=150, currency="USD"))
+            db.add(Holding(ticker="MSFT", name="Microsoft", quantity=5, avg_price=400, currency="USD"))
+            update_and_check_trailing(db, "AAPL", 200.0, 0.10)
+            update_and_check_trailing(db, "MSFT", 500.0, 0.10)
+            db.commit()
+        finally:
+            db.close()
+
+        service = PortfolioCoreService()
+        assert service.remove_holding("AAPL") is True
+
+        db = SessionLocal()
+        try:
+            assert db.get(PortfolioTrailingState, "AAPL") is None
+            assert db.get(PortfolioTrailingState, "MSFT") is not None
         finally:
             db.close()
 
@@ -229,8 +270,8 @@ class TestScanner:
 
         # Price at 60000 = -25% from buy price → triggers stop loss
         with (
-            patch("api.services.portfolio_alert_scanner._fetch_prices", return_value={"005930.KS": 60000.0}),
-            patch("api.services.portfolio_alert_service._send_telegram"),
+            patch("api.services.portfolio.portfolio_alert_service._fetch_prices", return_value={"005930.KS": 60000.0}),
+            patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}),
         ):
             alerts = scanner._scan(holdings, settings)
             assert alerts == 1
@@ -256,8 +297,8 @@ class TestScanner:
 
         # Price at 135 = +35% → triggers take profit
         with (
-            patch("api.services.portfolio_alert_scanner._fetch_prices", return_value={"AAPL": 135.0}),
-            patch("api.services.portfolio_alert_service._send_telegram"),
+            patch("api.services.portfolio.portfolio_alert_service._fetch_prices", return_value={"AAPL": 135.0}),
+            patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}),
         ):
             alerts = scanner._scan(holdings, settings)
             assert alerts == 1
@@ -283,11 +324,46 @@ class TestScanner:
 
         # Price at 105 = +5% → no alert
         with (
-            patch("api.services.portfolio_alert_scanner._fetch_prices", return_value={"AAPL": 105.0}),
-            patch("api.services.portfolio_alert_service._send_telegram"),
+            patch("api.services.portfolio.portfolio_alert_service._fetch_prices", return_value={"AAPL": 105.0}),
+            patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}),
         ):
             alerts = scanner._scan(holdings, settings)
             assert alerts == 0
+
+    def test_scan_uses_per_holding_sell_conditions_for_trailing_threshold(self):
+        from api.services.portfolio_alert_scanner import (
+            AlertSettings,
+            HoldingInfo,
+            PortfolioAlertScanner,
+        )
+
+        scanner = PortfolioAlertScanner()
+        holdings = [
+            HoldingInfo(ticker="AAPL", name="Apple", buy_price=100, quantity=10),
+        ]
+        settings = AlertSettings(
+            enabled=True,
+            stop_loss_pct=0.20,
+            take_profit_pct=0.30,
+            trailing_stop_pct=0.10,
+            market_hours_only=False,
+        )
+
+        class _Conditions:
+            stop_loss_pct = 0.20
+            take_profit_pct = 0.30
+            trailing_stop_pct = 0.20
+
+        manager = MagicMock()
+        manager.get_sell_conditions_for.return_value = _Conditions()
+
+        with (
+            patch("api.services.portfolio.portfolio_alert_service._fetch_prices", side_effect=[{"AAPL": 120.0}, {"AAPL": 100.0}]),
+            patch("api.services.portfolio.portfolio_alert_service._load_sell_conditions_for_tickers", return_value={"AAPL": _Conditions()}),
+            patch("api.services.notification_dispatcher.dispatch", return_value={"telegram": True}),
+        ):
+            assert scanner._scan(holdings, settings) == 0
+            assert scanner._scan(holdings, settings) == 0
 
 
 # ---------------------------------------------------------------------------
