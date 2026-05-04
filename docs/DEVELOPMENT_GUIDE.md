@@ -42,7 +42,8 @@ Create a `.env` file in the project root (copy from `.env.example`):
 ```bash
 # API Configuration
 API_HOST=0.0.0.0
-API_PORT=8000
+API_PORT=8002
+WEB_PORT=3002
 DEBUG=true
 
 # AI Analysis (optional)
@@ -111,7 +112,7 @@ npm -v
 # Run health check
 ./scripts/run_api.sh &
 sleep 3
-curl http://localhost:8000/health
+curl http://localhost:8002/health
 ```
 
 ---
@@ -120,56 +121,38 @@ curl http://localhost:8000/health
 
 ```
 quant-investment/
-├── api/                      # FastAPI Backend
+├── api/                      # FastAPI backend
 │   ├── __init__.py
-│   ├── main.py              # Application entry point
-│   ├── config.py            # Configuration settings
-│   ├── dependencies.py      # Dependency injection
-│   ├── routers/             # API route handlers
-│   │   ├── analysis.py      # Analysis endpoints
-│   │   ├── health.py        # Health check endpoints
-│   │   ├── market.py        # Market data endpoints
-│   │   ├── portfolio.py     # Portfolio endpoints
-│   │   └── screening.py     # Screening endpoints
-│   ├── schemas/             # Pydantic models
-│   │   ├── analysis.py
-│   │   ├── common.py
-│   │   ├── market.py
-│   │   ├── portfolio.py
-│   │   └── screening.py
-│   └── services/            # Business logic
-│       ├── analysis_service.py
+│   ├── main.py               # Application entry point
+│   ├── config.py             # Configuration settings
+│   ├── routers/              # API route handlers
+│   ├── schemas/              # Pydantic models
+│   └── services/             # Business logic
+│       ├── portfolio/        # Portfolio sub-services
+│       ├── strategy/         # Strategy sub-services
 │       ├── market_service.py
-│       ├── portfolio_service.py
+│       ├── macro_service.py
+│       ├── notification_dispatcher.py
 │       └── screening_service.py
 │
-├── web/                      # Next.js Frontend
+├── web/                      # Next.js frontend
 │   ├── src/
 │   │   ├── app/             # App Router pages
-│   │   │   ├── page.tsx     # Dashboard
-│   │   │   ├── portfolio/   # Portfolio page
-│   │   │   └── screening/   # Screening page
-│   │   ├── components/      # React components
-│   │   │   ├── dashboard/
-│   │   │   ├── layout/
-│   │   │   ├── portfolio/
-│   │   │   ├── screening/
-│   │   │   └── ui/
-│   │   └── lib/             # Utilities
-│   │       ├── api.ts       # API client
-│   │       └── types.ts     # TypeScript types
+│   │   ├── features/        # Feature-first UI modules
+│   │   ├── components/ui/   # Shared UI primitives
+│   │   └── lib/api/         # Generated + handwritten API clients
 │   ├── package.json
 │   └── Dockerfile
 │
-├── screener/                 # Screening library
+├── screener/                # Screening runtime library
 │   ├── conditions/          # Screening conditions
 │   └── stock_screener.py    # Main screener class
 │
-├── discovery/                # Stock discovery
-├── portfolio/                # Portfolio management
-├── engine/                   # Backtesting engine
-├── llm/                      # Claude AI integration
-├── data_enrichment/          # Data enrichment
+├── data_sources/            # Unified data fetch layer
+├── portfolio/               # Portfolio/domain logic
+├── engine/                  # Backtesting engine
+├── llm/                     # AI integration
+├── data_enrichment/         # Derived metrics and enrichment
 │
 ├── scripts/                  # Utility scripts
 │   ├── dev.sh               # Start all services
@@ -201,9 +184,9 @@ Start both API and Web servers with hot reload:
 ```
 
 This will start:
-- **API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
-- **Web**: http://localhost:3000
+- **API**: http://localhost:8002
+- **API Docs**: http://localhost:8002/docs
+- **Web**: http://localhost:3002
 
 Press `Ctrl+C` to stop all servers.
 
@@ -277,7 +260,7 @@ pytest tests/integration/
 # Or use httpx for manual testing
 python -c "
 import httpx
-r = httpx.get('http://localhost:8000/health')
+r = httpx.get('http://localhost:8002/health')
 print(r.json())
 "
 ```
@@ -363,7 +346,7 @@ def test_process_feature():
 1. **Create Page** (`web/src/app/`)
 
 ```tsx
-// web/src/app/my-page/page.tsx
+// web/src/app/[locale]/my-page/page.tsx
 export default function MyPage() {
   return (
     <div className="p-6">
@@ -374,10 +357,10 @@ export default function MyPage() {
 }
 ```
 
-2. **Create Components** (`web/src/components/`)
+2. **Create Feature Components** (`web/src/features/`)
 
 ```tsx
-// web/src/components/my-page/MyComponent.tsx
+// web/src/features/my-page/components/MyComponent.tsx
 interface MyComponentProps {
   title: string;
 }
@@ -387,7 +370,7 @@ export function MyComponent({ title }: MyComponentProps) {
 }
 ```
 
-3. **Add API Types** (`web/src/lib/types.ts`)
+3. **Add API Types / Client** (`web/src/lib/api/`)
 
 ```typescript
 export interface MyFeatureRequest {
@@ -399,7 +382,7 @@ export interface MyFeatureResponse {
 }
 ```
 
-4. **Add API Function** (`web/src/lib/api.ts`)
+4. **Add API Function** (`web/src/lib/api/myFeatureApi.ts`)
 
 ```typescript
 export async function processMyFeature(
@@ -414,7 +397,7 @@ export async function processMyFeature(
 }
 ```
 
-5. **Add Navigation** (`web/src/components/layout/Sidebar.tsx`)
+5. **Add Navigation** (`web/src/features/layout/Sidebar.tsx`)
 
 Add link to the new page in the sidebar navigation.
 
@@ -535,13 +518,13 @@ docs: update API reference with new endpoints
 #### Port Already in Use
 
 ```bash
-# Find process using port 8000
-lsof -i :8000
+# Find process using port 8002
+lsof -i :8002
 # Kill the process
 kill -9 <PID>
 
-# Or use different port
-API_PORT=8001 ./scripts/run_api.sh
+# Or use different ports
+API_PORT=8010 WEB_PORT=3010 ./scripts/dev.sh
 ```
 
 #### Module Not Found
@@ -556,16 +539,16 @@ pip install -r requirements.txt
 
 #### CORS Errors in Browser
 
-The API is configured to allow requests from `localhost:3000`. If using a different port:
+The API is configured to allow requests from explicit local dev origins, including `localhost:3002`. If using a different port:
 
 1. Update `api/config.py`:
 ```python
-cors_origins: list[str] = ["http://localhost:3000", "http://localhost:YOUR_PORT"]
+cors_origins: list[str] = ["http://localhost:3002", "http://localhost:YOUR_PORT"]
 ```
 
 2. Or set environment variable:
 ```bash
-CORS_ORIGINS=http://localhost:3000,http://localhost:YOUR_PORT
+CORS_ORIGINS=http://localhost:3002,http://localhost:YOUR_PORT
 ```
 
 #### Next.js Build Errors

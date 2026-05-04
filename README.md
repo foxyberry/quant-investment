@@ -46,22 +46,22 @@ npm --prefix web install
 
 ### 3) Run
 
-API (default port `8001`):
+API (default port `8002`):
 ```bash
-source venv/bin/activate && uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+source venv/bin/activate && uvicorn api.main:app --host 0.0.0.0 --port 8002 --reload
 ```
 
-Web (default port `3001`):
+Web (default port `3002`):
 ```bash
-cd web && npm run dev -- -p 3001
+cd web && PORT=3002 npm run dev
 ```
 
 > Port numbers can be changed freely. Update `NEXT_PUBLIC_API_URL` in `web/.env.local` to match your API port.
 
 ### 4) Open
 
-- Web UI: `http://localhost:3001`
-- API Docs (Swagger): `http://localhost:8001/docs`
+- Web UI: `http://localhost:3002`
+- API Docs (Swagger): `http://localhost:8002/docs`
 
 ## Shared DB via Docker (Location/Port Independent)
 
@@ -162,7 +162,7 @@ docker compose up -d db
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | Frontend API base URL (e.g. `http://localhost:8001`) |
+| `NEXT_PUBLIC_API_URL` | Frontend API base URL (e.g. `http://localhost:8002`) |
 | `ANTHROPIC_API_KEY` | AI analysis integration |
 | `FINNHUB_API_KEY` | Optional news/data source |
 | `MARKETAUX_API_KEY` | Optional news/data source |
@@ -185,7 +185,7 @@ docker compose up -d db
 | Macro | `/api/market/macro/*` | Macro bundle and history (`/bundle`, `/history`) |
 | Backtest | `/api/backtest` | Backtest execution |
 
-Full interactive docs: `http://localhost:8001/docs`
+Full interactive docs: `http://localhost:8002/docs`
 
 ## Development
 
@@ -193,7 +193,7 @@ Full interactive docs: `http://localhost:8001/docs`
 
 ```bash
 source venv/bin/activate
-./venv/bin/python -m uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+./venv/bin/python -m uvicorn api.main:app --host 0.0.0.0 --port 8002 --reload
 ```
 
 > **Tip**: Use `python -m uvicorn` instead of `uvicorn` directly. If you move or recreate the venv, the `uvicorn` shebang may point to a stale Python path.
@@ -201,28 +201,30 @@ source venv/bin/activate
 ### Frontend
 
 ```bash
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8001 npm --prefix web run dev -- --hostname 0.0.0.0 --port 3001
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8002 PORT=3002 npm --prefix web run dev
 ```
 
 Or set `NEXT_PUBLIC_API_URL` in `web/.env.local` and run:
 
 ```bash
-cd web && npm run dev -- -p 3001
+cd web && PORT=3002 npm run dev
 ```
 
 ### CORS: `localhost` vs `127.0.0.1`
 
-Browsers treat `localhost` and `127.0.0.1` as different origins. The default CORS config allows both:
+Browsers treat `localhost` and `127.0.0.1` as different origins. The default CORS config allows these explicit dev origins:
 
-```
-http://localhost:3000-3002
-http://127.0.0.1:3000-3002
-```
+- `http://localhost:3000`
+- `http://localhost:3001`
+- `http://localhost:3002`
+- `http://127.0.0.1:3000`
+- `http://127.0.0.1:3001`
+- `http://127.0.0.1:3002`
 
 To add custom origins, set `CORS_ORIGINS` in `.env`:
 
 ```env
-CORS_ORIGINS=["http://localhost:3001","http://192.168.1.100:3001"]
+CORS_ORIGINS=["http://localhost:3002","http://192.168.1.100:3002"]
 ```
 
 ### Useful Checks
@@ -239,7 +241,7 @@ npm --prefix web run check:strategy-i18n
 
 ```bash
 # API health
-curl http://127.0.0.1:8001/health
+curl http://127.0.0.1:8002/health
 
 # DB readiness (Postgres only)
 pg_isready -h localhost -p 5432
