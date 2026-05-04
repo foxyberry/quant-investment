@@ -12,7 +12,6 @@ import sys
 import argparse
 import logging
 from pathlib import Path
-from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
@@ -21,11 +20,10 @@ from enum import Enum
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from screener.portfolio_manager import PortfolioManager, ConfigHolding, SellConditions
-from api.database import SessionLocal
-from api.services.portfolio.portfolio_trailing_service import update_and_check_trailing
-from utils.fetch import get_historical_data
-from utils.timezone_utils import get_current_market_time
+from screener.portfolio_manager import PortfolioManager, ConfigHolding, SellConditions  # noqa: E402
+from api.database import SessionLocal  # noqa: E402
+from api.services.portfolio.portfolio_trailing_service import update_and_check_trailing  # noqa: E402
+from utils.timezone_utils import get_current_market_time  # noqa: E402
 
 
 class Signal(Enum):
@@ -139,6 +137,9 @@ class PortfolioSellChecker:
     def check_technical_conditions(self, symbol: str, price_data: Dict) -> List[str]:
         """기술적 매도 조건 체크"""
         reasons = []
+        if not self.pm.is_technical_signals_enabled():
+            return reasons
+
         tech_config = self.pm.get_technical_signals_config()
 
         if not price_data:
@@ -166,6 +167,7 @@ class PortfolioSellChecker:
         """단일 종목 매도 신호 체크"""
         symbol = holding.symbol
         conditions = self.pm.get_sell_conditions_for(symbol)
+        technical_signals_enabled = self.pm.is_technical_signals_enabled()
 
         # 현재가 조회
         current_price = self.get_current_price(symbol)
@@ -180,8 +182,10 @@ class PortfolioSellChecker:
         price_reasons = self.check_price_conditions(holding, current_price, conditions)
 
         # 기술적 조건 체크
-        price_data = self.get_price_data(symbol)
-        tech_reasons = self.check_technical_conditions(symbol, price_data)
+        tech_reasons: List[str] = []
+        if technical_signals_enabled:
+            price_data = self.get_price_data(symbol)
+            tech_reasons = self.check_technical_conditions(symbol, price_data)
 
         # 모든 이유 합치기
         all_reasons = price_reasons + tech_reasons
