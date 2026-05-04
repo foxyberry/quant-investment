@@ -167,6 +167,7 @@ class PortfolioSellChecker:
         """단일 종목 매도 신호 체크"""
         symbol = holding.symbol
         conditions = self.pm.get_sell_conditions_for(symbol)
+        technical_signals_enabled = self.pm.is_technical_signals_enabled()
 
         # 현재가 조회
         current_price = self.get_current_price(symbol)
@@ -181,8 +182,10 @@ class PortfolioSellChecker:
         price_reasons = self.check_price_conditions(holding, current_price, conditions)
 
         # 기술적 조건 체크
-        price_data = self.get_price_data(symbol)
-        tech_reasons = self.check_technical_conditions(symbol, price_data)
+        tech_reasons: List[str] = []
+        if technical_signals_enabled:
+            price_data = self.get_price_data(symbol)
+            tech_reasons = self.check_technical_conditions(symbol, price_data)
 
         # 모든 이유 합치기
         all_reasons = price_reasons + tech_reasons
