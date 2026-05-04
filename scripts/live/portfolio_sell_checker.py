@@ -20,9 +20,10 @@ from enum import Enum
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from screener.portfolio_manager import PortfolioManager, ConfigHolding, SellConditions  # noqa: E402
 from api.database import SessionLocal  # noqa: E402
+from api.services.portfolio_manager_provider import build_db_portfolio_manager  # noqa: E402
 from api.services.portfolio.portfolio_trailing_service import update_and_check_trailing  # noqa: E402
+from screener.portfolio_manager import ConfigHolding, SellConditions  # noqa: E402
 from utils.timezone_utils import get_current_market_time  # noqa: E402
 
 
@@ -51,7 +52,7 @@ class PortfolioSellChecker:
 
     def __init__(self, verbose: bool = False):
         self.logger = self._setup_logger(verbose)
-        self.pm = PortfolioManager()
+        self.pm = build_db_portfolio_manager()
 
     def _setup_logger(self, verbose: bool) -> logging.Logger:
         logger = logging.getLogger(__name__)

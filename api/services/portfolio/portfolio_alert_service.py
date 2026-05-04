@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError
 from api.database import SessionLocal
 from api.models.portfolio_alert import PortfolioAlertHistory
 from api.schemas.portfolio_alert import PortfolioAlertHistoryEntry, PortfolioAlertHistoryResponse
+from api.services.portfolio_manager_provider import build_db_portfolio_manager
 from api.services.portfolio_alert_config_service import (  # noqa: F401
     # Re-exported here for the backward-compat scanner shim.
     _CONFIG_PATH,
@@ -99,9 +100,7 @@ def _load_sell_conditions_for_tickers(tickers: list[str]) -> dict[str, Any]:
         return {}
 
     try:
-        from screener.portfolio_manager import PortfolioManager
-
-        manager = PortfolioManager()
+        manager = build_db_portfolio_manager()
         return {ticker: manager.get_sell_conditions_for(ticker) for ticker in tickers}
     except Exception:
         logger.warning("Failed to load per-holding sell conditions", exc_info=True)

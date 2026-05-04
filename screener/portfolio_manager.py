@@ -3,11 +3,11 @@ Portfolio Manager Module
 보유 종목 및 매도 조건 관리
 """
 
-import yaml
 import logging
+import yaml
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional, Protocol
 from datetime import date
 
 
@@ -57,10 +57,29 @@ class SellConditions:
         }
 
 
+class PortfolioDataProvider(Protocol):
+    """Optional runtime provider for DB-backed portfolio data."""
+
+    def get_default_sell_conditions(self) -> Dict[str, float]:
+        ...
+
+    def get_technical_signals_config(self) -> Dict[str, Any]:
+        ...
+
+    def is_technical_signals_enabled(self) -> bool:
+        ...
+
+    def get_holdings(self) -> List[ConfigHolding]:
+        ...
+
+    def get_sell_condition_overrides(self, symbol: str) -> Dict[str, float]:
+        ...
+
+
 class PortfolioManager:
     """포트폴리오 관리 클래스"""
 
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: str = None, provider: PortfolioDataProvider | None = None):
         self.logger = logging.getLogger(__name__)
         self.project_root = Path(__file__).parent.parent
 
@@ -69,6 +88,7 @@ class PortfolioManager:
 
         self.config_path = Path(config_path)
         self.config = self._load_config()
+        self.provider = provider
 
     def _load_config(self) -> Dict[str, Any]:
         """포트폴리오 설정 로드"""
@@ -120,46 +140,55 @@ class PortfolioManager:
 
     def get_default_sell_conditions(self) -> SellConditions:
         """기본 매도 조건 반환"""
-        from api.services.portfolio_alert_config_service import get_portfolio_alert_config_service
+        if self.provider is not None:
+            return SellConditions.from_dict(self.provider.get_default_sell_conditions())
 
-        conditions = get_portfolio_alert_config_service().get_default_sell_conditions()
+        conditions = self.config.get('default_sell_conditions', {}) or {}
         return SellConditions.from_dict(conditions)
 
     def get_technical_signals_config(self) -> Dict[str, Any]:
         """기술적 매도 신호 설정 반환"""
-        from api.services.portfolio_alert_config_service import get_portfolio_alert_config_service
-
-        return get_portfolio_alert_config_service().get_technical_signals_config()
+        if self.provider is not None:
+            return self.provider.get_technical_signals_config()
+        return self.config.get('technical_sell_signals', {}) or {}
 
     def is_technical_signals_enabled(self) -> bool:
         """기술적 매도 신호 평가 활성화 여부 반환"""
-        from api.services.portfolio_alert_config_service import get_portfolio_alert_config_service
-
-        return bool(get_portfolio_alert_config_service().get_config().technical_signals)
+        if self.provider is not None:
+            return self.provider.is_technical_signals_enabled()
+        alert_settings = self.config.get('alert_settings', {}) or {}
+        return bool(alert_settings.get('technical_signals', True))
 
     def get_holdings(self) -> List[ConfigHolding]:
-        """모든 보유 종목 반환 (DB에서 조회)"""
-        try:
-            from api.database import SessionLocal
-            from api.models.portfolio import Holding as DBHolding
-            db = SessionLocal()
-            try:
-                rows = db.query(DBHolding).filter(DBHolding.quantity > 0).all()
-                return [
-                    ConfigHolding(
-                        symbol=row.ticker,
-                        name=row.name or row.ticker,
-                        buy_price=float(row.avg_price or 0),
-                        quantity=int(row.quantity),
-                        buy_date=row.bought_at or date.today(),
-                    )
-                    for row in rows
-                ]
-            finally:
-                db.close()
-        except Exception as e:
-            self.logger.warning(f"Failed to load holdings from DB: {e}")
-            return []
+        """모든 보유 종목 반환"""
+        if self.provider is not None:
+            return self.provider.get_holdings()
+
+        holdings = self.config.get('holdings', {}) or {}
+        rows: List[ConfigHolding] = []
+        for symbol, raw in holdings.items():
+            if not raw:
+                continue
+            raw_buy_date = raw.get('buy_date')
+            buy_date = date.today()
+            if isinstance(raw_buy_date, date):
+                buy_date = raw_buy_date
+            elif isinstance(raw_buy_date, str):
+                try:
+                    buy_date = date.fromisoformat(raw_buy_date)
+                except ValueError:
+                    buy_date = date.today()
+
+            rows.append(
+                ConfigHolding(
+                    symbol=symbol,
+                    name=raw.get('name') or symbol,
+                    buy_price=float(raw.get('buy_price') or 0),
+                    quantity=int(raw.get('quantity') or 0),
+                    buy_date=buy_date,
+                )
+            )
+        return rows
 
     def get_holding(self, symbol: str) -> Optional[ConfigHolding]:
         """특정 종목 정보 반환 (DB에서 조회)"""
@@ -174,48 +203,21 @@ class PortfolioManager:
         Priority:
         1. DB-backed per-holding SellRule overrides
         2. Legacy YAML holding overrides (temporary compatibility)
-        3. DB-backed global defaults
+        3. Global defaults
         """
         defaults = self.get_default_sell_conditions().to_dict()
         merged = defaults.copy()
-        db_override_keys: set[str] = set()
+        provider_override_keys: set[str] = set()
 
-        try:
-            from api.database import SessionLocal
-            from api.models.portfolio import SellRule
-
-            db = SessionLocal()
+        if self.provider is not None:
             try:
-                symbol_upper = symbol.upper()
-                aliases = {symbol_upper}
-                if symbol_upper.endswith(('.KS', '.KQ')):
-                    aliases.add(symbol_upper.split('.')[0])
-                elif '.' not in symbol_upper:
-                    aliases.add(f"{symbol_upper}.KS")
-                    aliases.add(f"{symbol_upper}.KQ")
-
-                rules = (
-                    db.query(SellRule)
-                    .filter(SellRule.ticker.in_(list(aliases)), SellRule.is_active.is_(True))
-                    .order_by(SellRule.created_at.asc())
-                    .all()
-                )
-            finally:
-                db.close()
-
-            for rule in rules:
-                params = rule.params or {}
-                if rule.rule_type == 'stop_loss' and params.get('pct') is not None:
-                    merged['stop_loss_pct'] = abs(float(params['pct'])) / 100
-                    db_override_keys.add('stop_loss_pct')
-                elif rule.rule_type == 'take_profit' and params.get('pct') is not None:
-                    merged['take_profit_pct'] = abs(float(params['pct'])) / 100
-                    db_override_keys.add('take_profit_pct')
-                elif rule.rule_type == 'trailing_stop' and params.get('pct') is not None:
-                    merged['trailing_stop_pct'] = abs(float(params['pct'])) / 100
-                    db_override_keys.add('trailing_stop_pct')
-        except Exception as e:
-            self.logger.warning(f"Failed to load sell rule overrides from DB: {e}")
+                overrides = self.provider.get_sell_condition_overrides(symbol)
+                for key, value in overrides.items():
+                    if key in ('stop_loss_pct', 'take_profit_pct', 'trailing_stop_pct') and value is not None:
+                        merged[key] = value
+                        provider_override_keys.add(key)
+            except Exception as e:
+                self.logger.warning(f"Failed to load sell rule overrides from provider: {e}")
 
         holdings = self.config.get('holdings', {}) or {}
         holding_config = None
@@ -231,7 +233,7 @@ class PortfolioManager:
                 or {}
             )
             for key in ('stop_loss_pct', 'take_profit_pct', 'trailing_stop_pct'):
-                if key in overrides and overrides[key] is not None and key not in db_override_keys:
+                if key in overrides and overrides[key] is not None and key not in provider_override_keys:
                     merged[key] = overrides[key]
         return SellConditions.from_dict(merged)
 

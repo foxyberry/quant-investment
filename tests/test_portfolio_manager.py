@@ -3,16 +3,42 @@
 from __future__ import annotations
 
 from pathlib import Path
-import json
 
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from api.database import Base
-from api.models.portfolio import SellRule
-from api.models.portfolio_alert_config import PortfolioAlertConfig
 from screener.portfolio_manager import PortfolioManager
+
+
+class StubProvider:
+    def __init__(
+        self,
+        *,
+        default_sell_conditions: dict[str, float] | None = None,
+        technical_signals_config: dict | None = None,
+        technical_signals_enabled: bool = True,
+        sell_condition_overrides: dict[str, dict[str, float]] | None = None,
+    ) -> None:
+        self._default_sell_conditions = default_sell_conditions or {
+            "stop_loss_pct": 0.05,
+            "take_profit_pct": 0.15,
+            "trailing_stop_pct": 0.08,
+        }
+        self._technical_signals_config = technical_signals_config or {}
+        self._technical_signals_enabled = technical_signals_enabled
+        self._sell_condition_overrides = sell_condition_overrides or {}
+
+    def get_default_sell_conditions(self) -> dict[str, float]:
+        return self._default_sell_conditions
+
+    def get_technical_signals_config(self) -> dict:
+        return self._technical_signals_config
+
+    def is_technical_signals_enabled(self) -> bool:
+        return self._technical_signals_enabled
+
+    def get_holdings(self):
+        return []
+
+    def get_sell_condition_overrides(self, symbol: str) -> dict[str, float]:
+        return self._sell_condition_overrides.get(symbol.upper(), {})
 
 
 def _write_config(tmp_path: Path, body: str) -> Path:
@@ -21,66 +47,12 @@ def _write_config(tmp_path: Path, body: str) -> Path:
     return config_path
 
 
-@pytest.fixture()
-def db_session():
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False})
-    testing_session = sessionmaker(bind=engine)
-    Base.metadata.create_all(bind=engine)
-    yield testing_session
-    engine.dispose()
-
-
-@pytest.fixture()
-def patch_db_sessions(db_session):
-    import api.database as database_mod
-    import api.services.portfolio_alert_config_service as config_mod
-
-    orig_db_session = database_mod.SessionLocal
-    orig_config_session = config_mod.SessionLocal
-    database_mod.SessionLocal = db_session
-    config_mod.SessionLocal = db_session
-    try:
-        yield db_session
-    finally:
-        database_mod.SessionLocal = orig_db_session
-        config_mod.SessionLocal = orig_config_session
-
-
-def _seed_default_config(db_session) -> None:
-    db = db_session()
-    try:
-        db.add(
-            PortfolioAlertConfig(
-                id=1,
-                enabled=True,
-                scan_interval_seconds=60,
-                stop_loss_pct=0.20,
-                take_profit_pct=0.30,
-                trailing_stop_pct=0.10,
-                technical_signals=True,
-                market_hours_only=True,
-                channels_json='["telegram"]',
-                default_stop_loss_pct=0.05,
-                default_take_profit_pct=0.15,
-                default_trailing_stop_pct=0.08,
-                technical_signals_json=json.dumps({}),
-                migrated_from_yaml=False,
-            )
-        )
-        db.commit()
-    finally:
-        db.close()
-
-
-def test_get_sell_conditions_for_returns_defaults_without_holding_override(tmp_path, patch_db_sessions):
-    _seed_default_config(patch_db_sessions)
-    config_path = _write_config(
-        tmp_path,
-        """
-""".strip(),
+def test_get_sell_conditions_for_returns_provider_defaults_without_holding_override(tmp_path):
+    manager = PortfolioManager(
+        config_path=str(_write_config(tmp_path, "")),
+        provider=StubProvider(),
     )
 
-    manager = PortfolioManager(config_path=str(config_path))
     conditions = manager.get_sell_conditions_for("AAPL")
 
     assert conditions.stop_loss_pct == 0.05
@@ -88,8 +60,7 @@ def test_get_sell_conditions_for_returns_defaults_without_holding_override(tmp_p
     assert conditions.trailing_stop_pct == 0.08
 
 
-def test_get_sell_conditions_for_merges_sell_conditions_override(tmp_path, patch_db_sessions):
-    _seed_default_config(patch_db_sessions)
+def test_get_sell_conditions_for_merges_yaml_override_on_top_of_provider_defaults(tmp_path):
     config_path = _write_config(
         tmp_path,
         """
@@ -101,7 +72,7 @@ holdings:
 """.strip(),
     )
 
-    manager = PortfolioManager(config_path=str(config_path))
+    manager = PortfolioManager(config_path=str(config_path), provider=StubProvider())
     conditions = manager.get_sell_conditions_for("AAPL")
 
     assert conditions.stop_loss_pct == 0.05
@@ -109,8 +80,7 @@ holdings:
     assert conditions.trailing_stop_pct == 0.12
 
 
-def test_get_sell_conditions_for_supports_legacy_custom_conditions_key(tmp_path, patch_db_sessions):
-    _seed_default_config(patch_db_sessions)
+def test_get_sell_conditions_for_supports_legacy_custom_conditions_key(tmp_path):
     config_path = _write_config(
         tmp_path,
         """
@@ -121,7 +91,7 @@ holdings:
 """.strip(),
     )
 
-    manager = PortfolioManager(config_path=str(config_path))
+    manager = PortfolioManager(config_path=str(config_path), provider=StubProvider())
     conditions = manager.get_sell_conditions_for("tsla")
 
     assert conditions.stop_loss_pct == 0.03
@@ -129,15 +99,7 @@ holdings:
     assert conditions.trailing_stop_pct == 0.08
 
 
-def test_get_sell_conditions_for_prefers_db_sell_rules_over_yaml_override(tmp_path, patch_db_sessions):
-    _seed_default_config(patch_db_sessions)
-    db = patch_db_sessions()
-    try:
-        db.add(SellRule(ticker="AAPL", rule_type="trailing_stop", params={"pct": 12}, is_active=True))
-        db.commit()
-    finally:
-        db.close()
-
+def test_get_sell_conditions_for_prefers_provider_overrides_over_yaml_override(tmp_path):
     config_path = _write_config(
         tmp_path,
         """
@@ -148,7 +110,12 @@ holdings:
 """.strip(),
     )
 
-    manager = PortfolioManager(config_path=str(config_path))
+    manager = PortfolioManager(
+        config_path=str(config_path),
+        provider=StubProvider(
+            sell_condition_overrides={"AAPL": {"trailing_stop_pct": 0.12}},
+        ),
+    )
     conditions = manager.get_sell_conditions_for("AAPL")
 
     assert conditions.trailing_stop_pct == 0.12
