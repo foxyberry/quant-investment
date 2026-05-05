@@ -2,11 +2,11 @@
 
 REST API documentation for the quant-investment platform.
 
-**Base URL**: `http://localhost:8000`
+**Base URL**: `http://localhost:8002`
 
 **Interactive Documentation**:
-- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
-- ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+- Swagger UI: [http://localhost:8002/docs](http://localhost:8002/docs)
+- ReDoc: [http://localhost:8002/redoc](http://localhost:8002/redoc)
 
 ---
 
@@ -712,6 +712,6 @@ Consider implementing client-side timeouts accordingly.
 ## OpenAPI Specification
 
 The full OpenAPI 3.0 specification is available at:
-- JSON: [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json)
+- JSON: [http://localhost:8002/openapi.json](http://localhost:8002/openapi.json)
 
 This can be used to generate client SDKs in various languages.

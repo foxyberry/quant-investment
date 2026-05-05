@@ -30,7 +30,7 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Default configuration
-PORT="${WEB_PORT:-3000}"
+PORT="${WEB_PORT:-3002}"
 
 echo "Starting Next.js development server..."
 echo "  Port: $PORT"
@@ -38,4 +38,4 @@ echo "  URL: http://localhost:$PORT"
 echo "============================================"
 
 # Run Next.js dev server
-npm run dev
+PORT="$PORT" npm run dev

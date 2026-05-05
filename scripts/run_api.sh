@@ -32,7 +32,7 @@ fi
 
 # Default configuration
 HOST="${API_HOST:-0.0.0.0}"
-PORT="${API_PORT:-8000}"
+PORT="${API_PORT:-8002}"
 
 echo "Starting FastAPI server..."
 echo "  Host: $HOST"
