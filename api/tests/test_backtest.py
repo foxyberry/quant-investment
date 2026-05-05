@@ -2,12 +2,10 @@
 Tests for backtest API endpoints.
 """
 
-from dataclasses import dataclass
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
-import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app
@@ -78,6 +76,46 @@ def _make_mock_backtest_result(
     stats._strategy = mock_strategy
 
     return result
+
+
+def _make_graph_request(*, include_universe: bool = False):
+    nodes = []
+    edges = []
+    if include_universe:
+        nodes.append(
+            {
+                "id": "u1",
+                "data": {"node_type": "universe", "universe": "SP500", "universes": ["SP500"]},
+            }
+        )
+    nodes.extend(
+        [
+            {
+                "id": "c1",
+                "data": {
+                    "node_type": "condition",
+                    "condition_type": "rsi_oversold",
+                    "params": {"period": 14, "threshold": 30},
+                },
+            },
+            {"id": "o1", "data": {"node_type": "output"}},
+        ]
+    )
+    if include_universe:
+        edges.extend(
+            [
+                {"id": "e1", "source": "u1", "target": "c1"},
+                {"id": "e2", "source": "c1", "target": "o1"},
+            ]
+        )
+    else:
+        edges.append({"id": "e1", "source": "c1", "target": "o1"})
+
+    return {
+        "graph": {"nodes": nodes, "edges": edges},
+        "ticker": "AAPL",
+        "period": "1y",
+    }
 
 
 class TestStrategiesEndpoint:
@@ -522,3 +560,29 @@ class TestSanitization:
         data = response.json()
         # Should not raise a serialization error; trades should be present
         assert len(data["trades"]) > 0
+
+
+class TestGraphBacktestEndpoint:
+    @patch("api.services.backtest_service.BacktestEngine")
+    def test_run_graph_backtest_success_for_single_ticker_graph(self, mock_engine_cls):
+        mock_result = _make_mock_backtest_result()
+        mock_engine = MagicMock()
+        mock_engine.run.return_value = mock_result
+        mock_engine_cls.return_value = mock_engine
+
+        response = client.post("/api/backtest/run-graph", json=_make_graph_request())
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ticker"] == "AAPL"
+        assert data["strategy"] == "graph"
+        assert "warnings" in data
+
+    def test_run_graph_backtest_rejects_universe_node(self):
+        response = client.post(
+            "/api/backtest/run-graph",
+            json=_make_graph_request(include_universe=True),
+        )
+
+        assert response.status_code == 400
+        assert "single-ticker graphs" in response.json()["detail"]

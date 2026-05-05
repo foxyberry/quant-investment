@@ -25,6 +25,18 @@ from api.services.strategy_backtest_result_service import get_results
 def _make_graph():
     return StrategyGraph(
         nodes=[
+            StrategyNode(id="c1", data=StrategyNodeData(node_type="condition", condition_type="rsi_oversold", params={"period": 14, "threshold": 30})),
+            StrategyNode(id="o1", data=StrategyNodeData(node_type="output")),
+        ],
+        edges=[
+            StrategyEdge(id="e1", source="c1", target="o1"),
+        ],
+    )
+
+
+def _make_universe_graph():
+    return StrategyGraph(
+        nodes=[
             StrategyNode(id="u1", data=StrategyNodeData(node_type="universe", universe="SP500", universes=["SP500"])),
             StrategyNode(id="c1", data=StrategyNodeData(node_type="condition", condition_type="rsi_oversold", params={"period": 14, "threshold": 30})),
             StrategyNode(id="o1", data=StrategyNodeData(node_type="output")),
@@ -39,7 +51,8 @@ def _make_graph():
 @pytest.fixture(autouse=True)
 def _use_in_memory_db(monkeypatch):
     from api import database
-    from api.services import strategy_save_service, strategy_backtest_result_service
+    from api.services import strategy_save_service
+    from api.services.strategy import strategy_analytics_service
 
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
@@ -50,7 +63,7 @@ def _use_in_memory_db(monkeypatch):
     monkeypatch.setattr(database, "engine", test_engine)
     monkeypatch.setattr(database, "SessionLocal", TestSession)
     monkeypatch.setattr(strategy_save_service, "SessionLocal", TestSession)
-    monkeypatch.setattr(strategy_backtest_result_service, "SessionLocal", TestSession)
+    monkeypatch.setattr(strategy_analytics_service, "SessionLocal", TestSession)
     monkeypatch.setattr(strategy_save_service, "_strategy_save_service", None)
 
     database.Base.metadata.create_all(bind=test_engine)
@@ -156,3 +169,14 @@ class TestAutoPromote:
         response = run_graph_backtest(request)
 
         assert response.strategy_status is None
+
+    def test_universe_graph_is_rejected(self):
+        from api.services.backtest_service import run_graph_backtest
+
+        request = GraphBacktestRequest(
+            graph=_make_universe_graph(),
+            ticker="AAPL",
+        )
+
+        with pytest.raises(ValueError, match="single-ticker graphs"):
+            run_graph_backtest(request)
