@@ -1,8 +1,8 @@
-"""Tests for PortfolioManager reading DB-backed sell/technical settings."""
+"""Tests for PortfolioManager provider injection and DB-backed provider behavior."""
 
 from __future__ import annotations
 
-import json
+from dataclasses import dataclass
 from datetime import date
 
 import pytest
@@ -11,7 +11,42 @@ from sqlalchemy.orm import sessionmaker
 
 from api.database import Base
 from api.models.portfolio import Holding, SellRule
-from api.models.portfolio_alert_config import PortfolioAlertConfig
+from api.services.portfolio_manager_provider import DBPortfolioDataProvider
+from screener.portfolio_manager import PortfolioManager
+
+
+@dataclass
+class StubConfigResponse:
+    technical_signals: bool
+
+
+class StubConfigService:
+    def __init__(
+        self,
+        *,
+        default_sell_conditions: dict[str, float] | None = None,
+        technical_signals_config: dict | None = None,
+        technical_signals_enabled: bool = True,
+    ) -> None:
+        self._default_sell_conditions = default_sell_conditions or {
+            "stop_loss_pct": 0.04,
+            "take_profit_pct": 0.21,
+            "trailing_stop_pct": 0.07,
+        }
+        self._technical_signals_config = technical_signals_config or {
+            "ma_breakdown": True,
+            "death_cross": False,
+        }
+        self._technical_signals_enabled = technical_signals_enabled
+
+    def get_default_sell_conditions(self) -> dict[str, float]:
+        return self._default_sell_conditions
+
+    def get_technical_signals_config(self) -> dict:
+        return self._technical_signals_config
+
+    def get_config(self) -> StubConfigResponse:
+        return StubConfigResponse(technical_signals=self._technical_signals_enabled)
 
 
 @pytest.fixture()
@@ -24,35 +59,9 @@ def db_session():
 
 
 @pytest.fixture()
-def manager(db_session):
-    import api.services.portfolio_alert_config_service as config_mod
-    import api.database as database_mod
-
-    orig_session = config_mod.SessionLocal
-    orig_db_session = database_mod.SessionLocal
-    config_mod.SessionLocal = db_session
-    database_mod.SessionLocal = db_session
-
+def provider(db_session):
     db = db_session()
     try:
-        db.add(
-            PortfolioAlertConfig(
-                id=1,
-                enabled=True,
-                scan_interval_seconds=60,
-                stop_loss_pct=0.20,
-                take_profit_pct=0.30,
-                trailing_stop_pct=0.10,
-                technical_signals=True,
-                market_hours_only=True,
-                channels_json='["telegram"]',
-                default_stop_loss_pct=0.04,
-                default_take_profit_pct=0.21,
-                default_trailing_stop_pct=0.07,
-                technical_signals_json=json.dumps({"ma_breakdown": True, "death_cross": False}),
-                migrated_from_yaml=False,
-            )
-        )
         db.add(
             Holding(
                 ticker="AAPL",
@@ -67,15 +76,18 @@ def manager(db_session):
     finally:
         db.close()
 
-    from screener.portfolio_manager import PortfolioManager
-
-    mgr = PortfolioManager(config_path="/nonexistent/portfolio.yaml")
-    yield mgr
-    config_mod.SessionLocal = orig_session
-    database_mod.SessionLocal = orig_db_session
+    return DBPortfolioDataProvider(
+        session_factory=db_session,
+        config_service=StubConfigService(),
+    )
 
 
-def test_portfolio_manager_reads_db_backed_default_sell_conditions(manager):
+@pytest.fixture()
+def manager(provider):
+    return PortfolioManager(config_path="/nonexistent/portfolio.yaml", provider=provider)
+
+
+def test_portfolio_manager_reads_provider_backed_default_sell_conditions(manager):
     conditions = manager.get_default_sell_conditions()
 
     assert conditions.stop_loss_pct == 0.04
@@ -83,46 +95,28 @@ def test_portfolio_manager_reads_db_backed_default_sell_conditions(manager):
     assert conditions.trailing_stop_pct == 0.07
 
 
-def test_portfolio_manager_reads_db_backed_technical_signals(manager):
+def test_portfolio_manager_reads_provider_backed_technical_signals(manager):
     assert manager.get_technical_signals_config() == {
         "ma_breakdown": True,
         "death_cross": False,
     }
 
 
-def test_portfolio_manager_reads_technical_signals_enabled_flag(manager):
+def test_portfolio_manager_reads_technical_signals_enabled_flag_from_provider(manager):
     assert manager.is_technical_signals_enabled() is True
 
 
+def test_portfolio_manager_reads_holdings_from_provider(manager):
+    holdings = manager.get_holdings()
+
+    assert len(holdings) == 1
+    assert holdings[0].symbol == "AAPL"
+    assert holdings[0].buy_price == 150.0
+
+
 def test_portfolio_manager_uses_db_sell_rules_as_per_holding_overrides(db_session):
-    import api.services.portfolio_alert_config_service as config_mod
-    import api.database as database_mod
-
-    orig_session = config_mod.SessionLocal
-    orig_db_session = database_mod.SessionLocal
-    config_mod.SessionLocal = db_session
-    database_mod.SessionLocal = db_session
-
     db = db_session()
     try:
-        db.add(
-            PortfolioAlertConfig(
-                id=1,
-                enabled=True,
-                scan_interval_seconds=60,
-                stop_loss_pct=0.20,
-                take_profit_pct=0.30,
-                trailing_stop_pct=0.10,
-                technical_signals=True,
-                market_hours_only=True,
-                channels_json='["telegram"]',
-                default_stop_loss_pct=0.05,
-                default_take_profit_pct=0.15,
-                default_trailing_stop_pct=0.08,
-                technical_signals_json="{}",
-                migrated_from_yaml=False,
-            )
-        )
         db.add(
             Holding(
                 ticker="AAPL",
@@ -140,52 +134,26 @@ def test_portfolio_manager_uses_db_sell_rules_as_per_holding_overrides(db_sessio
     finally:
         db.close()
 
-    from screener.portfolio_manager import PortfolioManager
+    provider = DBPortfolioDataProvider(
+        session_factory=db_session,
+        config_service=StubConfigService(
+            default_sell_conditions={
+                "stop_loss_pct": 0.05,
+                "take_profit_pct": 0.15,
+                "trailing_stop_pct": 0.08,
+            }
+        ),
+    )
 
-    mgr = PortfolioManager(config_path="/nonexistent/portfolio.yaml")
+    mgr = PortfolioManager(config_path="/nonexistent/portfolio.yaml", provider=provider)
     conditions = mgr.get_sell_conditions_for("AAPL")
 
     assert conditions.stop_loss_pct == 0.03
     assert conditions.take_profit_pct == 0.25
     assert conditions.trailing_stop_pct == 0.12
 
-    config_mod.SessionLocal = orig_session
-    database_mod.SessionLocal = orig_db_session
-
 
 def test_portfolio_manager_still_supports_legacy_yaml_override_fallback(db_session, tmp_path):
-    import api.services.portfolio_alert_config_service as config_mod
-    import api.database as database_mod
-
-    orig_session = config_mod.SessionLocal
-    orig_db_session = database_mod.SessionLocal
-    config_mod.SessionLocal = db_session
-    database_mod.SessionLocal = db_session
-
-    db = db_session()
-    try:
-        db.add(
-            PortfolioAlertConfig(
-                id=1,
-                enabled=True,
-                scan_interval_seconds=60,
-                stop_loss_pct=0.20,
-                take_profit_pct=0.30,
-                trailing_stop_pct=0.10,
-                technical_signals=True,
-                market_hours_only=True,
-                channels_json='["telegram"]',
-                default_stop_loss_pct=0.05,
-                default_take_profit_pct=0.15,
-                default_trailing_stop_pct=0.08,
-                technical_signals_json="{}",
-                migrated_from_yaml=False,
-            )
-        )
-        db.commit()
-    finally:
-        db.close()
-
     config_path = tmp_path / "portfolio.yaml"
     config_path.write_text(
         """
@@ -198,14 +166,20 @@ holdings:
         encoding="utf-8",
     )
 
-    from screener.portfolio_manager import PortfolioManager
+    provider = DBPortfolioDataProvider(
+        session_factory=db_session,
+        config_service=StubConfigService(
+            default_sell_conditions={
+                "stop_loss_pct": 0.05,
+                "take_profit_pct": 0.15,
+                "trailing_stop_pct": 0.08,
+            }
+        ),
+    )
 
-    mgr = PortfolioManager(config_path=str(config_path))
+    mgr = PortfolioManager(config_path=str(config_path), provider=provider)
     conditions = mgr.get_sell_conditions_for("TSLA")
 
     assert conditions.stop_loss_pct == 0.02
     assert conditions.take_profit_pct == 0.30
     assert conditions.trailing_stop_pct == 0.08
-
-    config_mod.SessionLocal = orig_session
-    database_mod.SessionLocal = orig_db_session
