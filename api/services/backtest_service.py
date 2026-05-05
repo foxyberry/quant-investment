@@ -112,6 +112,23 @@ STRATEGY_META: Dict[str, Dict[str, Any]] = {
 }
 
 
+def _validate_single_ticker_graph_backtest(request: GraphBacktestRequest) -> None:
+    """Reject graph backtests whose graph semantics do not match single-ticker execution."""
+    unsupported_scope_nodes = [
+        node.data.node_type
+        for node in request.graph.nodes
+        if node.data.node_type in {"universe", "sector"}
+    ]
+    if not unsupported_scope_nodes:
+        return
+
+    unique_types = ", ".join(sorted(set(unsupported_scope_nodes)))
+    raise ValueError(
+        "Graph backtest only supports single-ticker graphs. "
+        f"Remove scope-setting node(s): {unique_types}, or use a portfolio/universe backtest mode."
+    )
+
+
 def _sanitize_value(v: Any) -> Any:
     """
     Convert numpy/pandas types to native Python types for JSON serialization.
@@ -394,6 +411,8 @@ def run_graph_backtest(request: GraphBacktestRequest) -> GraphBacktestResponse:
         ValueError: If no backtestable conditions are found.
     """
     from api.services.strategy_builder import build_strategy_from_graph
+
+    _validate_single_ticker_graph_backtest(request)
 
     # Build strategy from graph
     build_result = build_strategy_from_graph(
