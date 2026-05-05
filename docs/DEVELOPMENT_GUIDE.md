@@ -548,7 +548,7 @@ cors_origins: list[str] = ["http://localhost:3002", "http://localhost:YOUR_PORT"
 
 2. Or set environment variable:
 ```bash
-CORS_ORIGINS=http://localhost:3002,http://localhost:YOUR_PORT
+CORS_ORIGINS='["http://localhost:3002","http://localhost:YOUR_PORT"]'
 ```
 
 #### Next.js Build Errors

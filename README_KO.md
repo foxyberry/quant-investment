@@ -45,22 +45,22 @@ npm --prefix web install
 
 ### 3) 실행
 
-API (기본 포트 `8001`):
+API (기본 포트 `8002`):
 ```bash
-source venv/bin/activate && uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+source venv/bin/activate && uvicorn api.main:app --host 0.0.0.0 --port 8002 --reload
 ```
 
-Web (기본 포트 `3001`):
+Web (기본 포트 `3002`):
 ```bash
-cd web && npm run dev -- -p 3001
+cd web && PORT=3002 npm run dev
 ```
 
 > 포트 번호는 자유롭게 변경 가능합니다. API 포트를 바꾸면 `web/.env.local`의 `NEXT_PUBLIC_API_URL`도 맞춰 주세요.
 
 ### 4) 접속
 
-- Web UI: `http://localhost:3001`
-- API 문서 (Swagger): `http://localhost:8001/docs`
+- Web UI: `http://localhost:3002`
+- API 문서 (Swagger): `http://localhost:8002/docs`
 
 ## Docker 공용 DB (실행 위치/포트 독립)
 
@@ -161,7 +161,7 @@ docker compose up -d db
 
 | 변수 | 용도 |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | 프론트엔드 API 베이스 URL (예: `http://localhost:8001`) |
+| `NEXT_PUBLIC_API_URL` | 프론트엔드 API 베이스 URL (예: `http://localhost:8002`) |
 | `ANTHROPIC_API_KEY` | AI 분석 연동 |
 | `FINNHUB_API_KEY` | 선택적 뉴스/데이터 소스 |
 | `MARKETAUX_API_KEY` | 선택적 뉴스/데이터 소스 |
@@ -180,7 +180,7 @@ docker compose up -d db
 | 시장 | `/api/market` | 마켓 캘린더, 환율 |
 | 백테스트 | `/api/backtest` | 백테스트 실행 |
 
-전체 API 문서: `http://localhost:8001/docs`
+전체 API 문서: `http://localhost:8002/docs`
 
 ## 개발
 
@@ -188,7 +188,7 @@ docker compose up -d db
 
 ```bash
 source venv/bin/activate
-./venv/bin/python -m uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+./venv/bin/python -m uvicorn api.main:app --host 0.0.0.0 --port 8002 --reload
 ```
 
 > **팁**: `uvicorn` 직접 실행 대신 `python -m uvicorn`을 사용하세요. venv를 이동하거나 재생성하면 `uvicorn` shebang이 깨질 수 있습니다.
@@ -196,28 +196,30 @@ source venv/bin/activate
 ### 프론트엔드
 
 ```bash
-NEXT_PUBLIC_API_URL=http://127.0.0.1:8001 npm --prefix web run dev -- --hostname 0.0.0.0 --port 3001
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8002 PORT=3002 npm --prefix web run dev
 ```
 
 또는 `web/.env.local`에 `NEXT_PUBLIC_API_URL`을 설정한 후:
 
 ```bash
-cd web && npm run dev -- -p 3001
+cd web && PORT=3002 npm run dev
 ```
 
 ### CORS: `localhost` vs `127.0.0.1`
 
-브라우저는 `localhost`와 `127.0.0.1`을 서로 다른 origin으로 취급합니다. 기본 CORS 설정은 둘 다 허용합니다:
+브라우저는 `localhost`와 `127.0.0.1`을 서로 다른 origin으로 취급합니다. 기본 CORS 설정은 아래 dev origin을 명시적으로 허용합니다:
 
-```
-http://localhost:3000-3002
-http://127.0.0.1:3000-3002
-```
+- `http://localhost:3000`
+- `http://localhost:3001`
+- `http://localhost:3002`
+- `http://127.0.0.1:3000`
+- `http://127.0.0.1:3001`
+- `http://127.0.0.1:3002`
 
 커스텀 origin을 추가하려면 `.env`에서 `CORS_ORIGINS`를 설정하세요:
 
 ```env
-CORS_ORIGINS=["http://localhost:3001","http://192.168.1.100:3001"]
+CORS_ORIGINS=["http://localhost:3002","http://192.168.1.100:3002"]
 ```
 
 ### 유용한 점검 명령
@@ -234,7 +236,7 @@ npm --prefix web run check:strategy-i18n
 
 ```bash
 # API 헬스 체크
-curl http://127.0.0.1:8001/health
+curl http://127.0.0.1:8002/health
 
 # DB 준비 상태 (Postgres만 해당)
 pg_isready -h localhost -p 5432
