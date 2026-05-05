@@ -63,6 +63,7 @@ class DBPortfolioDataProvider(PortfolioDataProvider):
 
     def get_sell_condition_overrides(self, symbol: str) -> dict[str, float]:
         db = self.session_factory()
+        rules: list[SellRule] = []
         try:
             symbol_upper = symbol.upper()
             aliases = {symbol_upper}

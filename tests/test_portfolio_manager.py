@@ -119,3 +119,27 @@ holdings:
     conditions = manager.get_sell_conditions_for("AAPL")
 
     assert conditions.trailing_stop_pct == 0.12
+
+
+def test_get_holdings_reads_yaml_when_provider_is_absent(tmp_path):
+    config_path = _write_config(
+        tmp_path,
+        """
+holdings:
+  AAPL:
+    name: Apple
+    buy_price: 150.5
+    quantity: 7
+    buy_date: 2026-01-15
+""".strip(),
+    )
+
+    manager = PortfolioManager(config_path=str(config_path))
+    holdings = manager.get_holdings()
+
+    assert len(holdings) == 1
+    assert holdings[0].symbol == "AAPL"
+    assert holdings[0].name == "Apple"
+    assert holdings[0].buy_price == 150.5
+    assert holdings[0].quantity == 7
+    assert holdings[0].buy_date.isoformat() == "2026-01-15"
