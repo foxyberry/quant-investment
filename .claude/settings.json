@@ -43,10 +43,10 @@
         "repo": "openai/codex-plugin-cc"
       }
     },
-    "claude-code-plugins": {
+    "claude-plugins-official": {
       "source": {
         "source": "github",
-        "repo": "anthropics/claude-code"
+        "repo": "anthropics/claude-plugins-official"
       }
     }
   },
@@ -54,7 +54,7 @@
     "codex@openai-codex": true,
     "skill-creator@claude-plugins-official": true,
     "chrome-devtools-mcp@claude-plugins-official": true,
-    "frontend-design@claude-code-plugins": true
+    "frontend-design@claude-plugins-official": true
   },
   "enabledMcpjsonServers": [
     "codex",
