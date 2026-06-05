@@ -200,5 +200,5 @@ web/.next/
 web/.env.local
 web/.env*.local
 
-# MCP config (contains API keys)
-.mcp.json
+# MCP config — committed for portability (codex/context7/playwright are npx, no secrets).
+# Keep any secret-bearing MCP server in ~/.claude.json (user scope), NOT in this committed file.
