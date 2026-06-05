@@ -28,7 +28,7 @@ Claude Code 첫 실행 시 폴더 신뢰 프롬프트 → 신뢰. (보안상 자
 /plugin install codex@openai-codex
 /plugin install skill-creator@claude-plugins-official
 /plugin install chrome-devtools-mcp@claude-plugins-official
-/plugin install frontend-design@claude-code-plugins
+/plugin install frontend-design@claude-plugins-official
 ```
 
 확인: `/plugin` 또는 `/doctor`
